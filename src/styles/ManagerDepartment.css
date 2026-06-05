@@ -1,0 +1,232 @@
+/* Extracted from managerdepartment.html — main content only */
+
+:root {
+  --gold: #d4af37;
+  --border-gold: rgba(212, 175, 55, 0.3);
+}
+
+.manager-department-page {
+  flex: 1;
+  overflow-y: auto;
+  background: #0a0a0a;
+  padding: 28px 32px 48px;
+  color: #eff0f5;
+}
+
+.manager-department-page ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.manager-department-page ::-webkit-scrollbar-track {
+  background: #111;
+}
+
+.manager-department-page ::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 10px;
+}
+
+.manager-department-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-gold);
+  gap: 12px;
+}
+
+.manager-department-page .title h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.manager-department-page .title p {
+  font-size: 14px;
+  color: #9a9dc2;
+  margin-top: 4px;
+}
+
+.manager-department-page .date-picker-wrapper {
+  background: #111216;
+  padding: 8px 18px;
+  border-radius: 40px;
+  border: 1px solid #d4af37;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.manager-department-page .date-picker-wrapper i {
+  color: #d4af37;
+}
+
+.manager-department-page .date-picker-wrapper input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.manager-department-page .stats-badge {
+  background: rgba(212, 175, 55, 0.15);
+  padding: 6px 20px;
+  border-radius: 40px;
+  font-size: 0.85rem;
+  color: #d4af37;
+  display: inline-block;
+  margin-bottom: 28px;
+  border: 1px solid var(--border-gold);
+}
+
+.manager-department-page .dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.manager-department-page .glass-card {
+  background: #0f0f0f;
+  border: 1px solid var(--border-gold);
+  border-radius: 28px;
+  padding: 20px;
+  transition: 0.2s;
+}
+
+.manager-department-page .glass-card:hover {
+  border-color: #d4af37;
+  transform: translateY(-2px);
+}
+
+.manager-department-page .dept-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.manager-department-page .dept-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.manager-department-page .dept-code {
+  background: #1e1f28;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  color: #d4af37;
+  border: 1px solid var(--border-gold);
+}
+
+.manager-department-page .employee-count {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff, #f5d742);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 8px 0;
+}
+
+.manager-department-page .attendance-stats {
+  display: flex;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.manager-department-page .present-box,
+.manager-department-page .absent-box {
+  flex: 1;
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.manager-department-page .present-box {
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.15);
+}
+
+.manager-department-page .absent-box {
+  background: rgba(255, 82, 82, 0.08);
+  border: 1px solid rgba(255, 82, 82, 0.15);
+}
+
+.manager-department-page .att-label {
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+  color: #999;
+}
+
+.manager-department-page .att-num {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.manager-department-page .present-box .att-num {
+  color: #00e676;
+}
+
+.manager-department-page .absent-box .att-num {
+  color: #ff5252;
+}
+
+.manager-department-page .dept-head {
+  font-size: 0.8rem;
+  color: #d4af37;
+  margin-top: 10px;
+}
+
+.manager-department-page .empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px;
+  color: #555;
+  background: #0f0f0f;
+  border-radius: 28px;
+  border: 1px dashed var(--border-gold);
+}
+
+.manager-department-page .spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d4af37;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: mgr-dept-spin 0.6s linear infinite;
+}
+
+@keyframes mgr-dept-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.manager-department-page .mgr-dept-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1e1a10;
+  border-left: 4px solid #d4af37;
+  padding: 10px 20px;
+  border-radius: 40px;
+  color: #f5e2b0;
+  z-index: 2000;
+  opacity: 0;
+  transition: 0.25s;
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+.manager-department-page .mgr-dept-toast.show {
+  opacity: 1;
+}

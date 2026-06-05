@@ -1,0 +1,295 @@
+/* Extracted from admindepartment.html — scoped to page wrapper */
+
+.admin-department-page {
+  flex: 1;
+  overflow-y: auto;
+  background: #0a0a0a;
+  padding: 24px 32px;
+}
+
+.admin-department-page ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-department-page ::-webkit-scrollbar-track {
+  background: #111;
+}
+.admin-department-page ::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 10px;
+}
+
+.admin-department-page .dashboard-header {
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 16px;
+}
+.admin-department-page .dashboard-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff, #e4bc5c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.admin-department-page .dashboard-header p {
+  color: #d4af37;
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+.admin-department-page .header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.admin-department-page .date-picker-wrapper {
+  background: #111216;
+  padding: 5px 16px;
+  border-radius: 40px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-department-page .date-picker-wrapper label {
+  font-size: 0.8rem;
+  color: #d4af37;
+}
+.admin-department-page #attendanceDate {
+  background: #1e1f28;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 30px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.8rem;
+}
+.admin-department-page .branch-dropdown {
+  position: relative;
+}
+.admin-department-page .branch-selector {
+  background: #111216;
+  padding: 8px 20px;
+  border-radius: 40px;
+  border: 1px solid #d4af37;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.admin-department-page .branch-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: #111216;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+  min-width: 220px;
+  z-index: 200;
+  display: none;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.admin-department-page .branch-menu.show {
+  display: block;
+}
+.admin-department-page .branch-menu-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.admin-department-page .branch-menu-item:hover {
+  background: rgba(212, 175, 55, 0.15);
+  color: #d4af37;
+}
+.admin-department-page .live-badge {
+  background: #1e1a10;
+  padding: 4px 12px;
+  border-radius: 60px;
+  font-size: 0.7rem;
+  border: 1px solid #d4af37;
+}
+.admin-department-page .live-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #23c55e;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: dept-pulse 1.5s infinite;
+}
+@keyframes dept-pulse {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.admin-department-page .stats-badge {
+  background: rgba(212, 175, 55, 0.15);
+  padding: 6px 20px;
+  border-radius: 40px;
+  font-size: 0.85rem;
+  color: #d4af37;
+  display: inline-block;
+  margin-bottom: 28px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+.admin-department-page .stats-badge.skeleton {
+  opacity: 0.5;
+}
+
+.admin-department-page .dept-grid-wrap {
+  position: relative;
+}
+.admin-department-page .dept-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  border-radius: 28px;
+  pointer-events: none;
+}
+.admin-department-page .dept-loading-overlay .loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(212, 175, 55, 0.2);
+  border-top-color: #d4af37;
+  border-radius: 50%;
+  animation: dept-spin 0.8s linear infinite;
+}
+@keyframes dept-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-department-page .dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+.admin-department-page .glass-card {
+  background: #0f0f0f;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 28px;
+  padding: 20px;
+  transition: 0.2s;
+}
+.admin-department-page .glass-card:hover {
+  border-color: #d4af37;
+  transform: translateY(-2px);
+}
+.admin-department-page .dept-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.admin-department-page .dept-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.admin-department-page .dept-code {
+  background: #1e1f28;
+  padding: 4px 12px;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+.admin-department-page .employee-count {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff, #f5d742);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 8px 0;
+}
+.admin-department-page .attendance-stats {
+  display: flex;
+  gap: 16px;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+.admin-department-page .present-box,
+.admin-department-page .absent-box {
+  flex: 1;
+  background: rgba(0, 255, 170, 0.08);
+  border: 1px solid rgba(0, 255, 170, 0.15);
+  border-radius: 20px;
+  padding: 12px;
+}
+.admin-department-page .absent-box {
+  background: rgba(255, 82, 82, 0.08);
+  border-color: rgba(255, 82, 82, 0.15);
+}
+.admin-department-page .attendance-label {
+  font-size: 0.7rem;
+  margin-bottom: 6px;
+}
+.admin-department-page .attendance-number {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.admin-department-page .present-box .attendance-number {
+  color: #00e676;
+}
+.admin-department-page .absent-box .attendance-number {
+  color: #ff5252;
+}
+.admin-department-page .empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px;
+  color: #888;
+  background: #0f0f0f;
+  border-radius: 28px;
+  border: 1px dashed rgba(212, 175, 55, 0.5);
+}
+
+.admin-department-page .toast-msg {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: #1e1a10;
+  border-left: 4px solid #d4af37;
+  padding: 12px 24px;
+  border-radius: 50px;
+  color: #f5e2b0;
+  z-index: 2000;
+  opacity: 0;
+  transition: 0.2s;
+  pointer-events: none;
+}
+.admin-department-page .toast-msg.show {
+  opacity: 1;
+}
+
+@media (max-width: 1000px) {
+  .admin-department-page {
+    padding: 16px;
+  }
+  .admin-department-page .dept-grid {
+    grid-template-columns: 1fr;
+  }
+}
