@@ -59,12 +59,12 @@ function Login() {
         <div className="hero-map"></div>
 
         <div className="hero-content">
-          <div className="hero-badge">Enterprise Immigration HRM</div>
+          <div className="hero-badge">Enterprise Immigration HRMS</div>
 
           <h1>
             Welcome to
             <span>VJC Overseas</span>
-            <strong>HRM</strong>
+            <strong>HRMS</strong>
           </h1>
 
           <p>
@@ -84,7 +84,7 @@ function Login() {
 
         <div className="hero-footer">
           <span>© 2026 VJC Overseas Immigration & Visa Consultants</span>
-          <span>Secure HRM Platform</span>
+          <span>Secure HRMS Platform</span>
         </div>
       </section>
 
@@ -106,7 +106,7 @@ function Login() {
 
           <div className="login-heading">
             <h2>Welcome Back</h2>
-            <p>Sign in to continue to your HRM dashboard</p>
+            <p>Sign in to continue to your HRMS dashboard</p>
           </div>
 
           <form onSubmit={handleLogin} className="login-form">
@@ -167,7 +167,7 @@ function Login() {
           
           </form>
 
-          <div className="secure-note">🔐 Secure HRM Platform</div>
+          <div className="secure-note">🔐 Secure HRMS Platform</div>
         </div>
       </section>
     </main>
