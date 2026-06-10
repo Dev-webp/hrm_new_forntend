@@ -1,4 +1,3 @@
-export const MAX_LATE_LOGINS = 6;
 
 export function getInitials(name) {
   if (!name) return "??";
