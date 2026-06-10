@@ -16,7 +16,7 @@ import {
 import {
   transformAttendanceRangeRecord,
   monthRangeBounds,
-} from "../../utils/calendarHelpers";
+} from "../../utils/calendarHelper";
 
 import "../../styles/adminCalendar.css";
 
