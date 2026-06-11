@@ -57,6 +57,12 @@ function Navbar({
       </div>
 
       <div className="topbar-controls">
+        <label className="topbar-search">
+          <i className="fas fa-search" />
+          <input type="search" placeholder="Search workspace" aria-label="Search workspace" />
+          <span>Ctrl K</span>
+        </label>
+
         <div className="month-picker-wrap">
           <i
             className="fas fa-calendar-alt"
@@ -98,6 +104,11 @@ function Navbar({
             ))}
           </div>
         </div>
+
+        <button type="button" className="topbar-icon-btn" aria-label="Notifications">
+          <i className="fas fa-bell" />
+          <span className="topbar-notification-dot" />
+        </button>
 
         <div className="topbar-profile" aria-label={`Signed in as ${profileName}`}>
           <div className="topbar-avatar">{profileInitials}</div>

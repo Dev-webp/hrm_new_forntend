@@ -89,7 +89,7 @@ function StatusPieChart({ full, half, late, absent }) {
         datasets: [
           {
             data: [full, half, late, absent],
-            backgroundColor: ["#16A34A", "#86efac", "#FF8C00", "#DC2626"],
+            backgroundColor: ["#16A34A", "#0D47A1", "#FF8C00", "#DC2626"],
             borderWidth: 0,
             hoverOffset: 6,
           },

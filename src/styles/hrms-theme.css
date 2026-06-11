@@ -378,9 +378,9 @@ body.hrms-dashboard {
 .sidebar,
 .employee-sidebar {
   width: 248px !important;
-  background: #ffffff !important;
-  border-right: 1px solid #e5e7eb !important;
-  box-shadow: none !important;
+  background: linear-gradient(180deg, #0d47a1 0%, #08306f 100%) !important;
+  border-right: 0 !important;
+  box-shadow: 4px 0 18px rgba(8, 48, 111, 0.12) !important;
   padding: 12px 10px;
 }
 
@@ -397,7 +397,7 @@ body.hrms-dashboard {
   min-height: 64px;
   padding: 10px 8px 18px !important;
   margin-bottom: 12px !important;
-  border-bottom: 1px solid #eef2f7 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 
 .brand-mark {
@@ -407,18 +407,18 @@ body.hrms-dashboard {
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: #0d47a1;
+  background: #ff8c00;
   color: #ffffff;
   font-size: 18px;
   font-weight: 800;
-  box-shadow: 0 6px 16px rgba(13, 71, 161, 0.2);
+  box-shadow: 0 6px 16px rgba(8, 48, 111, 0.24);
 }
 
 .brand-copy h2,
 .sidebar-header h2,
 .employee-sidebar .logo-text h2 {
-  color: #1a2b4b !important;
-  -webkit-text-fill-color: #1a2b4b !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   font-size: 14px !important;
   letter-spacing: 0.03em !important;
 }
@@ -426,7 +426,7 @@ body.hrms-dashboard {
 .brand-copy p,
 .sidebar-header p,
 .employee-sidebar .logo-text p {
-  color: #64748b !important;
+  color: rgba(255, 255, 255, 0.7) !important;
   font-size: 10px !important;
   letter-spacing: 0.08em !important;
   margin-top: 3px !important;
@@ -440,7 +440,7 @@ body.hrms-dashboard {
 .sidebar .nav-label,
 .employee-sidebar .nav-label-group {
   padding: 16px 12px 6px !important;
-  color: #94a3b8 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
   font-size: 10px !important;
   letter-spacing: 0.1em !important;
 }
@@ -451,41 +451,41 @@ body.hrms-dashboard {
   margin: 2px 0 !important;
   padding: 10px 12px !important;
   border-radius: 10px !important;
-  color: #52637a !important;
+  color: rgba(255, 255, 255, 0.82) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
 }
 
 .sidebar .nav-item i,
 .employee-sidebar .nav-item i {
-  color: #7890aa !important;
+  color: rgba(255, 255, 255, 0.72) !important;
   font-size: 15px !important;
 }
 
 .sidebar .nav-item:hover,
 .employee-sidebar .nav-item:hover {
-  background: #f1f6fc !important;
-  color: #0d47a1 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
   transform: translateX(2px);
 }
 
 .sidebar .nav-item.active,
 .employee-sidebar .nav-item.active {
-  background: #eaf4ff !important;
-  color: #0d47a1 !important;
+  background: #ff8c00 !important;
+  color: #ffffff !important;
   border-left: 0 !important;
-  box-shadow: inset 3px 0 #0d47a1 !important;
+  box-shadow: 0 8px 18px rgba(8, 48, 111, 0.2) !important;
   font-weight: 650 !important;
 }
 
 .sidebar .nav-item.active i,
 .employee-sidebar .nav-item.active i {
-  color: #0d47a1 !important;
+  color: #ffffff !important;
 }
 
 .sidebar-footer,
 .employee-sidebar .sidebar-bottom {
-  border-top: 1px solid #eef2f7 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
   padding: 10px 0 0 !important;
 }
 
@@ -494,17 +494,17 @@ body.hrms-dashboard {
   padding: 8px !important;
   border: 0 !important;
   border-radius: 12px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .employee-sidebar .emp-avatar {
-  background: #eaf4ff !important;
-  border: 1px solid #cfe4fb !important;
+  background: #ffffff !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
   color: #0d47a1 !important;
 }
 
 .employee-sidebar .emp-info .name {
-  color: #1a2b4b !important;
+  color: #ffffff !important;
 }
 
 .main-panel {
@@ -574,6 +574,72 @@ body.hrms-dashboard {
 .topbar-profile > i {
   color: #94a3b8;
   font-size: 10px;
+}
+
+.topbar-search {
+  width: min(260px, 24vw);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border: 1px solid #dbe7f3;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.topbar-search > i {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.topbar-search input {
+  min-width: 0;
+  flex: 1;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 11px;
+}
+
+.topbar-search span {
+  padding: 3px 5px;
+  border: 1px solid #dbe7f3;
+  border-radius: 5px;
+  color: #94a3b8;
+  background: #ffffff;
+  font-size: 8px;
+}
+
+.topbar-icon-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbe7f3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.topbar-icon-btn:hover {
+  border-color: #b9daf8;
+  background: #eaf4ff;
+  color: #0d47a1;
+}
+
+.topbar-notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid #ffffff;
+  border-radius: 50%;
+  background: #ff8c00;
 }
 
 .main-content,
@@ -724,9 +790,9 @@ body.hrms-dashboard {
 }
 
 .filter-chip.active {
-  background: #eaf4ff !important;
-  border-color: #b9daf8 !important;
-  color: #0d47a1 !important;
+  background: #ff8c00 !important;
+  border-color: #ff8c00 !important;
+  color: #ffffff !important;
 }
 
 .add-employee-btn,
@@ -740,6 +806,59 @@ body.hrms-dashboard {
   border-radius: 10px !important;
   box-shadow: 0 6px 14px rgba(13, 71, 161, 0.16) !important;
   font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.accent-btn,
+.btn-accent {
+  background: #ff8c00 !important;
+  border-color: #ff8c00 !important;
+  color: #ffffff !important;
+}
+
+.secondary-btn,
+.btn-secondary {
+  background: #ffffff !important;
+  border: 1px solid #0d47a1 !important;
+  color: #0d47a1 !important;
+  box-shadow: none !important;
+}
+
+.danger-btn,
+.btn-danger {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.success-btn,
+.btn-success {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
+.table-wrapper,
+.table-container,
+.table-card {
+  overflow: auto;
+  background: #ffffff !important;
+  border: 1px solid #dbe7f3 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(13, 71, 161, 0.06) !important;
+}
+
+table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.badge,
+.status-badge,
+.role-badge,
+.branch-tag {
+  border-radius: 999px !important;
   font-weight: 650 !important;
 }
 
@@ -1119,5 +1238,36 @@ canvas {
   .dashboard-content,
   .employee-main {
     padding: 24px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-layout,
+  .employee-layout {
+    min-width: 760px;
+  }
+
+  .sidebar,
+  .employee-sidebar {
+    width: 76px !important;
+  }
+
+  .sidebar .sb-label,
+  .sidebar .brand-copy,
+  .employee-sidebar .logo-text,
+  .employee-sidebar .emp-info,
+  .employee-sidebar .nav-item span,
+  .employee-sidebar .nav-label-group {
+    display: none !important;
+  }
+
+  .sidebar .nav-item,
+  .employee-sidebar .nav-item {
+    justify-content: center;
+  }
+
+  .topbar-search,
+  .topbar-profile-copy {
+    display: none;
   }
 }

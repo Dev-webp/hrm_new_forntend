@@ -1,8 +1,8 @@
 import { useChart } from "./useChart";
 
-const GOLD_LEGEND = { color: "#FF8C00", font: { size: 11 } };
-const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "rgba(255,255,255,0.04)" } };
-const GRID_Y = { ticks: { color: "#64748B" }, grid: { color: "rgba(255,255,255,0.04)" } };
+const GOLD_LEGEND = { color: "#64748B", font: { size: 11, family: "Inter" } };
+const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "#DBE7F3" } };
+const GRID_Y = { ticks: { color: "#64748B" }, grid: { color: "#DBE7F3" } };
 
 /** Branch-level 6-month trends — present / late / absent (optional) */
 export function BranchTrendsChart({ trends }) {
@@ -114,7 +114,7 @@ export function CheckInChart({ records }) {
             },
             min: 7,
             max: 12,
-            grid: { color: "rgba(255,255,255,0.04)" },
+            grid: { color: "#DBE7F3" },
           },
         },
         plugins: { legend: { labels: GOLD_LEGEND } },
@@ -237,7 +237,7 @@ export function WeekBreakChart({ labels, breakData }) {
       data: {
         labels,
         datasets: [
-          { label: "Break (min)", data: breakData, backgroundColor: "#4A8FE8" },
+          { label: "Break (min)", data: breakData, backgroundColor: "#0D47A1" },
         ],
       },
       options: {
@@ -262,7 +262,7 @@ export function BreakPieChart({ pieData }) {
         datasets: [
           {
             data: pieData,
-            backgroundColor: ["#FF8C00", "#16A34A", "#FF8C00", "#818cf8"],
+            backgroundColor: ["#FF8C00", "#16A34A", "#0D47A1", "#DC2626"],
           },
         ],
       },
