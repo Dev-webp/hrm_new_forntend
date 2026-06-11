@@ -97,13 +97,13 @@ export default function EmployeePayslip() {
       <html><head><title>${document.title}</title>
       <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
       <style>
-        body { font-family: 'Sora', sans-serif; padding: 20px; background: white; color: black; }
-        .payslip-card { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; border-radius: 16px; padding: 24px; }
-        .payslip-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 12px; margin-bottom: 20px; }
+        body { font-family: 'Sora', sans-serif; padding: 20px; background: white; color: #1A2B4B; }
+        .payslip-card { max-width: 800px; margin: 0 auto; border: 1px solid #64748B; border-radius: 16px; padding: 24px; }
+        .payslip-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #64748B; padding-bottom: 12px; margin-bottom: 20px; }
         .emp-details-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 24px; }
         .salary-breakdown { border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 12px 0; margin: 16px 0; }
         .salary-row { display: flex; justify-content: space-between; padding: 8px 0; }
-        .salary-row.total { font-weight: bold; font-size: 1.2rem; border-top: 1px solid #ddd; margin-top: 8px; padding-top: 12px; }
+        .salary-row.total { font-weight: bold; font-size: 1.2rem; border-top: 1px solid #64748B; margin-top: 8px; padding-top: 12px; }
         .attendance-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .status-badge { padding: 2px 10px; border-radius: 20px; background: #f0f0f0; }
       </style>

@@ -96,10 +96,10 @@ function AttendanceTable({
           <td>
             <LatePill emp={emp} />
           </td>
-          <td style={{ color: "#D4AF37", fontWeight: 600 }}>
+          <td style={{ color: "#FF8C00", fontWeight: 600 }}>
             {emp.production_hours || "0.00"} hrs
           </td>
-          <td style={{ color: "#9B9EC2" }}>
+          <td style={{ color: "#64748B" }}>
             {emp.total_break_minutes || 0} min
           </td>
           <td>

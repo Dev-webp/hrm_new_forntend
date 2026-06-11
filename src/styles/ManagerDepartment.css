@@ -1,16 +1,16 @@
 /* Extracted from managerdepartment.html — main content only */
 
 :root {
-  --gold: #d4af37;
-  --border-gold: rgba(212, 175, 55, 0.3);
+  --gold: #FF8C00;
+  --border-gold: rgba(255, 140, 0, 0.3);
 }
 
 .manager-department-page {
   flex: 1;
   overflow-y: auto;
-  background: #0a0a0a;
+  background: #FFFFFF;
   padding: 28px 32px 48px;
-  color: #eff0f5;
+  color: #1A2B4B;
 }
 
 .manager-department-page ::-webkit-scrollbar {
@@ -18,11 +18,11 @@
 }
 
 .manager-department-page ::-webkit-scrollbar-track {
-  background: #111;
+  background: #FFFFFF;
 }
 
 .manager-department-page ::-webkit-scrollbar-thumb {
-  background: #d4af37;
+  background: #FF8C00;
   border-radius: 10px;
 }
 
@@ -40,7 +40,7 @@
 .manager-department-page .title h1 {
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #d4af37);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -48,22 +48,22 @@
 
 .manager-department-page .title p {
   font-size: 14px;
-  color: #9a9dc2;
+  color: #64748B;
   margin-top: 4px;
 }
 
 .manager-department-page .date-picker-wrapper {
-  background: #111216;
+  background: #FFFFFF;
   padding: 8px 18px;
   border-radius: 40px;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .manager-department-page .date-picker-wrapper i {
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .manager-department-page .date-picker-wrapper input {
@@ -77,11 +77,11 @@
 }
 
 .manager-department-page .stats-badge {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
   padding: 6px 20px;
   border-radius: 40px;
   font-size: 0.85rem;
-  color: #d4af37;
+  color: #FF8C00;
   display: inline-block;
   margin-bottom: 28px;
   border: 1px solid var(--border-gold);
@@ -94,7 +94,7 @@
 }
 
 .manager-department-page .glass-card {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 28px;
   padding: 20px;
@@ -102,7 +102,7 @@
 }
 
 .manager-department-page .glass-card:hover {
-  border-color: #d4af37;
+  border-color: #FF8C00;
   transform: translateY(-2px);
 }
 
@@ -119,18 +119,18 @@
 }
 
 .manager-department-page .dept-code {
-  background: #1e1f28;
+  background: #EAF4FF;
   padding: 4px 12px;
   border-radius: 40px;
   font-size: 0.7rem;
-  color: #d4af37;
+  color: #FF8C00;
   border: 1px solid var(--border-gold);
 }
 
 .manager-department-page .employee-count {
   font-size: 2rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #fff, #f5d742);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -163,7 +163,7 @@
 .manager-department-page .att-label {
   font-size: 0.7rem;
   margin-bottom: 4px;
-  color: #999;
+  color: #64748B;
 }
 
 .manager-department-page .att-num {
@@ -181,7 +181,7 @@
 
 .manager-department-page .dept-head {
   font-size: 0.8rem;
-  color: #d4af37;
+  color: #FF8C00;
   margin-top: 10px;
 }
 
@@ -189,8 +189,8 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px;
-  color: #555;
-  background: #0f0f0f;
+  color: #64748B;
+  background: #FFFFFF;
   border-radius: 28px;
   border: 1px dashed var(--border-gold);
 }
@@ -199,7 +199,7 @@
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid #d4af37;
+  border: 2px solid #FF8C00;
   border-radius: 50%;
   border-top-color: transparent;
   animation: mgr-dept-spin 0.6s linear infinite;
@@ -215,11 +215,11 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #1e1a10;
-  border-left: 4px solid #d4af37;
+  background: #FFF4E5;
+  border-left: 4px solid #FF8C00;
   padding: 10px 20px;
   border-radius: 40px;
-  color: #f5e2b0;
+  color: #FFF4E5;
   z-index: 2000;
   opacity: 0;
   transition: 0.25s;

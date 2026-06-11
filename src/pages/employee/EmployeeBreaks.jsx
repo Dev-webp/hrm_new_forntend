@@ -150,13 +150,13 @@ export default function EmployeeBreaks() {
     const pct = Math.min(100, Math.round((total / 60) * 100));
     const rem = Math.max(0, 60 - total);
     const stroke =
-      total > 60 ? "#FF6B6B" : total > 45 ? "#FBB824" : "#d4af37";
+      total > 60 ? "#DC2626" : total > 45 ? "#FBB824" : "#FF8C00";
     const barBg =
       total > 60
-        ? "linear-gradient(90deg,#FF6B6B,#ff4444)"
+        ? "linear-gradient(90deg,#DC2626,#ff4444)"
         : total > 45
           ? "linear-gradient(90deg,#FBB824,#f5a623)"
-          : "linear-gradient(90deg,#d4af37,#f5d742)";
+          : "linear-gradient(90deg,#FF8C00,#FF8C00)";
     return {
       total,
       pct,
@@ -296,10 +296,10 @@ export default function EmployeeBreaks() {
           <>
             {b.start}
             <br />
-            <span style={{ color: "#555" }}>→ {b.end}</span>
+            <span style={{ color: "#64748B" }}>→ {b.end}</span>
           </>
         ) : (
-          <span style={{ color: "#333" }}>—</span>
+          <span style={{ color: "#1A2B4B" }}>—</span>
         );
       };
 
@@ -402,10 +402,10 @@ export default function EmployeeBreaks() {
                 style={{
                   width: 12,
                   height: 12,
-                  background: "rgba(212,175,55,.1)",
+                  background: "rgba(255, 140, 0,.1)",
                   borderRadius: 4,
                   display: "inline-block",
-                  border: "1px solid rgba(212,175,55,.4)",
+                  border: "1px solid rgba(255, 140, 0,.4)",
                 }}
               />
               Break taken (≤60 min)
@@ -458,10 +458,10 @@ export default function EmployeeBreaks() {
         <>
           {b.start}
           <br />
-          <span style={{ color: "#555" }}>→ {b.end}</span>
+          <span style={{ color: "#64748B" }}>→ {b.end}</span>
         </>
       ) : (
-        <span style={{ color: "#333" }}>—</span>
+        <span style={{ color: "#1A2B4B" }}>—</span>
       );
     };
 
@@ -689,7 +689,7 @@ export default function EmployeeBreaks() {
                   <div
                     className="hs-val"
                     style={{
-                      color: histStats.daysOverLimit ? "#FF6B6B" : "#4ADE80",
+                      color: histStats.daysOverLimit ? "#DC2626" : "#16A34A",
                     }}
                   >
                     {histStats.daysOverLimit}

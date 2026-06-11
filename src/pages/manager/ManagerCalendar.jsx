@@ -334,7 +334,7 @@ export default function ManagerCalendar() {
             <div
               className="day-badge"
               style={{
-                background: "rgba(212,175,55,0.25)",
+                background: "rgba(255, 140, 0,0.25)",
                 color: "#e8c84a",
               }}
             >
@@ -398,7 +398,7 @@ export default function ManagerCalendar() {
                 </div>
                 {rec.lateMinutes > 0 ? (
                   <div className="mini-row">
-                    <span style={{ color: "#f59e0b", fontSize: "0.62rem" }}>
+                    <span style={{ color: "#FF8C00", fontSize: "0.62rem" }}>
                       ⏰ Late {rec.lateMinutes}m
                     </span>
                   </div>
@@ -467,7 +467,7 @@ export default function ManagerCalendar() {
                   <div className="tt-title">
                     {MONTH_NAMES[month]} {d}
                   </div>
-                  <div style={{ color: "#888" }}>No record</div>
+                  <div style={{ color: "#64748B" }}>No record</div>
                 </div>
               );
             }
@@ -904,7 +904,7 @@ export default function ManagerCalendar() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2} style={{ color: "#666" }}>
+                    <td colSpan={2} style={{ color: "#64748B" }}>
                       No holidays
                     </td>
                   </tr>
@@ -934,7 +934,7 @@ export default function ManagerCalendar() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2} style={{ color: "#666" }}>
+                    <td colSpan={2} style={{ color: "#64748B" }}>
                       None
                     </td>
                   </tr>
@@ -962,7 +962,7 @@ export default function ManagerCalendar() {
                   ))
                 ) : (
                   <tr>
-                    <td style={{ color: "#666" }}>None</td>
+                    <td style={{ color: "#64748B" }}>None</td>
                   </tr>
                 )}
               </tbody>

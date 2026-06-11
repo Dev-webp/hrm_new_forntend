@@ -23,8 +23,11 @@ function Sidebar({ role = "admin" }) {
   return (
     <aside className={`sidebar${collapsed ? " collapsed" : ""}`}>
       <div className="sidebar-header">
-        <h2>VJC OVERSEAS</h2>
-        <p className="sb-label">IMMIGRATION &amp; VISA</p>
+        <div className="brand-mark">V</div>
+        <div className="brand-copy sb-label">
+          <h2>VJC OVERSEAS</h2>
+          <p>People Operations</p>
+        </div>
       </div>
 
       <div className="nav-section">

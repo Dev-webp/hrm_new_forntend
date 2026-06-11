@@ -110,7 +110,7 @@ export function computeEmpStats(
 
 export function attPctColor(pct) {
   if (pct >= 90) {
-    return { color: "#22c55e", ring: "#22c55e", cls: "pct-excellent" };
+    return { color: "#16A34A", ring: "#16A34A", cls: "pct-excellent" };
   }
 
   if (pct >= 75) {
@@ -118,10 +118,10 @@ export function attPctColor(pct) {
   }
 
   if (pct >= 50) {
-    return { color: "#f59e0b", ring: "#f59e0b", cls: "pct-average" };
+    return { color: "#FF8C00", ring: "#FF8C00", cls: "pct-average" };
   }
 
-  return { color: "#ef4444", ring: "#ef4444", cls: "pct-poor" };
+  return { color: "#DC2626", ring: "#DC2626", cls: "pct-poor" };
 }
 
 export function getGreeting(hour) {

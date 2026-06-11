@@ -116,7 +116,7 @@ export default function AdminDepartment() {
         </div>
         <div className="header-actions">
           <div className="date-picker-wrapper">
-            <i className="fas fa-calendar-day" style={{ color: "#d4af37" }} />
+            <i className="fas fa-calendar-day" style={{ color: "#FF8C00" }} />
             <label htmlFor="attendanceDate">Date:</label>
             <input
               type="date"
@@ -216,7 +216,7 @@ export default function AdminDepartment() {
                     <div
                       style={{
                         fontSize: "12px",
-                        color: "#9A9DC2",
+                        color: "#64748B",
                         marginTop: "8px",
                       }}
                     >
@@ -227,7 +227,7 @@ export default function AdminDepartment() {
                         marginTop: "4px",
                         fontSize: "14px",
                         fontWeight: 600,
-                        color: "#d4af37",
+                        color: "#FF8C00",
                       }}
                     >
                       <i className="fas fa-user-tie" />{" "}

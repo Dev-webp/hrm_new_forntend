@@ -108,15 +108,19 @@ function AdminEmployees() {
     const activeCount = filteredEmployees.filter(
       (employee) => employee.status === "active"
     ).length;
-    const activeRate = total ? Math.round((activeCount / total) * 100) : 0;
     const uniqueDepts = new Set(
       filteredEmployees.map((employee) => employee.department)
+    );
+    const uniqueBranches = new Set(
+      filteredEmployees.map((employee) => employee.branch).filter(Boolean)
     );
 
     return {
       total,
-      activeRate,
+      activeCount,
+      inactiveCount: total - activeCount,
       deptCount: uniqueDepts.size,
+      branchCount: uniqueBranches.size,
     };
   }, [filteredEmployees]);
 
@@ -233,11 +237,10 @@ function AdminEmployees() {
       <div className="header">
         <div className="title">
           <h1>
-            <i className="fas fa-users" /> Employee Command Center
+            Employee Management
           </h1>
           <p>
-            Super Admin · People analytics &amp; workforce intelligence (Aadhar
-            + Visible Password)
+            Manage employee profiles, roles, departments, and branch assignments.
           </p>
         </div>
 
@@ -282,19 +285,27 @@ function AdminEmployees() {
         <div className="stat-card">
           <div className="stat-label">Total Employees</div>
           <div className="stat-number">{stats.total}</div>
-          <div className="stat-trend">
-            <i className="fas fa-arrow-up" /> +8.2% vs last quarter
-          </div>
+          <div className="stat-trend">Across selected workforce</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Active Rate</div>
-          <div className="stat-number">{stats.activeRate}%</div>
-          <div className="stat-trend">88% active rate target</div>
+          <div className="stat-label">Active Employees</div>
+          <div className="stat-number">{stats.activeCount}</div>
+          <div className="stat-trend">Currently active</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Inactive Employees</div>
+          <div className="stat-number">{stats.inactiveCount}</div>
+          <div className="stat-trend neutral">Require review</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Departments</div>
           <div className="stat-number">{stats.deptCount}</div>
-          <div className="stat-trend">7 core teams</div>
+          <div className="stat-trend">Active teams</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Branches</div>
+          <div className="stat-number">{stats.branchCount}</div>
+          <div className="stat-trend">Operational locations</div>
         </div>
       </div>
 

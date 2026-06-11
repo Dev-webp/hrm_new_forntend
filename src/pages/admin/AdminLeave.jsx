@@ -185,16 +185,16 @@ const message =
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { bg: "#f59e0b", text: "Pending" },
-      approved: { bg: "#4ade80", text: "Approved" },
-      rejected: { bg: "#ef4444", text: "Rejected" },
+      pending: { bg: "#FF8C00", text: "Pending" },
+      approved: { bg: "#16A34A", text: "Approved" },
+      rejected: { bg: "#DC2626", text: "Rejected" },
     };
     const config = statusMap[status] || statusMap.pending;
     return (
       <span
         style={{
           background: config.bg,
-          color: "#000",
+          color: "#1A2B4B",
           padding: "4px 12px",
           borderRadius: "20px",
           fontSize: "0.75rem",
@@ -237,9 +237,9 @@ const message =
               marginLeft: "8px",
               padding: "8px 12px",
               borderRadius: "10px",
-              border: "1px solid #d4af37",
+              border: "1px solid #FF8C00",
               background: "transparent",
-              color: "#d4af37",
+              color: "#FF8C00",
               cursor: "pointer",
             }}
           >
@@ -357,7 +357,7 @@ const message =
                           handleOpenAction(request.id, request.full_name, "approved")
                         }
                         disabled={loading}
-                        style={{ background: "#4ade80" }}
+                        style={{ background: "#16A34A" }}
                       >
                         <i className="fas fa-check"></i>
                       </button>
@@ -368,7 +368,7 @@ const message =
                           handleOpenAction(request.id, request.full_name, "rejected")
                         }
                         disabled={loading}
-                        style={{ background: "#ef4444" }}
+                        style={{ background: "#DC2626" }}
                       >
                         <i className="fas fa-times"></i>
                       </button>
@@ -395,15 +395,15 @@ const message =
         {actionModal.action === "approved" && (
           <div
             style={{
-              background: "#111827",
-              border: "2px solid #4ade80",
+              background: "#1A2B4B",
+              border: "2px solid #16A34A",
               borderRadius: "16px",
               padding: "16px",
               marginBottom: "18px",
               color: "white",
             }}
           >
-            <h4 style={{ color: "#4ade80", marginBottom: "12px" }}>
+            <h4 style={{ color: "#16A34A", marginBottom: "12px" }}>
               Leave Balance Preview
             </h4>
 
@@ -455,7 +455,7 @@ const message =
             disabled={saving}
             style={{
               background:
-                actionModal.action === "approved" ? "#4ade80" : "#ef4444",
+                actionModal.action === "approved" ? "#16A34A" : "#DC2626",
             }}
           >
             {saving

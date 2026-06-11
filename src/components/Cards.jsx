@@ -42,7 +42,7 @@ export function EmployeeCardSkeleton() {
   return (
     <>
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="emp-card skeleton" style={{ height: "230px" }} />
+        <div key={index} className="emp-card skeleton" style={{ height: "156px" }} />
       ))}
     </>
   );

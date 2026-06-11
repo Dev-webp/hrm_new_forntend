@@ -2,8 +2,8 @@
 
 .employee-sidebar {
   width: 270px;
-  background: #040404;
-  border-right: 1px solid rgba(212, 175, 55, 0.2);
+  background: #F5F7FA;
+  border-right: 1px solid rgba(255, 140, 0, 0.2);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -40,14 +40,14 @@
 
 .employee-sidebar .logo-area {
   padding: 24px 20px 18px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
   margin-bottom: 20px;
 }
 
 .employee-sidebar .logo-text h2 {
   font-size: 1.4rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #f9e0a0, #d4af37);
+  background: linear-gradient(135deg, #FFF4E5, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -55,14 +55,14 @@
 
 .employee-sidebar .logo-text p {
   font-size: 0.65rem;
-  color: #c9a23d;
+  color: #FF8C00;
   letter-spacing: 2px;
   margin-top: 3px;
 }
 
 .employee-sidebar .emp-avatar-area {
   padding: 0 20px 20px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -72,27 +72,27 @@
 .employee-sidebar .emp-avatar {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #d4af37, #7a5c00);
+  background: linear-gradient(135deg, #FF8C00, #D97706);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1rem;
-  color: #030303;
-  border: 2px solid #d4af37;
+  color: #1A2B4B;
+  border: 2px solid #FF8C00;
   flex-shrink: 0;
 }
 
 .employee-sidebar .emp-info .name {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .employee-sidebar .emp-info .dept {
   font-size: 0.65rem;
-  color: #888;
+  color: #64748B;
   margin-top: 2px;
 }
 
@@ -105,7 +105,7 @@
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: rgba(212, 175, 55, 0.35);
+  color: rgba(255, 140, 0, 0.35);
   padding: 8px 10px 4px;
   font-weight: 700;
 }
@@ -119,7 +119,7 @@
   border-radius: 14px;
   font-size: 0.83rem;
   font-weight: 500;
-  color: #aaa;
+  color: #64748B;
   cursor: pointer;
   transition: 0.2s;
   background: none;
@@ -132,24 +132,24 @@
 .employee-sidebar .nav-item i {
   width: 22px;
   font-size: 1.1rem;
-  color: #c9a23d;
+  color: #FF8C00;
   flex-shrink: 0;
 }
 
 .employee-sidebar .nav-item:hover {
-  background: #1a1400;
-  color: #d4af37;
+  background: #0D47A1;
+  color: #FF8C00;
 }
 
 .employee-sidebar .nav-item.active {
-  background: linear-gradient(95deg, #1f1a0c, #0f0e06);
-  border-left: 3px solid #d4af37;
-  color: #d4af37;
+  background: linear-gradient(95deg, #0D47A1, #08306F);
+  border-left: 3px solid #FF8C00;
+  color: #FF8C00;
 }
 
 .employee-sidebar .sidebar-bottom {
   padding: 14px;
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  border-top: 1px solid rgba(255, 140, 0, 0.2);
 }
 
 .employee-layout {

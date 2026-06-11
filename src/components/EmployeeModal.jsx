@@ -207,7 +207,7 @@ function EmployeeFormModal({
         </div>
 
         <div className="form-group" style={{ marginTop: "8px" }}>
-          <label style={{ fontWeight: 700, color: "#D4AF37" }}>
+          <label style={{ fontWeight: 700, color: "#FF8C00" }}>
             Bank Details
           </label>
         </div>
@@ -252,7 +252,7 @@ function EmployeeFormModal({
         </div>
 
         <div className="form-group">
-          <label style={{ fontWeight: 700, color: "#D4AF37" }}>
+          <label style={{ fontWeight: 700, color: "#FF8C00" }}>
             Change Password (optional)
           </label>
           <input
@@ -384,7 +384,7 @@ function EmployeeDetailsModal({ open, employee, onClose, onCopyPassword }) {
               <div className="detail-label">Status</div>
               <div className="detail-value">
                 {employee.status === "active" ? (
-                  <span style={{ color: "#4ADE80" }}>● Active</span>
+                  <span style={{ color: "#16A34A" }}>● Active</span>
                 ) : (
                   <span style={{ color: "#F87171" }}>● Inactive</span>
                 )}

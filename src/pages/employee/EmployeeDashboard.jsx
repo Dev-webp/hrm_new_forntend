@@ -7,10 +7,10 @@ import "../../styles/EmployeeDashboard.css";
 
 const LEAVE_LIMITS = { Sick: 12, Casual: 6, Annual: 18, Emergency: 3 };
 const LEAVE_COLORS = {
-  Sick: "#3B82F6",
-  Casual: "#d4af37",
-  Annual: "#4ADE80",
-  Emergency: "#EF4444",
+  Sick: "#0D47A1",
+  Casual: "#FF8C00",
+  Annual: "#16A34A",
+  Emergency: "#DC2626",
 };
 const GAUGE_CIRCUMFERENCE = 226.2;
 const LATE_MAX = 6;
@@ -179,12 +179,12 @@ export default function EmployeeDashboard() {
           : "Attendance needs attention";
     const gaugeColor =
       score >= 95
-        ? "#4ADE80"
+        ? "#16A34A"
         : score >= 80
-          ? "#d4af37"
+          ? "#FF8C00"
           : score >= 60
-            ? "#F59E0B"
-            : "#EF4444";
+            ? "#FF8C00"
+            : "#DC2626";
 
     const today = new Date().toISOString().slice(0, 10);
     let currentStreak = 0;

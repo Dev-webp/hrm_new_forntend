@@ -183,7 +183,7 @@ function AdminDashboard() {
         .slice(0, 3)
         .forEach((record) => {
           alertList.push({
-            color: "#f59e0b",
+            color: "#FF8C00",
             text: `${record.full_name} — ${record.late_minutes}m late`,
             time: "Today",
           });
@@ -208,7 +208,7 @@ function AdminDashboard() {
         .slice(0, 3)
         .forEach((employee) => {
           alertList.push({
-            color: "#ef4444",
+            color: "#DC2626",
             text: `${employee.full_name} — only ${employee.stats.attPct}% MTD`,
             time: "MTD",
           });
@@ -353,7 +353,7 @@ function AdminDashboard() {
         icon: "fas fa-calendar",
         label: "Total Days",
         value: monthStats.total,
-        accent: "#3b82f6",
+        accent: "#0D47A1",
       },
       {
         icon: "fas fa-sun",
@@ -371,19 +371,19 @@ function AdminDashboard() {
         icon: "fas fa-briefcase",
         label: "Working Days",
         value: monthStats.working,
-        accent: "#d4af37",
+        accent: "#FF8C00",
       },
       {
         icon: "fas fa-clock",
         label: "Late (MTD)",
         value: monthKpi ? Number(monthKpi.total_late) : "--",
-        accent: "#f59e0b",
+        accent: "#FF8C00",
       },
       {
         icon: "fas fa-user-times",
         label: "Absences (MTD)",
         value: monthKpi ? Number(monthKpi.total_absent) : "--",
-        accent: "#ef4444",
+        accent: "#DC2626",
       },
     ],
     [monthKpi, monthStats]
@@ -695,7 +695,7 @@ function AdminDashboard() {
                       style={{
                         width: `${employee.stats.attPct}%`,
                         background:
-                          employee.stats.attPct >= 90 ? "#22c55e" : "#f59e0b",
+                          employee.stats.attPct >= 90 ? "#16A34A" : "#FF8C00",
                       }}
                     />
                   </div>
@@ -845,19 +845,19 @@ function AdminDashboard() {
 
                   <div className="emp-mini-stats">
                     <div className="mini-stat">
-                      <div className="msv" style={{ color: "#22c55e" }}>
+                      <div className="msv" style={{ color: "#16A34A" }}>
                         {stats.present}
                       </div>
                       <div className="msl">Present</div>
                     </div>
                     <div className="mini-stat">
-                      <div className="msv" style={{ color: "#f59e0b" }}>
+                      <div className="msv" style={{ color: "#FF8C00" }}>
                         {stats.late}
                       </div>
                       <div className="msl">Late</div>
                     </div>
                     <div className="mini-stat">
-                      <div className="msv" style={{ color: "#ef4444" }}>
+                      <div className="msv" style={{ color: "#DC2626" }}>
                         {stats.absent}
                       </div>
                       <div className="msl">Absent</div>

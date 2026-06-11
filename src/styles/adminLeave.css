@@ -1,6 +1,6 @@
 .admin-leave-page {
   padding: 28px 32px 48px;
-  background: #0a0a0a;
+  background: #FFFFFF;
 }
 
 .admin-leave-page .header {
@@ -10,13 +10,13 @@
   flex-wrap: wrap;
   margin-bottom: 28px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.3);
 }
 
 .admin-leave-page .title h1 {
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #d4af37);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -24,7 +24,7 @@
 
 .admin-leave-page .title p {
   font-size: 14px;
-  color: #9a9dc2;
+  color: #64748B;
   margin-top: 6px;
 }
 
@@ -36,21 +36,21 @@
 }
 
 .admin-leave-page .date-picker-wrapper {
-  background: #111216;
+  background: #FFFFFF;
   padding: 8px 18px;
   border-radius: 40px;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 .admin-leave-page .date-picker-wrapper i {
-  color: #d4af37;
+  color: #FF8C00;
 }
 .leave-info-banner {
-  background: linear-gradient(135deg, rgba(212,175,55,0.14), rgba(212,175,55,0.04));
-  border: 1px solid rgba(212,175,55,0.25);
+  background: linear-gradient(135deg, rgba(255, 140, 0,0.14), rgba(255, 140, 0,0.04));
+  border: 1px solid rgba(255, 140, 0,0.25);
   color: #f5d76e;
   padding: 14px 18px;
   border-radius: 18px;
@@ -67,20 +67,20 @@
 }
 
 .balance-card {
-  background: linear-gradient(145deg, #111, #080808);
-  border: 1px solid rgba(212,175,55,0.22);
+  background: linear-gradient(145deg, #FFFFFF, #FFFFFF);
+  border: 1px solid rgba(255, 140, 0,0.22);
   border-radius: 22px;
   padding: 18px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+  box-shadow: 0 10px 24px rgba(26, 43, 75,0.28);
 }
 
 .balance-card::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top right, rgba(212,175,55,0.16), transparent 35%);
+  background: radial-gradient(circle at top right, rgba(255, 140, 0,0.16), transparent 35%);
   pointer-events: none;
 }
 
@@ -91,14 +91,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(212,175,55,0.12);
+  background: rgba(255, 140, 0,0.12);
   margin-bottom: 12px;
   font-size: 1.25rem;
 }
 
 .balance-card h3 {
   font-size: 0.78rem;
-  color: #aaa;
+  color: #64748B;
   text-transform: uppercase;
   letter-spacing: 0.7px;
   margin-bottom: 8px;
@@ -118,14 +118,14 @@
   color: #777;
 }
 
-.balance-card.sick span { color: #4ade80; }
-.balance-card.casual span { color: #d4af37; }
+.balance-card.sick span { color: #16A34A; }
+.balance-card.casual span { color: #FF8C00; }
 .balance-card.paid span { color: #60a5fa; }
 .balance-card.used span { color: #fbbf24; }
-.balance-card.unpaid span { color: #ff6b6b; }
+.balance-card.unpaid span { color: #DC2626; }
 .balance-card.eligibility span { color: #a78bfa; }
 .admin-leave-page #attendanceDate {
-  background: #1a1c26;
+  background: #F5F7FA;
   border: none;
   color: white;
   padding: 8px 12px;
@@ -139,15 +139,15 @@
 }
 
 .admin-leave-page .branch-selector-btn {
-  background: #111216;
+  background: #FFFFFF;
   padding: 8px 20px;
   border-radius: 40px;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   display: flex;
   gap: 12px;
   align-items: center;
   cursor: pointer;
-  color: #cfcfcf;
+  color: #64748B;
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -157,8 +157,8 @@
   top: 100%;
   right: 0;
   margin-top: 8px;
-  background: #111216;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.3);
   border-radius: 20px;
   min-width: 220px;
   z-index: 200;
@@ -170,12 +170,12 @@
   cursor: pointer;
   transition: 0.2s;
   font-size: 14px;
-  color: #cfcfcf;
+  color: #64748B;
 }
 
 .admin-leave-page .branch-menu-item:hover {
-  background: rgba(212, 175, 55, 0.15);
-  color: #d4af37;
+  background: rgba(255, 140, 0, 0.15);
+  color: #FF8C00;
 }
 
 .admin-leave-page .stats-row {
@@ -186,8 +186,8 @@
 }
 
 .admin-leave-page .stat-card {
-  background: #0c0d12;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.2);
   border-radius: 24px;
   padding: 16px 24px;
   flex: 1;
@@ -196,21 +196,21 @@
 
 .admin-leave-page .stat-label {
   font-size: 13px;
-  color: #a9adc9;
+  color: #64748B;
   margin-bottom: 8px;
 }
 
 .admin-leave-page .stat-number {
   font-size: 28px;
   font-weight: 800;
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .admin-leave-page .table-wrapper {
   overflow-x: auto;
   border-radius: 24px;
-  background: #0c0d12;
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.2);
   margin-top: 8px;
 }
 
@@ -224,48 +224,48 @@
 .admin-leave-page .leave-table th {
   text-align: left;
   padding: 16px 12px;
-  background: #0f0e0a;
-  color: #d4af37;
+  background: #EAF4FF;
+  color: #FF8C00;
   font-weight: 600;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
 }
 
 .admin-leave-page .leave-table td {
   padding: 14px 12px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.1);
   vertical-align: middle;
 }
 
 .admin-leave-page .edit-btn {
-  background: #d4af37;
+  background: #FF8C00;
   border: none;
   padding: 6px 14px;
   border-radius: 40px;
   font-weight: 600;
-  color: #030303;
+  color: #1A2B4B;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .admin-leave-page .edit-btn:hover {
-  background: #c5a022;
+  background: #FF8C00;
   transform: scale(1.02);
 }
 
 .admin-leave-page .remaining-badge {
   font-weight: 700;
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .admin-leave-page .remaining-badge.warning {
-  color: #f59e0b;
+  color: #FF8C00;
 }
 
 .admin-leave-page .remaining-badge.danger {
-  color: #ef4444;
+  color: #DC2626;
 }
 .approval-preview-box {
-  background: #111827;
+  background: #1A2B4B;
   border: 1px solid #374151;
   border-radius: 14px;
   padding: 14px;
@@ -285,7 +285,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(26, 43, 75, 0.85);
   backdrop-filter: blur(12px);
   z-index: 1000;
   align-items: center;
@@ -306,7 +306,7 @@
 }
 
 .approval-preview-box {
-  background: #111827;
+  background: #1A2B4B;
   border: 1px solid #374151;
   border-radius: 14px;
   padding: 14px;
@@ -314,19 +314,19 @@
   color: white;
 }
 .admin-leave-page .modal-content {
-  background: #0d0e12;
+  background: #FFFFFF;
   border-radius: 32px;
   max-width: 550px;
   width: 90%;
   padding: 28px;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   max-height: 85vh;
   overflow-y: auto;
 }
 
 .admin-leave-page .modal-content h3 {
   margin-bottom: 20px;
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .admin-leave-page .form-group {
@@ -337,7 +337,7 @@
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
-  color: #a9adc9;
+  color: #64748B;
 }
 
 .admin-leave-page .time-row {
@@ -348,8 +348,8 @@
 }
 
 .admin-leave-page .time-row input {
-  background: #1a1c26;
-  border: 1px solid #2a2a35;
+  background: #F5F7FA;
+  border: 1px solid #EAF4FF;
   border-radius: 16px;
   padding: 10px 14px;
   color: white;
@@ -359,7 +359,7 @@
 }
 
 .admin-leave-page .time-row input:focus {
-  border-color: #d4af37;
+  border-color: #FF8C00;
 }
 
 .admin-leave-page .modal-actions {
@@ -370,7 +370,7 @@
 }
 
 .admin-leave-page .modal-btn {
-  background: #d4af37;
+  background: #FF8C00;
   border: none;
   padding: 10px 24px;
   border-radius: 40px;
@@ -380,19 +380,19 @@
 
 .admin-leave-page .modal-btn.cancel {
   background: transparent;
-  border: 1px solid #d4af37;
-  color: #d4af37;
+  border: 1px solid #FF8C00;
+  color: #FF8C00;
 }
 
 .admin-leave-page .toast {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  background: #1e1a10;
-  border-left: 4px solid #d4af37;
+  background: #FFF4E5;
+  border-left: 4px solid #FF8C00;
   padding: 12px 24px;
   border-radius: 50px;
-  color: #f5e2b0;
+  color: #FFF4E5;
   z-index: 1000;
   opacity: 0;
   transition: 0.2s;
@@ -407,7 +407,7 @@
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid #d4af37;
+  border: 2px solid #FF8C00;
   border-radius: 50%;
   border-top-color: transparent;
   animation: spin 0.6s linear infinite;

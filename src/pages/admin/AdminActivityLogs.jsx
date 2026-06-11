@@ -696,7 +696,7 @@ export default function AdminActivityLogs() {
                   <td colSpan={8} className="table-message">
                     <i
                       className="fas fa-exclamation-triangle"
-                      style={{ color: "#ef4444" }}
+                      style={{ color: "#DC2626" }}
                     />
                     {loadError}
                   </td>
@@ -725,7 +725,7 @@ export default function AdminActivityLogs() {
                         <div>{fmtDate(fields.timestamp)}</div>
                         <div
                           style={{
-                            color: "#555",
+                            color: "#64748B",
                             fontSize: "0.65rem",
                             marginTop: "2px",
                           }}
@@ -925,7 +925,7 @@ export default function AdminActivityLogs() {
                   <div className="diff-title">Metadata</div>
                   <pre
                     style={{
-                      background: "#111216",
+                      background: "#FFFFFF",
                       borderRadius: "12px",
                       padding: "12px",
                       fontSize: "0.75rem",

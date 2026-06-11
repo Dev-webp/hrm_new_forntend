@@ -7,20 +7,20 @@
 }
 
 :root {
-  --gold: #d4af37;
+  --gold: #FF8C00;
   --gold-light: #f0cc5a;
-  --gold-dim: rgba(212, 175, 55, 0.15);
-  --gold-border: rgba(212, 175, 55, 0.25);
-  --bg: #050507;
-  --bg2: #0a0b10;
-  --bg3: #0f1018;
-  --bg4: #14151f;
-  --text: #f0f2ff;
+  --gold-dim: rgba(255, 140, 0, 0.15);
+  --gold-border: rgba(255, 140, 0, 0.25);
+  --bg: #F5F7FA;
+  --bg2: #FFFFFF;
+  --bg3: #FFFFFF;
+  --bg4: #FFFFFF;
+  --text: #1A2B4B;
   --muted: #8890b0;
-  --green: #22c55e;
-  --red: #ef4444;
-  --orange: #f59e0b;
-  --blue: #3b82f6;
+  --green: #16A34A;
+  --red: #DC2626;
+  --orange: #FF8C00;
+  --blue: #0D47A1;
   --purple: #8b5cf6;
 }
 
@@ -178,8 +178,8 @@ body.hrms-dashboard #root {
 .nav-item.active {
   background: linear-gradient(
     90deg,
-    rgba(212, 175, 55, 0.18),
-    rgba(212, 175, 55, 0.04)
+    rgba(255, 140, 0, 0.18),
+    rgba(255, 140, 0, 0.04)
   );
   border-left: 2px solid var(--gold);
   color: var(--gold);
@@ -192,7 +192,7 @@ body.hrms-dashboard #root {
 
 .secure-badge {
   margin-left: auto;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
   font-size: 0.58rem;
   padding: 3px 7px;
   border-radius: 30px;
@@ -291,7 +291,7 @@ body.hrms-dashboard #root {
   z-index: 200;
   display: none;
   overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(26, 43, 75, 0.5);
 }
 
 .dropdown-menu.show {
@@ -407,8 +407,8 @@ body.hrms-dashboard #root {
   height: 54px;
   background: linear-gradient(
     135deg,
-    rgba(212, 175, 55, 0.3),
-    rgba(212, 175, 55, 0.1)
+    rgba(255, 140, 0, 0.3),
+    rgba(255, 140, 0, 0.1)
   );
   border: 2px solid var(--gold);
   border-radius: 50%;
@@ -482,7 +482,7 @@ body.hrms-dashboard #root {
 }
 
 .datetime-pill {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
   border: 1px solid var(--gold-border);
   border-radius: 10px;
   padding: 6px 12px;
@@ -689,7 +689,7 @@ body.hrms-dashboard #root {
 }
 
 .lb-rank.gold {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(255, 140, 0, 0.2);
   color: var(--gold);
 }
 
@@ -867,7 +867,7 @@ body.hrms-dashboard #root {
 .emp-card:hover {
   border-color: var(--gold);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.1);
+  box-shadow: 0 8px 24px rgba(255, 140, 0, 0.1);
 }
 
 .emp-card-top {
@@ -1045,7 +1045,7 @@ body.hrms-dashboard #root {
   padding: 10px 20px;
   border-radius: 30px;
   font-size: 0.8rem;
-  color: #f5e2b0;
+  color: #FFF4E5;
   z-index: 2000;
   opacity: 0;
   transform: translateY(8px);

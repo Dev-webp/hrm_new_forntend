@@ -44,7 +44,7 @@ function AttendanceLateAlerts({
           {loading ? (
             <div className="dept-row">Loading late employees...</div>
           ) : !lateEmployees.length ? (
-            <div style={{ padding: 20, color: "#4ADE80" }}>
+            <div style={{ padding: 20, color: "#16A34A" }}>
               <i className="fas fa-circle-check" /> No late employees today
             </div>
           ) : (
@@ -69,7 +69,7 @@ function AttendanceLateAlerts({
                         gap: 10,
                         flexWrap: "wrap",
                         fontSize: 12,
-                        color: "#AAA",
+                        color: "#64748B",
                       }}
                     >
                       <span className="branch-tag">
@@ -82,7 +82,7 @@ function AttendanceLateAlerts({
                       <span
                         style={{
                           background: "rgba(255,70,70,0.18)",
-                          color: "#FF6B6B",
+                          color: "#DC2626",
                           padding: "4px 10px",
                           borderRadius: 30,
                           fontWeight: 700,
@@ -95,7 +95,7 @@ function AttendanceLateAlerts({
                       <span>
                         Check-in: {formatTimeShort(emp.check_in_time)}
                       </span>
-                      <span style={{ color: "#D4AF37" }}>
+                      <span style={{ color: "#FF8C00" }}>
                         Production: {emp.production_hours || "0.00"} hrs
                       </span>
                     </div>

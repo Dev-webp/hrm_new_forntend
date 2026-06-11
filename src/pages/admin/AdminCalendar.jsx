@@ -481,7 +481,7 @@ function AdminCalendar() {
           statusLabel = (
             <div
               className="status-label"
-              style={{ background: "rgba(212,175,55,0.3)" }}
+              style={{ background: "rgba(255, 140, 0,0.3)" }}
             >
               🎉 {entry.name}
             </div>
@@ -534,17 +534,17 @@ function AdminCalendar() {
 
               <div className="tooltip-row">
                 <span>✅ Present</span>
-                <span style={{ color: "#4ADE80" }}>{stats.present}</span>
+                <span style={{ color: "#16A34A" }}>{stats.present}</span>
               </div>
 
               <div className="tooltip-row">
                 <span>❌ Absent</span>
-                <span style={{ color: "#EF4444" }}>{stats.absent}</span>
+                <span style={{ color: "#DC2626" }}>{stats.absent}</span>
               </div>
 
               <div className="tooltip-row">
                 <span>🔴 Late</span>
-                <span style={{ color: "#F59E0B" }}>{stats.late}</span>
+                <span style={{ color: "#FF8C00" }}>{stats.late}</span>
               </div>
 
               <div className="tooltip-row">
@@ -554,13 +554,13 @@ function AdminCalendar() {
 
               <div className="tooltip-row">
                 <span>🏖️ Leave</span>
-                <span style={{ color: "#3B82F6" }}>{stats.leave}</span>
+                <span style={{ color: "#0D47A1" }}>{stats.leave}</span>
               </div>
 
               <div
                 className="tooltip-row"
                 style={{
-                  borderTop: "1px solid rgba(212,175,55,0.2)",
+                  borderTop: "1px solid rgba(255, 140, 0,0.2)",
                   marginTop: "4px",
                   paddingTop: "4px",
                 }}
@@ -724,13 +724,13 @@ function AdminCalendar() {
           <button
             onClick={handleAddHoliday}
             style={{
-              background: "#D4AF37",
+              background: "#FF8C00",
               border: "none",
               padding: "10px 22px",
               borderRadius: "40px",
               fontWeight: "600",
               cursor: "pointer",
-              color: "#000",
+              color: "#1A2B4B",
             }}
           >
             + Add Holiday
@@ -747,8 +747,8 @@ function AdminCalendar() {
             }}
             style={{
               background: "#050505",
-              color: "#D4AF37",
-              border: "1px solid #D4AF37",
+              color: "#FF8C00",
+              border: "1px solid #FF8C00",
               padding: "10px 16px",
               borderRadius: "30px",
               fontWeight: "600",
@@ -1169,11 +1169,11 @@ function AdminCalendar() {
           position: "fixed",
           bottom: "20px",
           right: "20px",
-          background: "#1e1a10",
-          borderLeft: "4px solid #d4af37",
+          background: "#FFF4E5",
+          borderLeft: "4px solid #FF8C00",
           padding: "10px 20px",
           borderRadius: "40px",
-          color: "#f5e2b0",
+          color: "#FFF4E5",
           zIndex: "2000",
           opacity: toast.show ? "1" : "0",
           transition: "0.2s",

@@ -1,15 +1,15 @@
 /* Extracted from managernotifications.html — scoped to React page wrapper */
 
 :root {
-  --gold: #d4af37;
-  --border-gold: rgba(212, 175, 55, 0.3);
+  --gold: #FF8C00;
+  --border-gold: rgba(255, 140, 0, 0.3);
 }
 
 .manager-notifications-page {
   flex: 1;
   overflow-y: auto;
-  background: #0a0a0a;
-  color: #eff0f5;
+  background: #FFFFFF;
+  color: #1A2B4B;
 }
 
 .manager-notifications-page ::-webkit-scrollbar {
@@ -17,7 +17,7 @@
 }
 
 .manager-notifications-page ::-webkit-scrollbar-track {
-  background: #111;
+  background: #FFFFFF;
 }
 
 .manager-notifications-page ::-webkit-scrollbar-thumb {
@@ -30,7 +30,7 @@
 .manager-notifications-page .main {
   flex: 1;
   overflow-y: auto;
-  background: #0a0a0a;
+  background: #FFFFFF;
 }
 
 /* ── TOP BAR ── */
@@ -52,7 +52,7 @@
 .manager-notifications-page .topbar h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #d4af37);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -60,7 +60,7 @@
 
 .manager-notifications-page .topbar p {
   font-size: 0.8rem;
-  color: #9a9dc2;
+  color: #64748B;
   margin-top: 3px;
 }
 
@@ -74,8 +74,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #0f0f0f;
-  border: 1px solid #333;
+  background: #FFFFFF;
+  border: 1px solid #1A2B4B;
   padding: 6px 14px;
   border-radius: 40px;
   font-size: 0.72rem;
@@ -85,21 +85,21 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #555;
+  background: #64748B;
 }
 
 .manager-notifications-page .conn-dot.connected {
-  background: #4ade80;
-  box-shadow: 0 0 6px #4ade80;
+  background: #16A34A;
+  box-shadow: 0 0 6px #16A34A;
   animation: mgr-notif-pulse 1.5s infinite;
 }
 
 .manager-notifications-page .conn-dot.disconnected {
-  background: #ef4444;
+  background: #DC2626;
 }
 
 .manager-notifications-page .branch-scope-badge {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
   border: 1px solid var(--border-gold);
   padding: 6px 14px;
   border-radius: 40px;
@@ -124,15 +124,15 @@
 }
 
 .manager-notifications-page .mark-all-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
 }
 
 .manager-notifications-page .clear-btn {
   background: transparent;
-  border: 1px solid #333;
+  border: 1px solid #1A2B4B;
   padding: 7px 16px;
   border-radius: 40px;
-  color: #666;
+  color: #64748B;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -141,8 +141,8 @@
 }
 
 .manager-notifications-page .clear-btn:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 /* ── CONTENT ── */
@@ -159,7 +159,7 @@
 }
 
 .manager-notifications-page .stat-card {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 20px;
   padding: 14px 20px;
@@ -174,13 +174,13 @@
 }
 
 .manager-notifications-page .stat-card.active-filter {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
   border-color: var(--gold);
 }
 
 .manager-notifications-page .stat-label {
   font-size: 0.68rem;
-  color: #888;
+  color: #64748B;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -194,7 +194,7 @@
 
 .manager-notifications-page .stat-sub {
   font-size: 0.65rem;
-  color: #555;
+  color: #64748B;
 }
 
 /* ── FILTER CHIPS ── */
@@ -207,30 +207,30 @@
 }
 
 .manager-notifications-page .filter-chip {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid transparent;
   padding: 6px 16px;
   border-radius: 40px;
   font-size: 0.78rem;
   cursor: pointer;
-  color: #888;
+  color: #64748B;
   transition: 0.2s;
   font-family: inherit;
 }
 
 .manager-notifications-page .filter-chip.active {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
   border-color: var(--gold);
   color: var(--gold);
 }
 
 .manager-notifications-page .filter-chip:hover {
   border-color: var(--border-gold);
-  color: #ddd;
+  color: #64748B;
 }
 
 .manager-notifications-page .search-box {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 40px;
   padding: 7px 18px;
@@ -258,7 +258,7 @@
 }
 
 .manager-notifications-page .notif-item {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 18px;
   padding: 16px 20px;
@@ -272,7 +272,7 @@
 
 .manager-notifications-page .notif-item.unread {
   border-left: 3px solid var(--gold);
-  background: #111008;
+  background: #EAF4FF;
 }
 
 .manager-notifications-page .notif-item.new-flash {
@@ -280,7 +280,7 @@
 }
 
 .manager-notifications-page .notif-item:hover {
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: rgba(255, 140, 0, 0.5);
 }
 
 .manager-notifications-page .notif-icon {
@@ -296,12 +296,12 @@
 
 .manager-notifications-page .icon-login {
   background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .manager-notifications-page .icon-logout {
   background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  color: #DC2626;
 }
 
 .manager-notifications-page .icon-checkin {
@@ -320,7 +320,7 @@
 }
 
 .manager-notifications-page .icon-leave {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
   color: var(--gold);
 }
 
@@ -331,12 +331,12 @@
 
 .manager-notifications-page .icon-payslip {
   background: rgba(74, 222, 128, 0.12);
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .manager-notifications-page .icon-default {
   background: rgba(255, 255, 255, 0.06);
-  color: #888;
+  color: #64748B;
 }
 
 .manager-notifications-page .notif-body {
@@ -346,7 +346,7 @@
 
 .manager-notifications-page .notif-desc {
   font-size: 0.85rem;
-  color: #ddd;
+  color: #64748B;
   line-height: 1.4;
 }
 
@@ -360,12 +360,12 @@
 
 .manager-notifications-page .notif-time {
   font-size: 0.7rem;
-  color: #555;
+  color: #64748B;
 }
 
 .manager-notifications-page .notif-branch {
   font-size: 0.7rem;
-  background: #1a1a1a;
+  background: #EAF4FF;
   color: var(--gold);
   padding: 2px 8px;
   border-radius: 12px;
@@ -373,8 +373,8 @@
 
 .manager-notifications-page .action-badge {
   font-size: 0.65rem;
-  background: rgba(212, 175, 55, 0.1);
-  color: #aaa;
+  background: rgba(255, 140, 0, 0.1);
+  color: #64748B;
   padding: 2px 8px;
   border-radius: 12px;
   text-transform: uppercase;
@@ -393,7 +393,7 @@
   border: 1px solid #2a2a2a;
   padding: 4px 12px;
   border-radius: 20px;
-  color: #666;
+  color: #64748B;
   font-size: 0.72rem;
   cursor: pointer;
   white-space: nowrap;
@@ -419,7 +419,7 @@
 .manager-notifications-page .empty-state {
   text-align: center;
   padding: 60px;
-  color: #555;
+  color: #64748B;
 }
 
 .manager-notifications-page .empty-state i {
@@ -432,11 +432,11 @@
 /* ── LIVE BADGE ── */
 .manager-notifications-page .live-badge-topbar {
   background: #0f1a0a;
-  border: 1px solid #4ade80;
+  border: 1px solid #16A34A;
   padding: 6px 14px;
   border-radius: 40px;
   font-size: 0.72rem;
-  color: #4ade80;
+  color: #16A34A;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -446,10 +446,10 @@
 .manager-notifications-page .live-pulse {
   width: 7px;
   height: 7px;
-  background: #4ade80;
+  background: #16A34A;
   border-radius: 50%;
   animation: mgr-notif-pulse 1.2s infinite;
-  box-shadow: 0 0 5px #4ade80;
+  box-shadow: 0 0 5px #16A34A;
 }
 
 /* ── TOAST ── */
@@ -457,7 +457,7 @@
   position: fixed;
   bottom: 28px;
   right: 28px;
-  background: #111;
+  background: #FFFFFF;
   border: 1px solid var(--gold);
   color: var(--gold);
   padding: 10px 22px;
@@ -477,19 +477,19 @@
 }
 
 .manager-notifications-page .toast.success {
-  border-color: #4ade80;
-  color: #4ade80;
+  border-color: #16A34A;
+  color: #16A34A;
 }
 
 .manager-notifications-page .toast.error {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 /* Bell badge (sidebar / future use) */
 .manager-notifications-page #bellBadge,
 #bellBadge {
-  background: #ef4444;
+  background: #DC2626;
   color: white;
   font-size: 0.6rem;
   padding: 2px 6px;
@@ -524,10 +524,10 @@
 @keyframes mgr-notif-flash {
   0%,
   100% {
-    background: #0f0f0f;
+    background: #FFFFFF;
   }
   50% {
-    background: rgba(212, 175, 55, 0.12);
+    background: rgba(255, 140, 0, 0.12);
   }
 }
 

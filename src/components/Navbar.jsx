@@ -29,6 +29,13 @@ function Navbar({
   }, []);
 
   const branchLabel = BRANCH_LABELS[branch] || branch;
+  const profileName = localStorage.getItem("full_name") || "VJC User";
+  const profileInitials = profileName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="topbar">
@@ -92,9 +99,13 @@ function Navbar({
           </div>
         </div>
 
-        <div className="live-pill">
-          <div className="live-dot" />
-          <span>Live</span>
+        <div className="topbar-profile" aria-label={`Signed in as ${profileName}`}>
+          <div className="topbar-avatar">{profileInitials}</div>
+          <div className="topbar-profile-copy">
+            <strong>{profileName}</strong>
+            <span>VJC Overseas</span>
+          </div>
+          <i className="fas fa-chevron-down" />
         </div>
       </div>
     </div>

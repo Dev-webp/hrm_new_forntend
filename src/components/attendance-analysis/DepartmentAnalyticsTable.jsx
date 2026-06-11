@@ -34,13 +34,13 @@ function DepartmentAnalyticsTable({ employees, loading, error }) {
             <TableSkeleton />
           ) : error ? (
             <tr>
-              <td colSpan={7} style={{ color: "#FF6B6B", textAlign: "center" }}>
+              <td colSpan={7} style={{ color: "#DC2626", textAlign: "center" }}>
                 Load failed
               </td>
             </tr>
           ) : !employees?.length ? (
             <tr>
-              <td colSpan={7} style={{ color: "#9B9EC2", textAlign: "center" }}>
+              <td colSpan={7} style={{ color: "#64748B", textAlign: "center" }}>
                 No data
               </td>
             </tr>
@@ -53,9 +53,9 @@ function DepartmentAnalyticsTable({ employees, loading, error }) {
                   <span style={{ fontSize: 10 }}>{e.department}</span>
                 </td>
                 <td>{e.department}</td>
-                <td style={{ color: "#4ADE80" }}>{e.present_days}</td>
-                <td style={{ color: "#FFB347" }}>{e.late_days}</td>
-                <td style={{ color: "#FF6B6B" }}>{e.absent_days}</td>
+                <td style={{ color: "#16A34A" }}>{e.present_days}</td>
+                <td style={{ color: "#FF8C00" }}>{e.late_days}</td>
+                <td style={{ color: "#DC2626" }}>{e.absent_days}</td>
                 <td>{e.avg_break_mins}m</td>
                 <td>{e.break_exceeded_days}</td>
               </tr>

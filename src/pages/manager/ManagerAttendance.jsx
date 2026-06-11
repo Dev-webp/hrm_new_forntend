@@ -250,7 +250,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
               <i className="fas fa-store"></i> {branch === "Hyderabad" ? "🏢" : "💻"} {branch}
             </div>
             <div className="date-picker-wrapper">
-              <i className="fas fa-calendar-alt" style={{ color: "#D4AF37" }}></i>
+              <i className="fas fa-calendar-alt" style={{ color: "#FF8C00" }}></i>
               <input type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)} />
             </div>
             <div className="live-badge">
@@ -267,7 +267,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
               <br />
               {selfAttendance && selfAttendance.id ? (
                 <span className="self-status">
-                  <i className="fas fa-circle" style={{ color: "#4ADE80", fontSize: "10px" }}></i>{" "}
+                  <i className="fas fa-circle" style={{ color: "#16A34A", fontSize: "10px" }}></i>{" "}
                   {selfAttendance.status === "full_day"
                     ? "FULL DAY"
                     : selfAttendance.status === "half_day"
@@ -278,7 +278,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                 </span>
               ) : (
                 <span className="self-status">
-                  <i className="fas fa-circle" style={{ color: "#FF6B6B", fontSize: "10px" }}></i> Not Checked In
+                  <i className="fas fa-circle" style={{ color: "#DC2626", fontSize: "10px" }}></i> Not Checked In
                 </span>
               )}
             </div>
@@ -369,9 +369,9 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
             </div>
             <div className="dept-leaderboard">
               {loading && leaderboard.length === 0 ? (
-                <div style={{ color: "#555", textAlign: "center", padding: "20px" }}>Loading...</div>
+                <div style={{ color: "#64748B", textAlign: "center", padding: "20px" }}>Loading...</div>
               ) : leaderboard.length === 0 ? (
-                <div style={{ color: "#555", textAlign: "center", padding: "20px" }}>No data</div>
+                <div style={{ color: "#64748B", textAlign: "center", padding: "20px" }}>No data</div>
               ) : (
                 leaderboard.map((d, index) => (
                   <div key={index} className="dept-row">
@@ -379,7 +379,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                     <div className="progress">
                       <div className="progress-fill" style={{ width: Number(d.percent ?? 0) + "%" }}></div>
                     </div>
-                    <span style={{ fontSize: "0.8rem", color: "#d4af37", width: "36px", textAlign: "right" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#FF8C00", width: "36px", textAlign: "right" }}>
                       {Number(d.percent ?? 0)}%
                     </span>
                   </div>
@@ -436,7 +436,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                   </tr>
                 ) : filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="9" style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+                    <td colSpan="9" style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
                       No records found
                     </td>
                   </tr>
@@ -444,7 +444,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                   filteredRecords.map((r) => (
                     <tr key={r.user_id || r.id}>
                       <td>
-                        <i className="fas fa-user-circle" style={{ color: "#d4af37", marginRight: "6px" }}></i>
+                        <i className="fas fa-user-circle" style={{ color: "#FF8C00", marginRight: "6px" }}></i>
                         {r.full_name}
                       </td>
                       <td>{r.department || "—"}</td>
@@ -452,10 +452,10 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                       <td>{r.check_out_time ? r.check_out_time.slice(0, 5) : "—"}</td>
                       <td>{getStatusBadge(r.status)}</td>
                       <td>{getLatePill(r)}</td>
-                      <td style={{ color: "#D4AF37", fontWeight: "600" }}>
+                      <td style={{ color: "#FF8C00", fontWeight: "600" }}>
                         {Number(r.production_hours || 0).toFixed(2)} hrs
                       </td>
-                      <td style={{ color: "#9B9EC2" }}>{Number(r.total_break_minutes || 0)} min</td>
+                      <td style={{ color: "#64748B" }}>{Number(r.total_break_minutes || 0)} min</td>
                       <td>
                         <button
                           type="button"
@@ -543,7 +543,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                         <td>{r.check_out_time ? r.check_out_time.slice(0, 5) : "—"}</td>
                         <td>{getStatusBadge(r.status)}</td>
                         <td>{Number(r.late_minutes || 0)}</td>
-                        <td style={{ color: "#D4AF37" }}>{formatProductionHours(Number(r.production_hours || 0))}</td>
+                        <td style={{ color: "#FF8C00" }}>{formatProductionHours(Number(r.production_hours || 0))}</td>
                       </tr>
                     ))
                   )}

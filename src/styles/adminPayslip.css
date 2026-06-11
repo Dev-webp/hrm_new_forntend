@@ -11,7 +11,7 @@
   gap: 16px;
   margin-bottom: 28px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.25);
 }
 
 .admin-payslip-page .page-title {
@@ -24,7 +24,7 @@
 }
 
 .admin-payslip-page .page-sub {
-  color: #d4af37;
+  color: #FF8C00;
   font-size: 0.82rem;
   font-weight: 500;
   margin-top: 4px;
@@ -38,13 +38,13 @@
 }
 
 .admin-payslip-page .btn-gold {
-  background: linear-gradient(95deg, #d4af37, #b8860b);
+  background: linear-gradient(95deg, #FF8C00, #b8860b);
   border: none;
   padding: 10px 22px;
   border-radius: 40px;
   font-weight: 700;
   font-size: 0.82rem;
-  color: #030303;
+  color: #1A2B4B;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -60,10 +60,10 @@
 
 .admin-payslip-page .btn-outline {
   background: transparent;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   border-radius: 40px;
   padding: 8px 18px;
-  color: #d4af37;
+  color: #FF8C00;
   font-size: 0.8rem;
   cursor: pointer;
   transition: 0.2s;
@@ -74,7 +74,7 @@
 }
 
 .admin-payslip-page .btn-outline:hover {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
 }
 
 .admin-payslip-page .branch-wrap {
@@ -82,10 +82,10 @@
 }
 
 .admin-payslip-page .branch-btn {
-  background: #111216;
+  background: #FFFFFF;
   padding: 9px 18px;
   border-radius: 40px;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -98,14 +98,14 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #111216;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.25);
   border-radius: 16px;
   min-width: 200px;
   z-index: 300;
   display: none;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px rgba(26, 43, 75, 0.5);
 }
 
 .admin-payslip-page .branch-menu.open {
@@ -117,12 +117,12 @@
   cursor: pointer;
   font-size: 0.82rem;
   transition: 0.15s;
-  color: #cfcfcf;
+  color: #64748B;
 }
 
 .admin-payslip-page .branch-menu-item:hover {
-  background: rgba(212, 175, 55, 0.15);
-  color: #d4af37;
+  background: rgba(255, 140, 0, 0.15);
+  color: #FF8C00;
 }
 
 .admin-payslip-page .filter-bar {
@@ -134,13 +134,13 @@
 }
 
 .admin-payslip-page .search-box {
-  background: #111215;
+  background: #EAF4FF;
   border-radius: 40px;
   padding: 9px 18px;
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(255, 140, 0, 0.25);
   flex: 2;
   min-width: 220px;
 }
@@ -155,8 +155,8 @@
 }
 
 .admin-payslip-page .month-pick {
-  background: #111215;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: #EAF4FF;
+  border: 1px solid rgba(255, 140, 0, 0.25);
   border-radius: 40px;
   padding: 8px 16px;
   color: #ececec;
@@ -166,7 +166,7 @@
 }
 
 .admin-payslip-page .chip {
-  background: #111216;
+  background: #FFFFFF;
   padding: 6px 15px;
   border-radius: 40px;
   font-size: 0.78rem;
@@ -174,13 +174,13 @@
   border: 1px solid transparent;
   transition: 0.15s;
   white-space: nowrap;
-  color: #cfcfcf;
+  color: #64748B;
 }
 
 .admin-payslip-page .chip.active {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
-  color: #d4af37;
+  background: rgba(255, 140, 0, 0.15);
+  border-color: #FF8C00;
+  color: #FF8C00;
 }
 
 .admin-payslip-page .chip:hover {
@@ -195,8 +195,8 @@
 }
 
 .admin-payslip-page .kpi-card {
-  background: #0f0f0f;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.25);
   border-radius: 20px;
   padding: 20px;
 }
@@ -212,7 +212,7 @@
 .admin-payslip-page .kpi-value {
   font-size: 1.7rem;
   font-weight: 800;
-  color: #d4af37;
+  color: #FF8C00;
   font-family: "JetBrains Mono", monospace;
 }
 
@@ -230,8 +230,8 @@
 }
 
 .admin-payslip-page .dept-pill {
-  background: #111216;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.25);
   border-radius: 14px;
   padding: 10px 16px;
   min-width: 130px;
@@ -245,7 +245,7 @@
 .admin-payslip-page .dept-pill-amt {
   font-size: 1rem;
   font-weight: 700;
-  color: #d4af37;
+  color: #FF8C00;
   margin-top: 2px;
   font-family: "JetBrains Mono", monospace;
 }
@@ -256,8 +256,8 @@
 }
 
 .admin-payslip-page .table-card {
-  background: #0f0f0f;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.25);
   border-radius: 22px;
   overflow: hidden;
 }
@@ -267,13 +267,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 18px 22px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.25);
 }
 
 .admin-payslip-page .table-title {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #d4af37;
+  color: #FF8C00;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -288,18 +288,18 @@
 .admin-payslip-page .payslip-tbl th {
   padding: 12px 14px;
   text-align: left;
-  color: #d4af37;
+  color: #FF8C00;
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.25);
   white-space: nowrap;
 }
 
 .admin-payslip-page .payslip-tbl td {
   padding: 13px 14px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.08);
   vertical-align: middle;
 }
 
@@ -308,7 +308,7 @@
 }
 
 .admin-payslip-page .payslip-tbl tr:hover td {
-  background: rgba(212, 175, 55, 0.04);
+  background: rgba(255, 140, 0, 0.04);
 }
 
 .admin-payslip-page .emp-name {
@@ -334,12 +334,12 @@
 
 .admin-payslip-page .status-pill.paid {
   background: rgba(74, 222, 128, 0.12);
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .admin-payslip-page .status-pill.unpaid {
   background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  color: #FF8C00;
 }
 
 .admin-payslip-page .toggle-status-btn {
@@ -358,7 +358,7 @@
 
 .admin-payslip-page .toggle-status-btn.mark-paid {
   border-color: rgba(74, 222, 128, 0.5);
-  color: #4ade80;
+  color: #16A34A;
   background: rgba(74, 222, 128, 0.08);
 }
 
@@ -368,7 +368,7 @@
 
 .admin-payslip-page .toggle-status-btn.mark-unpaid {
   border-color: rgba(245, 158, 11, 0.5);
-  color: #f59e0b;
+  color: #FF8C00;
   background: rgba(245, 158, 11, 0.08);
 }
 
@@ -392,9 +392,9 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(255, 140, 0, 0.25);
   background: transparent;
-  color: #d4af37;
+  color: #FF8C00;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -404,7 +404,7 @@
 }
 
 .admin-payslip-page .icon-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
 }
 
 .admin-payslip-page .mono {
@@ -413,15 +413,15 @@
 }
 
 .admin-payslip-page .deduction-val {
-  color: #ef4444;
+  color: #DC2626;
 }
 
 .admin-payslip-page .earning-val {
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .admin-payslip-page .net-val {
-  color: #d4af37;
+  color: #FF8C00;
   font-weight: 700;
 }
 
@@ -435,7 +435,7 @@
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.88);
+  background: rgba(26, 43, 75, 0.88);
   backdrop-filter: blur(16px);
   z-index: 500;
   align-items: center;
@@ -448,8 +448,8 @@
 }
 
 .admin-payslip-page .modal-box {
-  background: #0d0e12;
-  border: 1px solid #d4af37;
+  background: #FFFFFF;
+  border: 1px solid #FF8C00;
   border-radius: 28px;
   width: 100%;
   max-width: 780px;
@@ -464,20 +464,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 22px 26px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.25);
   flex-shrink: 0;
 }
 
 .admin-payslip-page .modal-head h2 {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .admin-payslip-page .modal-close {
   background: none;
   border: none;
-  color: #d4af37;
+  color: #FF8C00;
   font-size: 1.6rem;
   cursor: pointer;
   line-height: 1;
@@ -512,7 +512,7 @@
 }
 
 .admin-payslip-page .form-control {
-  background: #1a1c26;
+  background: #F5F7FA;
   border: 1px solid #2a2a3a;
   border-radius: 12px;
   padding: 11px 14px;
@@ -524,11 +524,11 @@
 }
 
 .admin-payslip-page .form-control:focus {
-  border-color: #d4af37;
+  border-color: #FF8C00;
 }
 
 .admin-payslip-page .form-control[readonly] {
-  background: #111216;
+  background: #FFFFFF;
   color: #6b7280;
 }
 
@@ -540,7 +540,7 @@
   padding: 12px 16px;
   margin-bottom: 14px;
   font-size: 0.82rem;
-  color: #4ade80;
+  color: #16A34A;
   align-items: center;
   gap: 10px;
 }
@@ -550,8 +550,8 @@
 }
 
 .admin-payslip-page .att-preview {
-  background: #0a0a0a;
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 140, 0, 0.25);
   border-radius: 16px;
   padding: 16px;
   margin: 16px 0;
@@ -560,7 +560,7 @@
 .admin-payslip-page .att-preview-title {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #d4af37;
+  color: #FF8C00;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   margin-bottom: 12px;
@@ -576,7 +576,7 @@
 }
 
 .admin-payslip-page .att-box {
-  background: #111216;
+  background: #FFFFFF;
   border-radius: 10px;
   padding: 8px 6px;
   text-align: center;
@@ -594,15 +594,15 @@
 }
 
 .admin-payslip-page .att-box.green .att-box-val {
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .admin-payslip-page .att-box.amber .att-box-val {
-  color: #f59e0b;
+  color: #FF8C00;
 }
 
 .admin-payslip-page .att-box.red .att-box-val {
-  color: #ef4444;
+  color: #DC2626;
 }
 
 .admin-payslip-page .att-box.blue .att-box-val {
@@ -610,7 +610,7 @@
 }
 
 .admin-payslip-page .att-box.gold .att-box-val {
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .admin-payslip-page .att-box.muted .att-box-val {
@@ -622,11 +622,11 @@
   color: #6b7280;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(212, 175, 55, 0.25);
+  border-top: 1px solid rgba(255, 140, 0, 0.25);
 }
 
 .admin-payslip-page .att-note span {
-  color: #d4af37;
+  color: #FF8C00;
   font-weight: 600;
 }
 
@@ -641,11 +641,11 @@
 }
 
 .admin-payslip-page .pl-explain strong {
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .admin-payslip-page .salary-preview {
-  background: #111216;
+  background: #FFFFFF;
   border-radius: 16px;
   padding: 16px;
   margin: 12px 0;
@@ -660,7 +660,7 @@
 }
 
 .admin-payslip-page .sal-row + .sal-row {
-  border-top: 1px solid rgba(212, 175, 55, 0.08);
+  border-top: 1px solid rgba(255, 140, 0, 0.08);
 }
 
 .admin-payslip-page .sal-row.section-head {
@@ -674,19 +674,19 @@
 .admin-payslip-page .sal-row.total {
   font-weight: 700;
   font-size: 0.95rem;
-  color: #d4af37;
+  color: #FF8C00;
 }
 
 .admin-payslip-page .sal-row.subtotal {
   font-weight: 600;
-  background: rgba(212, 175, 55, 0.04);
+  background: rgba(255, 140, 0, 0.04);
   margin: 4px -28px;
   padding: 8px 28px;
 }
 
 .admin-payslip-page .net-box {
-  background: #0a0a0a;
-  border: 1px solid #d4af37;
+  background: #FFFFFF;
+  border: 1px solid #FF8C00;
   border-radius: 18px;
   padding: 18px 20px;
   display: flex;
@@ -703,13 +703,13 @@
 .admin-payslip-page .net-box-amount {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #4ade80;
+  color: #16A34A;
   font-family: "JetBrains Mono", monospace;
 }
 
 .admin-payslip-page .modal-footer {
   padding: 18px 26px;
-  border-top: 1px solid rgba(212, 175, 55, 0.25);
+  border-top: 1px solid rgba(255, 140, 0, 0.25);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -718,22 +718,22 @@
 
 .admin-payslip-page .btn-secondary {
   background: transparent;
-  border: 1px solid #d4af37;
+  border: 1px solid #FF8C00;
   padding: 10px 22px;
   border-radius: 40px;
-  color: #d4af37;
+  color: #FF8C00;
   cursor: pointer;
   font-size: 0.85rem;
 }
 
 .admin-payslip-page .btn-primary {
-  background: #d4af37;
+  background: #FF8C00;
   border: none;
   padding: 10px 26px;
   border-radius: 40px;
   font-weight: 700;
   font-size: 0.85rem;
-  color: #030303;
+  color: #1A2B4B;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -750,9 +750,9 @@
 }
 
 .admin-payslip-page .ps-header {
-  background: #0a0a0a;
+  background: #FFFFFF;
   padding: 24px 28px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.25);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -761,7 +761,7 @@
 .admin-payslip-page .ps-company {
   font-size: 1.6rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #f9e0a0, #d4af37);
+  background: linear-gradient(135deg, #FFF4E5, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -769,14 +769,14 @@
 
 .admin-payslip-page .ps-subtitle {
   font-size: 0.72rem;
-  color: #c9a23d;
+  color: #FF8C00;
   margin-top: 2px;
 }
 
 .admin-payslip-page .ps-month {
   font-size: 1rem;
   font-weight: 700;
-  color: #d4af37;
+  color: #FF8C00;
   text-align: right;
 }
 
@@ -787,12 +787,12 @@
 .admin-payslip-page .ps-section-title {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #d4af37;
+  color: #FF8C00;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 14px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.25);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -823,7 +823,7 @@
 }
 
 .admin-payslip-page .ps-stat {
-  background: #111216;
+  background: #FFFFFF;
   border-radius: 10px;
   padding: 10px 8px;
   text-align: center;
@@ -845,7 +845,7 @@
   justify-content: space-between;
   padding: 8px 0;
   font-size: 0.85rem;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.06);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.06);
 }
 
 .admin-payslip-page .ps-sal-row:last-child {
@@ -853,7 +853,7 @@
 }
 
 .admin-payslip-page .ps-sal-row.deduct .val {
-  color: #ef4444;
+  color: #DC2626;
 }
 
 .admin-payslip-page .ps-sal-row .val {
@@ -880,13 +880,13 @@
 .admin-payslip-page .ps-net-amount {
   font-size: 2rem;
   font-weight: 800;
-  color: #4ade80;
+  color: #16A34A;
   font-family: "JetBrains Mono", monospace;
 }
 
 .admin-payslip-page .ps-footer {
   padding: 16px 28px;
-  border-top: 1px solid rgba(212, 175, 55, 0.25);
+  border-top: 1px solid rgba(255, 140, 0, 0.25);
   text-align: center;
   font-size: 0.72rem;
   color: #6b7280;
@@ -896,11 +896,11 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #1e1a10;
-  border-left: 4px solid #d4af37;
+  background: #FFF4E5;
+  border-left: 4px solid #FF8C00;
   padding: 12px 22px;
   border-radius: 40px;
-  color: #f5e2b0;
+  color: #FFF4E5;
   z-index: 1000;
   opacity: 0;
   transform: translateY(10px);
@@ -918,8 +918,8 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(212, 175, 55, 0.3);
-  border-top-color: #d4af37;
+  border: 2px solid rgba(255, 140, 0, 0.3);
+  border-top-color: #FF8C00;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
@@ -939,13 +939,13 @@
   border-radius: 40px;
   padding: 4px 12px;
   font-size: 0.68rem;
-  color: #4ade80;
+  color: #16A34A;
 }
 
 .admin-payslip-page .live-dot {
   width: 7px;
   height: 7px;
-  background: #4ade80;
+  background: #16A34A;
   border-radius: 50%;
   animation: pulse 1.5s infinite;
 }

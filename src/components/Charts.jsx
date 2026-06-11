@@ -43,19 +43,19 @@ function AttendanceTrendChart({ labels, present, late, absent }) {
         interaction: { mode: "index", intersect: false },
         plugins: {
           legend: {
-            labels: { color: "#8890b0", font: { size: 10 } },
+            labels: { color: "#64748B", font: { size: 11, family: "Inter" } },
           },
         },
         scales: {
           x: {
             stacked: true,
-            ticks: { color: "#8890b0", font: { size: 9 } },
-            grid: { color: "rgba(255,255,255,0.03)" },
+            ticks: { color: "#94A3B8", font: { size: 10, family: "Inter" } },
+            grid: { color: "#EEF2F7" },
           },
           y: {
             stacked: true,
-            ticks: { color: "#8890b0", font: { size: 9 } },
-            grid: { color: "rgba(255,255,255,0.05)" },
+            ticks: { color: "#94A3B8", font: { size: 10, family: "Inter" } },
+            grid: { color: "#EEF2F7" },
           },
         },
       },
@@ -89,7 +89,7 @@ function StatusPieChart({ full, half, late, absent }) {
         datasets: [
           {
             data: [full, half, late, absent],
-            backgroundColor: ["#22c55e", "#86efac", "#f59e0b", "#ef4444"],
+            backgroundColor: ["#16A34A", "#86efac", "#FF8C00", "#DC2626"],
             borderWidth: 0,
             hoverOffset: 6,
           },
@@ -101,7 +101,7 @@ function StatusPieChart({ full, half, late, absent }) {
         plugins: {
           legend: {
             position: "bottom",
-            labels: { color: "#8890b0", font: { size: 10 }, padding: 10 },
+            labels: { color: "#64748B", font: { size: 11, family: "Inter" }, padding: 14 },
           },
         },
       },
@@ -134,7 +134,7 @@ function EmployeeDonut({ employeeId, attPct, ringColor }) {
         datasets: [
           {
             data: [attPct, 100 - attPct],
-            backgroundColor: [ringColor, "rgba(255,255,255,0.05)"],
+            backgroundColor: [ringColor, "#EEF2F7"],
             borderWidth: 0,
             borderRadius: 3,
           },

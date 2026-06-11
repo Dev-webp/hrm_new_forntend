@@ -246,7 +246,7 @@ setLeaveBalance(balance);
             <div className="stat-label">My Status</div>
             <div
               className="stat-number"
-              style={{ fontSize: "20px", paddingTop: "6px", color: latestMyLeave ? (latestMyLeave.status === "approved" ? "#4ADE80" : latestMyLeave.status === "rejected" ? "#FF6B6B" : "#FFB347") : "#D4AF37" }}
+              style={{ fontSize: "20px", paddingTop: "6px", color: latestMyLeave ? (latestMyLeave.status === "approved" ? "#16A34A" : latestMyLeave.status === "rejected" ? "#DC2626" : "#FF8C00") : "#FF8C00" }}
             >
               {latestMyLeave ? latestMyLeave.status.toUpperCase() : "—"}
             </div>
@@ -281,7 +281,7 @@ setLeaveBalance(balance);
                   </tr>
                 ) : !myLeaves.length ? (
                   <tr>
-                    <td colSpan="8" style={{ textAlign: "center", padding: "30px", color: "#555" }}>
+                    <td colSpan="8" style={{ textAlign: "center", padding: "30px", color: "#64748B" }}>
                       No leave applications yet
                     </td>
                   </tr>
@@ -347,7 +347,7 @@ setLeaveBalance(balance);
                   </tr>
                 ) : !filteredTeamLeaves.length ? (
                   <tr>
-                    <td colSpan="10" style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+                    <td colSpan="10" style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
                       No {currentStatus} leave requests
                     </td>
                   </tr>
@@ -355,7 +355,7 @@ setLeaveBalance(balance);
                   filteredTeamLeaves.map((l) => (
                     <tr key={l.id}>
                       <td>
-                        <i className="fas fa-user-circle" style={{ color: "#D4AF37", marginRight: "6px" }}></i>
+                        <i className="fas fa-user-circle" style={{ color: "#FF8C00", marginRight: "6px" }}></i>
                         {escapeHtml(l.full_name)}
                       </td>
                       <td>{escapeHtml(l.leave_type)}</td>
@@ -377,7 +377,7 @@ setLeaveBalance(balance);
                             </button>
                           </>
                         ) : (
-                          <span style={{ color: "#555", fontSize: "11px" }}>—</span>
+                          <span style={{ color: "#64748B", fontSize: "11px" }}>—</span>
                         )}
                       </td>
                       <td>{escapeHtml(l.approved_by_name || "—")}</td>

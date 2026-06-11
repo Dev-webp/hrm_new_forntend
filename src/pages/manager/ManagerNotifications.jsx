@@ -377,7 +377,7 @@ export default function ManagerNotifications() {
                         {n.action_type?.replace(/_/g, " ")}
                       </span>
                       {n.user_name ? (
-                        <span style={{ fontSize: "0.7rem", color: "#666" }}>
+                        <span style={{ fontSize: "0.7rem", color: "#64748B" }}>
                           by {n.user_name}
                         </span>
                       ) : null}

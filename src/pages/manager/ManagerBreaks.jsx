@@ -416,7 +416,7 @@ export default function ManagerBreaks() {
               );
             })}
           </div>
-          <div style={{ marginTop: "12px", fontSize: "0.8rem", color: "#aaa" }}>
+          <div style={{ marginTop: "12px", fontSize: "0.8rem", color: "#64748B" }}>
             Click a break button to start/stop. Total used today: <span>{getTotalBreakMinutes(managerBreaks)}</span> min (max 60 min)
           </div>
         </div>

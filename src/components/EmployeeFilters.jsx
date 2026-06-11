@@ -13,7 +13,7 @@ function EmployeeFilters({
   return (
     <div className="filter-bar">
       <div className="search-box">
-        <i className="fas fa-search" style={{ color: "#D4AF37" }} />
+        <i className="fas fa-search" />
         <input
           type="text"
           placeholder="Search by name, department, email..."

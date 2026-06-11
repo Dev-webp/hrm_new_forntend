@@ -1,8 +1,8 @@
 import { useChart } from "./useChart";
 
-const GOLD_LEGEND = { color: "#D4AF37", font: { size: 11 } };
-const GRID_X = { ticks: { color: "#9B9EC2" }, grid: { color: "rgba(255,255,255,0.04)" } };
-const GRID_Y = { ticks: { color: "#9B9EC2" }, grid: { color: "rgba(255,255,255,0.04)" } };
+const GOLD_LEGEND = { color: "#FF8C00", font: { size: 11 } };
+const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "rgba(255,255,255,0.04)" } };
+const GRID_Y = { ticks: { color: "#64748B" }, grid: { color: "rgba(255,255,255,0.04)" } };
 
 /** Branch-level 6-month trends — present / late / absent (optional) */
 export function BranchTrendsChart({ trends }) {
@@ -20,7 +20,7 @@ export function BranchTrendsChart({ trends }) {
           {
             label: "Present",
             data: present,
-            borderColor: "#4ADE80",
+            borderColor: "#16A34A",
             backgroundColor: "rgba(74,222,128,0.1)",
             fill: true,
             tension: 0.3,
@@ -28,7 +28,7 @@ export function BranchTrendsChart({ trends }) {
           {
             label: "Late",
             data: late,
-            borderColor: "#FFB347",
+            borderColor: "#FF8C00",
             backgroundColor: "rgba(255,179,71,0.08)",
             fill: true,
             tension: 0.3,
@@ -36,7 +36,7 @@ export function BranchTrendsChart({ trends }) {
           {
             label: "Absent",
             data: absent,
-            borderColor: "#FF6B6B",
+            borderColor: "#DC2626",
             backgroundColor: "rgba(255,107,107,0.08)",
             fill: true,
             tension: 0.3,
@@ -80,9 +80,9 @@ export function CheckInChart({ records }) {
           {
             label: "Check-In (hr)",
             data: ciData,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212,175,55,0.08)",
-            pointBackgroundColor: "#D4AF37",
+            borderColor: "#FF8C00",
+            backgroundColor: "rgba(255, 140, 0,0.08)",
+            pointBackgroundColor: "#FF8C00",
             pointRadius: 4,
             fill: true,
             tension: 0.3,
@@ -90,7 +90,7 @@ export function CheckInChart({ records }) {
           {
             label: "9:00 AM",
             data: labels.map(() => 9),
-            borderColor: "#FF6B6B",
+            borderColor: "#DC2626",
             borderDash: [5, 4],
             pointRadius: 0,
             fill: false,
@@ -103,13 +103,13 @@ export function CheckInChart({ records }) {
         animation: { duration: 400 },
         scales: {
           x: {
-            title: { display: true, text: "Date", color: "#9B9EC2" },
+            title: { display: true, text: "Date", color: "#64748B" },
             ...GRID_X,
           },
           y: {
-            title: { display: true, text: "Hour", color: "#9B9EC2" },
+            title: { display: true, text: "Hour", color: "#64748B" },
             ticks: {
-              color: "#9B9EC2",
+              color: "#64748B",
               callback: (v) => `${v}:00`,
             },
             min: 7,
@@ -130,7 +130,7 @@ export function CheckInChart({ records }) {
 export function BreakDurationChart({ records }) {
   const labels = (records || []).map((r) => parseInt(r.date.slice(8, 10), 10));
   const breakData = (records || []).map((r) => r.breaks);
-  const breakColors = breakData.map((v) => (v > 60 ? "#FF6B6B" : "#4ADE80"));
+  const breakColors = breakData.map((v) => (v > 60 ? "#DC2626" : "#16A34A"));
 
   const canvasRef = useChart(
     () => ({
@@ -147,7 +147,7 @@ export function BreakDurationChart({ records }) {
             label: "60 min limit",
             data: labels.map(() => 60),
             type: "line",
-            borderColor: "#FF6B6B",
+            borderColor: "#DC2626",
             borderDash: [5, 4],
             pointRadius: 0,
             fill: false,
@@ -179,15 +179,15 @@ export function AttendanceTrendChart({ labels, values }) {
           {
             label: "Break (min)",
             data: values,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212,175,55,0.08)",
+            borderColor: "#FF8C00",
+            backgroundColor: "rgba(255, 140, 0,0.08)",
             fill: true,
             tension: 0.3,
           },
           {
             label: "60 min limit",
             data: labels.map(() => 60),
-            borderColor: "#FF6B6B",
+            borderColor: "#DC2626",
             borderDash: [5, 4],
             pointRadius: 0,
             fill: false,
@@ -198,7 +198,7 @@ export function AttendanceTrendChart({ labels, values }) {
         responsive: true,
         animation: { duration: 300 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: { color: "#D4AF37" } } },
+        plugins: { legend: { labels: { color: "#FF8C00" } } },
       },
     }),
     [labels.join(","), values.join(",")]
@@ -214,14 +214,14 @@ export function WeekHoursChart({ labels, hoursData }) {
       data: {
         labels,
         datasets: [
-          { label: "Hours Worked", data: hoursData, backgroundColor: "#D4AF37" },
+          { label: "Hours Worked", data: hoursData, backgroundColor: "#FF8C00" },
         ],
       },
       options: {
         responsive: true,
         animation: { duration: 300 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: { color: "#D4AF37" } } },
+        plugins: { legend: { labels: { color: "#FF8C00" } } },
       },
     }),
     [labels.join(","), hoursData.join(",")]
@@ -244,7 +244,7 @@ export function WeekBreakChart({ labels, breakData }) {
         responsive: true,
         animation: { duration: 300 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: { color: "#D4AF37" } } },
+        plugins: { legend: { labels: { color: "#FF8C00" } } },
       },
     }),
     [labels.join(","), breakData.join(",")]
@@ -262,13 +262,13 @@ export function BreakPieChart({ pieData }) {
         datasets: [
           {
             data: pieData,
-            backgroundColor: ["#D4AF37", "#4ADE80", "#FFB347", "#818cf8"],
+            backgroundColor: ["#FF8C00", "#16A34A", "#FF8C00", "#818cf8"],
           },
         ],
       },
       options: {
         animation: { duration: 300 },
-        plugins: { legend: { labels: { color: "#D4AF37" } } },
+        plugins: { legend: { labels: { color: "#FF8C00" } } },
       },
     }),
     [pieData.join(",")]

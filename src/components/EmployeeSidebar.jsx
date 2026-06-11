@@ -51,9 +51,10 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
   return (
     <aside className={`sidebar employee-sidebar${collapsed ? " collapsed" : ""}`}>
       <div className="logo-area">
+        <div className="brand-mark">V</div>
         <div className="logo-text">
           <h2>VJC OVERSEAS</h2>
-          <p>EMPLOYEE PORTAL</p>
+          <p>Employee Workspace</p>
         </div>
       </div>
 

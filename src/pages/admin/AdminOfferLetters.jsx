@@ -157,13 +157,13 @@ export default function AdminOfferLetters() {
   const statusColor = (status) => {
     switch (status) {
       case "SENT":
-        return "#FFB347";
+        return "#FF8C00";
       case "ACCEPTED":
-        return "#4ADE80";
+        return "#16A34A";
       case "REJECTED":
-        return "#FF6B6B";
+        return "#DC2626";
       default:
-        return "#9B9EC2";
+        return "#64748B";
     }
   };
 
@@ -182,7 +182,7 @@ export default function AdminOfferLetters() {
             style={{
               fontSize: "1.5rem",
               fontWeight: 800,
-              background: "linear-gradient(135deg,#f9e0a0,#d4af37)",
+              background: "linear-gradient(135deg,#FFF4E5,#FF8C00)",
               WebkitBackgroundClip: "text",
               backgroundClip: "text",
               color: "transparent",
@@ -190,7 +190,7 @@ export default function AdminOfferLetters() {
           >
             Offer Letters
           </h1>
-          <p style={{ color: "#9B9EC2", fontSize: "13px", marginTop: "4px" }}>
+          <p style={{ color: "#64748B", fontSize: "13px", marginTop: "4px" }}>
             Create and manage candidate offer letters
           </p>
         </div>
@@ -198,8 +198,8 @@ export default function AdminOfferLetters() {
         <button
           onClick={() => setShowForm((v) => !v)}
           style={{
-            background: "linear-gradient(135deg,#d4af37,#f9e0a0)",
-            color: "#1A1C26",
+            background: "linear-gradient(135deg,#FF8C00,#FFF4E5)",
+            color: "#F5F7FA",
             border: "none",
             borderRadius: "12px",
             padding: "10px 20px",
@@ -219,10 +219,10 @@ export default function AdminOfferLetters() {
             borderRadius: "20px",
             padding: "24px",
             marginBottom: "24px",
-            border: "1px solid #2A2D3E",
+            border: "1px solid #EAF4FF",
           }}
         >
-          <h3 style={{ color: "#D4AF37", marginBottom: "20px", fontWeight: 700 }}>
+          <h3 style={{ color: "#FF8C00", marginBottom: "20px", fontWeight: 700 }}>
             Create Offer Letter
           </h3>
 
@@ -251,7 +251,7 @@ export default function AdminOfferLetters() {
                 <div key={name}>
                   <label
                     style={{
-                      color: "#9B9EC2",
+                      color: "#64748B",
                       fontSize: "12px",
                       display: "block",
                       marginBottom: "6px",
@@ -269,8 +269,8 @@ export default function AdminOfferLetters() {
                       required={required}
                       style={{
                         width: "100%",
-                        background: "#252836",
-                        border: "1px solid #2A2D3E",
+                        background: "#EAF4FF",
+                        border: "1px solid #EAF4FF",
                         borderRadius: "10px",
                         padding: "10px 14px",
                         color: "#F0F2F8",
@@ -292,8 +292,8 @@ export default function AdminOfferLetters() {
                       readOnly={name === "location"}
                       style={{
                         width: "100%",
-                        background: "#252836",
-                        border: "1px solid #2A2D3E",
+                        background: "#EAF4FF",
+                        border: "1px solid #EAF4FF",
                         borderRadius: "10px",
                         padding: "10px 14px",
                         color: "#F0F2F8",
@@ -309,7 +309,7 @@ export default function AdminOfferLetters() {
               <div style={{ gridColumn: "1 / -1" }}>
                 <label
                   style={{
-                    color: "#9B9EC2",
+                    color: "#64748B",
                     fontSize: "12px",
                     display: "block",
                     marginBottom: "6px",
@@ -325,8 +325,8 @@ export default function AdminOfferLetters() {
                   rows={2}
                   style={{
                     width: "100%",
-                    background: "#252836",
-                    border: "1px solid #2A2D3E",
+                    background: "#EAF4FF",
+                    border: "1px solid #EAF4FF",
                     borderRadius: "10px",
                     padding: "10px 14px",
                     color: "#F0F2F8",
@@ -344,8 +344,8 @@ export default function AdminOfferLetters() {
               disabled={submitting}
               style={{
                 marginTop: "20px",
-                background: "linear-gradient(135deg,#d4af37,#f9e0a0)",
-                color: "#1A1C26",
+                background: "linear-gradient(135deg,#FF8C00,#FFF4E5)",
+                color: "#F5F7FA",
                 border: "none",
                 borderRadius: "12px",
                 padding: "12px 32px",
@@ -365,27 +365,27 @@ export default function AdminOfferLetters() {
           background: "#1E2030",
           borderRadius: "20px",
           padding: "24px",
-          border: "1px solid #2A2D3E",
+          border: "1px solid #EAF4FF",
         }}
       >
-        <h3 style={{ color: "#D4AF37", marginBottom: "16px", fontWeight: 700 }}>
+        <h3 style={{ color: "#FF8C00", marginBottom: "16px", fontWeight: 700 }}>
           All Offer Letters
         </h3>
 
         {loading ? (
-          <p style={{ color: "#9B9EC2", textAlign: "center" }}>Loading...</p>
+          <p style={{ color: "#64748B", textAlign: "center" }}>Loading...</p>
         ) : offers.length === 0 ? (
-          <p style={{ color: "#9B9EC2", textAlign: "center" }}>No offer letters yet</p>
+          <p style={{ color: "#64748B", textAlign: "center" }}>No offer letters yet</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid #2A2D3E" }}>
+                <tr style={{ borderBottom: "1px solid #EAF4FF" }}>
                   {["Ref #", "Candidate", "Designation", "Dept", "Offer Date", "Joining Date", "Status", "Actions"].map((h) => (
                     <th
                       key={h}
                       style={{
-                        color: "#9B9EC2",
+                        color: "#64748B",
                         fontWeight: 600,
                         padding: "10px 12px",
                         textAlign: "left",
@@ -399,23 +399,23 @@ export default function AdminOfferLetters() {
 
               <tbody>
                 {offers.map((o) => (
-                  <tr key={o.id} style={{ borderBottom: "1px solid #1A1C26" }}>
-                    <td style={{ padding: "12px", color: "#D4AF37", fontFamily: "monospace" }}>
+                  <tr key={o.id} style={{ borderBottom: "1px solid #F5F7FA" }}>
+                    <td style={{ padding: "12px", color: "#FF8C00", fontFamily: "monospace" }}>
                       {o.reference_number}
                     </td>
 
                     <td style={{ padding: "12px" }}>
                       <strong style={{ color: "#F0F2F8" }}>{o.candidate_name}</strong>
                       <br />
-                      <span style={{ color: "#9B9EC2", fontSize: "11px" }}>
+                      <span style={{ color: "#64748B", fontSize: "11px" }}>
                         {o.candidate_email}
                       </span>
                     </td>
 
                     <td style={{ padding: "12px", color: "#F0F2F8" }}>{o.designation}</td>
-                    <td style={{ padding: "12px", color: "#9B9EC2" }}>{o.department}</td>
-                    <td style={{ padding: "12px", color: "#9B9EC2" }}>{o.offer_date?.slice(0, 10)}</td>
-                    <td style={{ padding: "12px", color: "#9B9EC2" }}>{o.joining_date?.slice(0, 10)}</td>
+                    <td style={{ padding: "12px", color: "#64748B" }}>{o.department}</td>
+                    <td style={{ padding: "12px", color: "#64748B" }}>{o.offer_date?.slice(0, 10)}</td>
+                    <td style={{ padding: "12px", color: "#64748B" }}>{o.joining_date?.slice(0, 10)}</td>
 
                     <td style={{ padding: "12px" }}>
                       <span
@@ -437,9 +437,9 @@ export default function AdminOfferLetters() {
                         <button
                           onClick={() => handleGeneratePdf(o.id)}
                           style={{
-                            background: "#252836",
-                            border: "1px solid #4ADE80",
-                            color: "#4ADE80",
+                            background: "#EAF4FF",
+                            border: "1px solid #16A34A",
+                            color: "#16A34A",
                             borderRadius: "8px",
                             padding: "6px 12px",
                             cursor: "pointer",
@@ -454,7 +454,7 @@ export default function AdminOfferLetters() {
                           <button
                             onClick={() => handleDownloadPdf(o.id, o.candidate_name)}
                             style={{
-                              background: "#252836",
+                              background: "#EAF4FF",
                               border: "1px solid #60A5FA",
                               color: "#60A5FA",
                               borderRadius: "8px",
@@ -472,7 +472,7 @@ export default function AdminOfferLetters() {
                           <button
                             onClick={() => handlePreviewPdf(o.id)}
                             style={{
-                              background: "#252836",
+                              background: "#EAF4FF",
                               border: "1px solid #A78BFA",
                               color: "#A78BFA",
                               borderRadius: "8px",
@@ -490,9 +490,9 @@ export default function AdminOfferLetters() {
                           <button
                             onClick={() => handleSend(o.id)}
                             style={{
-                              background: "#252836",
-                              border: "1px solid #D4AF37",
-                              color: "#D4AF37",
+                              background: "#EAF4FF",
+                              border: "1px solid #FF8C00",
+                              color: "#FF8C00",
                               borderRadius: "8px",
                               padding: "6px 12px",
                               cursor: "pointer",
@@ -519,8 +519,8 @@ export default function AdminOfferLetters() {
             position: "fixed",
             bottom: "24px",
             right: "24px",
-            background: "#252836",
-            border: "1px solid #D4AF37",
+            background: "#EAF4FF",
+            border: "1px solid #FF8C00",
             color: "#F0F2F8",
             borderRadius: "12px",
             padding: "12px 20px",

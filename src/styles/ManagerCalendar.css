@@ -1,27 +1,27 @@
 /* Extracted from managercalendar.html — main content only (no sidebar) */
 
 :root {
-  --gold: #d4af37;
-  --gold-dim: rgba(212, 175, 55, 0.3);
-  --gold-bg: rgba(212, 175, 55, 0.08);
-  --bg-page: #030303;
-  --bg-card: #0c0d12;
-  --bg-day: #0b0c10;
-  --text-main: #ebecf0;
-  --text-muted: #9a9dc2;
-  --c-present: #4ade80;
-  --c-absent: #ef4444;
-  --c-late: #f59e0b;
+  --gold: #FF8C00;
+  --gold-dim: rgba(255, 140, 0, 0.3);
+  --gold-bg: rgba(255, 140, 0, 0.08);
+  --bg-page: #1A2B4B;
+  --bg-card: #FFFFFF;
+  --bg-day: #FFFFFF;
+  --text-main: #1A2B4B;
+  --text-muted: #64748B;
+  --c-present: #16A34A;
+  --c-absent: #DC2626;
+  --c-late: #FF8C00;
   --c-halfday: #8b5cf6;
-  --c-leave: #3b82f6;
-  --c-holiday: #d4af37;
+  --c-leave: #0D47A1;
+  --c-holiday: #FF8C00;
   --c-sunday: #b91c1c;
 }
 
 .manager-calendar-page {
   flex: 1;
   overflow-y: auto;
-  background: #0a0a0a;
+  background: #FFFFFF;
   padding: 24px 28px 48px;
   color: var(--text-main);
 }
@@ -32,7 +32,7 @@
 }
 
 .manager-calendar-page ::-webkit-scrollbar-track {
-  background: #111;
+  background: #FFFFFF;
 }
 
 .manager-calendar-page ::-webkit-scrollbar-thumb {
@@ -54,7 +54,7 @@
 .manager-calendar-page .title h1 {
   font-size: 26px;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #d4af37);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -68,7 +68,7 @@
 
 .manager-calendar-page .view-toggle {
   display: flex;
-  background: #0c0d12;
+  background: #FFFFFF;
   border: 1px solid var(--gold-dim);
   border-radius: 40px;
   padding: 4px;
@@ -85,12 +85,12 @@
   transition: 0.2s;
   font-family: "Inter", sans-serif;
   background: transparent;
-  color: #888;
+  color: #64748B;
 }
 
 .manager-calendar-page .toggle-btn.active {
   background: var(--gold);
-  color: #000;
+  color: #1A2B4B;
 }
 
 .manager-calendar-page .toggle-btn:not(.active):hover {
@@ -159,7 +159,7 @@
 .manager-calendar-page .stat-pill .sv {
   font-size: 1.7rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #fff, #f5d742);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -189,7 +189,7 @@
   align-items: center;
   gap: 7px;
   font-size: 0.77rem;
-  color: #ccc;
+  color: #64748B;
 }
 
 .manager-calendar-page .legend.personal-legend .legend-item.branch-only {
@@ -275,7 +275,7 @@
 
 .manager-calendar-page .cal-day:hover {
   transform: translateY(-2px);
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: rgba(255, 140, 0, 0.5);
 }
 
 .manager-calendar-page .cal-day.is-sunday {
@@ -284,8 +284,8 @@
 }
 
 .manager-calendar-page .cal-day.is-holiday {
-  background: rgba(212, 175, 55, 0.14);
-  border-color: rgba(212, 175, 55, 0.6);
+  background: rgba(255, 140, 0, 0.14);
+  border-color: rgba(255, 140, 0, 0.6);
 }
 
 .manager-calendar-page .cal-day.is-halfday-holiday {
@@ -359,7 +359,7 @@
   display: flex;
   justify-content: space-between;
   padding: 1px 0;
-  color: #888;
+  color: #64748B;
 }
 
 .manager-calendar-page .mini-row .val {
@@ -371,7 +371,7 @@
   bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
-  background: #1a1b24;
+  background: #FFFFFF;
   border: 1px solid var(--gold);
   border-radius: 18px;
   padding: 12px 15px;
@@ -383,7 +383,7 @@
   color: var(--text-main);
   font-size: 0.73rem;
   line-height: 1.65;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 12px 32px rgba(26, 43, 75, 0.7);
 }
 
 .manager-calendar-page .tooltip-card::after {
@@ -460,7 +460,7 @@
 .manager-calendar-page .info-table td {
   padding: 7px 6px;
   text-align: left;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.08);
 }
 
 .manager-calendar-page .info-table th {
@@ -469,7 +469,7 @@
 }
 
 .manager-calendar-page .info-table td {
-  color: #ccc;
+  color: #64748B;
 }
 
 .manager-calendar-page .personal-summary {
@@ -503,7 +503,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 2px;
-  color: #888;
+  color: #64748B;
 }
 
 .manager-calendar-page .ps-present .pv {
@@ -551,12 +551,12 @@
 }
 
 .manager-calendar-page .readonly-badge {
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(255, 140, 0, 0.08);
   border: 1px solid var(--gold-dim);
   border-radius: 40px;
   padding: 6px 16px;
   font-size: 0.75rem;
-  color: #c9a23d;
+  color: #FF8C00;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -573,11 +573,11 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #1e1a10;
+  background: #FFF4E5;
   border-left: 4px solid var(--gold);
   padding: 10px 20px;
   border-radius: 40px;
-  color: #f5e2b0;
+  color: #FFF4E5;
   z-index: 3000;
   opacity: 0;
   transition: 0.25s;

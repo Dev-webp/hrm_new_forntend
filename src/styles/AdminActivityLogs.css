@@ -3,7 +3,7 @@
 .admin-activity-logs-page {
   flex: 1;
   overflow-y: auto;
-  background: #0a0a0a;
+  background: #FFFFFF;
   padding: 24px 32px;
   display: flex;
   flex-direction: column;
@@ -11,16 +11,16 @@
 }
 
 .admin-activity-logs-page {
-  --gold: #d4af37;
-  --gold-dark: #b68b1f;
-  --gold-glow: rgba(212, 175, 55, 0.15);
-  --border-gold: rgba(212, 175, 55, 0.3);
-  --card-bg: #0f0f0f;
+  --gold: #FF8C00;
+  --gold-dark: #D97706;
+  --gold-glow: rgba(255, 140, 0, 0.15);
+  --border-gold: rgba(255, 140, 0, 0.3);
+  --card-bg: #FFFFFF;
   --text-muted: #b0b0b0;
-  --critical: #ef4444;
-  --warning: #f59e0b;
-  --success: #22c55e;
-  --info: #3b82f6;
+  --critical: #DC2626;
+  --warning: #FF8C00;
+  --success: #16A34A;
+  --info: #0D47A1;
 }
 
 .admin-activity-logs-page ::-webkit-scrollbar {
@@ -28,10 +28,10 @@
   height: 6px;
 }
 .admin-activity-logs-page ::-webkit-scrollbar-track {
-  background: #111;
+  background: #FFFFFF;
 }
 .admin-activity-logs-page ::-webkit-scrollbar-thumb {
-  background: #2a2414;
+  background: #FFF4E5;
   border-radius: 3px;
 }
 
@@ -121,7 +121,7 @@
 }
 .admin-activity-logs-page .socket-status.connected {
   border-color: rgba(34, 197, 94, 0.4);
-  color: #4ade80;
+  color: #16A34A;
   background: rgba(34, 197, 94, 0.08);
 }
 .admin-activity-logs-page .socket-status.disconnected {
@@ -135,17 +135,17 @@
   border-radius: 50%;
 }
 .admin-activity-logs-page .connected .socket-dot {
-  background: #22c55e;
+  background: #16A34A;
 }
 .admin-activity-logs-page .disconnected .socket-dot {
-  background: #ef4444;
+  background: #DC2626;
 }
 
 .admin-activity-logs-page .branch-dropdown {
   position: relative;
 }
 .admin-activity-logs-page .branch-selector {
-  background: #111216;
+  background: #FFFFFF;
   padding: 8px 20px;
   border-radius: 40px;
   border: 1px solid var(--gold);
@@ -160,7 +160,7 @@
   top: 100%;
   right: 0;
   margin-top: 8px;
-  background: #111216;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 20px;
   min-width: 200px;
@@ -178,7 +178,7 @@
   font-size: 14px;
 }
 .admin-activity-logs-page .branch-menu-item:hover {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
   color: var(--gold);
 }
 
@@ -188,7 +188,7 @@
   flex-wrap: wrap;
 }
 .admin-activity-logs-page .stat-card {
-  background: #0c0d12;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 20px;
   padding: 16px 22px;
@@ -198,7 +198,7 @@
 }
 .admin-activity-logs-page .stat-card.bump {
   border-color: var(--gold);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+  box-shadow: 0 0 20px rgba(255, 140, 0, 0.15);
   animation: bump 0.6s ease;
 }
 @keyframes bump {
@@ -212,7 +212,7 @@
 }
 .admin-activity-logs-page .stat-label {
   font-size: 12px;
-  color: #a9adc9;
+  color: #64748B;
   margin-bottom: 4px;
 }
 .admin-activity-logs-page .stat-number {
@@ -226,7 +226,7 @@
 }
 .admin-activity-logs-page .stat-delta {
   font-size: 0.65rem;
-  color: #22c55e;
+  color: #16A34A;
   margin-top: 2px;
   display: flex;
   align-items: center;
@@ -237,7 +237,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  background: #0c0d12;
+  background: #FFFFFF;
   padding: 16px 20px;
   border-radius: 20px;
   border: 1px solid var(--border-gold);
@@ -257,8 +257,8 @@
 }
 .admin-activity-logs-page .filter-group input,
 .admin-activity-logs-page .filter-group select {
-  background: #1a1c26;
-  border: 1px solid #2a2a35;
+  background: #F5F7FA;
+  border: 1px solid #EAF4FF;
   border-radius: 16px;
   padding: 8px 14px;
   color: white;
@@ -281,7 +281,7 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: #64748B;
   font-size: 0.8rem;
 }
 .admin-activity-logs-page .search-wrap input {
@@ -294,7 +294,7 @@
   align-items: flex-end;
 }
 .admin-activity-logs-page .export-btn {
-  background: #2a2414;
+  background: #FFF4E5;
   border: 1px solid var(--gold);
   border-radius: 28px;
   padding: 8px 16px;
@@ -306,11 +306,11 @@
 }
 .admin-activity-logs-page .export-btn:hover {
   background: var(--gold);
-  color: black;
+  color: #1A2B4B;
 }
 .admin-activity-logs-page .export-btn.primary {
   background: var(--gold);
-  color: #000;
+  color: #1A2B4B;
   font-weight: 600;
 }
 .admin-activity-logs-page .export-btn.primary:hover {
@@ -318,7 +318,7 @@
 }
 
 .admin-activity-logs-page .table-wrapper {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 24px;
   overflow: hidden;
@@ -338,7 +338,7 @@
 .admin-activity-logs-page .table-loading-overlay .loading-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(212, 175, 55, 0.2);
+  border: 3px solid rgba(255, 140, 0, 0.2);
   border-top-color: var(--gold);
   border-radius: 50%;
   animation: actlog-spin 0.8s linear infinite;
@@ -359,7 +359,7 @@
 .admin-activity-logs-page .log-table th {
   text-align: left;
   padding: 14px 16px;
-  background: #0c0c0c;
+  background: #FFFFFF;
   color: var(--gold);
   font-weight: 600;
   border-bottom: 1px solid var(--border-gold);
@@ -381,21 +381,21 @@
 }
 .admin-activity-logs-page .log-table td {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.07);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.07);
   vertical-align: middle;
 }
 .admin-activity-logs-page .log-table tbody tr {
   transition: background 0.15s;
 }
 .admin-activity-logs-page .log-table tbody tr:hover {
-  background: rgba(212, 175, 55, 0.04);
+  background: rgba(255, 140, 0, 0.04);
 }
 .admin-activity-logs-page .log-table tbody tr.new-row {
   animation: row-flash 1.5s ease;
 }
 @keyframes row-flash {
   0% {
-    background: rgba(212, 175, 55, 0.18);
+    background: rgba(255, 140, 0, 0.18);
   }
   100% {
     background: transparent;
@@ -478,8 +478,8 @@
 }
 .admin-activity-logs-page .user-cell .role-tag {
   font-size: 0.65rem;
-  color: #c9a23d;
-  background: rgba(212, 175, 55, 0.08);
+  color: #FF8C00;
+  background: rgba(255, 140, 0, 0.08);
   padding: 1px 7px;
   border-radius: 20px;
   display: inline-block;
@@ -494,23 +494,23 @@
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 20px;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  color: #aaa;
+  background: #EAF4FF;
+  border: 1px solid #1A2B4B;
+  color: #64748B;
 }
 .admin-activity-logs-page .details-btn {
   background: transparent;
   border: 1px solid var(--border-gold);
   border-radius: 16px;
   padding: 4px 12px;
-  color: #d4af37;
+  color: #FF8C00;
   cursor: pointer;
   font-size: 0.7rem;
   transition: 0.2s;
 }
 .admin-activity-logs-page .details-btn:hover {
   background: var(--gold);
-  color: black;
+  color: #1A2B4B;
 }
 
 .admin-activity-logs-page .pagination-bar {
@@ -519,22 +519,22 @@
   align-items: center;
   padding: 12px 16px;
   border-top: 1px solid var(--border-gold);
-  background: #0c0c0c;
+  background: #FFFFFF;
 }
 .admin-activity-logs-page .pagination-info {
   font-size: 0.75rem;
-  color: #666;
+  color: #64748B;
 }
 .admin-activity-logs-page .pagination-btns {
   display: flex;
   gap: 6px;
 }
 .admin-activity-logs-page .page-btn {
-  background: #1a1a1a;
+  background: #EAF4FF;
   border: 1px solid #2a2a2a;
   padding: 5px 12px;
   border-radius: 10px;
-  color: #aaa;
+  color: #64748B;
   cursor: pointer;
   font-size: 0.78rem;
   transition: 0.15s;
@@ -546,7 +546,7 @@
 }
 .admin-activity-logs-page .page-btn.active {
   background: var(--gold);
-  color: #000;
+  color: #1A2B4B;
   border-color: var(--gold);
   font-weight: 700;
 }
@@ -565,13 +565,13 @@
   gap: 8px;
 }
 .admin-activity-logs-page .toast {
-  background: #111216;
+  background: #FFFFFF;
   border-left: 4px solid var(--gold);
   padding: 10px 20px;
   border-radius: 12px;
-  color: #f5e2b0;
+  color: #FFF4E5;
   font-size: 0.82rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 24px rgba(26, 43, 75, 0.5);
   animation: toast-in 0.3s ease;
   max-width: 320px;
 }
@@ -597,7 +597,7 @@
 .admin-activity-logs-page .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(26, 43, 75, 0.85);
   backdrop-filter: blur(12px);
   z-index: 1000;
   display: none;
@@ -608,7 +608,7 @@
   display: flex;
 }
 .admin-activity-logs-page .modal-box {
-  background: #0d0e12;
+  background: #FFFFFF;
   border: 1px solid var(--gold);
   border-radius: 24px;
   max-width: 680px;
@@ -633,7 +633,7 @@
   margin-bottom: 20px;
 }
 .admin-activity-logs-page .meta-item {
-  background: #111216;
+  background: #FFFFFF;
   border-radius: 12px;
   padding: 12px 16px;
 }
@@ -654,7 +654,7 @@
 .admin-activity-logs-page .diff-title {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #666;
+  color: #64748B;
   letter-spacing: 1px;
   margin-bottom: 12px;
 }
@@ -698,7 +698,7 @@
   font-weight: 700;
   cursor: pointer;
   margin-top: 20px;
-  color: #000;
+  color: #1A2B4B;
   font-family: inherit;
 }
 .admin-activity-logs-page .table-message {
@@ -710,7 +710,7 @@
 .admin-activity-logs-page .table-message i {
   font-size: 2rem;
   margin-bottom: 12px;
-  color: #333;
+  color: #1A2B4B;
   display: block;
 }
 

@@ -258,7 +258,7 @@ export default function EmployeeAttendance() {
         badgeHtml = (
           <div
             className="day-badge"
-            style={{ background: "rgba(212,175,55,0.25)", color: "#e8c84a" }}
+            style={{ background: "rgba(255, 140, 0,0.25)", color: "#e8c84a" }}
           >
             🎉 {entry.name}
           </div>
@@ -475,10 +475,10 @@ export default function EmployeeAttendance() {
       else if (data.status === "half_day") statusText = "HALF DAY";
       const color =
         data.status === "full_day"
-          ? "#4ADE80"
+          ? "#16A34A"
           : data.status === "half_day"
             ? "#FBB824"
-            : "#aaa";
+            : "#64748B";
       return {
         statusHtml: statusText,
         color,
@@ -489,7 +489,7 @@ export default function EmployeeAttendance() {
     }
     return {
       statusHtml: "NOT CHECKED IN",
-      color: "#aaa",
+      color: "#64748B",
       timings: "No active session",
       checkInDisabled: false,
       checkOutDisabled: true,

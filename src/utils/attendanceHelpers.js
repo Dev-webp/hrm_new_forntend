@@ -43,13 +43,13 @@ export function getStatusMeta(status) {
   if (s === "full_day") {
     return {
       label: "FULL DAY",
-      style: { background: "rgba(74,222,128,0.2)", color: "#4ADE80" },
+      style: { background: "rgba(74,222,128,0.2)", color: "#16A34A" },
     };
   }
   if (s === "half_day") {
     return {
       label: "HALF DAY",
-      style: { background: "rgba(255,160,0,0.2)", color: "#FFB347" },
+      style: { background: "rgba(255,160,0,0.2)", color: "#FF8C00" },
     };
   }
   return {
@@ -65,7 +65,7 @@ export function getLatePillMeta(emp) {
       label: "Absent",
       style: {
         background: "rgba(255,70,70,0.15)",
-        color: "#FF6B6B",
+        color: "#DC2626",
         padding: "6px 12px",
         borderRadius: "30px",
         fontWeight: 700,
@@ -78,7 +78,7 @@ export function getLatePillMeta(emp) {
       label: `🔴 ${emp.late_minutes} min`,
       style: {
         background: "rgba(255,70,70,0.18)",
-        color: "#FF6B6B",
+        color: "#DC2626",
         padding: "6px 12px",
         borderRadius: "30px",
         fontWeight: 700,
@@ -94,7 +94,7 @@ export function getLatePillMeta(emp) {
     label: "On Time",
     style: {
       background: "rgba(74,222,128,0.15)",
-      color: "#4ADE80",
+      color: "#16A34A",
       padding: "6px 12px",
       borderRadius: "30px",
       fontWeight: 600,
@@ -106,12 +106,12 @@ export function getLatePillMeta(emp) {
 export function getLateEmployeeStatusMeta(status) {
   const finalStatus = (status || "absent").toLowerCase();
   if (finalStatus === "full_day") {
-    return { label: "FULL DAY", color: "#4ADE80", bg: "rgba(74,222,128,0.2)" };
+    return { label: "FULL DAY", color: "#16A34A", bg: "rgba(74,222,128,0.2)" };
   }
   if (finalStatus === "half_day") {
-    return { label: "HALF DAY", color: "#FFB347", bg: "rgba(255,160,0,0.2)" };
+    return { label: "HALF DAY", color: "#FF8C00", bg: "rgba(255,160,0,0.2)" };
   }
-  return { label: "ABSENT", color: "#FF6B6B", bg: "rgba(255,70,70,0.2)" };
+  return { label: "ABSENT", color: "#DC2626", bg: "rgba(255,70,70,0.2)" };
 }
 
 export function filterAttendanceRows(records, deptFilter, search) {

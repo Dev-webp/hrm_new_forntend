@@ -3,20 +3,20 @@
 .admin-notifications-page {
   flex: 1;
   overflow-y: auto;
-  background: #0a0a0a;
+  background: #FFFFFF;
 }
 
 .admin-notifications-page :root,
 .admin-notifications-page {
-  --gold: #d4af37;
-  --border-gold: rgba(212, 175, 55, 0.3);
+  --gold: #FF8C00;
+  --border-gold: rgba(255, 140, 0, 0.3);
 }
 
 .admin-notifications-page ::-webkit-scrollbar {
   width: 6px;
 }
 .admin-notifications-page ::-webkit-scrollbar-track {
-  background: #111;
+  background: #FFFFFF;
 }
 .admin-notifications-page ::-webkit-scrollbar-thumb {
   background: var(--gold);
@@ -40,14 +40,14 @@
 .admin-notifications-page .topbar h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #d4af37);
+  background: linear-gradient(135deg, #fff, #FF8C00);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 .admin-notifications-page .topbar p {
   font-size: 0.8rem;
-  color: #9a9dc2;
+  color: #64748B;
   margin-top: 3px;
 }
 .admin-notifications-page .topbar-right {
@@ -60,8 +60,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #0f0f0f;
-  border: 1px solid #333;
+  background: #FFFFFF;
+  border: 1px solid #1A2B4B;
   padding: 6px 14px;
   border-radius: 40px;
   font-size: 0.72rem;
@@ -70,15 +70,15 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #555;
+  background: #64748B;
 }
 .admin-notifications-page .conn-dot.connected {
-  background: #4ade80;
-  box-shadow: 0 0 6px #4ade80;
+  background: #16A34A;
+  box-shadow: 0 0 6px #16A34A;
   animation: notif-pulse 1.5s infinite;
 }
 .admin-notifications-page .conn-dot.disconnected {
-  background: #ef4444;
+  background: #DC2626;
 }
 @keyframes notif-pulse {
   0%,
@@ -103,15 +103,15 @@
   transition: 0.2s;
 }
 .admin-notifications-page .mark-all-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
 }
 
 .admin-notifications-page .clear-btn {
   background: transparent;
-  border: 1px solid #333;
+  border: 1px solid #1A2B4B;
   padding: 7px 16px;
   border-radius: 40px;
-  color: #666;
+  color: #64748B;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -119,8 +119,8 @@
   transition: 0.2s;
 }
 .admin-notifications-page .clear-btn:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 .admin-notifications-page .content {
@@ -134,7 +134,7 @@
   flex-wrap: wrap;
 }
 .admin-notifications-page .stat-card {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 20px;
   padding: 14px 20px;
@@ -147,12 +147,12 @@
   border-color: var(--gold);
 }
 .admin-notifications-page .stat-card.active-filter {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(255, 140, 0, 0.1);
   border-color: var(--gold);
 }
 .admin-notifications-page .stat-label {
   font-size: 0.68rem;
-  color: #888;
+  color: #64748B;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -164,7 +164,7 @@
 }
 .admin-notifications-page .stat-sub {
   font-size: 0.65rem;
-  color: #555;
+  color: #64748B;
 }
 
 .admin-notifications-page .filter-row {
@@ -175,27 +175,27 @@
   align-items: center;
 }
 .admin-notifications-page .filter-chip {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid transparent;
   padding: 6px 16px;
   border-radius: 40px;
   font-size: 0.78rem;
   cursor: pointer;
-  color: #888;
+  color: #64748B;
   transition: 0.2s;
   font-family: inherit;
 }
 .admin-notifications-page .filter-chip.active {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
   border-color: var(--gold);
   color: var(--gold);
 }
 .admin-notifications-page .filter-chip:hover {
   border-color: var(--border-gold);
-  color: #ddd;
+  color: #64748B;
 }
 .admin-notifications-page .search-box {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 40px;
   padding: 7px 18px;
@@ -221,7 +221,7 @@
 }
 
 .admin-notifications-page .notif-item {
-  background: #0f0f0f;
+  background: #FFFFFF;
   border: 1px solid var(--border-gold);
   border-radius: 18px;
   padding: 16px 20px;
@@ -244,7 +244,7 @@
 }
 .admin-notifications-page .notif-item.unread {
   border-left: 3px solid var(--gold);
-  background: #111008;
+  background: #EAF4FF;
 }
 .admin-notifications-page .notif-item.new-flash {
   animation: flash 0.6s ease;
@@ -252,14 +252,14 @@
 @keyframes flash {
   0%,
   100% {
-    background: #0f0f0f;
+    background: #FFFFFF;
   }
   50% {
-    background: rgba(212, 175, 55, 0.12);
+    background: rgba(255, 140, 0, 0.12);
   }
 }
 .admin-notifications-page .notif-item:hover {
-  border-color: rgba(212, 175, 55, 0.5);
+  border-color: rgba(255, 140, 0, 0.5);
 }
 
 .admin-notifications-page .notif-icon {
@@ -274,11 +274,11 @@
 }
 .admin-notifications-page .icon-login {
   background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
+  color: #16A34A;
 }
 .admin-notifications-page .icon-logout {
   background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
+  color: #DC2626;
 }
 .admin-notifications-page .icon-checkin {
   background: rgba(59, 130, 246, 0.15);
@@ -293,7 +293,7 @@
   color: #fbb824;
 }
 .admin-notifications-page .icon-leave {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(255, 140, 0, 0.15);
   color: var(--gold);
 }
 .admin-notifications-page .icon-break {
@@ -302,11 +302,11 @@
 }
 .admin-notifications-page .icon-payslip {
   background: rgba(74, 222, 128, 0.12);
-  color: #4ade80;
+  color: #16A34A;
 }
 .admin-notifications-page .icon-default {
   background: rgba(255, 255, 255, 0.06);
-  color: #888;
+  color: #64748B;
 }
 
 .admin-notifications-page .notif-body {
@@ -315,7 +315,7 @@
 }
 .admin-notifications-page .notif-desc {
   font-size: 0.85rem;
-  color: #ddd;
+  color: #64748B;
   line-height: 1.4;
 }
 .admin-notifications-page .notif-meta {
@@ -327,19 +327,19 @@
 }
 .admin-notifications-page .notif-time {
   font-size: 0.7rem;
-  color: #555;
+  color: #64748B;
 }
 .admin-notifications-page .notif-branch {
   font-size: 0.7rem;
-  background: #1a1a1a;
+  background: #EAF4FF;
   color: var(--gold);
   padding: 2px 8px;
   border-radius: 12px;
 }
 .admin-notifications-page .action-badge {
   font-size: 0.65rem;
-  background: rgba(212, 175, 55, 0.1);
-  color: #aaa;
+  background: rgba(255, 140, 0, 0.1);
+  color: #64748B;
   padding: 2px 8px;
   border-radius: 12px;
   text-transform: uppercase;
@@ -357,7 +357,7 @@
   border: 1px solid #2a2a2a;
   padding: 4px 12px;
   border-radius: 20px;
-  color: #666;
+  color: #64748B;
   font-size: 0.72rem;
   cursor: pointer;
   white-space: nowrap;
@@ -369,7 +369,7 @@
 }
 .admin-notifications-page .btn-del {
   background: transparent;
-  border: 1px solid #1a1a1a;
+  border: 1px solid #EAF4FF;
   padding: 4px 10px;
   border-radius: 20px;
   color: #444;
@@ -378,8 +378,8 @@
   transition: 0.2s;
 }
 .admin-notifications-page .btn-del:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 .admin-notifications-page .unread-dot {
@@ -396,7 +396,7 @@
 .admin-notifications-page .empty-state {
   text-align: center;
   padding: 60px;
-  color: #555;
+  color: #64748B;
 }
 .admin-notifications-page .empty-state i {
   font-size: 3rem;
@@ -407,11 +407,11 @@
 
 .admin-notifications-page .live-badge-topbar {
   background: #0f1a0a;
-  border: 1px solid #4ade80;
+  border: 1px solid #16A34A;
   padding: 6px 14px;
   border-radius: 40px;
   font-size: 0.72rem;
-  color: #4ade80;
+  color: #16A34A;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -420,17 +420,17 @@
 .admin-notifications-page .live-pulse {
   width: 7px;
   height: 7px;
-  background: #4ade80;
+  background: #16A34A;
   border-radius: 50%;
   animation: notif-pulse 1.2s infinite;
-  box-shadow: 0 0 5px #4ade80;
+  box-shadow: 0 0 5px #16A34A;
 }
 
 .admin-notifications-page .toast {
   position: fixed;
   bottom: 28px;
   right: 28px;
-  background: #111;
+  background: #FFFFFF;
   border: 1px solid var(--gold);
   color: var(--gold);
   padding: 10px 22px;
@@ -448,12 +448,12 @@
   transform: translateY(0);
 }
 .admin-notifications-page .toast.success {
-  border-color: #4ade80;
-  color: #4ade80;
+  border-color: #16A34A;
+  color: #16A34A;
 }
 .admin-notifications-page .toast.error {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 @media (max-width: 900px) {

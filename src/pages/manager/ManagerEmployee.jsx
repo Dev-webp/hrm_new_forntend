@@ -180,7 +180,6 @@ export default function ManagerEmployee() {
 
   const totalEmployees = employees.length;
   const activeEmployees = employees.filter((e) => e.status === "active").length;
-  const activeRate = totalEmployees ? Math.round((activeEmployees / totalEmployees) * 100) : 0;
   const deptCount = new Set(employees.map((e) => e.department)).size;
 
   return (
@@ -189,7 +188,7 @@ export default function ManagerEmployee() {
         <div className="header">
           <div className="title">
             <h1>
-              <i className="fas fa-users"></i> Employee Command Center
+              Employee Management
             </h1>
             <p>
               Branch: <span>{branch}</span> · Your team
@@ -212,9 +211,14 @@ export default function ManagerEmployee() {
             <div className="stat-trend">Your branch team</div>
           </div>
           <div className="stat-card">
-            <div className="stat-label">Active Rate</div>
-            <div className="stat-number">{activeRate}%</div>
+            <div className="stat-label">Active Employees</div>
+            <div className="stat-number">{activeEmployees}</div>
             <div className="stat-trend">Currently active</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Inactive Employees</div>
+            <div className="stat-number">{totalEmployees - activeEmployees}</div>
+            <div className="stat-trend neutral">Require review</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Departments</div>
@@ -225,7 +229,7 @@ export default function ManagerEmployee() {
 
         <div className="filter-bar">
           <div className="search-box">
-            <i className="fas fa-search" style={{ color: "#D4AF37" }}></i>
+            <i className="fas fa-search" style={{ color: "#FF8C00" }}></i>
             <input
               type="text"
               placeholder="Search by name, department, email..."
@@ -342,7 +346,7 @@ export default function ManagerEmployee() {
             </div>
             <div className="form-group">
               <label>Branch</label>
-              <input type="text" value={branch} readOnly style={{ background: "#2A2A35" }} />
+              <input type="text" value={branch} readOnly style={{ background: "#EAF4FF" }} />
             </div>
             <div className="form-group">
               <label>Salary (USD)</label>
@@ -360,7 +364,7 @@ export default function ManagerEmployee() {
                 type="text"
                 value={editingId ? selectedEmployee?.employee_code : "Auto-generated"}
                 readOnly
-                style={{ background: "#2A2A35" }}
+                style={{ background: "#EAF4FF" }}
               />
             </div>
             <div className="form-group">
@@ -467,7 +471,7 @@ export default function ManagerEmployee() {
                   <div className="detail-label">Status</div>
                   <div className="detail-value">
                     {selectedEmployee.status === "active" ? (
-                      <span style={{ color: "#4ADE80" }}>● Active</span>
+                      <span style={{ color: "#16A34A" }}>● Active</span>
                     ) : (
                       <span style={{ color: "#F87171" }}>● Inactive</span>
                     )}

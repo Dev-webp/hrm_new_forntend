@@ -66,7 +66,7 @@ function statusBadgeClass(r) {
   return "b-present";
 }
 function heatmapColor(r) {
-  if (!r) return "#1A1C26";
+  if (!r) return "#F5F7FA";
 
   if (r.status === "sunday") return "#2563eb";
   if (r.status === "holiday") return "#2A2D42";
@@ -405,7 +405,7 @@ export default function ManagerAttendanceAnalysis() {
           datasets: [{
             label: "Check-ins",
             data,
-            backgroundColor: data.map((_, i) => i < 3 ? "#4ADE80" : i < 5 ? "#FFB347" : "#FF6B6B"),
+            backgroundColor: data.map((_, i) => i < 3 ? "#16A34A" : i < 5 ? "#FF8C00" : "#DC2626"),
             borderRadius: 4,
           }],
         },
@@ -413,8 +413,8 @@ export default function ManagerAttendanceAnalysis() {
           responsive: true,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: "#9B9EC2", font: { size: 10 } }, grid: { color: "#252836" } },
-            y: { ticks: { color: "#9B9EC2", font: { size: 10 } }, grid: { color: "#252836" } },
+            x: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#EAF4FF" } },
+            y: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#EAF4FF" } },
           },
         },
       });
@@ -439,7 +439,7 @@ export default function ManagerAttendanceAnalysis() {
           datasets: [{
             label: "Break (min)",
             data,
-            backgroundColor: data.map((v) => v > 60 ? "#FF6B6B" : "#4ADE80"),
+            backgroundColor: data.map((v) => v > 60 ? "#DC2626" : "#16A34A"),
             borderRadius: 4,
           }],
         },
@@ -447,8 +447,8 @@ export default function ManagerAttendanceAnalysis() {
           responsive: true,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: "#9B9EC2", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#252836" } },
-            y: { ticks: { color: "#9B9EC2", font: { size: 10 } }, grid: { color: "#252836" } },
+            x: { ticks: { color: "#64748B", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#EAF4FF" } },
+            y: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#EAF4FF" } },
           },
         },
       });
@@ -476,20 +476,20 @@ export default function ManagerAttendanceAnalysis() {
             datasets: [{
               label: "Work Hours",
               data: workDays.map((r) => r.workHours.toFixed(2)),
-              borderColor: "#D4AF37",
-              backgroundColor: "rgba(212,175,55,0.1)",
+              borderColor: "#FF8C00",
+              backgroundColor: "rgba(255, 140, 0,0.1)",
               borderWidth: 2,
               tension: 0.3,
               fill: true,
-              pointBackgroundColor: "#D4AF37",
+              pointBackgroundColor: "#FF8C00",
             }],
           },
           options: {
             responsive: true,
-            plugins: { legend: { labels: { color: "#9B9EC2" } } },
+            plugins: { legend: { labels: { color: "#64748B" } } },
             scales: {
-              x: { ticks: { color: "#9B9EC2", font: { size: 9 } }, grid: { color: "#252836" } },
-              y: { ticks: { color: "#9B9EC2" }, grid: { color: "#252836" }, min: 0, max: 10 },
+              x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#EAF4FF" } },
+              y: { ticks: { color: "#64748B" }, grid: { color: "#EAF4FF" }, min: 0, max: 10 },
             },
           },
         });
@@ -504,7 +504,7 @@ export default function ManagerAttendanceAnalysis() {
             datasets: [{
               label: "Break (min)",
               data: workDays.map((r) => r.breaks),
-              backgroundColor: workDays.map((r) => r.breaks > 60 ? "#FF6B6B" : "#4ADE80"),
+              backgroundColor: workDays.map((r) => r.breaks > 60 ? "#DC2626" : "#16A34A"),
               borderRadius: 4,
             }],
           },
@@ -512,8 +512,8 @@ export default function ManagerAttendanceAnalysis() {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-              x: { ticks: { color: "#9B9EC2", font: { size: 9 } }, grid: { color: "#252836" } },
-              y: { ticks: { color: "#9B9EC2" }, grid: { color: "#252836" } },
+              x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#EAF4FF" } },
+              y: { ticks: { color: "#64748B" }, grid: { color: "#EAF4FF" } },
             },
           },
         });
@@ -541,14 +541,14 @@ export default function ManagerAttendanceAnalysis() {
                 breakSummaryKpi.sumB2,
                 breakSummaryKpi.sumB3,
               ],
-              backgroundColor: ["#D4AF37","#4ADE80","#60A5FA","#A78BFA"],
+              backgroundColor: ["#FF8C00","#16A34A","#60A5FA","#A78BFA"],
               borderWidth: 0,
             }],
           },
           options: {
             responsive: true,
             plugins: {
-              legend: { labels: { color: "#9B9EC2" }, position: "bottom" },
+              legend: { labels: { color: "#64748B" }, position: "bottom" },
             },
           },
         });
@@ -564,8 +564,8 @@ export default function ManagerAttendanceAnalysis() {
             datasets: [{
               label: "Total break (min)",
               data: workDays.map((r) => r.breaks),
-              borderColor: "#D4AF37",
-              backgroundColor: "rgba(212,175,55,0.08)",
+              borderColor: "#FF8C00",
+              backgroundColor: "rgba(255, 140, 0,0.08)",
               borderWidth: 2,
               tension: 0.3,
               fill: true,
@@ -573,7 +573,7 @@ export default function ManagerAttendanceAnalysis() {
             }, {
               label: "60 min limit",
               data: workDays.map(() => 60),
-              borderColor: "#FF6B6B",
+              borderColor: "#DC2626",
               borderDash: [6, 3],
               borderWidth: 1,
               pointRadius: 0,
@@ -581,10 +581,10 @@ export default function ManagerAttendanceAnalysis() {
           },
           options: {
             responsive: true,
-            plugins: { legend: { labels: { color: "#9B9EC2" } } },
+            plugins: { legend: { labels: { color: "#64748B" } } },
             scales: {
-              x: { ticks: { color: "#9B9EC2", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#252836" } },
-              y: { ticks: { color: "#9B9EC2" }, grid: { color: "#252836" } },
+              x: { ticks: { color: "#64748B", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#EAF4FF" } },
+              y: { ticks: { color: "#64748B" }, grid: { color: "#EAF4FF" } },
             },
           },
         });
@@ -639,7 +639,7 @@ export default function ManagerAttendanceAnalysis() {
               <input
                 type="text"
                 placeholder="Search employee..."
-                style={{ background: "#1A1C26", border: "none", borderRadius: "40px", padding: "6px 14px", color: "white" }}
+                style={{ background: "#F5F7FA", border: "none", borderRadius: "40px", padding: "6px 14px", color: "white" }}
               />
             </div>
             <div className="icon-btn"><i className="fas fa-bell"></i></div>
@@ -651,10 +651,10 @@ export default function ManagerAttendanceAnalysis() {
 
         {/* Page title */}
         <div style={{ marginBottom: "20px" }}>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, background: "linear-gradient(135deg,#f9e0a0,#d4af37)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, background: "linear-gradient(135deg,#FFF4E5,#FF8C00)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
             Manager Attendance Analysis
           </h1>
-          <p style={{ color: "#9B9EC2", fontSize: "13px", marginTop: "4px" }}>
+          <p style={{ color: "#64748B", fontSize: "13px", marginTop: "4px" }}>
             Your branch only — {branch} Branch
           </p>
         </div>
@@ -684,7 +684,7 @@ export default function ManagerAttendanceAnalysis() {
                 ["Employees","Total Present","Total Late","Break Exceeded"].map((label) => (
                   <div key={label} className="kpi-tile">
                     <div className="label">{label}</div>
-                    <div style={{ height: "36px", background: "linear-gradient(90deg,#1a1c26,#252836,#1a1c26)", backgroundSize: "200%", animation: "shimmer 1.4s infinite", borderRadius: "8px", marginTop: "6px" }}></div>
+                    <div style={{ height: "36px", background: "linear-gradient(90deg,#F5F7FA,#EAF4FF,#F5F7FA)", backgroundSize: "200%", animation: "shimmer 1.4s infinite", borderRadius: "8px", marginTop: "6px" }}></div>
                   </div>
                 ))
               ) : summary ? (
@@ -707,7 +707,7 @@ export default function ManagerAttendanceAnalysis() {
                     {summaryLoading
                       ? Array(5).fill(null).map((_, i) => (
                           <tr key={i}>{Array(7).fill(null).map((_, j) => (
-                            <td key={j}><div style={{ height: "14px", background: "#252836", borderRadius: "6px" }}></div></td>
+                            <td key={j}><div style={{ height: "14px", background: "#EAF4FF", borderRadius: "6px" }}></div></td>
                           ))}</tr>
                         ))
                       : summary && summary.employees.length
@@ -715,14 +715,14 @@ export default function ManagerAttendanceAnalysis() {
                             <tr key={e.user_id}>
                               <td><strong>{e.full_name}</strong><br /><span style={{ fontSize: "10px" }}>{e.department}</span></td>
                               <td>{e.department}</td>
-                              <td style={{ color: "#4ADE80" }}>{e.present_days}</td>
-                              <td style={{ color: "#FFB347" }}>{e.late_days}</td>
-                              <td style={{ color: "#FF6B6B" }}>{e.absent_days}</td>
+                              <td style={{ color: "#16A34A" }}>{e.present_days}</td>
+                              <td style={{ color: "#FF8C00" }}>{e.late_days}</td>
+                              <td style={{ color: "#DC2626" }}>{e.absent_days}</td>
                               <td>{e.avg_break_mins}m</td>
                               <td>{e.break_exceeded_days}</td>
                             </tr>
                           ))
-                        : <tr><td colSpan="7" style={{ color: "#9B9EC2", textAlign: "center" }}>No data</td></tr>}
+                        : <tr><td colSpan="7" style={{ color: "#64748B", textAlign: "center" }}>No data</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -786,13 +786,13 @@ export default function ManagerAttendanceAnalysis() {
                 )}
                 <div className="chart-row">
                   <div className="card" style={{ maxHeight: "320px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#D4AF37", marginBottom: "12px", paddingLeft: "4px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#FF8C00", marginBottom: "12px", paddingLeft: "4px" }}>
                       Check-In Time (Hour of Day)
                     </div>
                     <canvas ref={checkinChartRef}></canvas>
                   </div>
                   <div className="card" style={{ maxHeight: "320px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#D4AF37", marginBottom: "12px", paddingLeft: "4px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#FF8C00", marginBottom: "12px", paddingLeft: "4px" }}>
                       Daily Break Duration (min)
                     </div>
                     <canvas ref={breakBarChartRef}></canvas>
@@ -933,26 +933,26 @@ if (isSunday || r.status === "sunday") {
                       const isWork = !["absent","sunday","holiday"].includes(r.status);
                       return (
                         <div key={r.date} style={{
-                          background: "#1A1C26", borderRadius: "12px", padding: "12px",
-                          border: r.lateMinutes > 0 ? "1px solid #FFB34744" : isWork ? "1px solid #4ADE8022" : "1px solid #252836",
+                          background: "#F5F7FA", borderRadius: "12px", padding: "12px",
+                          border: r.lateMinutes > 0 ? "1px solid #FF8C0044" : isWork ? "1px solid #16A34A22" : "1px solid #EAF4FF",
                         }}>
                           <div style={{ fontSize: "11px", color: "#7B8199" }}>{dayName(r.date)}</div>
-                          <div style={{ fontSize: "13px", color: "#D4AF37", fontWeight: 700 }}>{formatDateReadable(r.date)}</div>
+                          <div style={{ fontSize: "13px", color: "#FF8C00", fontWeight: 700 }}>{formatDateReadable(r.date)}</div>
                           <div style={{ marginTop: "8px" }}>
                             <span className={`badge ${statusBadgeClass(r)}`}>{st}</span>
                           </div>
                           {isWork && (
                             <>
-                              <div style={{ fontSize: "11px", color: "#9B9EC2", marginTop: "8px" }}>
+                              <div style={{ fontSize: "11px", color: "#64748B", marginTop: "8px" }}>
                                 {r.checkIn !== "--" ? `In: ${r.checkIn}` : "No check-in"}
                               </div>
-                              <div style={{ fontSize: "11px", color: "#9B9EC2" }}>
+                              <div style={{ fontSize: "11px", color: "#64748B" }}>
                                 {r.checkOut !== "--" ? `Out: ${r.checkOut}` : "No check-out"}
                               </div>
                               <div style={{ fontSize: "12px", fontWeight: 700, marginTop: "4px" }}>
                                 {r.workHours > 0 ? `${r.workHours.toFixed(1)}h` : "--"}
                                 {r.breaks > 0 && (
-                                  <span style={{ fontSize: "10px", color: r.breaks > 60 ? "#FF6B6B" : "#4ADE80", marginLeft: "6px" }}>
+                                  <span style={{ fontSize: "10px", color: r.breaks > 60 ? "#DC2626" : "#16A34A", marginLeft: "6px" }}>
                                     {r.breaks}m break
                                   </span>
                                 )}
@@ -963,7 +963,7 @@ if (isSunday || r.status === "sunday") {
                       );
                     })}
                     {currentWeekRecords.length === 0 && (
-                      <div style={{ color: "#9B9EC2", fontSize: "13px", gridColumn: "1/-1", padding: "12px" }}>
+                      <div style={{ color: "#64748B", fontSize: "13px", gridColumn: "1/-1", padding: "12px" }}>
                         No data for this week
                       </div>
                     )}
@@ -971,11 +971,11 @@ if (isSunday || r.status === "sunday") {
 
                   <div className="chart-row">
                     <div className="card">
-                      <div style={{ fontSize: "12px", color: "#D4AF37", marginBottom: "8px" }}>Work Hours This Week</div>
+                      <div style={{ fontSize: "12px", color: "#FF8C00", marginBottom: "8px" }}>Work Hours This Week</div>
                       <canvas ref={weekHoursChartRef}></canvas>
                     </div>
                     <div className="card">
-                      <div style={{ fontSize: "12px", color: "#D4AF37", marginBottom: "8px" }}>Break Minutes This Week</div>
+                      <div style={{ fontSize: "12px", color: "#FF8C00", marginBottom: "8px" }}>Break Minutes This Week</div>
                       <canvas ref={weekBreakChartRef}></canvas>
                     </div>
                   </div>
@@ -1006,22 +1006,22 @@ if (isSunday || r.status === "sunday") {
                       <tbody>
                         {filteredDailyLog.map((r) => (
                           <tr key={r.date}>
-                            <td style={{ color: "#D4AF37" }}>{formatDateReadable(r.date)}</td>
-                            <td style={{ color: "#9B9EC2" }}>{dayName(r.date)}</td>
+                            <td style={{ color: "#FF8C00" }}>{formatDateReadable(r.date)}</td>
+                            <td style={{ color: "#64748B" }}>{dayName(r.date)}</td>
                             <td><span className={`badge ${statusBadgeClass(r)}`}>{statusLabel(r)}</span></td>
                             <td>{r.checkIn !== "--" ? formatTimeDisplay(r.checkIn) : "--"}</td>
                             <td>{r.checkOut !== "--" ? formatTimeDisplay(r.checkOut) : "--"}</td>
                             <td style={{ fontWeight: 700 }}>{r.workHours > 0 ? r.workHours.toFixed(1) + "h" : "--"}</td>
-                            <td style={{ color: r.lateMinutes > 0 ? "#FFB347" : "#7B8199" }}>
+                            <td style={{ color: r.lateMinutes > 0 ? "#FF8C00" : "#7B8199" }}>
                               {r.lateMinutes > 0 ? r.lateMinutes + " min" : "--"}
                             </td>
-                            <td style={{ color: r.breaks > 60 ? "#FF6B6B" : "#4ADE80" }}>
+                            <td style={{ color: r.breaks > 60 ? "#DC2626" : "#16A34A" }}>
                               {r.breaks > 0 ? r.breaks : "--"}
                             </td>
                           </tr>
                         ))}
                         {filteredDailyLog.length === 0 && (
-                          <tr><td colSpan="8" style={{ color: "#9B9EC2", textAlign: "center" }}>No records</td></tr>
+                          <tr><td colSpan="8" style={{ color: "#64748B", textAlign: "center" }}>No records</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -1036,7 +1036,7 @@ if (isSunday || r.status === "sunday") {
                 {breakSummaryKpi && (
                   <div className="kpi-grid">
                     <div className="kpi-tile"><div className="label">Avg Daily Break</div><div className="value">{breakSummaryKpi.avg}m</div></div>
-                    <div className="kpi-tile"><div className="label">Days &gt;60m</div><div className="value" style={{ color: "#FF6B6B" }}>{breakSummaryKpi.exceed}</div></div>
+                    <div className="kpi-tile"><div className="label">Days &gt;60m</div><div className="value" style={{ color: "#DC2626" }}>{breakSummaryKpi.exceed}</div></div>
                     <div className="kpi-tile"><div className="label">Break1 Total</div><div className="value">{breakSummaryKpi.sumB1}m</div></div>
                     <div className="kpi-tile"><div className="label">Lunch Total</div><div className="value">{breakSummaryKpi.sumL}m</div></div>
                     <div className="kpi-tile"><div className="label">Break2 Total</div><div className="value">{breakSummaryKpi.sumB2}m</div></div>
@@ -1083,8 +1083,8 @@ if (isSunday || r.status === "sunday") {
                             : <span style={{ color: "#3A3D55" }}>0m</span>;
                           return (
                             <tr key={r.date} style={isAbsent ? { opacity: 0.4 } : {}}>
-                              <td style={{ color: "#D4AF37" }}>{formatDateReadable(r.date)}</td>
-                              <td style={{ color: "#9B9EC2" }}>{dayName(r.date)}</td>
+                              <td style={{ color: "#FF8C00" }}>{formatDateReadable(r.date)}</td>
+                              <td style={{ color: "#64748B" }}>{dayName(r.date)}</td>
                               <td>{bCell(r.breakDetails?.b1?.in)}</td>
                               <td>{bCell(r.breakDetails?.b1?.out)}</td>
                               <td>{dCell(r.breakMins?.b1 || 0)}</td>
@@ -1097,8 +1097,8 @@ if (isSunday || r.status === "sunday") {
                               <td>{bCell(r.breakDetails?.b3?.in)}</td>
                               <td>{bCell(r.breakDetails?.b3?.out)}</td>
                               <td>{dCell(r.breakMins?.b3 || 0)}</td>
-                              <td style={{ fontWeight: 700, color: r.breaks > 60 ? "#FF6B6B" : "#F0F2F8" }}>{r.breaks || 0}m</td>
-                              <td style={{ color: remaining <= 0 ? "#FF6B6B" : "#4ADE80" }}>{remaining}m</td>
+                              <td style={{ fontWeight: 700, color: r.breaks > 60 ? "#DC2626" : "#F0F2F8" }}>{r.breaks || 0}m</td>
+                              <td style={{ color: remaining <= 0 ? "#DC2626" : "#16A34A" }}>{remaining}m</td>
                               <td>
                                 {isAbsent
                                   ? <span className="badge b-absent">Absent</span>
@@ -1110,7 +1110,7 @@ if (isSunday || r.status === "sunday") {
                           );
                         })}
                         {filteredBreakDetail.length === 0 && (
-                          <tr><td colSpan="17" style={{ color: "#9B9EC2", textAlign: "center" }}>No records</td></tr>
+                          <tr><td colSpan="17" style={{ color: "#64748B", textAlign: "center" }}>No records</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -1151,7 +1151,7 @@ if (isSunday || r.status === "sunday") {
                                 <td><span className="badge b-present">{l.status}</span></td>
                               </tr>
                             ))
-                          : <tr><td colSpan="6" style={{ color: "#9B9EC2", textAlign: "center" }}>No approved leaves</td></tr>}
+                          : <tr><td colSpan="6" style={{ color: "#64748B", textAlign: "center" }}>No approved leaves</td></tr>}
                       </tbody>
                     </table>
                   </div>

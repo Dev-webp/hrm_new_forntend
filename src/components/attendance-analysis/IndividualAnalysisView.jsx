@@ -309,7 +309,7 @@ function IndividualAnalysisView({
                   <div style={{ fontSize: 14, fontWeight: 700 }}>
                     {card.dayNum}
                   </div>
-                  <div style={{ color: "#FF6B6B" }}>Absent</div>
+                  <div style={{ color: "#DC2626" }}>Absent</div>
                 </div>
               ) : (
                 <div className="week-day-card" key={card.key}>
@@ -317,7 +317,7 @@ function IndividualAnalysisView({
                   <div style={{ fontSize: 14, fontWeight: 700 }}>
                     {card.dayNum}
                   </div>
-                  <div style={{ fontSize: 10, color: "#9B9EC2" }}>
+                  <div style={{ fontSize: 10, color: "#64748B" }}>
                     {formatTimeDisplay(card.checkIn)}→
                     {formatTimeDisplay(card.checkOut)}
                   </div>
@@ -385,10 +385,10 @@ function IndividualAnalysisView({
                     const st = getDailyLogStatus(r);
                     return (
                       <tr key={r.date}>
-                        <td style={{ color: "#D4AF37" }}>
+                        <td style={{ color: "#FF8C00" }}>
                           {formatDateReadable(r.date)}
                         </td>
-                        <td style={{ color: "#9B9EC2" }}>{dayName(r.date)}</td>
+                        <td style={{ color: "#64748B" }}>{dayName(r.date)}</td>
                         <td>
                           <span className={`badge ${st.badge}`}>{st.label}</span>
                         </td>
@@ -409,14 +409,14 @@ function IndividualAnalysisView({
                         </td>
                         <td
                           style={{
-                            color: r.lateMinutes > 0 ? "#FFB347" : "#7B8199",
+                            color: r.lateMinutes > 0 ? "#FF8C00" : "#7B8199",
                           }}
                         >
                           {r.lateMinutes > 0 ? `${r.lateMinutes} min` : "--"}
                         </td>
                         <td
                           style={{
-                            color: r.breaks > 60 ? "#FF6B6B" : "#4ADE80",
+                            color: r.breaks > 60 ? "#DC2626" : "#16A34A",
                           }}
                         >
                           {r.breaks > 0 ? r.breaks : "--"}
@@ -441,7 +441,7 @@ function IndividualAnalysisView({
             {
               label: "Days >60m",
               value: breakStats.exceed,
-              valueStyle: { color: "#FF6B6B" },
+              valueStyle: { color: "#DC2626" },
             },
             { label: "Break1 Total", value: `${breakStats.sumB1}m` },
             { label: "Lunch Total", value: `${breakStats.sumL}m` },
@@ -524,10 +524,10 @@ function IndividualAnalysisView({
                       key={r.date}
                       style={isAbsent ? { opacity: 0.4 } : undefined}
                     >
-                      <td style={{ color: "#D4AF37" }}>
+                      <td style={{ color: "#FF8C00" }}>
                         {formatDateReadable(r.date)}
                       </td>
-                      <td style={{ color: "#9B9EC2" }}>{dayName(r.date)}</td>
+                      <td style={{ color: "#64748B" }}>{dayName(r.date)}</td>
                       <td>{bCell(r.breakDetails.b1.in)}</td>
                       <td>{bCell(r.breakDetails.b1.out)}</td>
                       <td>{dCell(r.breakMins.b1)}</td>
@@ -543,14 +543,14 @@ function IndividualAnalysisView({
                       <td
                         style={{
                           fontWeight: 700,
-                          color: r.breaks > 60 ? "#FF6B6B" : "#F0F2F8",
+                          color: r.breaks > 60 ? "#DC2626" : "#F0F2F8",
                         }}
                       >
                         {r.breaks || 0}m
                       </td>
                       <td
                         style={{
-                          color: remaining <= 0 ? "#FF6B6B" : "#4ADE80",
+                          color: remaining <= 0 ? "#DC2626" : "#16A34A",
                         }}
                       >
                         {remaining}m
@@ -616,7 +616,7 @@ function IndividualAnalysisView({
                   <tr>
                     <td
                       colSpan={6}
-                      style={{ color: "#9B9EC2", textAlign: "center" }}
+                      style={{ color: "#64748B", textAlign: "center" }}
                     >
                       No approved leaves
                     </td>
