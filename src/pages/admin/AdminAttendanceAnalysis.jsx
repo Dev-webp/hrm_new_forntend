@@ -351,7 +351,7 @@ const transformedRecords = (data.records || []).map((r) => ({
       : null;
 
   return (
-    <div className="admin-analysis-page main-panel-content">
+    <div className="admin-analysis-page main-panel-content admin-portal-page">
       <div className="exec-header">
         <div className="emp-profile">
           <div className="avatar-sm" id="headerAvatar">

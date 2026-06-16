@@ -704,7 +704,7 @@ function AdminCalendar() {
       : "💻 Bangalore Tech Hub";
 
   return (
-    <div className="admin-calendar-page">
+    <div className="admin-calendar-page admin-portal-page">
       <div className="page-header">
         <div className="title">
           <h1>
@@ -746,9 +746,9 @@ function AdminCalendar() {
               setRefreshKey((prev) => prev + 1);
             }}
             style={{
-              background: "#050505",
-              color: "#FF8C00",
-              border: "1px solid #FF8C00",
+              background: "#FFFFFF",
+              color: "#0D47A1",
+              border: "1px solid #DBE7F3",
               padding: "10px 16px",
               borderRadius: "30px",
               fontWeight: "600",
@@ -928,7 +928,7 @@ function AdminCalendar() {
                   className="calendar-day"
                   style={{
                     opacity: "0.3",
-                    background: "#050505",
+                    background: "#F5F7FA",
                     pointerEvents: "none",
                   }}
                 >

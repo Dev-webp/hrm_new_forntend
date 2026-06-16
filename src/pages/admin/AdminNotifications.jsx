@@ -265,7 +265,7 @@ export default function AdminNotifications() {
     `filter-chip${currentFilter === filter ? " active" : ""}`;
 
   return (
-    <div className="admin-notifications-page">
+    <div className="admin-notifications-page admin-portal-page">
       <div className="topbar">
         <div>
           <h1>

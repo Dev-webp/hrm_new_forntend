@@ -34,7 +34,7 @@
 
         /* ── BANNER ── */
         .welcome-banner {
-            background: linear-gradient(135deg, #0d0c08 0%, #1a1500 50%, #0d0c08 100%);
+            background: linear-gradient(135deg, #FFFFFF, #EAF4FF);
             border-bottom: 1px solid var(--gold-dim);
             padding: 24px 32px;
             position: relative;
@@ -142,7 +142,7 @@
         .metric-sub.red { color: var(--red); }
 
         /* ── STREAK CARD ── */
-        .streak-card { background: linear-gradient(135deg,#0f0d04,#1a1500); border: 1px solid rgba(255, 140, 0,0.35); border-radius: 20px; padding: 16px 22px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .streak-card { background: linear-gradient(135deg, #FFFFFF, #EAF4FF); border: 1px solid rgba(255, 140, 0,0.35); border-radius: 20px; padding: 16px 22px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
         .streak-left { display: flex; align-items: center; gap: 14px; }
         .streak-icon { font-size: 1.6rem; }
         .streak-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 1px; color: #FF8C00; font-weight: 700; }
@@ -222,3 +222,11 @@
             .leave-row { grid-template-columns: 1fr; }
             .welcome-banner { padding: 18px; }
         }
+
+/* Employee dashboard readability */
+.employee-dashboard :where(.perf-card, .metric-card, .streak-card, .late-card, .today-card, .leave-card, .month-nav, .trends-placeholder) { border:2px solid #c7d7ea !important; border-radius:18px !important; box-shadow:0 8px 22px rgba(13,71,161,.10) !important; transition:all .2s ease !important; }
+.employee-dashboard :where(.perf-card, .metric-card, .streak-card, .late-card, .today-card, .leave-card):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
+.employee-dashboard .welcome-title { background:none !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; font-size:30px !important; font-weight:800 !important; }
+.employee-dashboard .welcome-sub { color:#334155 !important; font-weight:600 !important; }
+.employee-dashboard :where(.analytics-head-title, .late-title, .today-title, .leave-card-title, .perf-card-title) { color:#0f172a !important; font-weight:800 !important; }
+.employee-dashboard :where(.analytics-head-sub, .metric-label, .metric-sub, .score-hint, .today-date, .ti-label, .leave-bar-header, p) { color:#475569 !important; font-weight:600 !important; }

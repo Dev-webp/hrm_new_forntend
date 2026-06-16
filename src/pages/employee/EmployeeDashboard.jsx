@@ -379,7 +379,7 @@ export default function EmployeeDashboard() {
   };
 
   return (
-    <div className="layout">
+    <div className="layout employee-dashboard">
       <EmployeeSidebar activePage="dashboard" />
       <div className="main">
         <div className="welcome-banner">

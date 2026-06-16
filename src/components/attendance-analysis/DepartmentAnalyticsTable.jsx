@@ -16,7 +16,7 @@ function TableSkeleton({ rows = 8, cols = 7 }) {
 
 function DepartmentAnalyticsTable({ employees, loading, error }) {
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div className="analysis-table-wrap">
       <table className="data-table" id="summaryTable">
         <thead>
           <tr>
@@ -45,21 +45,31 @@ function DepartmentAnalyticsTable({ employees, loading, error }) {
               </td>
             </tr>
           ) : (
-            employees.map((e) => (
-              <tr key={e.user_id}>
-                <td>
-                  <strong>{e.full_name}</strong>
-                  <br />
-                  <span style={{ fontSize: 10 }}>{e.department}</span>
-                </td>
-                <td>{e.department}</td>
-                <td style={{ color: "#16A34A" }}>{e.present_days}</td>
-                <td style={{ color: "#FF8C00" }}>{e.late_days}</td>
-                <td style={{ color: "#DC2626" }}>{e.absent_days}</td>
-                <td>{e.avg_break_mins}m</td>
-                <td>{e.break_exceeded_days}</td>
-              </tr>
-            ))
+            employees.map((e) => {
+              const highAbsence = Number(e.absent_days || 0) >= 3;
+              const highLate = Number(e.late_days || 0) >= 5;
+              return (
+                <tr key={e.user_id} className={highAbsence || highLate ? "risk-row" : ""}>
+                  <td>
+                    <div className="analysis-employee-cell">
+                      <span className="analysis-avatar">
+                        {e.full_name?.slice(0, 2)?.toUpperCase()}
+                      </span>
+                      <span>
+                        <strong>{e.full_name}</strong>
+                        <small>{e.department}</small>
+                      </span>
+                    </div>
+                  </td>
+                  <td>{e.department}</td>
+                  <td><span className="metric-chip good">{e.present_days}</span></td>
+                  <td><span className={`metric-chip ${highLate ? "risk" : "warn"}`}>{e.late_days}</span></td>
+                  <td><span className={`metric-chip ${highAbsence ? "risk" : "neutral"}`}>{e.absent_days}</span></td>
+                  <td>{e.avg_break_mins}m</td>
+                  <td>{e.break_exceeded_days}</td>
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

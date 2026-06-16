@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { clearAuthSession } from "../utils/auth";
 import { parseJwt } from "../utils/parseJwt";
 import "../styles/EmployeeSidebar.css";
+import logo from "../assets/logoimagefinally1.png";
 
 const NAV_ITEMS = [
   { id: "dashboard", path: "/employee/dashboard", icon: "fa-chart-line", label: "Dashboard" },
@@ -50,14 +51,14 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
 
   return (
     <aside className={`sidebar employee-sidebar${collapsed ? " collapsed" : ""}`}>
-      <div className="logo-area">
-        <div className="brand-mark">V</div>
-        <div className="logo-text">
-          <h2>VJC OVERSEAS</h2>
-          <p>Employee Workspace</p>
-        </div>
-      </div>
-
+     
+<div className="logo-area">
+  <img
+    src={logo}
+    alt="VJC Overseas"
+    className="company-logo"
+  />
+</div>
       <div className="emp-avatar-area">
         <div className="emp-avatar">{profile.initials}</div>
         <div className="emp-info">

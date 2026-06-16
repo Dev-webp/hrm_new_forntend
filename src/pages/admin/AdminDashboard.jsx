@@ -549,17 +549,17 @@ function AdminDashboard() {
         onMonthChange={setCurrentMonthStr}
       />
 
-      <div className="scroll-content">
+      <div className="scroll-content admin-portal-page admin-dashboard-page">
         <div className="welcome-banner">
           <div className="welcome-left">
             <div className="welcome-avatar">{getInitials(displayName)}</div>
 
             <div className="welcome-text">
               <h2>
-                Good <span>{clock.greeting}</span>, <span>{displayName}</span> 👋
+                Good {clock.greeting}, <span>{displayName}</span>
               </h2>
               <p>
-                {user?.role || "Super Admin"} · VJC Overseas · {clock.dateLabel}
+                Here&apos;s what&apos;s happening today. <strong>{clock.dateLabel}</strong>
               </p>
             </div>
 
@@ -816,9 +816,7 @@ function AdminDashboard() {
                 todayStr
               );
               const { cls, ring } = attPctColor(stats.attPct);
-
-              return (
-                <div key={employee.id} className="emp-card">
+              return <div key={employee.id} className="emp-card">
                   <div className="emp-card-top">
                     <div className="emp-avatar">
                       {getInitials(employee.full_name)}
@@ -863,8 +861,7 @@ function AdminDashboard() {
                       <div className="msl">Absent</div>
                     </div>
                   </div>
-                </div>
-              );
+                  </div>;
             })
           )}
         </div>

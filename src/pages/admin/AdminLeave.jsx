@@ -22,10 +22,11 @@ function formatDate(dateString) {
 }
 
 function AdminLeave() {
-  const todayStr = new Date().toISOString().slice(0, 10);
-
   const [currentBranch, setCurrentBranch] = useState("all");
 const [currentDate, setCurrentDate] = useState("");
+const [statusFilter, setStatusFilter] = useState("all");
+
+
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -185,29 +186,26 @@ const message =
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { bg: "#FF8C00", text: "Pending" },
-      approved: { bg: "#16A34A", text: "Approved" },
-      rejected: { bg: "#DC2626", text: "Rejected" },
+      pending: { className: "pending", text: "Pending" },
+      approved: { className: "approved", text: "Approved" },
+      rejected: { className: "rejected", text: "Rejected" },
     };
     const config = statusMap[status] || statusMap.pending;
     return (
-      <span
-        style={{
-          background: config.bg,
-          color: "#1A2B4B",
-          padding: "4px 12px",
-          borderRadius: "20px",
-          fontSize: "0.75rem",
-          fontWeight: "600",
-        }}
-      >
+      <span className={`leave-status-badge ${config.className}`}>
         {config.text}
       </span>
     );
   };
+  const filteredLeaveRequests =
+  statusFilter === "all"
+    ? leaveRequests
+    : leaveRequests.filter(
+        (req) => req.status?.toLowerCase() === statusFilter
+      );
 
   return (
-  <div className="admin-leave-page">
+    <div className="admin-leave-page admin-portal-page">
     <div className="header">
       <div className="title">
         <h1>
@@ -233,15 +231,7 @@ const message =
               setCurrentDate("");
               showToast("Showing all dates");
             }}
-            style={{
-              marginLeft: "8px",
-              padding: "8px 12px",
-              borderRadius: "10px",
-              border: "1px solid #FF8C00",
-              background: "transparent",
-              color: "#FF8C00",
-              cursor: "pointer",
-            }}
+            className="all-dates-btn"
           >
             All Dates
           </button>
@@ -299,6 +289,25 @@ const message =
         <div className="stat-number">{loading ? "-" : stats?.rejected || 0}</div>
       </div>
     </div>
+<div className="leave-status-tabs">
+  {[
+    { key: "all", label: "All" },
+    { key: "pending", label: "Pending" },
+    { key: "approved", label: "Approved" },
+    { key: "rejected", label: "Rejected" },
+  ].map((tab) => (
+    <button
+      key={tab.key}
+      type="button"
+      className={`leave-status-tab ${statusFilter === tab.key ? "active" : ""}`}
+      onClick={() => setStatusFilter(tab.key)}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
+
+
 
     <div className="table-wrapper">
       <table className="leave-table">
@@ -329,14 +338,14 @@ const message =
                 Failed to load leave requests: {error}
               </td>
             </tr>
-          ) : leaveRequests.length === 0 ? (
+          ) : filteredLeaveRequests.length === 0 ? (
             <tr>
               <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
                 No leave requests found
               </td>
             </tr>
           ) : (
-            leaveRequests.map((request) => (
+            filteredLeaveRequests.map((request) => (
               <tr key={request.id}>
                 <td>
                   <i className="fas fa-user-circle"></i> {request.full_name}
@@ -350,14 +359,14 @@ const message =
                 <td>{getStatusBadge(request.status)}</td>
                 <td>
                   {request.status === "pending" && (
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div className="leave-row-actions">
                       <button
                         className="edit-btn"
                         onClick={() =>
                           handleOpenAction(request.id, request.full_name, "approved")
                         }
                         disabled={loading}
-                        style={{ background: "#16A34A" }}
+                        aria-label={`Approve leave for ${request.full_name}`}
                       >
                         <i className="fas fa-check"></i>
                       </button>
@@ -368,7 +377,7 @@ const message =
                           handleOpenAction(request.id, request.full_name, "rejected")
                         }
                         disabled={loading}
-                        style={{ background: "#DC2626" }}
+                        aria-label={`Reject leave for ${request.full_name}`}
                       >
                         <i className="fas fa-times"></i>
                       </button>
@@ -393,17 +402,8 @@ const message =
         </h3>
 
         {actionModal.action === "approved" && (
-          <div
-            style={{
-              background: "#1A2B4B",
-              border: "2px solid #16A34A",
-              borderRadius: "16px",
-              padding: "16px",
-              marginBottom: "18px",
-              color: "white",
-            }}
-          >
-            <h4 style={{ color: "#16A34A", marginBottom: "12px" }}>
+          <div className="approval-preview-box">
+            <h4>
               Leave Balance Preview
             </h4>
 

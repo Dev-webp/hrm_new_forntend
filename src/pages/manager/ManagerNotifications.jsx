@@ -198,7 +198,7 @@ export default function ManagerNotifications() {
   const topbarSub = `${myBranch} branch · Real-time events`;
 
   return (
-    <div className="manager-notifications-page">
+    <div className="manager-notifications-page manager-portal-page">
       <div className="topbar">
         <div>
           <h1>

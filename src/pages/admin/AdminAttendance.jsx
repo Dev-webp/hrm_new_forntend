@@ -77,12 +77,12 @@ function AdminAttendance() {
       const [statsData, leaderboardData, attendanceData] = await Promise.all([
         fetchAttendanceStats(currentDateStr, currentBranch),
         fetchDepartmentLeaderboard(currentDateStr, currentBranch),
-        fetchAttendance(
-          currentDateStr,
-          currentBranch,
-          deptFilter,
-          searchDebounced
-        ),
+       fetchAttendance(
+  currentDateStr,
+  currentBranch,
+  "all",
+  searchDebounced
+),
       ]);
 
       setStats(statsData);
@@ -98,7 +98,7 @@ function AdminAttendance() {
     } finally {
       setLoading(false);
     }
-  }, [currentBranch, currentDateStr, deptFilter, searchDebounced]);
+  }, [currentBranch, currentDateStr, searchDebounced]);
 
   useEffect(() => {
     loadData();
@@ -111,13 +111,17 @@ function AdminAttendance() {
     return () => window.clearInterval(interval);
   }, [loadData]);
 
-  const handleBranchSelect = (branch) => {
-    setCurrentBranch(branch);
-    setBranchMenuOpen(false);
-    setDeptFilter("all");
-    setSearch("");
-    setSearchDebounced("");
-  };
+const handleBranchSelect = (branch) => {
+  setCurrentBranch(branch);
+  setBranchMenuOpen(false);
+  setDeptFilter("all");
+  setSearch("");
+  setSearchDebounced("");
+
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  });
+};
 
   const handleDeptFilterChange = (value) => {
     setDeptFilter(value);
@@ -167,7 +171,7 @@ function AdminAttendance() {
   const tableNote = `Data for ${currentDateStr} · ${branchLabel}`;
 
   return (
-    <div className="admin-attendance-page att-dashboard">
+    <div className="admin-attendance-page att-dashboard admin-portal-page">
       <div className="header">
         <div className="title">
           <h1>
@@ -196,20 +200,18 @@ function AdminAttendance() {
             {branchMenuOpen && (
               <div className="branch-menu">
                 {ATTENDANCE_BRANCH_MENU.map((opt) => (
-                  <div
-                    key={opt.value}
-                    className="branch-menu-item"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleBranchSelect(opt.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        handleBranchSelect(opt.value);
-                      }
-                    }}
-                  >
-                    {opt.label}
-                  </div>
+                <button
+  key={opt.value}
+  type="button"
+  className="branch-menu-item"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleBranchSelect(opt.value);
+  }}
+>
+  {opt.label}
+</button>
                 ))}
               </div>
             )}
@@ -229,7 +231,7 @@ function AdminAttendance() {
         </div>
       </div>
 
-      <AttendanceKpis stats={stats} loading={loading} error={loadError} />
+      <AttendanceKpis stats={stats} records={records} loading={loading} error={loadError} />
 
       <AttendanceLateAlerts
         records={records}

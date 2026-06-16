@@ -36,6 +36,14 @@ export default function AdminDepartment() {
 
   const selectedBranchLabel =
     currentBranch === "all" ? "All Branches" : currentBranch;
+  const summary = departments.reduce(
+    (totals, dept) => ({
+      employees: totals.employees + Number(dept.employees || 0),
+      present: totals.present + Number(dept.present || 0),
+      absent: totals.absent + Number(dept.absent || 0),
+    }),
+    { employees: 0, present: 0, absent: 0 }
+  );
   const selectedBranchText =
     currentBranch === "all" ? "🌍 All Branches" : `🏢 ${currentBranch}`;
 
@@ -103,7 +111,7 @@ export default function AdminDepartment() {
   };
 
   return (
-    <div className="admin-department-page">
+    <div className="admin-department-page admin-portal-page">
       <div className="dashboard-header">
         <div>
           <h1>
@@ -175,13 +183,18 @@ export default function AdminDepartment() {
         </div>
       </div>
 
-      <div className="stats-badge">
-        <i className="fas fa-building" /> {departments.length} departments ·{" "}
-        <span>{branchesList.length} branches</span>
-        <span style={{ marginLeft: "12px" }}>
-          <i className="fas fa-calendar-alt" /> Attendance:{" "}
-          {formatDateDisplay(currentDate)}
-        </span>
+      <div className="department-kpi-grid">
+        {[
+          ["Total Departments", departments.length, "fa-building", "primary"],
+          ["Total Employees", summary.employees, "fa-users", "info"],
+          ["Present Today", summary.present, "fa-user-check", "success"],
+          ["Absent Today", summary.absent, "fa-user-xmark", "danger"],
+        ].map(([label, value, icon, tone]) => (
+          <div className={`department-kpi ${tone}`} key={label}>
+            <div><span>{label}</span><strong>{loading ? "—" : value}</strong></div>
+            <i className={`fas ${icon}`} />
+          </div>
+        ))}
       </div>
 
       <div className="dept-grid-wrap">
@@ -208,7 +221,11 @@ export default function AdminDepartment() {
               No departments found for this branch on {currentDate}
             </div>
           ) : (
-            departments.map((dept) => (
+            departments.map((dept) => {
+              const attendancePct = Number(dept.employees)
+                ? Math.round((Number(dept.present || 0) / Number(dept.employees)) * 100)
+                : 0;
+              return (
               <div className="glass-card" key={dept.name}>
                 <div className="dept-header">
                   <div>
@@ -256,8 +273,14 @@ export default function AdminDepartment() {
                     <div className="attendance-number">{dept.absent || 0}</div>
                   </div>
                 </div>
+                <div className="department-progress">
+                  <div><span>Attendance rate</span><strong>{attendancePct}%</strong></div>
+                  <div className="department-progress-track">
+                    <span style={{ width: `${attendancePct}%` }} />
+                  </div>
+                </div>
               </div>
-            ))
+            )})
           )}
         </div>
       </div>

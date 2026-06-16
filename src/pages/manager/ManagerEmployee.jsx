@@ -184,7 +184,7 @@ export default function ManagerEmployee() {
 
   return (
     <>
-      <div className="main-content">
+      <div className="main-content manager-portal-page manager-employees-page">
         <div className="header">
           <div className="title">
             <h1>
@@ -349,7 +349,7 @@ export default function ManagerEmployee() {
               <input type="text" value={branch} readOnly style={{ background: "#EAF4FF" }} />
             </div>
             <div className="form-group">
-              <label>Salary (USD)</label>
+              <label>Salary (INR)</label>
               <input
                 type="number"
                 name="salary"
@@ -505,7 +505,7 @@ export default function ManagerEmployee() {
                   <i className="fas fa-dollar-sign"></i>
                 </div>
                 <div className="detail-content">
-                  <div className="detail-label">Salary (USD)</div>
+                  <div className="detail-label">Salary (INR)</div>
                   <div className="detail-value">${Number(selectedEmployee.salary).toLocaleString()}</div>
                 </div>
               </div>

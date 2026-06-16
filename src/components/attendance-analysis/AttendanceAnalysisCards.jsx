@@ -32,14 +32,20 @@ function AttendanceAnalysisCards({ items, loading }) {
   return (
     <div className="kpi-grid">
       {items.map((item) => (
-        <div className="kpi-tile" key={item.label}>
-          <div className="label">{item.label}</div>
+        <div className={`kpi-tile ${item.tone || ""}`} key={item.label}>
+          <div className="kpi-tile-head">
+            <div className="label">{item.label}</div>
+            <div className="kpi-tile-icon">
+              <i className={`fas ${item.icon || "fa-chart-simple"}`} />
+            </div>
+          </div>
           <div
             className="value"
             style={item.valueStyle}
           >
             {item.value}
           </div>
+          {item.caption ? <div className="kpi-caption">{item.caption}</div> : null}
         </div>
       ))}
     </div>

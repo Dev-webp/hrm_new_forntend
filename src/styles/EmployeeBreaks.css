@@ -25,15 +25,15 @@
 
         /* MAIN */
         .main { flex:1; overflow-y:auto; }
-        .topbar { display:flex; justify-content:space-between; align-items:center; padding:20px 32px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(4,4,4,0.95); backdrop-filter:blur(12px); z-index:10; flex-wrap:wrap; gap:12px; }
+        .topbar { display:flex; justify-content:space-between; align-items:center; padding:20px 32px; border-bottom:1px solid #DBE7F3; position:sticky; top:0; background:#FFFFFF; backdrop-filter:blur(12px); z-index:10; flex-wrap:wrap; gap:12px; }
         .topbar h1 { font-size:1.6rem; font-weight:700; background:linear-gradient(135deg,#fff,#FF8C00); -webkit-background-clip:text; background-clip:text; color:transparent; }
         .topbar p { font-size:0.8rem; color:var(--muted); margin-top:3px; }
         .topbar-right { display:flex; gap:10px; align-items:center; }
-        .today-pill { background:#0f1a0a; border:1px solid #16A34A; color:#16A34A; padding:6px 16px; border-radius:40px; font-size:0.72rem; font-weight:600; }
+        .today-pill { background:#FFFFFF; border:1px solid #16A34A; color:#16A34A; padding:6px 16px; border-radius:40px; font-size:0.72rem; font-weight:600; }
         .content { padding:28px 32px 48px; }
 
         /* USAGE METER */
-        .usage-banner { background:linear-gradient(135deg,#FFFFFF,#13100a); border:1px solid var(--gold); border-radius:28px; padding:22px 28px; margin-bottom:28px; display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+        .usage-banner { background:linear-gradient(135deg, #FFFFFF, #EAF4FF); border:1px solid var(--gold); border-radius:28px; padding:22px 28px; margin-bottom:28px; display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
         .usage-ring { position:relative; width:90px; height:90px; flex-shrink:0; }
         .usage-ring svg { transform:rotate(-90deg); }
         .ring-bg { fill:none; stroke:#EAF4FF; stroke-width:8; }
@@ -50,7 +50,7 @@
         /* BREAK SLOTS */
         .breaks-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-bottom:28px; }
         .break-slot-card { background:var(--card2); border:1px solid var(--border); border-radius:24px; padding:20px; transition:.2s; }
-        .break-slot-card.active-break { border-color:var(--gold); background:linear-gradient(135deg,#FFFFFF,#13100a); }
+        .break-slot-card.active-break { border-color:var(--gold); background:linear-gradient(135deg, #FFFFFF, #EAF4FF); }
         .break-slot-card.done-break { border-color:rgba(74,222,128,.3); }
         .bsc-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
         .bsc-title { font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:8px; }
@@ -133,3 +133,10 @@
         .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--gold); border-radius:50%; border-top-color:transparent; animation:spin .6s linear infinite; }
         @keyframes spin { to{transform:rotate(360deg)} }
         @media(max-width:900px) { .breaks-grid{grid-template-columns:1fr;} .content{padding:20px;} .week-cards{grid-template-columns:repeat(4,1fr);} }
+
+/* Employee breaks readability */
+.employee-breaks-page :where(.usage-banner, .break-slot-card, .history-section, .hstat, .day-card) { border:2px solid #c7d7ea !important; border-radius:18px !important; box-shadow:0 8px 22px rgba(13,71,161,.10) !important; transition:all .2s ease !important; }
+.employee-breaks-page :where(.usage-banner, .break-slot-card, .history-section, .day-card):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
+.employee-breaks-page .btn-start { padding:14px 32px !important; border-radius:14px !important; font-size:16px !important; font-weight:800 !important; }
+.employee-breaks-page :where(h1, h2, h3, .bsc-title, .section-title, .usage-title) { color:#0f172a !important; font-weight:800 !important; }
+.employee-breaks-page :where(p, .usage-info p, .bsc-dur, .tb-label, .hs-label, .dc-name, .dc-date, .dc-lbl) { color:#475569 !important; font-weight:600 !important; }

@@ -152,7 +152,7 @@ function EmployeeFormModal({
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="empSalary">Salary (USD)</label>
+            <label htmlFor="empSalary">Salary (INR)</label>
             <input
               id="empSalary"
               type="number"
@@ -421,7 +421,7 @@ function EmployeeDetailsModal({ open, employee, onClose, onCopyPassword }) {
               <i className="fas fa-dollar-sign" />
             </div>
             <div className="detail-content">
-              <div className="detail-label">Salary (USD)</div>
+              <div className="detail-label">Salary (INR)</div>
               <div className="detail-value">
                 ${employee.salary.toLocaleString()}
               </div>

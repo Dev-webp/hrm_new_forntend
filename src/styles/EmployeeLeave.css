@@ -25,7 +25,7 @@
 
         /* MAIN */
         .main { flex:1; overflow-y:auto; }
-        .topbar { display:flex; justify-content:space-between; align-items:center; padding:20px 32px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(4,4,4,0.95); backdrop-filter:blur(12px); z-index:10; flex-wrap:wrap; gap:12px; }
+        .topbar { display:flex; justify-content:space-between; align-items:center; padding:20px 32px; border-bottom:1px solid #DBE7F3; position:sticky; top:0; background:#FFFFFF; backdrop-filter:blur(12px); z-index:10; flex-wrap:wrap; gap:12px; }
         .topbar h1 { font-size:1.6rem; font-weight:700; background:linear-gradient(135deg,#fff,#FF8C00); -webkit-background-clip:text; background-clip:text; color:transparent; }
         .topbar p { font-size:0.8rem; color:var(--muted); margin-top:3px; }
         .apply-btn { background:var(--gold); border:none; padding:10px 24px; border-radius:40px; font-weight:700; color:#1A2B4B; cursor:pointer; font-family:'Sora',sans-serif; font-size:0.85rem; display:flex; align-items:center; gap:8px; transition:.2s; }
@@ -76,7 +76,7 @@
         .modal-box h3 { color:var(--gold); margin-bottom:22px; font-size:1.1rem; }
         .form-group { margin-bottom:16px; }
         .form-group label { display:block; margin-bottom:6px; font-size:0.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
-        .form-group input,.form-group select,.form-group textarea { width:100%; background:#F5F7FA; border:1px solid #EAF4FF; border-radius:14px; padding:12px 16px; color:white; font-family:'Sora',sans-serif; font-size:0.85rem; outline:none; }
+        .form-group input,.form-group select,.form-group textarea { width:100%; background:#FFFFFF; border:1px solid #DBE7F3; border-radius:14px; padding:12px 16px; color:#1A2B4B; font-family:'Sora',sans-serif; font-size:0.85rem; outline:none; }
         .form-group textarea { min-height:80px; resize:vertical; }
         .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:var(--gold); }
         .form-row { display:flex; gap:14px; }
@@ -94,3 +94,9 @@
         .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--gold); border-radius:50%; border-top-color:transparent; animation:spin .6s linear infinite; }
         @keyframes spin { to{transform:rotate(360deg)} }
         @media(max-width:1000px) { .balance-grid{grid-template-columns:repeat(2,1fr);} .content{padding:20px;} .leave-card{grid-template-columns:1fr auto;} }
+
+/* Employee leave readability */
+.employee-leave-page :where(.leave-info-banner, .balance-card, .leave-card, .empty-state) { border:2px solid #c7d7ea !important; border-radius:18px !important; box-shadow:0 8px 22px rgba(13,71,161,.10) !important; transition:all .2s ease !important; }
+.employee-leave-page :where(.balance-card, .leave-card):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
+.employee-leave-page :where(h1, h2, h3, .lc-type, .days-num) { color:#0f172a !important; font-weight:800 !important; }
+.employee-leave-page :where(.title p, .leave-info-banner, .balance-card p, .lc-dates, .lc-reason, .days-label) { color:#475569 !important; font-weight:600 !important; }

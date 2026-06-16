@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
-import { escapeHtml, normalizeArray } from "./employeeUtils";
+import { normalizeArray } from "./employeeUtils";
 import "../../styles/EmployeePayslip.css";
 
 export default function EmployeePayslip() {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
-  const printAreaRef = useRef(null);
 
   const [allPayslips, setAllPayslips] = useState([]);
   const [currentPayslip, setCurrentPayslip] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const pdfUrlRef = useRef("");
+
   const [selectedMonth, setSelectedMonth] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadingPayslip, setLoadingPayslip] = useState(false);
@@ -20,61 +22,133 @@ export default function EmployeePayslip() {
     if (!token) navigate("/login");
   }, [token, navigate]);
 
+  useEffect(() => {
+    return () => {
+      if (pdfUrlRef.current) {
+        window.URL.revokeObjectURL(pdfUrlRef.current);
+      }
+    };
+  }, []);
+
   const showToast = useCallback((msg, type = "") => {
     setToast({ msg, visible: true, type });
-    const t = setTimeout(
-      () => setToast({ msg: "", visible: false, type: "" }),
-      3000
-    );
-    return () => clearTimeout(t);
+    setTimeout(() => {
+      setToast({ msg: "", visible: false, type: "" });
+    }, 3000);
   }, []);
+
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
   const monthOptions = useMemo(() => {
     const monthsSet = new Set();
+
     allPayslips.forEach((p) => {
-      if (p.month) monthsSet.add(p.month.slice(0, 7));
+      if (p?.month) monthsSet.add(String(p.month).slice(0, 7));
     });
+
     return Array.from(monthsSet).sort().reverse();
   }, [allPayslips]);
+
+  const loadPayslipPdfPreview = useCallback(
+    async (payslipId) => {
+      if (!payslipId || !token) return;
+
+      try {
+        if (pdfUrlRef.current) {
+          window.URL.revokeObjectURL(pdfUrlRef.current);
+          pdfUrlRef.current = "";
+        }
+
+        setPdfUrl("");
+
+        const res = await fetch(
+          `${API_BASE}/payroll/payslip/${payslipId}/download?preview=true`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const contentType = res.headers.get("content-type") || "";
+
+        if (!res.ok || !contentType.includes("application/pdf")) {
+          const errorText = await res.text();
+          console.log("PDF preview error:", errorText);
+          throw new Error("PDF preview failed");
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        pdfUrlRef.current = url;
+        setPdfUrl(url);
+      } catch (e) {
+        console.error("PDF preview failed:", e);
+        showToast(e.message || "PDF preview failed", "error");
+        setPdfUrl("");
+      }
+    },
+    [API_BASE, token, showToast]
+  );
 
   const loadPayslipForMonth = useCallback(
     async (monthYMD) => {
       if (!monthYMD) return;
+
       setLoadingPayslip(true);
+      setPdfUrl("");
+
       try {
         const payslip = await apiFetch(
           `/employee/my-payslip?month=${monthYMD}-01`
         );
-        if (!payslip) {
+
+        console.log("Employee payslip:", payslip);
+
+        if (!payslip?.id) {
           setCurrentPayslip(null);
-        } else {
-          setCurrentPayslip(payslip);
+          setPdfUrl("");
+          return;
         }
+
+        setCurrentPayslip(payslip);
+        await loadPayslipPdfPreview(payslip.id);
       } catch (e) {
+        console.error("Error loading payslip:", e);
         showToast(`Error loading payslip: ${e.message}`, "error");
         setCurrentPayslip(null);
+        setPdfUrl("");
       } finally {
         setLoadingPayslip(false);
       }
     },
-    [apiFetch, showToast]
+    [apiFetch, loadPayslipPdfPreview, showToast]
   );
 
   const loadPayslips = useCallback(async () => {
     setIsLoading(true);
+
     try {
       const data = normalizeArray(await apiFetch("/employee/my-payslips"));
       setAllPayslips(data);
+
       if (data.length > 0) {
-        const latest = data[0].month.slice(0, 7);
+        const latest = String(data[0].month).slice(0, 7);
         setSelectedMonth(latest);
         await loadPayslipForMonth(latest);
       } else {
         setSelectedMonth("");
         setCurrentPayslip(null);
+        setPdfUrl("");
       }
     } catch (e) {
+      console.error("Error loading payslips:", e);
       showToast(`Error loading payslips: ${e.message}`, "error");
+      setAllPayslips([]);
+      setCurrentPayslip(null);
+      setPdfUrl("");
     } finally {
       setIsLoading(false);
     }
@@ -84,126 +158,52 @@ export default function EmployeePayslip() {
     loadPayslips();
   }, [loadPayslips]);
 
-  const printPayslip = () => {
-    if (!currentPayslip || !printAreaRef.current) {
-      showToast("No payslip loaded to print", "error");
+  const downloadPayslipPdf = async () => {
+    if (!currentPayslip?.id) {
+      showToast("No payslip selected", "error");
       return;
     }
-    const originalTitle = document.title;
-    document.title = `Payslip_${currentPayslip.full_name}_${currentPayslip.month.slice(0, 7)}`;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><title>${document.title}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-      <style>
-        body { font-family: 'Sora', sans-serif; padding: 20px; background: white; color: #1A2B4B; }
-        .payslip-card { max-width: 800px; margin: 0 auto; border: 1px solid #64748B; border-radius: 16px; padding: 24px; }
-        .payslip-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #64748B; padding-bottom: 12px; margin-bottom: 20px; }
-        .emp-details-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 24px; }
-        .salary-breakdown { border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 12px 0; margin: 16px 0; }
-        .salary-row { display: flex; justify-content: space-between; padding: 8px 0; }
-        .salary-row.total { font-weight: bold; font-size: 1.2rem; border-top: 1px solid #64748B; margin-top: 8px; padding-top: 12px; }
-        .attendance-row { display: flex; gap: 20px; flex-wrap: wrap; }
-        .status-badge { padding: 2px 10px; border-radius: 20px; background: #f0f0f0; }
-      </style>
-      </head><body>${printAreaRef.current.outerHTML}</body></html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-    document.title = originalTitle;
-  };
 
-  const renderPayslipCard = (p) => {
-    const monthDate = new Date(p.month);
-    const monthDisplay = monthDate.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
-    const statusClass =
-      p.payment_status === "paid" ? "status-paid" : "status-unpaid";
-    const statusText = p.payment_status === "paid" ? "Paid" : "Unpaid";
+    try {
+      const res = await fetch(
+        `${API_BASE}/payroll/payslip/${currentPayslip.id}/download`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    return (
-      <div className="payslip-card" id="payslipPrintArea" ref={printAreaRef}>
-        <div className="payslip-header">
-          <h2>VJC OVERSEAS</h2>
-          <div className="payslip-month">
-            {monthDisplay}{" "}
-            <span className={`status-badge ${statusClass}`}>{statusText}</span>
-          </div>
-        </div>
-        <div className="emp-details-grid">
-          <div className="emp-detail-item">
-            <div className="label">Employee Name</div>
-            <div className="value">{escapeHtml(p.full_name)}</div>
-          </div>
-          <div className="emp-detail-item">
-            <div className="label">Employee ID</div>
-            <div className="value">{escapeHtml(p.employee_code || "-")}</div>
-          </div>
-          <div className="emp-detail-item">
-            <div className="label">Department</div>
-            <div className="value">{escapeHtml(p.department)}</div>
-          </div>
-          <div className="emp-detail-item">
-            <div className="label">Branch</div>
-            <div className="value">{escapeHtml(p.branch)}</div>
-          </div>
-        </div>
-        <div className="salary-breakdown">
-          <div className="salary-row">
-            <span>Basic Salary</span>
-            <span>₹ {Number(p.basic_salary).toLocaleString("en-IN")}</span>
-          </div>
-          <div className="salary-row">
-            <span>Incentives</span>
-            <span>₹ {Number(p.incentives).toLocaleString("en-IN")}</span>
-          </div>
-          <div className="salary-row">
-            <span>Deductions</span>
-            <span>₹ {Number(p.deductions).toLocaleString("en-IN")}</span>
-          </div>
-          <div className="salary-row">
-            <span>Tax (TDS)</span>
-            <span>₹ {Number(p.tax).toLocaleString("en-IN")}</span>
-          </div>
-          <div className="salary-row total">
-            <span>Net Pay</span>
-            <span>₹ {Number(p.net_pay).toLocaleString("en-IN")}</span>
-          </div>
-        </div>
-        <div className="attendance-row">
-          <span className="attendance-badge">
-            <i className="fas fa-calendar-week" /> Working Days: {p.working_days}
-          </span>
-          <span className="attendance-badge">
-            <i className="fas fa-user-check" /> Present Days: {p.present_days}
-          </span>
-          <span className="attendance-badge">
-            <i className="fas fa-user-slash" /> Absent Days:{" "}
-            {Math.max(0, p.working_days - p.present_days)}
-          </span>
-        </div>
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: 20,
-            fontSize: "0.7rem",
-            color: "var(--muted)",
-            borderTop: "1px solid var(--border)",
-            paddingTop: 16,
-          }}
-        >
-          This is a computer-generated payslip. For any discrepancies, contact HR.
-        </div>
-      </div>
-    );
+      const contentType = res.headers.get("content-type") || "";
+
+      if (!res.ok || !contentType.includes("application/pdf")) {
+        const errorText = await res.text();
+        console.log("PDF download error:", errorText);
+        throw new Error("Server did not return PDF");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `payslip_${String(currentPayslip.month).slice(0, 7)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("PDF download failed:", e);
+      showToast(e.message || "Download failed", "error");
+    }
   };
 
   return (
-    <div className="layout">
+    <div className="layout employee-payslip-page">
       <EmployeeSidebar activePage="payslip" />
+
       <div className="main">
         <div className="topbar">
           <div>
@@ -211,16 +211,20 @@ export default function EmployeePayslip() {
               <i className="fas fa-coins" style={{ fontSize: "1.3rem" }} /> My
               Payslips
             </h1>
-            <p>View, download & print your salary statements</p>
+            <p>View and download your salary statements</p>
           </div>
         </div>
 
         <div className="content">
           <div className="selector-card">
             <div>
-              <i className="fas fa-calendar-alt" style={{ color: "var(--gold)" }} />{" "}
+              <i
+                className="fas fa-calendar-alt"
+                style={{ color: "var(--gold)" }}
+              />{" "}
               <label htmlFor="monthSelect">Select Month</label>
             </div>
+
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <select
                 id="monthSelect"
@@ -228,8 +232,9 @@ export default function EmployeePayslip() {
                 value={selectedMonth}
                 disabled={isLoading || !monthOptions.length}
                 onChange={(e) => {
-                  setSelectedMonth(e.target.value);
-                  loadPayslipForMonth(e.target.value);
+                  const month = e.target.value;
+                  setSelectedMonth(month);
+                  loadPayslipForMonth(month);
                 }}
               >
                 {isLoading ? (
@@ -243,6 +248,7 @@ export default function EmployeePayslip() {
                       year: "numeric",
                       month: "long",
                     });
+
                     return (
                       <option key={m} value={m}>
                         {display}
@@ -251,13 +257,15 @@ export default function EmployeePayslip() {
                   })
                 )}
               </select>
+
               <button
                 type="button"
-                id="printPayslipBtn"
+                id="downloadPayslipBtn"
                 className="print-btn"
-                onClick={printPayslip}
+                onClick={downloadPayslipPdf}
+                disabled={!currentPayslip?.id}
               >
-                <i className="fas fa-print" /> Print Payslip
+                <i className="fas fa-download" /> Download PDF
               </button>
             </div>
           </div>
@@ -275,15 +283,31 @@ export default function EmployeePayslip() {
                   Payslips will appear once generated by HR.
                 </p>
               </div>
+            ) : pdfUrl ? (
+              <div className="pdf-preview-card">
+                <iframe
+                  src={pdfUrl}
+                  title="Generated Payslip PDF"
+                  className="pdf-preview-frame"
+                />
+              </div>
             ) : (
-              renderPayslipCard(currentPayslip)
+              <div className="empty-state">
+                <i className="fas fa-file-pdf" />
+                <p>PDF preview not available</p>
+                <p style={{ fontSize: "0.75rem", marginTop: 6 }}>
+                  Please click Download PDF or check backend permission.
+                </p>
+              </div>
             )}
           </div>
         </div>
       </div>
 
       <div
-        className={`toast${toast.visible ? " show" : ""}${toast.type ? ` ${toast.type}` : ""}`}
+        className={`toast${toast.visible ? " show" : ""}${
+          toast.type ? ` ${toast.type}` : ""
+        }`}
       >
         {toast.msg}
       </div>

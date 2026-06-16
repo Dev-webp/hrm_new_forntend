@@ -62,7 +62,11 @@ function AttendanceTable({
     return (
       <tbody>
         <tr>
-          <td colSpan={9}>No records found for this date</td>
+          <td colSpan={9} className="attendance-empty-state">
+            <i className="fas fa-calendar-xmark" />
+            <strong>No attendance records</strong>
+            <span>No records found for this date.</span>
+          </td>
         </tr>
       </tbody>
     );
@@ -74,7 +78,11 @@ function AttendanceTable({
     return (
       <tbody>
         <tr>
-          <td colSpan={9}>No matching employees</td>
+          <td colSpan={9} className="attendance-empty-state">
+            <i className="fas fa-user-slash" />
+            <strong>No matching employees</strong>
+            <span>Try changing the department filter or search.</span>
+          </td>
         </tr>
       </tbody>
     );

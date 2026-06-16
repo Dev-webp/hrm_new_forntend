@@ -476,7 +476,7 @@ export default function AdminActivityLogs() {
     (detailLog.field_changed || detailLog.old_value || detailLog.new_value);
 
   return (
-    <div className="admin-activity-logs-page">
+    <div className="admin-activity-logs-page admin-portal-page">
       <div className="dashboard-header">
         <div>
           <h1>

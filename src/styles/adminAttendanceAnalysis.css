@@ -3,7 +3,7 @@
 .admin-analysis-page.main-panel-content {
   flex: 1;
   overflow-y: auto;
-  background: #1A2B4B;
+  background: #F5F7FA;
   padding: 24px 32px 48px;
 }
 
@@ -22,11 +22,10 @@
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 28px;
-  background: rgba(12, 14, 22, 0.7);
-  backdrop-filter: blur(8px);
+  background: #FFFFFF;
   padding: 12px 24px;
-  border-radius: 48px;
-  border: 1px solid rgba(255, 140, 0, 0.3);
+  border-radius: 16px;
+  border: 1px solid #DBE7F3;
 }
 
 .admin-analysis-page .emp-profile {
@@ -38,7 +37,7 @@
 .admin-analysis-page .avatar-sm {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #FFF4E5, #1a160e);
+  background: linear-gradient(135deg, #FFFFFF, #EAF4FF);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -77,7 +76,7 @@
   border: none;
   border-radius: 40px;
   padding: 6px 14px;
-  color: white;
+  color: #1A2B4B;
   font-family: inherit;
   min-width: 160px;
 }
@@ -136,11 +135,11 @@
 
 .admin-analysis-page .filter-group select,
 .admin-analysis-page .filter-group input[type="month"] {
-  background: linear-gradient(145deg, #151824, #1d2233);
+  background: linear-gradient(135deg, #FFFFFF, #EAF4FF);
   border: 1px solid rgba(255, 140, 0, 0.28);
   border-radius: 16px;
   padding: 12px 18px;
-  color: #f5f7ff;
+  color: #1A2B4B;
   font-family: "Inter", sans-serif;
   font-size: 14px;
   font-weight: 600;
@@ -245,7 +244,7 @@
   padding: 12px 24px;
   font-weight: 600;
   font-size: 0.85rem;
-  color: #a0a5c0;
+  color: #64748B;
   cursor: pointer;
   border-radius: 40px;
   transition: 0.2s;
@@ -253,9 +252,9 @@
 }
 
 .admin-analysis-page .tab-btn.active {
-  background: rgba(255, 140, 0, 0.15);
-  color: #FF8C00;
-  box-shadow: inset 0 0 0 1px #FF8C00;
+  background: #EAF4FF;
+  color: #0D47A1;
+  box-shadow: inset 0 0 0 1px #DBE7F3;
 }
 
 .admin-analysis-page .tab-pane {
@@ -308,10 +307,7 @@
 .admin-analysis-page .kpi-tile .value {
   font-size: 32px;
   font-weight: 800;
-  background: linear-gradient(135deg, #fff, #FF8C00);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #0D47A1;
   margin: 6px 0 2px;
 }
 
@@ -464,7 +460,7 @@
 .admin-analysis-page .break-time-cell {
   font-family: monospace;
   font-size: 11px;
-  color: #c5cde0;
+  color: #64748B;
 }
 
 .admin-analysis-page .break-dur {
@@ -532,8 +528,9 @@
 }
 
 .admin-analysis-page .cal-holiday {
-  background: rgba(148, 163, 184, 0.07);
-  opacity: 0.6;
+  background: #FFF7ED;
+  border-color: #FDBA74;
+  opacity: 1;
 }
 
 .admin-analysis-page .cal-empty {
@@ -634,7 +631,7 @@
   border-left: 4px solid #FF8C00;
   padding: 12px 24px;
   border-radius: 50px;
-  color: #FFF4E5;
+  color: #1A2B4B;
   z-index: 2000;
   opacity: 0;
   transition: 0.2s;
@@ -668,7 +665,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 9, 14, 0.55);
+  background: rgba(26, 43, 75, 0.2);
   border-radius: 14px;
   z-index: 20;
   pointer-events: none;
@@ -736,4 +733,262 @@
     width: 100%;
     min-width: unset;
   }
+}
+
+/* Enterprise attendance analytics */
+.admin-analysis-page .exec-header {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+
+.admin-analysis-page .filter-card {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border-color: #dbe7f3;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.05);
+}
+
+.admin-analysis-page .filter-group label {
+  color: #5b6b84;
+}
+
+.admin-analysis-page .filter-group select,
+.admin-analysis-page .filter-group input[type="month"] {
+  min-height: 42px;
+  padding: 9px 12px;
+  border-color: #cbdbea;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.admin-analysis-page .kpi-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-analysis-page .kpi-tile {
+  position: relative;
+  min-height: 136px;
+  padding: 18px;
+  overflow: hidden;
+  border-color: #dbe7f3;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+
+.admin-analysis-page .kpi-tile::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: #0d47a1;
+  content: "";
+}
+
+.admin-analysis-page .kpi-tile.success::after { background: #16a34a; }
+.admin-analysis-page .kpi-tile.warning::after { background: #ff8c00; }
+.admin-analysis-page .kpi-tile.danger::after { background: #dc2626; }
+.admin-analysis-page .kpi-tile.info::after { background: #3b82f6; }
+
+.admin-analysis-page .kpi-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-analysis-page .kpi-tile-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf4ff;
+  color: #0d47a1;
+}
+
+.admin-analysis-page .kpi-tile.success .kpi-tile-icon { background: #ecfdf3; color: #16a34a; }
+.admin-analysis-page .kpi-tile.warning .kpi-tile-icon { background: #fff7ed; color: #c76d00; }
+.admin-analysis-page .kpi-tile.danger .kpi-tile-icon { background: #fff1f2; color: #dc2626; }
+
+.admin-analysis-page .kpi-tile .value {
+  max-width: 100%;
+  margin-top: 13px;
+  overflow: hidden;
+  color: #1a2b4b !important;
+  font-size: 25px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-analysis-page .kpi-caption {
+  margin-top: 5px;
+  color: #5b6b84;
+  font-size: 10px;
+}
+
+.admin-analysis-page .analysis-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid #dbe7f3;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.admin-analysis-page .analysis-toolbar div {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-analysis-page .analysis-toolbar strong {
+  color: #1a2b4b;
+  font-size: 13px;
+}
+
+.admin-analysis-page .analysis-toolbar span {
+  color: #5b6b84;
+  font-size: 11px;
+}
+
+.admin-analysis-page .card {
+  margin-bottom: 20px;
+  padding: 20px;
+  border-color: #dbe7f3;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+
+.admin-analysis-page .card-title {
+  color: #1a2b4b;
+  border-left-color: #0d47a1;
+}
+
+.admin-analysis-page .analysis-table-wrap {
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid #e5edf5;
+  border-radius: 12px;
+}
+
+.admin-analysis-page .data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.admin-analysis-page .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 13px 14px;
+  border-bottom: 1px solid #dbe7f3;
+  background: #eaf4ff !important;
+  color: #0d47a1;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-analysis-page .data-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.admin-analysis-page .data-table tbody tr:nth-child(even) td {
+  background: #fbfdff !important;
+}
+
+.admin-analysis-page .data-table tbody tr.risk-row td:first-child {
+  box-shadow: inset 3px 0 #dc2626;
+}
+
+.admin-analysis-page .analysis-employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.admin-analysis-page .analysis-employee-cell > span:last-child {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-analysis-page .analysis-employee-cell small {
+  color: #7b8ba1;
+  font-size: 10px;
+}
+
+.admin-analysis-page .analysis-avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf4ff;
+  color: #0d47a1;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-analysis-page .metric-chip {
+  min-width: 32px;
+  display: inline-flex;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #5b6b84;
+  font-weight: 750;
+}
+
+.admin-analysis-page .metric-chip.good { background: #ecfdf3; color: #15803d; }
+.admin-analysis-page .metric-chip.warn { background: #fff7ed; color: #b45309; }
+.admin-analysis-page .metric-chip.risk { background: #fff1f2; color: #dc2626; }
+
+@media (max-width: 1450px) {
+  .admin-analysis-page .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+
+
+/* Fix: search/filter bar should scroll normally */
+.admin-analysis-page .exec-header,
+.admin-analysis-page .filter-card,
+.employee-management-page .search-filter-card,
+.employee-management-page .filters-card,
+.employee-management-page .employee-search-section,
+.admin-employees-page .search-filter-card,
+.admin-employees-page .filters-card {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* Main page should scroll normally */
+.admin-analysis-page.main-panel-content,
+.admin-employees-page,
+.employee-management-page {
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100vh;
+}
+
+/* Add space between filters and employee cards */
+.employee-grid,
+.employees-grid,
+.admin-employees-page .employee-grid,
+.admin-employees-page .employees-grid {
+  margin-top: 24px;
 }

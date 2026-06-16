@@ -512,7 +512,7 @@ export default function EmployeeBreaks() {
     });
 
   return (
-    <div className="layout">
+    <div className="layout employee-breaks-page">
       <EmployeeSidebar activePage="breaks" />
       <div className="main">
         <div className="topbar">

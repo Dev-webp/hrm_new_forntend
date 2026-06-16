@@ -1,6 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; overflow: hidden; height: 100vh; }
-        :root { --gold: #FF8C00; --gold-dim: rgba(255, 140, 0,0.3); --gold-bg: rgba(255, 140, 0,0.08); --bg-page: #1A2B4B; --bg-card: #FFFFFF; --bg-day: #FFFFFF; --text-main: #1A2B4B; --text-muted: #64748B; --c-present: #16A34A; --c-absent: #DC2626; --c-late: #FF8C00; --c-halfday: #8B5CF6; --c-leave: #0D47A1; --c-holiday: #FF8C00; --c-sunday: #B91C1C; }
+        body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; overflow: hidden; height: 100vh; }
+        :root { --gold: #FF8C00; --gold-dim: rgba(255, 140, 0,0.3); --gold-bg: rgba(255, 140, 0,0.08); --bg-page: #F5F7FA; --bg-card: #FFFFFF; --bg-day: #FFFFFF; --text-main: #1A2B4B; --text-muted: #64748B; --c-present: #16A34A; --c-absent: #DC2626; --c-late: #FF8C00; --c-halfday: #8B5CF6; --c-leave: #0D47A1; --c-holiday: #FF8C00; --c-sunday: #B91C1C; }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #FFFFFF; } ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
         .app-layout { display: flex; height: 100vh; overflow: hidden; }
@@ -202,7 +202,7 @@
         .badge-halfday { background: rgba(139,92,246,0.15); color: #8B5CF6; }
         .badge-leave { background: rgba(59,130,246,0.15); color: #0D47A1; }
         .badge-holiday { background: rgba(255, 140, 0,0.2); color: #FF8C00; }
-        .badge-sunday { background: rgba(185,28,28,0.2); color: #FF8A8A; }
+        .badge-sunday { background: rgba(185,28,28,0.14); color: #991B1B; }
 
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--gold); border-radius: 50%; border-top-color: transparent; animation: spin 0.6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -219,3 +219,15 @@
         .info-table th { color: var(--gold); font-weight: 600; }
 
         @media (max-width: 1000px) { .main-content { padding: 16px; } .calendar-grid { gap: 5px; } .cal-day { min-height: 80px; padding: 8px 5px; } .att-table { font-size: 0.7rem; } }
+
+/* Employee attendance readability */
+.employee-attendance-page :where(.attendance-actions, .month-nav, .month-stats, .legend, .detailed-section, .info-table) { border:2px solid #c7d7ea !important; border-radius:18px !important; box-shadow:0 8px 22px rgba(13,71,161,.10) !important; }
+.employee-attendance-page :where(.attendance-actions, .month-nav, .month-stats, .detailed-section, .info-table):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
+.employee-attendance-page .action-btn { padding:14px 34px !important; border-radius:14px !important; font-size:16px !important; font-weight:800 !important; }
+.employee-attendance-page .status-badge { color:#0f172a !important; font-weight:800 !important; }
+.employee-attendance-page .month-stats { border-width:2px !important; }
+.employee-attendance-page .cal-day { border:2px solid #d6e3f3 !important; font-weight:700 !important; }
+.employee-attendance-page .cal-day:hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
+.employee-attendance-page .day-num { color:#0f172a !important; font-size:24px !important; font-weight:800 !important; }
+.employee-attendance-page :where(h1, h2, h3, .section-title, .month-label, .sv) { color:#0f172a !important; font-weight:800 !important; }
+.employee-attendance-page :where(p, .title p, .today-timings, .legend-item, .sl, .mini-row) { color:#475569 !important; font-weight:600 !important; }

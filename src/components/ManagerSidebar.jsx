@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { MANAGER_NAV } from "../config/managerNav";
 import { clearAuthSession } from "../utils/auth";
 import NotificationBadge from "./NotificationBadge";
-
+import logo from "../assets/logoimagefinally1.png";
 
 function ManagerSidebar() {
   const navigate = useNavigate();
@@ -16,13 +16,19 @@ function ManagerSidebar() {
 
   return (
     <aside className={`sidebar${collapsed ? " collapsed" : ""}`}>
-      <div className="sidebar-header">
-        <div className="brand-mark">V</div>
-        <div className="brand-copy sb-label">
-          <h2>VJC OVERSEAS</h2>
-          <p>Manager Workspace</p>
-        </div>
-      </div>
+     <div className="sidebar-header logo-only-header">
+  <img
+    src={logo}
+    alt="VJC Overseas"
+    className="sidebar-logo-img"
+    style={{
+      borderRadius: "10px",
+      width: "200px",
+      height: "auto",
+      objectFit: "contain"
+    }}
+  />
+</div>
 
       <div className="nav-section">
         {MANAGER_NAV.map((section) => (

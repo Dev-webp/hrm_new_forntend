@@ -13,11 +13,16 @@ function AttendanceFilters({
           key={dept.value}
           type="button"
           className={`filter-btn${deptFilter === dept.value ? " active" : ""}`}
-          onClick={() => onDeptFilterChange(dept.value)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDeptFilterChange(dept.value);
+          }}
         >
           {dept.label}
         </button>
       ))}
+
       <input
         type="text"
         className="search-input"

@@ -68,7 +68,7 @@ export default function ManagerDepartment() {
 
   return (
     <>
-      <main className="main-content manager-department-page">
+      <main className="main-content manager-department-page manager-portal-page">
         <div className="page-header">
           <div className="title">
             <h1>

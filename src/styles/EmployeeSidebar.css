@@ -162,3 +162,68 @@
   flex: 1;
   overflow-y: auto;
 }
+
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 14px;
+  margin-bottom: 10px;
+}
+
+.company-logo {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* When sidebar collapsed */
+.employee-sidebar.collapsed .logo-area {
+  padding: 16px 8px;
+}
+
+.employee-sidebar.collapsed .company-logo {
+  width: 44px;
+}
+
+
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 14px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 140, 0, 0.18);
+}
+
+.company-logo {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  border-radius: 10px;
+}
+
+.employee-sidebar.collapsed .logo-area {
+  padding: 16px 8px;
+}
+
+.employee-sidebar.collapsed .company-logo {
+  width: 44px;
+  border-radius: 50%;
+}
+
+.employee-sidebar .nav-item:hover {
+  background: #0d47a1;
+  color: #ff8c00;
+}
+
+.employee-sidebar .nav-item.active {
+  background: linear-gradient(95deg, #0d47a1, #08306f);
+  border-left: 3px solid #ff8c00;
+  color: #ff8c00;
+}

@@ -235,7 +235,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
 
   return (
     <>
-      <div className="att-dashboard">
+      <div className="att-dashboard manager-portal-page manager-attendance-page">
         <div className="header">
           <div className="title">
             <h1>

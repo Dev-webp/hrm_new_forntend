@@ -2,7 +2,7 @@ import EmptyState from "../../components/EmptyState";
 
 function ManagerPlaceholder({ title = "Manager module" }) {
   return (
-    <div className="scroll-content">
+    <div className="scroll-content manager-portal-page">
       <div className="panel" style={{ padding: 24 }}>
         <h2>{title}</h2>
         <p style={{ color: "var(--muted)", marginTop: 8 }}>

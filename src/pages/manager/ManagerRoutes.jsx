@@ -10,6 +10,7 @@ import ManagerDepartment from "./ManagerDepartment";
 import ManagerEmployee from "./ManagerEmployee";
 import ManagerLeave from "./ManagerLeave";
 import ManagerNotifications from "./ManagerNotifications";
+import ManagerPayslip from "./ManagerPayslip";
 import ManagerPlaceholder from "./ManagerPlaceholder";
 
 const PLACEHOLDER_TITLES = {
@@ -40,6 +41,7 @@ function ManagerRoutes() {
         <Route path="calendar" element={<ManagerCalendar />} />
         <Route path="department" element={<ManagerDepartment />} />
         <Route path="notifications" element={<ManagerNotifications />} />
+        <Route path="payslip" element={<ManagerPayslip />} />
 
         {placeholderSlugs.map((slug) => (
           <Route

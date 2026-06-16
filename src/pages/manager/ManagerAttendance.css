@@ -1,5 +1,5 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; overflow: hidden; height: 100vh; }
+body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; overflow: hidden; height: 100vh; }
 :root { --gold: #FF8C00; --border-gold: rgba(255, 140, 0,0.3); --card-bg: #FFFFFF; }
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #FFFFFF; } ::-webkit-scrollbar-thumb { background: #FF8C00; border-radius: 10px; }
 .app-layout { display: flex; height: 100vh; overflow: hidden; }
@@ -29,7 +29,7 @@ body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; ov
 .controls-group { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .branch-pill { background: rgba(255, 140, 0,0.15); border: 1px solid var(--gold); padding: 8px 20px; border-radius: 40px; font-size: 0.85rem; color: var(--gold); display: flex; align-items: center; gap: 10px; }
 .date-picker-wrapper { background: #FFFFFF; padding: 8px 16px; border-radius: 40px; border: 1px solid var(--gold); display: flex; align-items: center; gap: 10px; }
-.date-picker-wrapper input { background: transparent; border: none; color: white; font-family: 'Inter',sans-serif; font-size: 0.85rem; outline: none; cursor: pointer; }
+.date-picker-wrapper input { background: transparent; border: none; color: #1A2B4B; font-family: 'Inter',sans-serif; font-size: 0.85rem; outline: none; cursor: pointer; }
 .live-badge { background: #FFF4E5; padding: 6px 14px; border-radius: 40px; font-size: 0.75rem; border: 1px solid #FF8C00; }
 .live-pulse { display: inline-block; width: 8px; height: 8px; background: #23c55e; border-radius: 50%; margin-right: 6px; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%{opacity:0.4}100%{opacity:1} }
@@ -63,7 +63,7 @@ body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; ov
 .filter-bar { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
 .filter-btn { background: #EAF4FF; border: none; padding: 8px 18px; border-radius: 40px; color: #64748B; cursor: pointer; font-size: 13px; font-family: inherit; transition: 0.2s; }
 .filter-btn.active { background: #FF8C00; color: #1A2B4B; font-weight: 700; }
-.search-input { background: #EAF4FF; border: 1px solid #EAF4FF; border-radius: 40px; padding: 8px 20px; color: white; outline: none; font-family: inherit; font-size: 13px; }
+.search-input { background: #FFFFFF; border: 1px solid #DBE7F3; border-radius: 40px; padding: 8px 20px; color: #1A2B4B; outline: none; font-family: inherit; font-size: 13px; }
 .table-card { background: #FFFFFF; border-radius: 28px; border: 1px solid var(--border-gold); padding: 24px; margin-bottom: 28px; overflow-x: auto; }
 .att-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 900px; }
 .att-table th { text-align: left; padding: 14px 10px; background: #EAF4FF; color: #FF8C00; font-weight: 600; border-bottom: 1px solid var(--border-gold); }
@@ -81,7 +81,7 @@ body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; ov
 .modal-card { background: #FFFFFF; border: 1px solid #FF8C00; border-radius: 32px; width: 650px; max-width: 90%; padding: 28px; max-height: 80vh; overflow-y: auto; }
 .modal-card h3 { margin-bottom: 20px; color: #FF8C00; }
 .modal-card label { font-size: 12px; color: #64748B; display: block; margin-bottom: 6px; margin-top: 14px; }
-.modal-card input, .modal-card select { width: 100%; padding: 10px 14px; background: #FFFFFF; border: 1px solid #1A2B4B; border-radius: 28px; color: white; font-family: monospace; }
+.modal-card input, .modal-card select { width: 100%; padding: 10px 14px; background: #FFFFFF; border: 1px solid #DBE7F3; border-radius: 28px; color: #1A2B4B; font-family: monospace; }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
 .modal-actions button { padding: 8px 20px; border-radius: 40px; font-weight: 600; border: none; cursor: pointer; }
 .save-btn { background: #FF8C00; color: #1A2B4B; }

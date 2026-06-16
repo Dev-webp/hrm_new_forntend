@@ -42,7 +42,7 @@ export function getStatusMeta(status) {
   const s = (status || "absent").toLowerCase();
   if (s === "full_day") {
     return {
-      label: "FULL DAY",
+      label: "PRESENT",
       style: { background: "rgba(74,222,128,0.2)", color: "#16A34A" },
     };
   }
@@ -75,10 +75,10 @@ export function getLatePillMeta(emp) {
   }
   if ((emp.late_minutes || 0) > 0) {
     return {
-      label: `🔴 ${emp.late_minutes} min`,
+      label: `${emp.late_minutes} min late`,
       style: {
-        background: "rgba(255,70,70,0.18)",
-        color: "#DC2626",
+        background: "#FFF7ED",
+        color: "#B45309",
         padding: "6px 12px",
         borderRadius: "30px",
         fontWeight: 700,

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Toast } from "../../components/Cards";
 import EmployeeFilters from "../../components/EmployeeFilters";
-import EmployeeTable from "../../components/EmployeeTable";
 import EmployeeModal from "../../components/EmployeeModal";
 import { useToast } from "../../hooks/useToast";
 import api from "../../services/api";
@@ -15,7 +14,7 @@ import {
 } from "../../utils/employeeHelpers";
 import "../../styles/adminEmployees.css";
 
-const PAGE_SIZE = 6;
+
 const API_PATH = "/admin/employees";
 
 function AdminEmployees() {
@@ -27,7 +26,6 @@ function AdminEmployees() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const branchDropdownRef = useRef(null);
@@ -87,11 +85,6 @@ function AdminEmployees() {
     loadEmployees();
   }, [loadEmployees]);
 
-  // Reset to page 1 when any filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [currentBranch, currentDept, search, roleFilter, statusFilter]);
-
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const roleMatch =
@@ -123,16 +116,6 @@ function AdminEmployees() {
       branchCount: uniqueBranches.size,
     };
   }, [filteredEmployees]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredEmployees.length / PAGE_SIZE)
-  );
-
-  const paginatedEmployees = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredEmployees.slice(start, start + PAGE_SIZE);
-  }, [filteredEmployees, currentPage]);
 
   const selectedEmployee = useMemo(
     () => employees.find((employee) => employee.id === selectedEmployeeId),
@@ -233,7 +216,7 @@ function AdminEmployees() {
   };
 
   return (
-    <div className="admin-employees-page">
+    <div className="admin-employees-page admin-portal-page">
       <div className="header">
         <div className="title">
           <h1>
@@ -320,21 +303,83 @@ function AdminEmployees() {
         onStatusFilterChange={setStatusFilter}
       />
 
-      <EmployeeTable
-        employees={paginatedEmployees}
-        loading={loading}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        pageSize={PAGE_SIZE}
-        totalCount={filteredEmployees.length}
-        onEdit={openEditModal}
-        onDelete={handleDeleteEmployee}
-        onViewDetails={(employeeId) => {
-          setSelectedEmployeeId(employeeId);
-          setDetailsOpen(true);
-        }}
-        onPageChange={setCurrentPage}
-      />
+<div className="admin-employee-card-grid">
+  {loading ? (
+    <div className="loading-state">Loading employees...</div>
+  ) : filteredEmployees.length === 0 ? (
+    <div className="empty-state">No employees found</div>
+  ) : (
+    filteredEmployees.map((employee) => (
+      <div key={employee.id} className="admin-employee-card">
+        <div className="admin-card-actions">
+          <button
+            type="button"
+            className="admin-action-icon"
+            onClick={() => openEditModal(employee.id)}
+            title="Edit"
+          >
+            <i className="fas fa-pencil-alt" />
+          </button>
+
+          <button
+            type="button"
+            className="admin-action-icon delete"
+            onClick={() => handleDeleteEmployee(employee.id)}
+            title="Delete"
+          >
+            <i className="fas fa-trash-alt" />
+          </button>
+        </div>
+
+        <div className="admin-card-header">
+          <div className="admin-avatar">
+            {employee.initials || employee.name?.slice(0, 2)?.toUpperCase() || "E"}
+          </div>
+
+          <div>
+            <h4>{employee.name}</h4>
+            <div className="admin-role-line">
+              {employee.role === "MANAGER"
+                ? "MANAGER"
+                : employee.role === "SUPER_ADMIN"
+                ? "SUPER ADMIN"
+                : "EMPLOYEE"}
+              <span className={`admin-status-dot ${employee.status || "active"}`}>
+                {employee.status || "active"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-card-details">
+          <div>
+            <i className="fas fa-building" /> {employee.department || "—"}
+          </div>
+          <div>
+            <i className="fas fa-id-card" /> ID: {employee.employeeCode || "—"}
+          </div>
+          <div>
+            <i className="fas fa-envelope" /> {employee.email || "—"}
+          </div>
+          <div>
+            <i className="fas fa-store" /> {employee.branch || "—"}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="admin-full-details-btn"
+          onClick={() => {
+            setSelectedEmployeeId(employee.id);
+            setDetailsOpen(true);
+          }}
+        >
+          <i className="fas fa-file-alt" /> Full Details
+        </button>
+      </div>
+    ))
+  )}
+</div>
 
       <EmployeeModal
         formOpen={formOpen}

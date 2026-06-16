@@ -243,7 +243,7 @@
 .manager-notifications-page .search-box input {
   background: transparent;
   border: none;
-  color: white;
+  color: #1A2B4B;
   outline: none;
   font-family: inherit;
   font-size: 0.82rem;
@@ -390,7 +390,7 @@
 
 .manager-notifications-page .btn-read {
   background: transparent;
-  border: 1px solid #2a2a2a;
+  border: 1px solid #DBE7F3;
   padding: 4px 12px;
   border-radius: 20px;
   color: #64748B;
@@ -431,7 +431,7 @@
 
 /* ── LIVE BADGE ── */
 .manager-notifications-page .live-badge-topbar {
-  background: #0f1a0a;
+  background: #FFFFFF;
   border: 1px solid #16A34A;
   padding: 6px 14px;
   border-radius: 40px;

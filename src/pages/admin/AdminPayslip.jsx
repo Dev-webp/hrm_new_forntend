@@ -534,7 +534,7 @@ const salaryPreview = calculateSalaryPreview();
       : `🏢 ${currentBranch}`;
 
   return (
-    <div className="admin-payslip-page">
+    <div className="admin-payslip-page admin-portal-page">
       <div className="page-header">
         <div>
           <div className="page-title">

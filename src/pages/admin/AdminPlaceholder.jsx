@@ -23,7 +23,7 @@ function AdminPlaceholder({ branch, month, onBranchChange, onMonthChange }) {
         onMonthChange={onMonthChange}
       />
 
-      <div className="scroll-content">
+      <div className="scroll-content admin-portal-page">
         <div className="panel" style={{ padding: "32px" }}>
           <EmptyState
             icon="fa-tools"

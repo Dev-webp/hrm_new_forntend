@@ -49,13 +49,13 @@ function AttendanceTrendChart({ labels, present, late, absent }) {
         scales: {
           x: {
             stacked: true,
-            ticks: { color: "#94A3B8", font: { size: 10, family: "Inter" } },
-            grid: { color: "#EEF2F7" },
+            ticks: { color: "#64748B", font: { size: 10, family: "Inter" } },
+            grid: { color: "#E5E7EB" },
           },
           y: {
             stacked: true,
-            ticks: { color: "#94A3B8", font: { size: 10, family: "Inter" } },
-            grid: { color: "#EEF2F7" },
+            ticks: { color: "#64748B", font: { size: 10, family: "Inter" } },
+            grid: { color: "#E5E7EB" },
           },
         },
       },

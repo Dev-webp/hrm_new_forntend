@@ -1,4 +1,13 @@
 :root {
+  --color-primary: #0d47a1;
+  --color-accent: #ff8c00;
+  --color-text-main: #1a2b4b;
+  --color-text-body: #334155;
+  --color-text-muted: #64748b;
+  --color-bg: #f5f7fa;
+  --color-white: #ffffff;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
   --gold: #ff8c00;
   --gold-light: #FF8C00;
   --gold-dim: rgba(255, 140, 0, 0.12);
@@ -1269,5 +1278,973 @@ canvas {
   .topbar-search,
   .topbar-profile-copy {
     display: none;
+  }
+}
+
+/* Final light-theme contrast guardrails */
+.main-panel,
+.main-content,
+.main,
+.content,
+.page-content,
+.dashboard-content,
+.att-dashboard,
+.leave-dashboard,
+.admin-payslip-page,
+.admin-attendance-page,
+.admin-attendance-analysis-page,
+.admin-calendar-page,
+.admin-breaks-page,
+.admin-leave-page,
+.admin-employees-page,
+.admin-notifications-page,
+.activity-logs-page,
+.employee-main,
+.employee-dashboard,
+.employee-attendance-page,
+.employee-leave-page,
+.employee-breaks-page,
+.employee-payslip-page {
+  background: #f5f7fa !important;
+  color: #1a2b4b !important;
+}
+
+.card,
+.stat-card,
+.kpi,
+.kpi-card,
+.metric-card,
+.summary-card,
+.chart-card,
+.table-card,
+.table-wrapper,
+.table-container,
+.content-card,
+.dashboard-card,
+.employee-card,
+.balance-card,
+.bal-card,
+.self-card,
+.insight-card,
+.notification-card,
+.notification-item,
+.calendar-card,
+.panel,
+.section-card,
+.payslip-card,
+.selector-card,
+.salary-card,
+.offer-card,
+.activity-card,
+.analytics-card,
+.break-slot-card,
+.usage-banner,
+.streak-card,
+.late-card,
+.today-card,
+.perf-card,
+.detailed-section,
+.info-table,
+.tabs-container,
+.month-nav,
+.month-stats,
+.legend {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-color: #dbe7f3 !important;
+}
+
+.card *,
+.stat-card *,
+.kpi *,
+.kpi-card *,
+.metric-card *,
+.summary-card *,
+.chart-card *,
+.table-card *,
+.table-wrapper *,
+.content-card *,
+.dashboard-card *,
+.employee-card *,
+.balance-card *,
+.self-card *,
+.notification-card *,
+.calendar-card *,
+.panel *,
+.section-card *,
+.payslip-card *,
+.modal-content *,
+.modal-card *,
+.employee-modal-content * {
+  text-shadow: none !important;
+}
+
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.panel h1,
+.panel h2,
+.panel h3,
+.panel h4,
+.section-title,
+.card-header,
+.page-title,
+.title h1,
+.header h1,
+.modal-content h3,
+.modal-card h3,
+.employee-modal-content h3 {
+  color: #1a2b4b !important;
+  -webkit-text-fill-color: #1a2b4b !important;
+}
+
+.card p,
+.card small,
+.card label,
+.panel p,
+.panel small,
+.panel label,
+.table-card p,
+.table-card small,
+.detail-label,
+.stat-label,
+.kpi-title,
+.metric-label,
+.subtitle,
+.description,
+.muted {
+  color: #64748b !important;
+}
+
+.table-wrapper table,
+.table-container table,
+.table-card table,
+table {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+}
+
+table th {
+  background: #eaf4ff !important;
+  color: #0d47a1 !important;
+  border-color: #dbe7f3 !important;
+}
+
+table td {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-color: #e5edf5 !important;
+}
+
+table tbody tr:hover td {
+  background: #f7fbff !important;
+}
+
+input,
+select,
+textarea,
+.search-input,
+.filter-input,
+.month-select {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-color: #cbdbea !important;
+}
+
+input:disabled,
+input[readonly],
+select:disabled,
+textarea:disabled {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #7b8ba1 !important;
+  opacity: 1;
+}
+
+.modal-content,
+.modal-card,
+.modal-box,
+.employee-modal-content {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-color: #dbe7f3 !important;
+}
+
+.modal,
+.modal-overlay,
+.employee-modal-overlay {
+  background: rgba(26, 43, 75, 0.55) !important;
+}
+
+.toast,
+.toast-msg,
+.employee-toast-msg,
+.live-notification-toast {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-left: 4px solid #ff8c00 !important;
+}
+
+.topbar,
+.admin-notifications-page .topbar,
+.manager-notifications-page .topbar {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-bottom: 1px solid #dbe7f3 !important;
+}
+
+.topbar h1,
+.topbar h2,
+.topbar p,
+.topbar strong,
+.topbar span {
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none !important;
+}
+
+.primary-btn,
+.save-btn,
+.load-btn,
+.export-btn,
+.add-employee-btn,
+.modal-btn:not(.cancel) {
+  color: #ffffff !important;
+}
+
+.btn-check,
+.approve-btn,
+.action-btn.approve,
+.btn-success {
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+.btn-danger,
+.reject-btn,
+.delete-btn,
+.btn-end {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.tooltip-card,
+.dropdown-menu {
+  background: #ffffff !important;
+  color: #1a2b4b !important;
+  border-color: #dbe7f3 !important;
+  box-shadow: 0 12px 32px rgba(26, 43, 75, 0.14) !important;
+}
+
+.dropdown-item {
+  color: #1a2b4b !important;
+}
+
+.dropdown-item:hover {
+  background: #eaf4ff !important;
+  color: #0d47a1 !important;
+}
+
+/* Corporate readability guardrails for all content pages. Sidebar styling stays untouched. */
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) {
+  color: var(--color-text-body) !important;
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) :where(h1, h2, h3, h4, h5, h6, strong) {
+  color: var(--color-text-main);
+  text-shadow: none !important;
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) :where(p, li, dd, td, .detail-value, .employee-details, .notification-message) {
+  color: var(--color-text-body);
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) :where(.stat-number, .stat-value, .kpi-value, .metric-value, .kpi-tile .value, .sv, .pv, .psi-val) {
+  background: none !important;
+  color: var(--color-primary) !important;
+  -webkit-text-fill-color: var(--color-primary) !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) :where(.stat-label, .kpi-title, .metric-label, .detail-label, .insight-desc, .employee-email) {
+  color: var(--color-text-muted) !important;
+  opacity: 1 !important;
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) :where(table td, table th, table td *, table th *) {
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) table td {
+  color: var(--color-text-body) !important;
+}
+
+:where(
+  .main-panel,
+  .main-content,
+  .main,
+  .content,
+  .page-content,
+  .dashboard-content,
+  .employee-main
+) table th {
+  color: var(--color-primary) !important;
+  font-weight: 700 !important;
+}
+
+.status-present,
+.badge-present,
+.b-present,
+.present-value,
+.present-box :where(.attendance-number, .att-num) {
+  color: var(--color-success) !important;
+  -webkit-text-fill-color: var(--color-success) !important;
+}
+
+.status-absent,
+.badge-absent,
+.b-absent,
+.absent-value,
+.absent-box :where(.attendance-number, .att-num) {
+  color: var(--color-danger) !important;
+  -webkit-text-fill-color: var(--color-danger) !important;
+}
+
+.status-pending,
+.badge-holiday,
+.b-late {
+  color: #b45309 !important;
+}
+
+.admin-department-page .dept-name,
+.manager-department-page .dept-name {
+  color: var(--color-text-main) !important;
+  font-weight: 750 !important;
+}
+
+.admin-department-page .employee-count,
+.manager-department-page .employee-count {
+  background: none !important;
+  color: var(--color-primary) !important;
+  -webkit-text-fill-color: var(--color-primary) !important;
+  opacity: 1 !important;
+}
+
+.admin-department-page :where(.attendance-label, .att-label),
+.manager-department-page :where(.attendance-label, .att-label) {
+  color: var(--color-text-body) !important;
+  font-weight: 650 !important;
+}
+
+.admin-analysis-page .kpi-tile .value,
+.manager-analysis-page .kpi-tile .value {
+  background: none !important;
+  color: var(--color-primary) !important;
+  -webkit-text-fill-color: var(--color-primary) !important;
+  opacity: 1 !important;
+}
+
+.admin-analysis-page :where(.data-table, #dailyLogTable, #breakDetailTable) td,
+.manager-analysis-page :where(.data-table, #dailyLogTable, #breakDetailTable) td {
+  color: var(--color-text-body) !important;
+}
+
+.admin-calendar-page :where(.calendar-weekday, .day-number, .month-nav span),
+.manager-calendar-page :where(.cal-weekday, .day-num, .month-label) {
+  color: var(--color-primary) !important;
+}
+
+.admin-calendar-page .calendar-day.sunday,
+.manager-calendar-page .cal-day.is-sunday,
+.employee-attendance-page .cal-day.is-sunday {
+  background: #fff1f2 !important;
+  border-color: #fecaca !important;
+}
+
+.admin-calendar-page .calendar-day.sunday :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.is-sunday :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.is-sunday :where(.day-num, .day-badge, .mini-row) {
+  color: #991b1b !important;
+}
+
+.admin-calendar-page .calendar-day.holiday,
+.manager-calendar-page .cal-day.is-holiday,
+.employee-attendance-page .cal-day.is-holiday {
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+}
+
+.admin-calendar-page .calendar-day.holiday :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.is-holiday :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.is-holiday :where(.day-num, .day-badge, .mini-row) {
+  color: #9a3412 !important;
+}
+
+.admin-calendar-page .status-label {
+  background: #eaf4ff !important;
+  color: var(--color-text-main) !important;
+  font-weight: 650 !important;
+}
+
+/* Dashboard employee performance readability only */
+.scroll-content > .employees-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.scroll-content > .employees-grid .emp-card {
+  border: 1.5px solid #d6e3f3 !important;
+  transition: all 0.2s ease !important;
+}
+
+.scroll-content > .employees-grid .emp-card:hover {
+  border-color: #0d47a1 !important;
+  box-shadow: 0 8px 20px rgba(13, 71, 161, 0.10) !important;
+  transform: translateY(-2px);
+}
+
+.scroll-content > .employees-grid .emp-name {
+  color: #0f172a !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.scroll-content > .employees-grid .emp-dept {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+.scroll-content > .employees-grid .emp-mini-stats .msv {
+  font-weight: 800 !important;
+}
+
+@media (max-width: 1350px) {
+  .scroll-content > .employees-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .scroll-content > .employees-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Manager portal readability */
+.manager-portal-page {
+  color: #475569 !important;
+}
+
+.manager-portal-page :where(h1, .page-title, .title h1, .header h1) {
+  background: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(h2, h3, h4, .section-title, .card-title, .card-header, .panel-title, .insights-title) {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(label, .label, .stat-label, .kpi-title, .metric-label, .detail-label, .attendance-label) {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+.manager-portal-page :where(p, small, td, .muted, .subtitle, .description, .employee-details, .insight-desc) {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+.manager-portal-page :where(.stat-number, .stat-value, .kpi-value, .metric-value, .kpi-tile .value, .sv, .pv, .insight-value) {
+  background: none !important;
+  color: #0d47a1 !important;
+  -webkit-text-fill-color: #0d47a1 !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(
+  .card,
+  .panel,
+  .stat-card,
+  .kpi,
+  .kpi-tile,
+  .metric-card,
+  .summary-card,
+  .table-card,
+  .table-wrapper,
+  .filter-card,
+  .filter-bar,
+  .employee-card,
+  .emp-card,
+  .glass-card,
+  .self-card,
+  .notification-card,
+  .notification-item,
+  .calendar-card,
+  .week-day-card,
+  .day-card,
+  .my-break-card,
+  .department-card,
+  .offer-card
+) {
+  border: 2px solid #c7d7ea !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 22px rgba(13, 71, 161, 0.10) !important;
+  transition: all 0.2s ease !important;
+}
+
+.manager-portal-page :where(
+  .card,
+  .panel,
+  .stat-card,
+  .kpi,
+  .kpi-tile,
+  .metric-card,
+  .summary-card,
+  .employee-card,
+  .emp-card,
+  .glass-card,
+  .self-card,
+  .notification-card,
+  .notification-item,
+  .week-day-card,
+  .day-card,
+  .my-break-card,
+  .department-card
+):hover {
+  border-color: #0d47a1 !important;
+  box-shadow: 0 12px 28px rgba(13, 71, 161, 0.16) !important;
+  transform: translateY(-2px);
+}
+
+.manager-portal-page .employee-card {
+  padding: 18px !important;
+  border-color: #d6e3f3 !important;
+}
+
+.manager-portal-page :where(.employee-info h4, .emp-name, .employee-name, .manager-att-name, .notification-title) {
+  color: #0f172a !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(.employee-dept, .emp-dept, .employee-details, .employee-email, .role-badge, .branch-tag) {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+.manager-portal-page :where(.employees-grid, .kpi-grid, .stats-row, .summary-cards) {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.manager-portal-page :where(.primary-btn, .add-employee-btn, .apply-btn, .load-btn, .export-btn, .save-btn, .btn-check, .btn-check-out) {
+  min-height: 48px;
+  padding: 14px 32px !important;
+  border-radius: 14px !important;
+  background: #ff8c00 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(.secondary-btn, .btn-secondary, .btn-history, .full-details-btn) {
+  min-height: 42px;
+  border: 2px solid #0d47a1 !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #0d47a1 !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(input, select, textarea, .search-box, .search-input, .filter-select, .branch-pill, .date-picker-wrapper, .month-picker-wrap) {
+  border: 2px solid #c7d7ea !important;
+  border-radius: 14px !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.manager-portal-page :where(.table-card, .table-wrapper, .table-container) {
+  overflow: auto;
+  border: 2px solid #c7d7ea !important;
+}
+
+.manager-portal-page table th {
+  padding: 13px 14px !important;
+  background: #eaf4ff !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page table td {
+  padding: 13px 14px !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+.manager-portal-page table tbody tr:hover td {
+  background: #f8fbff !important;
+}
+
+.manager-portal-page :where(.badge, .status-badge, .leave-badge, .manager-att-status) {
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+}
+
+.manager-portal-page :where(.badge-full-day, .badge-present, .status-present, .status-approved, .sc-approved) {
+  background: #ecfdf3 !important;
+  color: #15803d !important;
+}
+
+.manager-portal-page :where(.badge-half-day, .badge-late, .status-pending, .sc-pending) {
+  background: #fff7ed !important;
+  color: #b45309 !important;
+}
+
+.manager-portal-page :where(.badge-absent, .status-absent, .status-rejected, .sc-rejected) {
+  background: #fff1f2 !important;
+  color: #dc2626 !important;
+}
+
+.manager-portal-page :where(.badge-leave, .status-leave) {
+  background: #eaf4ff !important;
+  color: #0d47a1 !important;
+}
+
+@media (max-width: 1350px) {
+  .manager-portal-page :where(.employees-grid, .kpi-grid, .stats-row, .summary-cards) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .manager-portal-page :where(.employees-grid, .kpi-grid, .stats-row, .summary-cards) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Admin portal readability */
+.admin-portal-page {
+  color: #475569 !important;
+}
+
+.admin-portal-page :where(h1, .page-title, .header-title, .title h1, .welcome-text h2) {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(h2, h3, .section-title, .card-title, .panel-title, .title h2, .title h3) {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(label, .label, .stat-label, .kpi-title, .metric-label, .detail-label, .attendance-label) {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+.admin-portal-page :where(p, small, td, .muted, .subtitle, .description, .employee-details, .insight-desc) {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+.admin-portal-page :where(.stat-number, .stat-value, .kpi-value, .metric-value, .kpi-tile .value, .sv, .pv, .insight-value) {
+  background: none !important;
+  color: #0d47a1 !important;
+  -webkit-text-fill-color: #0d47a1 !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(
+  .card,
+  .panel,
+  .stat-card,
+  .kpi,
+  .kpi-tile,
+  .metric-card,
+  .summary-card,
+  .chart-card,
+  .chart-panel,
+  .table-card,
+  .table-wrapper,
+  .table-container,
+  .filter-card,
+  .filter-bar,
+  .employee-card,
+  .admin-employee-card,
+  .emp-card,
+  .glass-card,
+  .balance-card,
+  .leave-card,
+  .notification-card,
+  .notification-item,
+  .calendar-card,
+  .offer-card,
+  .activity-card,
+  .department-card,
+  .department-kpi,
+  .selector-card,
+  .salary-card,
+  .payslip-card
+) {
+  border: 2px solid #c7d7ea !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 22px rgba(13, 71, 161, 0.10) !important;
+  transition: all 0.2s ease !important;
+}
+
+.admin-portal-page :where(
+  .card,
+  .panel,
+  .stat-card,
+  .kpi,
+  .kpi-tile,
+  .metric-card,
+  .summary-card,
+  .chart-card,
+  .chart-panel,
+  .employee-card,
+  .admin-employee-card,
+  .emp-card,
+  .glass-card,
+  .balance-card,
+  .leave-card,
+  .notification-card,
+  .notification-item,
+  .calendar-card,
+  .offer-card,
+  .activity-card,
+  .department-card,
+  .department-kpi,
+  .salary-card,
+  .payslip-card
+):hover {
+  border-color: #0d47a1 !important;
+  box-shadow: 0 12px 28px rgba(13, 71, 161, 0.16) !important;
+  transform: translateY(-2px);
+}
+
+.admin-portal-page :where(.employee-card, .admin-employee-card, .emp-card) {
+  padding: 18px !important;
+  border-color: #d6e3f3 !important;
+}
+
+.admin-portal-page :where(
+  .employee-info h4,
+  .emp-name,
+  .employee-name,
+  .user-name,
+  .notification-title,
+  .activity-user
+) {
+  color: #0f172a !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(.employee-dept, .emp-dept, .employee-details, .employee-email, .role-badge, .branch-tag) {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
+.admin-portal-page :where(
+  .employees-grid,
+  .admin-employee-card-grid,
+  .kpi-grid,
+  .stats-row,
+  .summary-cards,
+  .department-kpi-grid,
+  .leave-balance-grid
+) {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.admin-portal-page :where(
+  button.primary,
+  .primary-btn,
+  .add-employee-btn,
+  .apply-btn,
+  .load-btn,
+  .export-btn,
+  .save-btn,
+  .create-btn,
+  .add-btn
+) {
+  min-height: 48px;
+  padding: 14px 32px !important;
+  border-radius: 14px !important;
+  background: #ff8c00 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(.secondary-btn, .btn-secondary, .cancel-btn, .outline-btn, .view-btn) {
+  min-height: 42px;
+  border: 2px solid #0d47a1 !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #0d47a1 !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(input, select, textarea, .search-box, .search-input, .filter-select, .branch-pill, .date-picker-wrapper, .month-picker-wrap) {
+  border: 2px solid #c7d7ea !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.admin-portal-page :where(input, select, textarea):focus {
+  border-color: #0d47a1 !important;
+  box-shadow: 0 0 0 4px rgba(13, 71, 161, 0.12) !important;
+  outline: none !important;
+}
+
+.admin-portal-page :where(.table-card, .table-wrapper, .table-container) {
+  overflow: auto;
+  border: 2px solid #c7d7ea !important;
+}
+
+.admin-portal-page table th {
+  padding: 13px 14px !important;
+  background: #eaf4ff !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page table td {
+  padding: 13px 14px !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+.admin-portal-page table tbody tr:hover td {
+  background: #f8fbff !important;
+}
+
+.admin-portal-page :where(.badge, .status-badge, .leave-badge, .attendance-status, .payment-status) {
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+}
+
+.admin-portal-page :where(.badge-full-day, .badge-present, .status-present, .status-approved, .status-paid, .sc-approved) {
+  background: #ecfdf3 !important;
+  color: #15803d !important;
+}
+
+.admin-portal-page :where(.badge-half-day, .badge-late, .status-pending, .status-late, .sc-pending) {
+  background: #fff7ed !important;
+  color: #b45309 !important;
+}
+
+.admin-portal-page :where(.badge-absent, .status-absent, .status-rejected, .status-unpaid, .sc-rejected) {
+  background: #fff1f2 !important;
+  color: #dc2626 !important;
+}
+
+.admin-portal-page :where(.badge-leave, .status-leave, .status-holiday) {
+  background: #eaf4ff !important;
+  color: #0d47a1 !important;
+}
+
+@media (max-width: 1350px) {
+  .admin-portal-page :where(
+    .employees-grid,
+    .admin-employee-card-grid,
+    .kpi-grid,
+    .stats-row,
+    .summary-cards,
+    .department-kpi-grid,
+    .leave-balance-grid
+  ) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-portal-page :where(
+    .employees-grid,
+    .admin-employee-card-grid,
+    .kpi-grid,
+    .stats-row,
+    .summary-cards,
+    .department-kpi-grid,
+    .leave-balance-grid
+  ) {
+    grid-template-columns: 1fr !important;
   }
 }

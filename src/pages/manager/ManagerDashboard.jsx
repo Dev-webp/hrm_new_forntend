@@ -607,7 +607,7 @@ export default function ManagerDashboard() {
         </div>
       </div>
 
-      <div className="scroll-content manager-dashboard-page">
+        <div className="scroll-content manager-dashboard-page manager-portal-page">
         {error ? (
           <div className="manager-error-banner" role="alert">
             <i className="fas fa-triangle-exclamation" /> {error}
@@ -915,9 +915,7 @@ export default function ManagerDashboard() {
                 currentDate
               );
               const { cls, ring } = attPctColor(employeeStats.attPct);
-
-              return (
-                <div key={employee.id} className="emp-card">
+              return <div key={employee.id} className="emp-card">
                   <div className="emp-card-top">
                     <div className="emp-avatar">
                       {getInitials(employee.full_name)}
@@ -964,8 +962,7 @@ export default function ManagerDashboard() {
                       <div className="msl">Absent</div>
                     </div>
                   </div>
-                </div>
-              );
+                  </div>;
             })
           )}
         </div>

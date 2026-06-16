@@ -170,7 +170,7 @@ export default function EmployeeLeave() {
   };
 
   return (
-    <div className="layout">
+    <div className="layout employee-leave-page">
       <EmployeeSidebar activePage="leave" />
 
       <div className="main">
@@ -239,7 +239,7 @@ export default function EmployeeLeave() {
             </div>
           </div>
 
-          <div className="balance-grid" id="balanceGrid">
+          {balanceCards.length < 0 && <div className="balance-grid" id="balanceGrid">
             {isLoading ? (
               <div className="bal-card">
                 <div style={{ textAlign: "center", padding: 20 }}>
@@ -266,7 +266,7 @@ export default function EmployeeLeave() {
                 </div>
               ))
             )}
-          </div>
+          </div>}
 
           <div className="tabs">
             {["all", "pending", "approved", "rejected"].map((status) => (

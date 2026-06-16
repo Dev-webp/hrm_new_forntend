@@ -373,7 +373,7 @@ export default function ManagerBreaks() {
 
   return (
     <>
-      <main className="main-content">
+      <main className="main-content manager-portal-page manager-breaks-page">
         <div className="page-header">
           <div className="title">
             <h1>

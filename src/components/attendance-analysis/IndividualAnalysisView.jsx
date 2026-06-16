@@ -520,11 +520,8 @@ function IndividualAnalysisView({
                     );
 
                   return (
-                    <tr
-                      key={r.date}
-                      style={isAbsent ? { opacity: 0.4 } : undefined}
-                    >
-                      <td style={{ color: "#FF8C00" }}>
+                    <tr key={r.date}>
+                      <td style={{ color: "#0D47A1", fontWeight: 600 }}>
                         {formatDateReadable(r.date)}
                       </td>
                       <td style={{ color: "#64748B" }}>{dayName(r.date)}</td>
@@ -543,7 +540,7 @@ function IndividualAnalysisView({
                       <td
                         style={{
                           fontWeight: 700,
-                          color: r.breaks > 60 ? "#DC2626" : "#F0F2F8",
+                          color: r.breaks > 60 ? "#DC2626" : "#1A2B4B",
                         }}
                       >
                         {r.breaks || 0}m

@@ -413,8 +413,8 @@ export default function ManagerAttendanceAnalysis() {
           responsive: true,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#EAF4FF" } },
-            y: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#EAF4FF" } },
+            x: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#E5E7EB" } },
+            y: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#E5E7EB" } },
           },
         },
       });
@@ -447,8 +447,8 @@ export default function ManagerAttendanceAnalysis() {
           responsive: true,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: "#64748B", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#EAF4FF" } },
-            y: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#EAF4FF" } },
+            x: { ticks: { color: "#64748B", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#E5E7EB" } },
+            y: { ticks: { color: "#64748B", font: { size: 10 } }, grid: { color: "#E5E7EB" } },
           },
         },
       });
@@ -488,8 +488,8 @@ export default function ManagerAttendanceAnalysis() {
             responsive: true,
             plugins: { legend: { labels: { color: "#64748B" } } },
             scales: {
-              x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#EAF4FF" } },
-              y: { ticks: { color: "#64748B" }, grid: { color: "#EAF4FF" }, min: 0, max: 10 },
+              x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#E5E7EB" } },
+              y: { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" }, min: 0, max: 10 },
             },
           },
         });
@@ -512,8 +512,8 @@ export default function ManagerAttendanceAnalysis() {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-              x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#EAF4FF" } },
-              y: { ticks: { color: "#64748B" }, grid: { color: "#EAF4FF" } },
+              x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#E5E7EB" } },
+              y: { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } },
             },
           },
         });
@@ -583,8 +583,8 @@ export default function ManagerAttendanceAnalysis() {
             responsive: true,
             plugins: { legend: { labels: { color: "#64748B" } } },
             scales: {
-              x: { ticks: { color: "#64748B", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#EAF4FF" } },
-              y: { ticks: { color: "#64748B" }, grid: { color: "#EAF4FF" } },
+              x: { ticks: { color: "#64748B", font: { size: 9 }, maxRotation: 45 }, grid: { color: "#E5E7EB" } },
+              y: { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } },
             },
           },
         });
@@ -616,7 +616,7 @@ export default function ManagerAttendanceAnalysis() {
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="main-panel">
+      <div className="main-panel manager-portal-page manager-analysis-page">
         {/* Header */}
         <div className="exec-header">
           <div className="emp-profile">
@@ -1082,8 +1082,8 @@ if (isSunday || r.status === "sunday") {
                             ? <span className="break-dur">{d}m</span>
                             : <span style={{ color: "#3A3D55" }}>0m</span>;
                           return (
-                            <tr key={r.date} style={isAbsent ? { opacity: 0.4 } : {}}>
-                              <td style={{ color: "#FF8C00" }}>{formatDateReadable(r.date)}</td>
+                            <tr key={r.date}>
+                              <td style={{ color: "#0D47A1", fontWeight: 600 }}>{formatDateReadable(r.date)}</td>
                               <td style={{ color: "#64748B" }}>{dayName(r.date)}</td>
                               <td>{bCell(r.breakDetails?.b1?.in)}</td>
                               <td>{bCell(r.breakDetails?.b1?.out)}</td>
@@ -1097,7 +1097,7 @@ if (isSunday || r.status === "sunday") {
                               <td>{bCell(r.breakDetails?.b3?.in)}</td>
                               <td>{bCell(r.breakDetails?.b3?.out)}</td>
                               <td>{dCell(r.breakMins?.b3 || 0)}</td>
-                              <td style={{ fontWeight: 700, color: r.breaks > 60 ? "#DC2626" : "#F0F2F8" }}>{r.breaks || 0}m</td>
+                              <td style={{ fontWeight: 700, color: r.breaks > 60 ? "#DC2626" : "#334155" }}>{r.breaks || 0}m</td>
                               <td style={{ color: remaining <= 0 ? "#DC2626" : "#16A34A" }}>{remaining}m</td>
                               <td>
                                 {isAbsent

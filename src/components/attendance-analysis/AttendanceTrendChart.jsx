@@ -1,8 +1,8 @@
 import { useChart } from "./useChart";
 
 const GOLD_LEGEND = { color: "#64748B", font: { size: 11, family: "Inter" } };
-const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "#DBE7F3" } };
-const GRID_Y = { ticks: { color: "#64748B" }, grid: { color: "#DBE7F3" } };
+const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } };
+const GRID_Y = { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } };
 
 /** Branch-level 6-month trends — present / late / absent (optional) */
 export function BranchTrendsChart({ trends }) {
@@ -114,7 +114,7 @@ export function CheckInChart({ records }) {
             },
             min: 7,
             max: 12,
-            grid: { color: "#DBE7F3" },
+            grid: { color: "#E5E7EB" },
           },
         },
         plugins: { legend: { labels: GOLD_LEGEND } },
@@ -198,7 +198,7 @@ export function AttendanceTrendChart({ labels, values }) {
         responsive: true,
         animation: { duration: 300 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: { color: "#FF8C00" } } },
+        plugins: { legend: { labels: GOLD_LEGEND } },
       },
     }),
     [labels.join(","), values.join(",")]
@@ -221,7 +221,7 @@ export function WeekHoursChart({ labels, hoursData }) {
         responsive: true,
         animation: { duration: 300 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: { color: "#FF8C00" } } },
+        plugins: { legend: { labels: GOLD_LEGEND } },
       },
     }),
     [labels.join(","), hoursData.join(",")]
@@ -244,7 +244,7 @@ export function WeekBreakChart({ labels, breakData }) {
         responsive: true,
         animation: { duration: 300 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: { color: "#FF8C00" } } },
+        plugins: { legend: { labels: GOLD_LEGEND } },
       },
     }),
     [labels.join(","), breakData.join(",")]
@@ -268,7 +268,7 @@ export function BreakPieChart({ pieData }) {
       },
       options: {
         animation: { duration: 300 },
-        plugins: { legend: { labels: { color: "#FF8C00" } } },
+        plugins: { legend: { labels: GOLD_LEGEND } },
       },
     }),
     [pieData.join(",")]

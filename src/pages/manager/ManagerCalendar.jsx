@@ -713,7 +713,7 @@ export default function ManagerCalendar() {
 
   return (
     <>
-      <main className="main-content manager-calendar-page">
+      <main className="main-content manager-calendar-page manager-portal-page">
         <div className="page-header">
           <div className="title">
             <h1>

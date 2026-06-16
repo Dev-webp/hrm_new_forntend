@@ -162,7 +162,7 @@
 .admin-employees-page .search-box input {
   background: transparent;
   border: none;
-  color: white;
+  color: #1A2B4B;
   outline: none;
   width: 100%;
   font-family: inherit;
@@ -218,7 +218,7 @@
 .admin-employees-page .employees-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 24px;
+  gap: 10px;
 }
 
 .admin-employees-page .employee-card {
@@ -270,7 +270,7 @@
 .admin-employees-page .employee-details {
   margin: 16px 0;
   font-size: 0.85rem;
-  color: #b0b3c9;
+  color: #334155;
   line-height: 1.6;
 }
 
@@ -462,7 +462,7 @@
   border: 1px solid #EAF4FF;
   border-radius: 16px;
   padding: 12px;
-  color: white;
+  color: #1A2B4B;
   outline: none;
   font-family: inherit;
 }
@@ -699,5 +699,363 @@
 @media (max-width: 1350px) {
   .admin-employees-page .stats-row {
     grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+}
+
+
+
+/* Admin employee cards like Manager Employee UI */
+.admin-employees-page .admin-employee-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.admin-employees-page .admin-employee-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: 0.2s ease;
+}
+
+.admin-employees-page .admin-employee-card:hover {
+  border-color: #ff8c00;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.admin-employees-page .admin-card-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-right: 72px;
+}
+
+.admin-employees-page .admin-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #eaf4ff;
+  color: #0d47a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.admin-employees-page .admin-card-header h4 {
+  color: #1a2b4b;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.admin-employees-page .admin-role-line {
+  color: #1a2b4b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-employees-page .admin-card-actions {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 8px;
+}
+
+.admin-employees-page .admin-action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #d8e0e9;
+  background: #ffffff;
+  color: #52667f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.admin-employees-page .admin-action-icon:hover {
+  background: #eaf4ff;
+  color: #0d47a1;
+}
+
+.admin-employees-page .admin-action-icon.delete:hover {
+  background: #fff1f2;
+  color: #dc2626;
+  border-color: #fecdd3;
+}
+
+.admin-employees-page .admin-card-details {
+  display: grid;
+  gap: 8px;
+  color: #334155;
+  font-size: 14px;
+  margin: 14px 0 18px;
+}
+
+.admin-employees-page .admin-card-details div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.admin-employees-page .admin-card-details i {
+  width: 16px;
+  color: #ff8c00;
+}
+
+.admin-employees-page .admin-full-details-btn {
+  width: 100%;
+  background: #ffffff;
+  color: #0d47a1;
+  border: 1px solid #cfe4fb;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-employees-page .admin-full-details-btn:hover {
+  background: #eaf4ff;
+}
+
+.admin-employees-page .admin-card-pagination {
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.admin-employees-page .admin-page-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-employees-page .admin-page-buttons button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #1a2b4b;
+  cursor: pointer;
+}
+
+.admin-employees-page .admin-page-buttons button.active {
+  background: #0d47a1;
+  color: #ffffff;
+}
+
+.admin-employees-page .admin-page-buttons button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .admin-employees-page .admin-card-pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* Premium workforce directory */
+.admin-employees-page .filter-bar {
+  align-items: stretch;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(13, 71, 161, 0.06);
+}
+
+.admin-employees-page .search-box {
+  min-height: 44px;
+  background: #f8fbff !important;
+}
+
+.admin-employees-page .dept-filters {
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid #edf2f7;
+}
+
+.admin-employees-page .filter-chip {
+  border-radius: 999px !important;
+  padding: 8px 14px !important;
+  color: #5b6b84 !important;
+}
+
+.admin-employees-page .filter-chip.active {
+  background: #eaf4ff !important;
+  border-color: #b9daf8 !important;
+  color: #0d47a1 !important;
+  box-shadow: inset 0 0 0 1px rgba(13, 71, 161, 0.04);
+}
+
+.admin-employees-page .add-employee-btn {
+  min-height: 44px;
+  padding-inline: 20px !important;
+  border-radius: 12px !important;
+}
+.admin-employees-page .admin-employee-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+
+  max-height: none;
+  min-height: auto;
+
+  overflow: visible;
+}
+.admin-employees-page {
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.admin-employees-page .filter-bar {
+  position: static;
+}
+
+.admin-employees-page .header {
+  position: static;
+}
+
+.admin-employees-page .stat-card,
+.admin-employees-page .filter-bar,
+.admin-employees-page .admin-employee-card {
+  border: 2px solid #D8E5F5;
+
+  box-shadow:
+    0 8px 22px rgba(13,71,161,0.08);
+
+  transition: all 0.25s ease;
+}
+
+.admin-employees-page .stat-card:hover,
+.admin-employees-page .admin-employee-card:hover {
+  border-color: #0D47A1;
+
+  box-shadow:
+    0 12px 28px rgba(13,71,161,0.15);
+
+  transform: translateY(-4px);
+}
+
+.admin-employees-page .admin-employee-card {
+  min-width: 0;
+  padding: 20px;
+  border-color: #dbe7f3;
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(13, 71, 161, 0.03), 0 10px 24px rgba(13, 71, 161, 0.06);
+}
+
+.admin-employees-page .admin-employee-card:hover {
+  border-color: #b9daf8;
+  box-shadow: 0 16px 34px rgba(13, 71, 161, 0.13);
+}
+
+.admin-employees-page .admin-avatar {
+  width: 52px;
+  height: 52px;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px #d8eafe;
+  font-size: 15px;
+}
+
+.admin-employees-page .admin-card-header {
+  align-items: flex-start;
+  min-height: 58px;
+}
+
+.admin-employees-page .admin-card-header h4 {
+  max-width: 150px;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-employees-page .admin-role-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #5b6b84;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.admin-employees-page .admin-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #16a34a;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: capitalize;
+}
+
+.admin-employees-page .admin-status-dot::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.admin-employees-page .admin-status-dot.inactive {
+  color: #dc2626;
+}
+
+.admin-employees-page .admin-card-details {
+  gap: 10px;
+  min-height: 112px;
+  margin: 16px 0;
+  padding: 14px 0;
+  border-top: 1px solid #edf2f7;
+  border-bottom: 1px solid #edf2f7;
+  color: #5b6b84;
+  font-size: 12px;
+}
+
+.admin-employees-page .admin-card-details div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-employees-page .admin-card-details i {
+  color: #0d47a1;
+}
+
+.admin-employees-page .admin-full-details-btn {
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 1500px) {
+  .admin-employees-page .admin-employee-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1150px) {
+  .admin-employees-page .admin-employee-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

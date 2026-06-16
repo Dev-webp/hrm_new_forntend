@@ -501,7 +501,7 @@ export default function EmployeeAttendance() {
   };
 
   return (
-    <div className="layout">
+    <div className="layout employee-attendance-page">
       <EmployeeSidebar activePage="attendance" />
       <main className="main-content">
         <div className="page-header">
@@ -623,7 +623,7 @@ export default function EmployeeAttendance() {
                   className="cal-day"
                   style={{
                     opacity: 0.2,
-                    background: "#060608",
+                    background: "#F5F7FA",
                     pointerEvents: "none",
                   }}
                 />

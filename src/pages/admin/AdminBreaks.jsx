@@ -213,6 +213,7 @@ function AdminLeave() {
   // Calculate stats
   let totalUsedSum = 0;
   let exceeding = 0;
+  let onBreak = 0;
 
   const rows = filteredEmployees.map((emp) => {
     const empBreaks =
@@ -223,6 +224,8 @@ function AdminLeave() {
         break3: { start: "", end: "" },
       };
     const totalUsed = getTotalBreakMinutes(empBreaks);
+    if ([empBreaks.break1, empBreaks.lunch, empBreaks.break2, empBreaks.break3]
+      .some((item) => item?.start && !item?.end)) onBreak++;
     totalUsedSum += totalUsed;
     if (totalUsed > MAX_BREAK_MINUTES) exceeding++;
 
@@ -270,7 +273,7 @@ function AdminLeave() {
       : "🌍 All Branches";
 
   return (
-    <div className="admin-breaks-page">
+    <div className="admin-breaks-page admin-portal-page">
       <div className="header">
         <div className="title">
           <h1>
@@ -356,12 +359,16 @@ function AdminLeave() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Avg Break Used (min)</div>
-          <div className="stat-number">{loading ? "-" : avgUsed}</div>
+          <div className="stat-label">On Break</div>
+          <div className="stat-number">{loading ? "-" : onBreak}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Exceeding Break Limit (60 min)</div>
+          <div className="stat-label">Over Break Limit</div>
           <div className="stat-number">{loading ? "-" : exceeding}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Avg Break Used (min)</div>
+          <div className="stat-number">{loading ? "-" : avgUsed}</div>
         </div>
       </div>
 

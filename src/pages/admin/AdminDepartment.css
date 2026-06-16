@@ -64,7 +64,7 @@
 .admin-department-page #attendanceDate {
   background: #EAF4FF;
   border: none;
-  color: white;
+  color: #1A2B4B;
   padding: 6px 10px;
   border-radius: 30px;
   font-family: "Inter", sans-serif;
@@ -207,6 +207,7 @@
 .admin-department-page .dept-name {
   font-size: 1.3rem;
   font-weight: 700;
+  color: #1A2B4B;
 }
 .admin-department-page .dept-code {
   background: #EAF4FF;
@@ -219,10 +220,7 @@
 .admin-department-page .employee-count {
   font-size: 2rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #fff, #FF8C00);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #0D47A1;
   margin: 8px 0;
 }
 .admin-department-page .attendance-stats {
@@ -246,16 +244,18 @@
 .admin-department-page .attendance-label {
   font-size: 0.7rem;
   margin-bottom: 6px;
+  color: #334155;
+  font-weight: 600;
 }
 .admin-department-page .attendance-number {
   font-size: 1.6rem;
   font-weight: 700;
 }
 .admin-department-page .present-box .attendance-number {
-  color: #00e676;
+  color: #16A34A;
 }
 .admin-department-page .absent-box .attendance-number {
-  color: #ff5252;
+  color: #DC2626;
 }
 .admin-department-page .empty-state {
   grid-column: 1 / -1;
@@ -292,4 +292,168 @@
   .admin-department-page .dept-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Premium department operations */
+.admin-department-page {
+  padding: 24px;
+  background: #f5f7fa;
+}
+
+.admin-department-page .dashboard-header {
+  margin-bottom: 20px;
+  padding: 0;
+  border: 0;
+}
+
+.admin-department-page .dashboard-header h1 {
+  background: none;
+  color: #1a2b4b;
+  -webkit-text-fill-color: #1a2b4b;
+  font-size: 24px;
+}
+
+.admin-department-page .dashboard-header h1 i,
+.admin-department-page .dashboard-header p span {
+  color: #0d47a1;
+}
+
+.admin-department-page .dashboard-header p {
+  color: #5b6b84;
+}
+
+.admin-department-page .date-picker-wrapper,
+.admin-department-page .branch-selector,
+.admin-department-page .live-badge {
+  min-height: 42px;
+  border: 1px solid #dbe7f3;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.admin-department-page .department-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-department-page .department-kpi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 104px;
+  padding: 18px;
+  border: 1px solid #dbe7f3;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+
+.admin-department-page .department-kpi div {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-department-page .department-kpi span {
+  color: #5b6b84;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-department-page .department-kpi strong {
+  color: #1a2b4b;
+  font-size: 27px;
+}
+
+.admin-department-page .department-kpi > i {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #eaf4ff;
+  color: #0d47a1;
+}
+
+.admin-department-page .department-kpi.success > i { background: #ecfdf3; color: #16a34a; }
+.admin-department-page .department-kpi.danger > i { background: #fff1f2; color: #dc2626; }
+
+.admin-department-page .dept-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-department-page .glass-card {
+  padding: 18px;
+  border-color: #dbe7f3;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+
+.admin-department-page .glass-card:hover {
+  border-color: #b9daf8;
+  box-shadow: 0 14px 30px rgba(13, 71, 161, 0.12);
+}
+
+.admin-department-page .dept-name {
+  font-size: 16px;
+}
+
+.admin-department-page .dept-code {
+  border-color: #cfe4fb;
+  color: #0d47a1;
+}
+
+.admin-department-page .employee-count {
+  margin: 12px 0;
+  color: #1a2b4b;
+  font-size: 21px;
+}
+
+.admin-department-page .attendance-stats {
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.admin-department-page .present-box,
+.admin-department-page .absent-box {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.admin-department-page .attendance-label {
+  font-size: 9px;
+}
+
+.admin-department-page .attendance-number {
+  font-size: 20px;
+}
+
+.admin-department-page .department-progress > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: #5b6b84;
+  font-size: 11px;
+}
+
+.admin-department-page .department-progress strong { color: #0d47a1; }
+.admin-department-page .department-progress-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eaf4ff;
+}
+.admin-department-page .department-progress-track span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0d47a1, #16a34a);
+}
+
+@media (max-width: 1300px) {
+  .admin-department-page .dept-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

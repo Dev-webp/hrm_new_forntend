@@ -52,7 +52,7 @@
 .admin-breaks-page #attendanceDate {
   background: #F5F7FA;
   border: none;
-  color: white;
+  color: #1A2B4B;
   padding: 8px 12px;
   border-radius: 30px;
   font-family: "Inter", sans-serif;
@@ -256,7 +256,7 @@
   border: 1px solid #EAF4FF;
   border-radius: 16px;
   padding: 10px 14px;
-  color: white;
+  color: #1A2B4B;
   font-family: monospace;
   outline: none;
   flex: 1;
@@ -328,4 +328,82 @@
   .admin-breaks-page {
     padding: 20px;
   }
+}
+
+/* Premium breaks operations */
+.admin-breaks-page { padding: 24px; background: #f5f7fa; }
+.admin-breaks-page .header { margin-bottom: 20px; padding: 0; border: 0; }
+.admin-breaks-page .title h1 {
+  background: none;
+  color: #1a2b4b;
+  -webkit-text-fill-color: #1a2b4b;
+  font-size: 24px;
+}
+.admin-breaks-page .title h1 i { color: #0d47a1; }
+.admin-breaks-page .title p { color: #5b6b84; font-size: 12px; }
+.admin-breaks-page .date-picker-wrapper,
+.admin-breaks-page .branch-selector-btn {
+  min-height: 42px;
+  border-color: #dbe7f3;
+  border-radius: 10px;
+  background: #ffffff;
+}
+.admin-breaks-page .stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.admin-breaks-page .stat-card {
+  min-width: 0;
+  padding: 18px;
+  border-color: #dbe7f3;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+.admin-breaks-page .stat-number { color: #1a2b4b; }
+.admin-breaks-page .table-wrapper {
+  max-height: 620px;
+  overflow: auto;
+  border-color: #dbe7f3;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(13, 71, 161, 0.06);
+}
+.admin-breaks-page .breaks-table { min-width: 1100px; }
+.admin-breaks-page .breaks-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 12px 10px;
+  background: #eaf4ff;
+  color: #0d47a1;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.admin-breaks-page .breaks-table td { padding: 11px 10px; border-bottom-color: #edf2f7; }
+.admin-breaks-page .breaks-table tbody tr:hover td { background: #f5f9ff !important; }
+.admin-breaks-page .break-time-cell {
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.admin-breaks-page .remaining-badge {
+  display: inline-flex;
+  min-width: 34px;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #ecfdf3;
+}
+.admin-breaks-page .remaining-badge.warning { background: #fff7ed; color: #b45309; }
+.admin-breaks-page .remaining-badge.danger { background: #fff1f2; color: #dc2626; }
+.admin-breaks-page .edit-btn {
+  padding: 7px 11px;
+  border: 1px solid #cfe4fb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0d47a1;
 }

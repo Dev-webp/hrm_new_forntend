@@ -171,7 +171,7 @@ setLeaveBalance(balance);
 
   return (
     <>
-      <div className="main-content">
+      <div className="main-content manager-portal-page manager-leave-page">
         <div className="page-header">
           <div className="title">
             <h1>

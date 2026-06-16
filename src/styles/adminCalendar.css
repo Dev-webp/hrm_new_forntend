@@ -5,7 +5,7 @@
 
 /* Current selected branch text */
 .admin-calendar-page .branch-selector span {
-  color: #FF8C00 !important;
+  color: #1A2B4B !important;
   font-weight: 600;
 }
 
@@ -23,7 +23,7 @@
 
 /* Dropdown items */
 .admin-calendar-page .branch-menu-item {
-  color: #FF8C00 !important;
+  color: #334155 !important;
   font-weight: 500;
 }
 
@@ -127,7 +127,7 @@
 .admin-calendar-page .month-nav span {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #FF8C00;
+  color: #0D47A1;
 }
 
 .admin-calendar-page .month-stats {
@@ -230,7 +230,7 @@
   text-align: center;
   padding: 12px;
   font-weight: 600;
-  color: #FF8C00;
+  color: #0D47A1;
   background: #FFFFFF;
   border-radius: 16px;
   border: 1px solid rgba(255, 140, 0, 0.2);
@@ -238,7 +238,7 @@
 
 .admin-calendar-page .calendar-day {
   background: #FFFFFF;
-  border: 1px solid rgba(255, 140, 0, 0.2);
+  border: 3px solid rgba(255, 140, 0, 0.2);
   border-radius: 20px;
   padding: 12px 8px;
   min-height: 110px;
@@ -268,19 +268,21 @@
 
 .admin-calendar-page .calendar-day:hover {
   transform: translateY(-2px);
-  background: #0f111a;
+  background: #FFFFFF;
 }
 
 .admin-calendar-page .day-number {
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 8px;
-  color: #FF8C00;
+  color: #0D47A1;
 }
 
 .admin-calendar-page .status-label {
   font-size: 0.7rem;
-  background: rgba(26, 43, 75, 0.5);
+  background: #EAF4FF;
+  color: #1A2B4B;
+  font-weight: 600;
   padding: 2px 6px;
   border-radius: 12px;
   display: inline-block;
@@ -535,7 +537,7 @@
   width: 100%;
   margin: 6px 0 14px;
   padding: 10px;
-  background: #050505;
+  background: #FFFFFF;
   color: white;
   border: 1px solid #FF8C00;
   border-radius: 8px;
@@ -547,5 +549,43 @@
   border-radius: 30px;
   border: none;
   cursor: pointer;
+  font-weight: 700;
+}
+
+
+
+
+/* Calendar date numbers */
+.admin-calendar-page .day-number {
+  font-size: 18px;
+  font-weight: 900;
+  color: #0D47A1;
+}
+
+/* Weekday names */
+.admin-calendar-page .calendar-weekday {
+  font-weight: 800;
+  color: #0D47A1;
+}
+
+/* Status labels inside dates */
+.admin-calendar-page .status-label {
+  font-weight: 800;
+  color: #1A2B4B;
+}
+
+/* Section headings */
+.admin-calendar-page .info-table h3,
+.admin-calendar-page .month-nav span,
+.admin-calendar-page .title h1 {
+  font-weight: 800;
+}
+
+/* KPI labels */
+.admin-calendar-page .stat-card .stat-value {
+  font-weight: 900;
+}
+
+.admin-calendar-page .stat-card .stat-label {
   font-weight: 700;
 }

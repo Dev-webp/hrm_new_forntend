@@ -1,5 +1,5 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; overflow: hidden; height: 100vh; }
+body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; overflow: hidden; height: 100vh; }
 :root { --gold: #FF8C00; --border-gold: rgba(255, 140, 0,0.3); --card-bg: #FFFFFF; }
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #FFFFFF; } ::-webkit-scrollbar-thumb { background: #FF8C00; border-radius: 10px; }
 .app-layout { display: flex; height: 100vh; overflow: hidden; }
@@ -37,7 +37,7 @@ body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; ov
 .stat-trend { font-size: 12px; color: #16A34A; }
 .filter-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 28px; }
 .search-box { background: #EAF4FF; border-radius: 40px; padding: 12px 24px; border: 1px solid var(--border-gold); display: flex; gap: 12px; flex: 2; min-width: 240px; }
-.search-box input { background: transparent; border: none; color: white; width: 100%; outline: none; }
+.search-box input { background: transparent; border: none; color: #1A2B4B; width: 100%; outline: none; }
 .dept-filters { display: flex; flex-wrap: wrap; gap: 10px; }
 .filter-chip { background: #FFFFFF; padding: 8px 18px; border-radius: 40px; font-size: 13px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
 .filter-chip.active { background: rgba(255, 140, 0,0.2); border-color: #FF8C00; color: #FF8C00; }
@@ -85,7 +85,7 @@ body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; ov
 .employee-details {
     margin: 16px 0;
     font-size: 0.85rem;
-    color: #B0B3C9;
+    color: #334155;
     line-height: 1.6;
 }
 .employee-details i { width: 24px; color: #FF8C00; }
@@ -133,14 +133,14 @@ body { font-family: 'Inter', sans-serif; background: #1A2B4B; color: #1A2B4B; ov
 .insight-item { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 140, 0,0.1); }
 .insight-value { font-size: 28px; font-weight: 700; color: #FF8C00; margin: 8px 0; }
 .insight-label { font-size: 13px; color: #64748B; }
-.insight-desc { font-size: 12px; color: #7A7D9E; margin-top: 4px; }
+.insight-desc { font-size: 12px; color: #64748B; margin-top: 4px; }
 
 .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(26, 43, 75,0.85); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; }
 .modal-content { background: #FFFFFF; border-radius: 32px; max-width: 720px; width: 90%; padding: 28px; border: 1px solid #FF8C00; max-height: 85vh; overflow-y: auto; }
 .modal-content h3 { margin-bottom: 20px; color: #FF8C00; font-weight: 600; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #64748B; }
-.form-group input, .form-group select { width: 100%; background: #F5F7FA; border: 1px solid #EAF4FF; border-radius: 16px; padding: 12px; color: white; outline: none; }
+.form-group input, .form-group select { width: 100%; background: #FFFFFF; border: 1px solid #DBE7F3; border-radius: 16px; padding: 12px; color: #1A2B4B; outline: none; }
 .form-group input:focus, .form-group select:focus { border-color: #FF8C00; }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
 .modal-btn { background: #FF8C00; border: none; padding: 10px 24px; border-radius: 40px; font-weight: 600; cursor: pointer; }
