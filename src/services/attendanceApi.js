@@ -46,11 +46,12 @@ function normalizeTime(value) {
 }
 
 /** PUT /api/attendance/:userId */
-export async function updateAttendance(userId, date, checkIn, checkOut) {
+export async function updateAttendance(userId, date, checkIn, checkOut, reason) {
   const { data } = await api.put(`/attendance/${userId}`, {
     date: normalizeDate(date),
     check_in_time: normalizeTime(checkIn),
     check_out_time: normalizeTime(checkOut),
+    reason,
   });
 
   return data;

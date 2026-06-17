@@ -82,15 +82,19 @@ export function transformAttendanceRangeRecord(row) {
     workHours:   parseFloat(row.production_hours) || 0,
     lateMinutes: parseInt(row.late_minutes, 10) || 0,
 
-    // The employee/:userId endpoint does not return per-break columns.
-    // Break details are stored in the employee_breaks table and are only
-    // fetched by the day-detail popup via the edit flow.
-    // We seed "--" defaults here; the view/edit modals will show what
-    // the backend returns when a specific day is opened.
     breakDetails: {
-      b1:    { in: "--", out: "--" },
-      lunch: { in: "--", out: "--" },
-      b2:    { in: "--", out: "--" },
+      b1: {
+        in: fmtTime(row.break1_in),
+        out: fmtTime(row.break1_out),
+      },
+      lunch: {
+        in: fmtTime(row.lunch_in),
+        out: fmtTime(row.lunch_out),
+      },
+      b2: {
+        in: fmtTime(row.break2_in),
+        out: fmtTime(row.break2_out),
+      },
     },
   };
 }

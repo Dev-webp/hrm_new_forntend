@@ -12,10 +12,13 @@ function AttendanceEditModalForm({
 }) {
   const [checkIn, setCheckIn] = useState(initialCheckIn || "09:00");
   const [checkOut, setCheckOut] = useState(initialCheckOut || "18:00");
+  const [reason, setReason] = useState("");
+  const reasonIsValid = reason.trim().length >= 5;
 
   const handleSave = () => {
     const newIn = checkIn.trim();
     const newOut = checkOut.trim();
+    const editReason = reason.trim();
 
     if (!newIn || !newOut) {
       window.alert("Please fill both fields");
@@ -27,7 +30,12 @@ function AttendanceEditModalForm({
       return;
     }
 
-    onSave(newIn, newOut);
+    if (editReason.length < 5) {
+      window.alert("Please enter a reason of at least 5 characters.");
+      return;
+    }
+
+    onSave(newIn, newOut, editReason);
   };
 
   return (
@@ -52,6 +60,20 @@ function AttendanceEditModalForm({
         onChange={(e) => setCheckOut(e.target.value)}
         placeholder="18:00"
       />
+      <label htmlFor="editReason">Reason</label>
+      <textarea
+        id="editReason"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Enter reason for this edit"
+        rows={3}
+        required
+      />
+      {!reasonIsValid && (
+        <div className="att-modal-error">
+          Reason must be at least 5 characters.
+        </div>
+      )}
       <div className="att-modal-actions">
         <button type="button" className="cancel-btn" onClick={onClose}>
           Cancel
@@ -60,7 +82,7 @@ function AttendanceEditModalForm({
           type="button"
           className="save-btn"
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !reasonIsValid}
         >
           {saving ? "Saving…" : "Save Changes"}
         </button>

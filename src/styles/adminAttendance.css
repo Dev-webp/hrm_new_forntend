@@ -447,6 +447,27 @@
   box-sizing: border-box;
 }
 
+.att-modal-card textarea {
+  width: 100%;
+  padding: 12px;
+  background: #FFFFFF;
+  border: 1px solid #1A2B4B;
+  border-radius: 18px;
+  color: #1A2B4B;
+  margin-bottom: 18px;
+  font-family: monospace;
+  box-sizing: border-box;
+  min-height: 82px;
+  resize: vertical;
+}
+
+.att-modal-error {
+  color: #B91C1C;
+  font-size: 12px;
+  margin-top: -10px;
+  margin-bottom: 14px;
+}
+
 .att-modal-actions {
   display: flex;
   gap: 14px;

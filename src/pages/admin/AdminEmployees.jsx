@@ -66,6 +66,7 @@ function AdminEmployees() {
           branch: currentBranch,
           department: currentDept,
           search,
+          status: "all",
         },
       });
 
@@ -190,19 +191,19 @@ function AdminEmployees() {
     if (!employee) return;
 
     const confirmed = window.confirm(
-      `Delete ${employee.name}? This cannot be undone.`
+      `Mark ${employee.name} inactive? This keeps their records and related data.`
     );
 
     if (!confirmed) return;
 
     try {
       await api.delete(`${API_PATH}/${employeeId}`);
-      showToast(`🗑️ ${employee.name} deleted.`);
+      showToast("Employee marked as inactive");
       await loadEmployees();
     } catch (error) {
       const message =
-        error.response?.data?.message || error.message || "Delete failed";
-      showToast(`Delete failed: ${message}`);
+        error.response?.data?.message || error.message || "Mark inactive failed";
+      showToast(`Mark inactive failed: ${message}`);
     }
   };
 
@@ -325,7 +326,7 @@ function AdminEmployees() {
             type="button"
             className="admin-action-icon delete"
             onClick={() => handleDeleteEmployee(employee.id)}
-            title="Delete"
+            title="Mark inactive"
           >
             <i className="fas fa-trash-alt" />
           </button>

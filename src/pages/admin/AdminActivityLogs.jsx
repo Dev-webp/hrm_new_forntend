@@ -84,17 +84,67 @@ function BranchChip({ branch }) {
   return <span className="branch-chip">{branch}</span>;
 }
 
+function decodeHtmlEntities(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function decodeMetadata(value) {
+  if (!value) return value;
+  if (typeof value === "string") {
+    const decoded = decodeHtmlEntities(value);
+    try {
+      return JSON.parse(decoded);
+    } catch {
+      return decoded;
+    }
+  }
+  if (Array.isArray(value)) return value.map(decodeMetadata);
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [key, decodeMetadata(val)])
+    );
+  }
+  return value;
+}
+
+function normalizeLogRecord(log) {
+  if (!log) return log;
+  return {
+    ...log,
+    action: decodeHtmlEntities(log.action),
+    action_type: decodeHtmlEntities(log.action_type),
+    user_name: decodeHtmlEntities(log.user_name),
+    role: decodeHtmlEntities(log.role),
+    user_role: decodeHtmlEntities(log.user_role),
+    details: decodeHtmlEntities(log.details),
+    target_name: decodeHtmlEntities(log.target_name),
+    ip_address: decodeHtmlEntities(log.ip_address),
+    branch: decodeHtmlEntities(log.branch),
+    severity: decodeHtmlEntities(log.severity),
+    status: decodeHtmlEntities(log.status),
+    device_info: decodeHtmlEntities(log.device_info),
+    metadata: decodeMetadata(log.metadata),
+  };
+}
+
 function normalizeLogFields(log) {
   return {
     id: log.id,
-    action: log.action || log.action_type || "",
-    username: log.user_name || "",
-    role: log.role || log.user_role || "",
-    details: log.details || log.target_name || "",
-    ip: log.ip_address || "",
-    branch: log.branch || "",
+    action: decodeHtmlEntities(log.action || log.action_type || ""),
+    username: decodeHtmlEntities(log.user_name || ""),
+    role: decodeHtmlEntities(log.role || log.user_role || ""),
+    details: decodeHtmlEntities(log.details || log.target_name || ""),
+    ip: decodeHtmlEntities(log.ip_address || ""),
+    branch: decodeHtmlEntities(log.branch || ""),
     timestamp: log.timestamp || log.created_at || "",
-    severity: log.severity || "",
+    severity: decodeHtmlEntities(log.severity || ""),
   };
 }
 
@@ -209,7 +259,7 @@ export default function AdminActivityLogs() {
     setLoadError("");
     try {
       const result = await fetchActivityLogs(filters, currentPage, PAGE_LIMIT);
-      setLogsData(result.data);
+      setLogsData((result.data || []).map(normalizeLogRecord));
       setTotalPages(result.totalPages);
       setTotalCount(result.total);
       setCurrentPage(result.page);
@@ -262,18 +312,19 @@ export default function AdminActivityLogs() {
 
   const handleLiveLog = useCallback(
     (log) => {
-      const action = log.action || log.action_type || "Event";
-      const username = log.user_name || "System";
+      const normalizedLog = normalizeLogRecord(log);
+      const action = normalizedLog.action || normalizedLog.action_type || "Event";
+      const username = normalizedLog.user_name || "System";
       setTickerText(`${action} by ${username} · just now`);
 
       if (currentPage === 1 && sortFilter === "desc") {
         setLogsData((prev) => {
-          const exists = prev.some((r) => r.id === log.id);
+          const exists = prev.some((r) => r.id === normalizedLog.id);
           if (exists) return prev;
-          const next = [log, ...prev];
+          const next = [normalizedLog, ...prev];
           return next.slice(0, PAGE_LIMIT);
         });
-        addNewRowFlash(log.id);
+        addNewRowFlash(normalizedLog.id);
         showToast(`⚡ Live: ${action}`, "success");
       } else {
         showToast(`New: ${action} by ${username}`, "info");
@@ -335,7 +386,7 @@ export default function AdminActivityLogs() {
 
         socket.on("activity_logs_list", (rows) => {
           if (cancelled || !Array.isArray(rows) || !rows.length) return;
-          setLogsData(rows);
+          setLogsData(rows.map(normalizeLogRecord));
         });
       } catch (err) {
         console.error("Socket connect failed:", err);
@@ -375,7 +426,7 @@ export default function AdminActivityLogs() {
     showToast("Preparing CSV export…");
     try {
       const result = await exportActivityLogs(filters);
-      const logs = result.data || [];
+      const logs = (result.data || []).map(normalizeLogRecord);
       if (!logs.length) {
         showToast("No data to export", "error");
         return;
@@ -425,7 +476,7 @@ export default function AdminActivityLogs() {
     setDetailLog(null);
     try {
       const log = await fetchActivityLogById(logId);
-      setDetailLog(log);
+      setDetailLog(normalizeLogRecord(log));
     } catch {
       showToast("Could not load log details", "error");
       setDetailModalOpen(false);
@@ -464,12 +515,7 @@ export default function AdminActivityLogs() {
       }
     : null;
 
-  const metadata = detailLog?.metadata || detailLog?.reason;
-  const hasMetadata =
-    metadata &&
-    (typeof metadata === "object"
-      ? Object.keys(metadata).length > 0
-      : Boolean(metadata));
+
 
   const hasDiff =
     detailLog &&
@@ -756,7 +802,7 @@ export default function AdminActivityLogs() {
                       </td>
                       <td
                         style={{
-                          maxWidth: "200px",
+                          maxWidth: "360px",
                           fontSize: "0.78rem",
                           color: "#bbb",
                         }}
@@ -920,26 +966,7 @@ export default function AdminActivityLogs() {
                 </div>
               ) : null}
 
-              {hasMetadata ? (
-                <div style={{ marginTop: "16px" }}>
-                  <div className="diff-title">Metadata</div>
-                  <pre
-                    style={{
-                      background: "#FFFFFF",
-                      borderRadius: "12px",
-                      padding: "12px",
-                      fontSize: "0.75rem",
-                      color: "#9ca3af",
-                      overflowX: "auto",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
-                    {typeof metadata === "object"
-                      ? JSON.stringify(metadata, null, 2)
-                      : metadata}
-                  </pre>
-                </div>
-              ) : null}
+        
             </>
           ) : null}
           <button

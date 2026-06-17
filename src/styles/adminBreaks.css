@@ -266,6 +266,29 @@
   border-color: #FF8C00;
 }
 
+.admin-breaks-page .form-group textarea {
+  width: 100%;
+  min-height: 82px;
+  background: #F5F7FA;
+  border: 1px solid #EAF4FF;
+  border-radius: 16px;
+  padding: 10px 14px;
+  color: #1A2B4B;
+  font-family: monospace;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.admin-breaks-page .form-group textarea:focus {
+  border-color: #FF8C00;
+}
+
+.admin-breaks-page .modal-error {
+  color: #B91C1C;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
 .admin-breaks-page .modal-actions {
   display: flex;
   gap: 12px;
@@ -280,6 +303,11 @@
   border-radius: 40px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.admin-breaks-page .modal-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .admin-breaks-page .modal-btn.cancel {

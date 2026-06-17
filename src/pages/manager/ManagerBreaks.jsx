@@ -92,6 +92,7 @@ export default function ManagerBreaks() {
   const [summaryStat, setSummaryStat] = useState({ days: 0, avg: 0, highest: 0, exceeded: 0 });
   const [managerBreaks, setManagerBreaks] = useState({ break1: {}, lunch: {}, break2: {}, break3: {} });
   const [currentEditEmployeeId, setCurrentEditEmployeeId] = useState(null);
+  const [editReason, setEditReason] = useState("");
 
   const showToast = useCallback((msg, dur = 2500) => {
     setToast({ msg, visible: true });
@@ -138,8 +139,14 @@ export default function ManagerBreaks() {
       const updated = { break1: { ...current.break1 }, lunch: { ...current.lunch }, break2: { ...current.break2 }, break3: { ...current.break3 } };
       updated[breakType] = { start: newStart, end: newEnd };
 
+      const reason = window.prompt("Enter reason for this break update:");
+      if (!reason || reason.trim().length < 5) {
+        showToast("Enter a reason of at least 5 characters");
+        return;
+      }
+
       try {
-        await authFetch(`/breaks/${managerId}`, { method: "PUT", body: JSON.stringify({ date: currentDate, breaks: updated }) }, token, navigate);
+        await authFetch(`/breaks/${managerId}`, { method: "PUT", body: JSON.stringify({ date: currentDate, breaks: updated, reason: reason.trim() }) }, token, navigate);
         showToast(`${BREAK_LABELS[breakType]} updated`);
         refreshData();
       } catch (err) {
@@ -156,6 +163,7 @@ export default function ManagerBreaks() {
       setCurrentEditEmployeeId(empId);
       const empBreaks = breaksData.find((b) => b.id === empId) || { break1: {}, lunch: {}, break2: {}, break3: {} };
       setEditModal({ open: true, empId, empName: emp.name, breaks: empBreaks });
+      setEditReason("");
     },
     [employeesList, breaksData]
   );
@@ -163,6 +171,7 @@ export default function ManagerBreaks() {
   const closeModal = useCallback(() => {
     setEditModal({ open: false, empId: null, empName: "", breaks: { break1: {}, lunch: {}, break2: {}, break3: {} } });
     setCurrentEditEmployeeId(null);
+    setEditReason("");
   }, []);
 
   const updateEditField = useCallback((breakType, field, value) => {
@@ -174,6 +183,10 @@ export default function ManagerBreaks() {
 
   const saveModalChanges = useCallback(async () => {
     if (!currentEditEmployeeId) return;
+    if (editReason.trim().length < 5) {
+      showToast("Enter a reason of at least 5 characters");
+      return;
+    }
     const newBreaks = {
       break1: { start: editModal.breaks.break1?.start || "", end: editModal.breaks.break1?.end || "" },
       lunch: { start: editModal.breaks.lunch?.start || "", end: editModal.breaks.lunch?.end || "" },
@@ -181,14 +194,14 @@ export default function ManagerBreaks() {
       break3: { start: editModal.breaks.break3?.start || "", end: editModal.breaks.break3?.end || "" },
     };
     try {
-      await authFetch(`/breaks/${currentEditEmployeeId}`, { method: "PUT", body: JSON.stringify({ date: currentDate, breaks: newBreaks }) }, token, navigate);
+      await authFetch(`/breaks/${currentEditEmployeeId}`, { method: "PUT", body: JSON.stringify({ date: currentDate, breaks: newBreaks, reason: editReason.trim() }) }, token, navigate);
       showToast(`✅ Breaks saved for ${currentDate}`);
       closeModal();
       refreshData();
     } catch (err) {
       showToast("Update failed: " + err.message);
     }
-  }, [currentEditEmployeeId, editModal.breaks, currentDate, token, navigate, showToast, closeModal, refreshData]);
+  }, [currentEditEmployeeId, editModal.breaks, editReason, currentDate, token, navigate, showToast, closeModal, refreshData]);
 
   const loadPersonalHistory = useCallback(async () => {
     if (!historyFrom || !historyTo) {
@@ -629,11 +642,24 @@ export default function ManagerBreaks() {
                 </div>
               </div>
             ))}
+            <div className="form-group">
+              <label>Reason</label>
+              <textarea
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+                placeholder="Enter reason for this edit"
+                rows={3}
+                required
+              />
+              {editReason.trim().length < 5 && (
+                <div className="modal-error">Reason must be at least 5 characters.</div>
+              )}
+            </div>
             <div className="modal-actions">
               <button className="modal-btn cancel" onClick={closeModal}>
                 Cancel
               </button>
-              <button className="modal-btn" onClick={saveModalChanges}>
+              <button className="modal-btn" onClick={saveModalChanges} disabled={editReason.trim().length < 5}>
                 Save Changes
               </button>
             </div>

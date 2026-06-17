@@ -39,9 +39,12 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #64748B; }
 .time-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .time-row input { background: #FFFFFF; border: 1px solid #DBE7F3; border-radius: 16px; padding: 10px 14px; color: #1A2B4B; font-family: monospace; outline: none; flex: 1; }
+.form-group textarea { width: 100%; min-height: 82px; background: #FFFFFF; border: 1px solid #DBE7F3; border-radius: 16px; padding: 10px 14px; color: #1A2B4B; font-family: monospace; resize: vertical; box-sizing: border-box; }
+.modal-error { color: #B91C1C; font-size: 12px; margin-top: 6px; }
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
 .modal-btn { background: #FF8C00; border: none; padding: 10px 24px; border-radius: 40px; font-weight: 600; cursor: pointer; }
 .modal-btn.cancel { background: transparent; border: 1px solid #FF8C00; color: #FF8C00; }
+.modal-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .toast { position: fixed; bottom: 30px; right: 30px; background: #FFF4E5; border-left: 4px solid #FF8C00; padding: 12px 24px; border-radius: 50px; color: #FFF4E5; z-index: 1000; opacity: 0; transition: 0.2s; pointer-events: none; }
 .toast.show { opacity: 1; }
 .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #FF8C00; border-radius: 50%; border-top-color: transparent; animation: spin 0.6s linear infinite; }

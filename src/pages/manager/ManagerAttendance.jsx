@@ -60,6 +60,7 @@ export default function ManagerAttendance() {
   const [editTarget, setEditTarget] = useState(null);
   const [editCI, setEditCI] = useState("");
   const [editCO, setEditCO] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [historyModal, setHistoryModal] = useState(false);
   const [historyRecords, setHistoryRecords] = useState([]);
   const [historyStart, setHistoryStart] = useState("");
@@ -163,14 +164,19 @@ export default function ManagerAttendance() {
       showToast("Fill both fields");
       return;
     }
+    if (editReason.trim().length < 5) {
+      showToast("Enter a reason of at least 5 characters");
+      return;
+    }
     if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(editCI) || !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(editCO)) {
       showToast("Use HH:MM 24h format");
       return;
     }
     try {
-await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
+      await editAttendanceRecord(editTarget, currentDate, editCI, editCO, editReason.trim());
       showToast("✅ Attendance updated");
       setEditModal(false);
+      setEditReason("");
       await refresh();
     } catch (err) {
       showToast("Failed: " + err.message);
@@ -464,6 +470,7 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
                             setEditTarget(r.user_id);
                             setEditCI(r.check_in_time ? r.check_in_time.slice(0, 5) : "09:00");
                             setEditCO(r.check_out_time ? r.check_out_time.slice(0, 5) : "18:00");
+                            setEditReason("");
                             setEditModal(true);
                           }}
                         >
@@ -491,11 +498,22 @@ await editAttendanceRecord(editTarget, currentDate, editCI, editCO);
             <input type="text" value={editCI} onChange={(e) => setEditCI(e.target.value)} placeholder="09:00" />
             <label>Check-Out (HH:MM)</label>
             <input type="text" value={editCO} onChange={(e) => setEditCO(e.target.value)} placeholder="18:00" />
+            <label>Reason</label>
+            <textarea
+              value={editReason}
+              onChange={(e) => setEditReason(e.target.value)}
+              placeholder="Enter reason for this edit"
+              rows={3}
+              required
+            />
+            {editReason.trim().length < 5 && (
+              <div className="modal-error">Reason must be at least 5 characters.</div>
+            )}
             <div className="modal-actions">
               <button type="button" className="cancel-btn" onClick={() => setEditModal(false)}>
                 Cancel
               </button>
-              <button type="button" className="save-btn" onClick={handleEditSave}>
+              <button type="button" className="save-btn" onClick={handleEditSave} disabled={editReason.trim().length < 5}>
                 Save
               </button>
             </div>

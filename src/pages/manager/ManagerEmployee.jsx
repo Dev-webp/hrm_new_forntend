@@ -70,6 +70,7 @@ export default function ManagerEmployee() {
       const data = await fetchManagerEmployees({
         department: selectedDept,
         search: searchTerm,
+        status: "all",
       });
       setEmployees(data);
     } catch (err) {
@@ -119,10 +120,10 @@ export default function ManagerEmployee() {
   };
 
   const handleDeleteEmployee = async (id) => {
-    if (!window.confirm("Delete this employee permanently?")) return;
+    if (!window.confirm("Mark this employee inactive? This keeps their records and related data.")) return;
     try {
       await deleteEmployee(id);
-      showToast("Employee deleted");
+      showToast("Employee marked as inactive");
       loadEmployees();
     } catch (err) {
       showToast(err.message);
@@ -266,7 +267,7 @@ export default function ManagerEmployee() {
                   <button className="action-icon" onClick={() => handleEditEmployee(emp.id)}>
                     <i className="fas fa-pencil-alt"></i>
                   </button>
-                  <button className="action-icon delete-icon" onClick={() => handleDeleteEmployee(emp.id)}>
+                  <button className="action-icon delete-icon" onClick={() => handleDeleteEmployee(emp.id)} title="Mark inactive">
                     <i className="fas fa-trash-alt"></i>
                   </button>
                 </div>

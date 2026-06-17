@@ -45,6 +45,7 @@ export async function fetchManagerEmployees(filters = {}) {
     params.department = filters.department;
   }
   if (filters.search) params.search = filters.search;
+  if (filters.status) params.status = filters.status;
   const response = await api.get("/manager/employees", { params });
   return normalizeArray(response.data);
 }
@@ -154,11 +155,12 @@ export async function checkOut() {
 }
 
 /** PUT /attendance/:userId — attendanceRoutes.js */
-export async function editAttendanceRecord(userId, date, checkIn, checkOut) {
+export async function editAttendanceRecord(userId, date, checkIn, checkOut, reason) {
   const response = await api.put(`/attendance/${userId}`, {
     date,
     check_in_time: checkIn,
     check_out_time: checkOut,
+    reason,
   });
   return response.data;
 }

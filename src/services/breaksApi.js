@@ -23,8 +23,8 @@ export async function fetchBreaks(date, branch) {
 }
 
 // Update breaks for a specific user
-export async function updateBreaks(userId, date, breaks) {
-  const payload = { date, breaks };
+export async function updateBreaks(userId, date, breaks, reason) {
+  const payload = { date, breaks, reason };
   const response = await api.put(`/breaks/${userId}`, payload);
   return response.data;
 }

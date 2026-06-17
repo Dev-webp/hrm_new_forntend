@@ -147,14 +147,15 @@ const handleBranchSelect = (branch) => {
     }
   };
 
-  const handleSaveAttendance = async (checkIn, checkOut) => {
+  const handleSaveAttendance = async (checkIn, checkOut, reason) => {
     setSaving(true);
     try {
       await updateAttendance(
         editModal.userId,
         currentDateStr,
         checkIn,
-        checkOut
+        checkOut,
+        reason
       );
       setEditModal((prev) => ({ ...prev, open: false }));
       await loadData();

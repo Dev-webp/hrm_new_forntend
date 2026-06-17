@@ -64,6 +64,7 @@ function AdminLeave() {
       break2: { start: "", end: "" },
       break3: { start: "", end: "" },
     },
+    reason: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -155,6 +156,7 @@ function AdminLeave() {
       employeeName: emp.name,
       department: emp.department,
       breaks: empBreaks,
+      reason: "",
     });
   };
 
@@ -168,10 +170,19 @@ function AdminLeave() {
   // Save modal changes
   const handleSaveChanges = async () => {
     if (editModal.employeeId === null) return;
+    if (editModal.reason.trim().length < 5) {
+      window.alert("Please enter a reason of at least 5 characters.");
+      return;
+    }
 
     setSaving(true);
     try {
-      await updateBreaks(editModal.employeeId, currentDate, editModal.breaks);
+      await updateBreaks(
+        editModal.employeeId,
+        currentDate,
+        editModal.breaks,
+        editModal.reason.trim()
+      );
       showToast(`✅ Break timings saved for ${currentDate}`);
       setEditModal((prev) => ({ ...prev, open: false }));
       await loadData();
@@ -522,6 +533,23 @@ function AdminLeave() {
               />
             </div>
           </div>
+          <div className="form-group">
+            <label>Reason</label>
+            <textarea
+              value={editModal.reason}
+              onChange={(e) =>
+                setEditModal((prev) => ({ ...prev, reason: e.target.value }))
+              }
+              placeholder="Enter reason for this edit"
+              rows={3}
+              required
+            />
+            {editModal.reason.trim().length < 5 && (
+              <div className="modal-error">
+                Reason must be at least 5 characters.
+              </div>
+            )}
+          </div>
           <div className="modal-actions">
             <button
               className="modal-btn cancel"
@@ -533,7 +561,7 @@ function AdminLeave() {
             <button
               className="modal-btn"
               onClick={handleSaveChanges}
-              disabled={saving}
+              disabled={saving || editModal.reason.trim().length < 5}
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
