@@ -10,7 +10,6 @@ import {
   fetchAnalysisSummary,
   fetchAnalysisTrends,
   fetchEmployeeLeaves,
-  filterApprovedLeavesForUser,
   invalidateAnalysisCache,
 } from "../../services/attendanceAnalysisApi";
 import {
@@ -129,7 +128,10 @@ function AdminAttendanceAnalysis() {
 
       // Check cache first
       if (recordsCacheRef.current[cacheKey]) {
+        const signal = getSignal();
+        const monthlyLeaves = await fetchEmployeeLeaves(empId, monthStr, signal);
         setCurrentRecords(recordsCacheRef.current[cacheKey]);
+        setCurrentLeaves(monthlyLeaves || []);
         setCurrentEmpId(empId);
         setViewMode("individual");
         setWeeksCache(buildWeeksCache(monthStr));
@@ -147,9 +149,9 @@ function AdminAttendanceAnalysis() {
 
       try {
         const signal = getSignal();
-        const [data, allLeaves] = await Promise.all([
+        const [data, monthlyLeaves] = await Promise.all([
           fetchAnalysisIndividual(empId, monthStr, signal),
-          fetchEmployeeLeaves(currentBranch, signal),
+          fetchEmployeeLeaves(empId, monthStr, signal),
         ]);
 
         if (fetchId !== fetchIdRef.current) return;
@@ -158,9 +160,7 @@ function AdminAttendanceAnalysis() {
         recordsCacheRef.current[cacheKey] = transformedRecords;
 
         setCurrentRecords(transformedRecords);
-        setCurrentLeaves(
-          filterApprovedLeavesForUser(allLeaves, empId)
-        );
+        setCurrentLeaves(monthlyLeaves || []);
         setWeeksCache(buildWeeksCache(monthStr));
         showToast(`Loaded ${emp.name}`);
       } catch (err) {

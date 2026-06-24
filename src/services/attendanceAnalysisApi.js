@@ -78,22 +78,16 @@ export async function fetchAnalysisTrends(branch, months = 6, signal) {
   return data;
 }
 
-/** GET /api/leaves?branch=&status=all */
-export async function fetchEmployeeLeaves(branch, signal) {
-  const ck = `leaves|${branch}`;
+/** GET /api/leaves/approved-monthly?userId=&month=YYYY-MM */
+export async function fetchEmployeeLeaves(userId, month, signal) {
+  const ck = `leaves|${userId}|${month}`;
   const cached = cGet(ck);
   if (cached) return cached;
 
-  const { data } = await api.get("/leaves", {
-    params: { branch, status: "all" },
+  const { data } = await api.get("/leaves/approved-monthly", {
+    params: { userId, month },
     signal,
   });
   cSet(ck, data);
   return data;
-}
-
-export function filterApprovedLeavesForUser(leaves, userId) {
-  return (leaves || []).filter(
-    (l) => l.user_id == userId && l.status === "approved"
-  );
 }
