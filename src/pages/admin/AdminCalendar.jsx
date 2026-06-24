@@ -17,6 +17,7 @@ import {
   transformAttendanceRangeRecord,
   monthRangeBounds,
 } from "../../utils/calendarHelper";
+import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
 
 import "../../styles/adminCalendar.css";
 
@@ -26,6 +27,141 @@ const MONTH_NAMES = [
 ];
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function getRecordTime(record = {}, keys = []) {
+  for (const key of keys) {
+    const value = record[key];
+    if (value && value !== "--") return String(value).slice(0, 5);
+  }
+  return "";
+}
+
+function getRecordHours(record = {}) {
+  return Number(
+    record.production_hours ??
+    record.work_hours ??
+    record.workHours ??
+    record.hours ??
+    0
+  );
+}
+
+function normalizeAttendanceStatus(status = "") {
+  const value = String(status).trim().toLowerCase().replace(/\s+/g, "_");
+  if (value === "present" || value === "full_day") return "present";
+  if (value === "half_day") return "half_day";
+  if (value === "late") return "late";
+  if (value === "absent") return "absent";
+  if (value === "paid_leave") return "paid_leave";
+  if (value === "unpaid_leave") return "unpaid_leave";
+  if (value === "leave") return "leave";
+  if (value === "holiday") return "holiday";
+  return value || "no_record";
+}
+
+function hasValidAttendance(record = {}) {
+  const inTime = getRecordTime(record, ["office_in", "check_in", "login_time", "checkIn"]);
+  const outTime = getRecordTime(record, ["office_out", "check_out", "logout_time", "checkOut"]);
+  const hours = getRecordHours(record);
+
+  return (
+    inTime &&
+    outTime &&
+    inTime !== "00:00" &&
+    outTime !== "00:00" &&
+    hours >= 4
+  );
+}
+
+function hasApprovedLeave(record = {}) {
+  const status = normalizeAttendanceStatus(record.status || record.day_status);
+  const leaveStatus = String(record.leave_status || record.leaveStatus || "").toLowerCase();
+  const leaveType = String(record.leave_type || record.leaveType || record.leave_category || record.leaveCategory || "").toLowerCase();
+
+  return (
+    status === "paid_leave" ||
+    status === "unpaid_leave" ||
+    status === "leave" ||
+    leaveStatus === "approved" ||
+    leaveType === "paid" ||
+    leaveType === "unpaid" ||
+    Number(record.paid_days || record.paidDays || 0) > 0 ||
+    Number(record.unpaid_days || record.unpaidDays || 0) > 0 ||
+    Boolean(record.leave_request_id || record.leaveRequestId)
+  );
+}
+
+function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayHoliday } = {}) {
+  if (isSunday) return "sunday";
+  if (isHoliday) return "holiday";
+  if (isHalfDayHoliday && !record) return "half_day";
+  if (!record) return "no_record";
+
+  const status = normalizeAttendanceStatus(record.status || record.day_status);
+  const hours = getRecordHours(record);
+  const lateMinutes = Number(record.lateMinutes ?? record.late_minutes ?? 0);
+
+  if (hasValidAttendance(record)) {
+    if (status === "half_day") return "half_day";
+    if ((status === "late" || lateMinutes > 0) && hours >= 8) return "late";
+    if (status === "absent" && hours < 4) return "absent";
+    if (hours >= 8) return "present";
+    if (hours >= 4) return "half_day";
+    return "absent";
+  }
+
+  if (hasApprovedLeave(record)) {
+    if (
+      status === "paid_leave" ||
+      record.is_paid_leave === true ||
+      record.isPaidLeave === true ||
+      Number(record.paid_days || record.paidDays || 0) > 0
+    ) {
+      return "paid_leave";
+    }
+
+    return "unpaid_leave";
+  }
+
+  if (status === "absent") return "absent";
+  if (status === "holiday") return "holiday";
+
+  return "no_record";
+}
+
+function isPaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    !hasValidAttendance(safe) &&
+    hasApprovedLeave(safe) &&
+    (
+      safe.is_paid_leave === true ||
+      safe.isPaidLeave === true ||
+      status === "paid_leave" ||
+      leaveType === "paid" ||
+      Number(safe.paid_days || safe.paidDays || 0) > 0
+    )
+  );
+}
+
+function isUnpaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    !hasValidAttendance(safe) &&
+    hasApprovedLeave(safe) &&
+    (
+      safe.is_paid_leave === false ||
+      safe.isPaidLeave === false ||
+      status === "unpaid_leave" ||
+      leaveType === "unpaid" ||
+      Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+    )
+  );
+}
 
 function escapeHtml(str) {
   if (!str) return "";
@@ -74,6 +210,7 @@ function AdminCalendar() {
   const [employeeRecordsMap, setEmployeeRecordsMap] = useState(new Map());
   const [selectedDayRecord, setSelectedDayRecord] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
+  const [editError, setEditError] = useState("");
 
   const branchDropdownRef = useRef(null);
   const monthChangeTimerRef = useRef(null);
@@ -409,14 +546,57 @@ function AdminCalendar() {
 
         // --- NEW: Employee mode rendering ---
         if (selectedEmployeeId !== "all") {
-          const st = employeeRecord?.status || "absent";
+          const st = employeeRecord?.status || null;
           const isLate = Number(employeeRecord?.lateMinutes || 0) > 0;
+          const isCompanyHoliday = entry?.type === "holiday";
+          const isCompanyHalfDay = entry?.type === "halfday";
+          const statusKey = resolveEmployeeCalendarStatus(employeeRecord, {
+            isSunday: isSun,
+            isHoliday: isCompanyHoliday,
+            isHalfDayHoliday: isCompanyHalfDay,
+          });
+          const normalizedStatus = normalizeAttendanceStatus(st);
+          const lateMinutes = Number(employeeRecord?.lateMinutes || employeeRecord?.late_minutes || 0);
 
-          dayClass += ` employee-day ${st}`;
+          dayClass += " employee-day";
 
-          if (isLate && st !== "absent") {
+          if (statusKey === "sunday" || statusKey === "holiday") {
+            dayClass += " calendar-holiday";
+          } else if (statusKey === "paid_leave") {
+            dayClass += " calendar-paid-leave paid-leave";
+          } else if (statusKey === "unpaid_leave") {
+            dayClass += " calendar-unpaid-leave unpaid-leave";
+          } else if (statusKey === "absent") {
+            dayClass += " calendar-absent";
+          } else if (statusKey === "half_day") {
+            dayClass += " calendar-halfday";
+          } else if (statusKey === "late") {
+            dayClass += " calendar-late";
+          } else if (statusKey === "present") {
+            dayClass += " calendar-present";
+          } else {
+            dayClass += " calendar-empty";
+          }
+
+          if (normalizedStatus && normalizedStatus !== "no_record") {
+            dayClass += ` ${normalizedStatus}`;
+          }
+
+          if (statusKey === "late") {
             dayClass += " late-day";
           }
+
+          const labelText = (() => {
+            if (statusKey === "sunday") return "Sunday";
+            if (statusKey === "holiday") return entry.name || "Holiday";
+            if (statusKey === "paid_leave") return "Paid Leave";
+            if (statusKey === "unpaid_leave") return "Unpaid Leave";
+            if (statusKey === "absent") return "Absent";
+            if (statusKey === "half_day") return "Half Day";
+            if (statusKey === "late") return `Late ${lateMinutes}m`;
+            if (statusKey === "present") return "Present";
+            return "No Record";
+          })();
 
           statusLabel = (
             <div className="status-label">
@@ -429,10 +609,12 @@ function AdminCalendar() {
             </div>
           );
 
+          statusLabel = <div className="status-label">{labelText}</div>;
+
           tooltipContent = (
             <div className="tooltip-card">
               <div className="tooltip-title">{dateStr}</div>
-              <div className="tooltip-row">Status: {st}</div>
+              <div className="tooltip-row">Status: {labelText}</div>
               <div className="tooltip-row">Login: {employeeRecord?.checkIn || "--"}</div>
               <div className="tooltip-row">Logout: {employeeRecord?.checkOut || "--"}</div>
               <div className="tooltip-row">Hours: {employeeRecord?.workHours || 0}</div>
@@ -534,17 +716,17 @@ function AdminCalendar() {
 
               <div className="tooltip-row">
                 <span>✅ Present</span>
-                <span style={{ color: "#16A34A" }}>{stats.present}</span>
+                <span style={{ color: CALENDAR_STATUS_COLORS.present.text }}>{stats.present}</span>
               </div>
 
               <div className="tooltip-row">
                 <span>❌ Absent</span>
-                <span style={{ color: "#DC2626" }}>{stats.absent}</span>
+                <span style={{ color: CALENDAR_STATUS_COLORS.absent.text }}>{stats.absent}</span>
               </div>
 
               <div className="tooltip-row">
                 <span>🔴 Late</span>
-                <span style={{ color: "#FF8C00" }}>{stats.late}</span>
+                <span style={{ color: CALENDAR_STATUS_COLORS.late.text }}>{stats.late}</span>
               </div>
 
               <div className="tooltip-row">
@@ -554,7 +736,7 @@ function AdminCalendar() {
 
               <div className="tooltip-row">
                 <span>🏖️ Leave</span>
-                <span style={{ color: "#0D47A1" }}>{stats.leave}</span>
+                <span style={{ color: CALENDAR_STATUS_COLORS.paid_leave.text }}>{stats.leave}</span>
               </div>
 
               <div
@@ -875,7 +1057,12 @@ function AdminCalendar() {
 
         <div className="legend-item">
           <div className="color-dot leave"></div>
-          <span>Leave</span>
+          <span>Paid Leave</span>
+        </div>
+
+        <div className="legend-item">
+          <div className="color-dot unpaid-leave"></div>
+          <span>Unpaid Leave</span>
         </div>
 
         <div className="legend-item">
@@ -947,7 +1134,7 @@ function AdminCalendar() {
                     setSelectedDayRecord(
                       item.record || {
                         date: item.dateStr,
-                        status: "absent",
+                        status: "no_record",
                         checkIn: "--",
                         checkOut: "--",
                         lateMinutes: 0,
@@ -990,7 +1177,12 @@ function AdminCalendar() {
             <p><b>Lunch:</b> {selectedDayRecord.breakDetails?.lunch?.in || "--"} → {selectedDayRecord.breakDetails?.lunch?.out || "--"}</p>
             <p><b>Break 2:</b> {selectedDayRecord.breakDetails?.b2?.in || "--"} → {selectedDayRecord.breakDetails?.b2?.out || "--"}</p>
 
-            <button onClick={() => setEditRecord(selectedDayRecord)}>
+            <button
+              onClick={() => {
+                setEditError("");
+                setEditRecord(selectedDayRecord);
+              }}
+            >
               Edit Attendance
             </button>
 
@@ -1040,33 +1232,71 @@ function AdminCalendar() {
             <label>Break 2 Out</label>
             <input id="editB2Out" type="time" defaultValue={editRecord.breakDetails?.b2?.out !== "--" ? editRecord.breakDetails?.b2?.out : ""} />
 
+            <label>Reason <span style={{ color: "#DC2626" }}>*</span></label>
+            <textarea
+              id="editReason"
+              rows={3}
+              placeholder="Enter the reason for this calendar attendance edit"
+              style={{
+                resize: "vertical",
+                minHeight: "82px",
+                border: editError ? "1px solid #DC2626" : "1px solid #DBE7F3",
+              }}
+            />
+            {editError && (
+              <div style={{ color: "#DC2626", fontSize: "0.8rem", marginTop: "-6px" }}>
+                {editError}
+              </div>
+            )}
+
             <button
               onClick={async () => {
                 const status = document.getElementById("editStatus").value;
+                const reason = document.getElementById("editReason").value.trim();
 
-                await updateEmployeeCalendarDay(selectedEmployeeId, {
-                  date: editRecord.date,
-                  status: status === "auto" ? null : status,
-                  check_in_time: document.getElementById("editLogin").value || null,
-                  check_out_time: document.getElementById("editLogout").value || null,
-                  break1_in: document.getElementById("editB1In").value || null,
-                  break1_out: document.getElementById("editB1Out").value || null,
-                  break3_in: document.getElementById("editLunchIn").value || null,
-                  break3_out: document.getElementById("editLunchOut").value || null,
-                  break2_in: document.getElementById("editB2In").value || null,
-                  break2_out: document.getElementById("editB2Out").value || null,
-                });
+                if (!reason) {
+                  setEditError("Reason is required before saving attendance changes.");
+                  return;
+                }
 
-                setEditRecord(null);
-                setSelectedDayRecord(null);
-                setRefreshKey((prev) => prev + 1);
-                showToast("Attendance updated successfully");
+                try {
+                  await updateEmployeeCalendarDay(selectedEmployeeId, {
+                    date: editRecord.date,
+                    source: "calendar",
+                    reason,
+                    status: status === "auto" ? null : status,
+                    check_in_time: document.getElementById("editLogin").value || null,
+                    check_out_time: document.getElementById("editLogout").value || null,
+                    break1_in: document.getElementById("editB1In").value || null,
+                    break1_out: document.getElementById("editB1Out").value || null,
+                    break3_in: document.getElementById("editLunchIn").value || null,
+                    break3_out: document.getElementById("editLunchOut").value || null,
+                    break2_in: document.getElementById("editB2In").value || null,
+                    break2_out: document.getElementById("editB2Out").value || null,
+                  });
+
+                  setEditError("");
+                  setEditRecord(null);
+                  setSelectedDayRecord(null);
+                  setRefreshKey((prev) => prev + 1);
+                  showToast("Attendance updated successfully");
+                } catch (err) {
+                  setEditError(
+                    err?.response?.data?.message ||
+                    "Unable to update attendance. Please try again."
+                  );
+                }
               }}
             >
               Save
             </button>
 
-            <button onClick={() => setEditRecord(null)}>
+            <button
+              onClick={() => {
+                setEditError("");
+                setEditRecord(null);
+              }}
+            >
               Cancel
             </button>
           </div>

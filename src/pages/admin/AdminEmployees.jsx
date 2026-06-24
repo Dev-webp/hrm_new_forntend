@@ -4,6 +4,7 @@ import EmployeeFilters from "../../components/EmployeeFilters";
 import EmployeeModal from "../../components/EmployeeModal";
 import { useToast } from "../../hooks/useToast";
 import api from "../../services/api";
+import { updateEmployeeStatus } from "../../services/employeeApi";
 import {
   BRANCH_OPTIONS,
   EMPTY_EMPLOYEE_FORM,
@@ -196,14 +197,35 @@ function AdminEmployees() {
 
     if (!confirmed) return;
 
+    const reason = window.prompt("Reason for deactivation (optional):", "") ?? null;
+    if (reason === null) return;
+
     try {
-      await api.delete(`${API_PATH}/${employeeId}`);
+      await updateEmployeeStatus(employeeId, "inactive", reason);
+      setEmployees((prev) => prev.map((item) =>
+        item.id === employeeId ? { ...item, status: "inactive" } : item
+      ));
       showToast("Employee marked as inactive");
-      await loadEmployees();
     } catch (error) {
       const message =
         error.response?.data?.message || error.message || "Mark inactive failed";
       showToast(`Mark inactive failed: ${message}`);
+    }
+  };
+
+  const handleActivateEmployee = async (employeeId) => {
+    const employee = employees.find((item) => item.id === employeeId);
+    if (!employee || !window.confirm(`Activate ${employee.name}?`)) return;
+    const reason = window.prompt("Reason for activation (optional):", "") ?? null;
+    if (reason === null) return;
+    try {
+      await updateEmployeeStatus(employeeId, "active", reason);
+      setEmployees((prev) => prev.map((item) =>
+        item.id === employeeId ? { ...item, status: "active" } : item
+      ));
+      showToast(`${employee.name} activated`);
+    } catch (error) {
+      showToast(error.response?.data?.message || "Activation failed");
     }
   };
 
@@ -322,14 +344,25 @@ function AdminEmployees() {
             <i className="fas fa-pencil-alt" />
           </button>
 
-          <button
-            type="button"
-            className="admin-action-icon delete"
-            onClick={() => handleDeleteEmployee(employee.id)}
-            title="Mark inactive"
-          >
-            <i className="fas fa-trash-alt" />
-          </button>
+          {employee.status === "inactive" ? (
+            <button
+              type="button"
+              className="admin-action-icon activate"
+              onClick={() => handleActivateEmployee(employee.id)}
+              title="Activate employee"
+            >
+              <i className="fas fa-user-check" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="admin-action-icon delete"
+              onClick={() => handleDeleteEmployee(employee.id)}
+              title="Mark inactive"
+            >
+              <i className="fas fa-user-slash" />
+            </button>
+          )}
         </div>
 
         <div className="admin-card-header">
@@ -357,7 +390,7 @@ function AdminEmployees() {
             <i className="fas fa-building" /> {employee.department || "—"}
           </div>
           <div>
-            <i className="fas fa-id-card" /> ID: {employee.employeeCode || "—"}
+            <i className="fas fa-id-card" /> ID: {employee.empId  || "—"}
           </div>
           <div>
             <i className="fas fa-envelope" /> {employee.email || "—"}

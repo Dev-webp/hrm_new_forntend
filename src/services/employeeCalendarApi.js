@@ -5,6 +5,10 @@ export async function fetchEmployees(branch = "all") {
   if (branch && branch !== "all") params.branch = branch;
 
   const response = await api.get("/employees/list", { params });
+  console.log(
+    "Loaded users for attendance:",
+    response.data.map((u) => ({ name: u.full_name, role: u.role }))
+  );
   return Array.isArray(response.data) ? response.data : [];
 }
 

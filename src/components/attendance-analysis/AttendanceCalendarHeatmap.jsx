@@ -5,6 +5,9 @@ import {
   formatDateYMD,
   formatTimeDisplay,
   getAttendanceStyle,
+  isPaidLeaveRecord,
+  isUnpaidLeaveRecord,
+  normalizeAttendanceAnalysisRecord,
 } from "../../utils/attendanceAnalysisHelpers";
 
 /** O(1) lookup map: "YYYY-MM-DD" → record */
@@ -20,16 +23,21 @@ function buildRecordMap(records) {
 
 /** Pure day cell — no state, no hooks */
 function CalendarDay({ dateStr, dayNum, record }) {
-  const style = getAttendanceStyle(record);
+  const safeRecord = normalizeAttendanceAnalysisRecord(record, dateStr);
+  const style = getAttendanceStyle(safeRecord);
 
   const statusLabel =
-    record?.status === "full_day"
+    isPaidLeaveRecord(safeRecord)
+      ? "Paid Leave"
+      : isUnpaidLeaveRecord(safeRecord)
+      ? "Unpaid Leave"
+      : safeRecord.status === "full_day"
       ? "Full Day"
-      : record?.status === "half_day"
+      : safeRecord.status === "half_day"
         ? "Half Day"
-        : record?.status === "sunday"
+        : safeRecord.status === "sunday"
           ? "Sunday"
-          : record?.status === "holiday"
+          : safeRecord.status === "holiday"
             ? "Holiday"
             : "Absent";
 
@@ -37,48 +45,48 @@ function CalendarDay({ dateStr, dayNum, record }) {
     <div className={`cal-day ${style.className}`}>
       <div className={`day-num ${style.numClass}`}>{dayNum}</div>
       <div className="cal-tooltip-custom">
-        {record ? (
+        {safeRecord ? (
           <>
             <strong>
               {formatDateReadable(dateStr)} · {dayName(dateStr)}
             </strong>
             <hr />
             Status: <strong>{statusLabel}</strong>
-            {record.lateMinutes ? (
+            {safeRecord.lateMinutes ? (
               <>
                 <br />
-                Late by {record.lateMinutes} min
+                Late by {safeRecord.lateMinutes} min
               </>
             ) : null}
-            {record.checkIn !== "--" ? (
+            {safeRecord.checkIn !== "--" ? (
               <>
                 <br />
-                Login: {formatTimeDisplay(record.checkIn)}
+                Login: {formatTimeDisplay(safeRecord.checkIn)}
               </>
             ) : null}
-            {record.checkOut !== "--" ? (
-              <> &nbsp; Logout: {formatTimeDisplay(record.checkOut)}</>
+            {safeRecord.checkOut !== "--" ? (
+              <> &nbsp; Logout: {formatTimeDisplay(safeRecord.checkOut)}</>
             ) : null}
-            {record.workHours > 0 ? (
+            {safeRecord.workHours > 0 ? (
               <>
                 <br />
-                Hours: {record.workHours.toFixed(1)}h
+                Hours: {safeRecord.workHours.toFixed(1)}h
               </>
             ) : null}
             <hr />
-            Break1: {record.breakDetails.b1.in}→{record.breakDetails.b1.out} (
-            {record.breakMins.b1}m)
+            Break1: {safeRecord.breakDetails.b1.in}→{safeRecord.breakDetails.b1.out} (
+            {safeRecord.breakMins.b1}m)
             <br />
-            Lunch: {record.breakDetails.lunch.in}→
-            {record.breakDetails.lunch.out} ({record.breakMins.lunch}m)
+            Lunch: {safeRecord.breakDetails.lunch.in}→
+            {safeRecord.breakDetails.lunch.out} ({safeRecord.breakMins.lunch}m)
             <br />
-            Break2: {record.breakDetails.b2.in}→{record.breakDetails.b2.out} (
-            {record.breakMins.b2}m)
+            Break2: {safeRecord.breakDetails.b2.in}→{safeRecord.breakDetails.b2.out} (
+            {safeRecord.breakMins.b2}m)
             <br />
-            Break3: {record.breakDetails.b3.in}→{record.breakDetails.b3.out} (
-            {record.breakMins.b3}m)
+            Break3: {safeRecord.breakDetails.b3.in}→{safeRecord.breakDetails.b3.out} (
+            {safeRecord.breakMins.b3}m)
             <br />
-            Total Break: <strong>{record.breaks}m</strong>
+            Total Break: <strong>{safeRecord.breaks}m</strong>
           </>
         ) : (
           <>

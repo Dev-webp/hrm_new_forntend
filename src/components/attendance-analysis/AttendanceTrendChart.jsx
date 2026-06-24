@@ -1,4 +1,5 @@
 import { useChart } from "./useChart";
+import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
 
 const GOLD_LEGEND = { color: "#64748B", font: { size: 11, family: "Inter" } };
 const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } };
@@ -20,24 +21,24 @@ export function BranchTrendsChart({ trends }) {
           {
             label: "Present",
             data: present,
-            borderColor: "#16A34A",
-            backgroundColor: "rgba(74,222,128,0.1)",
+            borderColor: CALENDAR_STATUS_COLORS.present.border,
+            backgroundColor: CALENDAR_STATUS_COLORS.present.background,
             fill: true,
             tension: 0.3,
           },
           {
             label: "Late",
             data: late,
-            borderColor: "#FF8C00",
-            backgroundColor: "rgba(255,179,71,0.08)",
+            borderColor: CALENDAR_STATUS_COLORS.late.border,
+            backgroundColor: CALENDAR_STATUS_COLORS.late.background,
             fill: true,
             tension: 0.3,
           },
           {
             label: "Absent",
             data: absent,
-            borderColor: "#DC2626",
-            backgroundColor: "rgba(255,107,107,0.08)",
+            borderColor: CALENDAR_STATUS_COLORS.absent.border,
+            backgroundColor: CALENDAR_STATUS_COLORS.absent.background,
             fill: true,
             tension: 0.3,
           },
@@ -64,7 +65,7 @@ export function BranchTrendsChart({ trends }) {
 
 /** Individual: check-in time line chart */
 export function CheckInChart({ records }) {
-  const presentRecs = (records || []).filter((r) => r.checkIn !== "--");
+  const presentRecs = (records || []).filter((r) => r?.date && r?.checkIn && r.checkIn !== "--");
   const labels = presentRecs.map((r) => parseInt(r.date.slice(8, 10), 10));
   const ciData = presentRecs.map((r) => {
     const [h, mi] = r.checkIn.split(":").map(Number);
@@ -80,9 +81,9 @@ export function CheckInChart({ records }) {
           {
             label: "Check-In (hr)",
             data: ciData,
-            borderColor: "#FF8C00",
-            backgroundColor: "rgba(255, 140, 0,0.08)",
-            pointBackgroundColor: "#FF8C00",
+            borderColor: CALENDAR_STATUS_COLORS.late.border,
+            backgroundColor: CALENDAR_STATUS_COLORS.late.background,
+            pointBackgroundColor: CALENDAR_STATUS_COLORS.late.border,
             pointRadius: 4,
             fill: true,
             tension: 0.3,
@@ -90,7 +91,7 @@ export function CheckInChart({ records }) {
           {
             label: "9:00 AM",
             data: labels.map(() => 9),
-            borderColor: "#DC2626",
+            borderColor: CALENDAR_STATUS_COLORS.absent.border,
             borderDash: [5, 4],
             pointRadius: 0,
             fill: false,
@@ -128,9 +129,12 @@ export function CheckInChart({ records }) {
 
 /** Individual: daily break duration bar chart */
 export function BreakDurationChart({ records }) {
-  const labels = (records || []).map((r) => parseInt(r.date.slice(8, 10), 10));
-  const breakData = (records || []).map((r) => r.breaks);
-  const breakColors = breakData.map((v) => (v > 60 ? "#DC2626" : "#16A34A"));
+  const safeRecords = (records || []).filter((r) => r?.date);
+  const labels = safeRecords.map((r) => parseInt(r.date.slice(8, 10), 10));
+  const breakData = safeRecords.map((r) => Number(r.breaks) || 0);
+  const breakColors = breakData.map((v) =>
+    v > 60 ? CALENDAR_STATUS_COLORS.absent.border : CALENDAR_STATUS_COLORS.present.border
+  );
 
   const canvasRef = useChart(
     () => ({
@@ -147,7 +151,7 @@ export function BreakDurationChart({ records }) {
             label: "60 min limit",
             data: labels.map(() => 60),
             type: "line",
-            borderColor: "#DC2626",
+            borderColor: CALENDAR_STATUS_COLORS.absent.border,
             borderDash: [5, 4],
             pointRadius: 0,
             fill: false,
@@ -179,15 +183,15 @@ export function AttendanceTrendChart({ labels, values }) {
           {
             label: "Break (min)",
             data: values,
-            borderColor: "#FF8C00",
-            backgroundColor: "rgba(255, 140, 0,0.08)",
+            borderColor: CALENDAR_STATUS_COLORS.late.border,
+            backgroundColor: CALENDAR_STATUS_COLORS.late.background,
             fill: true,
             tension: 0.3,
           },
           {
             label: "60 min limit",
             data: labels.map(() => 60),
-            borderColor: "#DC2626",
+            borderColor: CALENDAR_STATUS_COLORS.absent.border,
             borderDash: [5, 4],
             pointRadius: 0,
             fill: false,
@@ -214,7 +218,7 @@ export function WeekHoursChart({ labels, hoursData }) {
       data: {
         labels,
         datasets: [
-          { label: "Hours Worked", data: hoursData, backgroundColor: "#FF8C00" },
+          { label: "Hours Worked", data: hoursData, backgroundColor: CALENDAR_STATUS_COLORS.present.background, borderColor: CALENDAR_STATUS_COLORS.present.border },
         ],
       },
       options: {
@@ -237,7 +241,7 @@ export function WeekBreakChart({ labels, breakData }) {
       data: {
         labels,
         datasets: [
-          { label: "Break (min)", data: breakData, backgroundColor: "#0D47A1" },
+          { label: "Break (min)", data: breakData, backgroundColor: CALENDAR_STATUS_COLORS.holiday.background, borderColor: CALENDAR_STATUS_COLORS.holiday.border },
         ],
       },
       options: {
@@ -262,7 +266,12 @@ export function BreakPieChart({ pieData }) {
         datasets: [
           {
             data: pieData,
-            backgroundColor: ["#FF8C00", "#16A34A", "#0D47A1", "#DC2626"],
+            backgroundColor: [
+              CALENDAR_STATUS_COLORS.late.background,
+              CALENDAR_STATUS_COLORS.present.background,
+              CALENDAR_STATUS_COLORS.holiday.background,
+              CALENDAR_STATUS_COLORS.absent.background,
+            ],
           },
         ],
       },

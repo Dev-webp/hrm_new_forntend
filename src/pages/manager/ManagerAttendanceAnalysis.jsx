@@ -5,6 +5,15 @@ import {
   fetchManagerEmployees,
   fetchManagerLeaves,
 } from "../../services/managerApi";
+import {
+  calculateLeaveSalaryImpact,
+  formatLeaveNumber,
+  getLeaveDays,
+  getLeavePaidDays,
+  getLeaveUnpaidDays,
+  normalizeAttendanceAnalysisRecords,
+} from "../../utils/attendanceAnalysisHelpers";
+import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
 import "./ManagerAttendanceAnalysis.css";
 
 // ─── Chart.js lazy import ───────────────────────────────────────────────────
@@ -27,7 +36,8 @@ function getInitials(name) {
 }
 
 function formatDateReadable(dateStr) {
-  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  if (!dateStr) return "";
+  const [y, m, d] = String(dateStr).slice(0, 10).split("-").map(Number);
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${months[m - 1]} ${d}`;
 }
@@ -51,30 +61,63 @@ function getWeekNumber(dateStr) {
 }
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
+function isPaidLeaveRecord(r = {}) {
+  const safe = r || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === true ||
+    safe.isPaidLeave === true ||
+    status === "paid_leave" ||
+    leaveType === "paid" ||
+    Number(safe.paid_days || safe.paidDays || 0) > 0
+  );
+}
+
+function isUnpaidLeaveRecord(r = {}) {
+  const safe = r || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === false ||
+    safe.isPaidLeave === false ||
+    status === "unpaid_leave" ||
+    leaveType === "unpaid" ||
+    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+  );
+}
+
 function statusLabel(r) {
-  if (r.status === "absent") return "Absent";
-  if (r.status === "half_day") return "Half Day";
-  if (r.status === "sunday") return "Sunday";
-  if (r.status === "holiday") return "Holiday";
-  if (r.lateMinutes > 0) return "Late";
+  const safe = r || { status: "absent", lateMinutes: 0 };
+  if (isPaidLeaveRecord(safe)) return "Paid Leave";
+  if (isUnpaidLeaveRecord(safe)) return "Unpaid Leave";
+  if (safe.status === "absent") return "Absent";
+  if (safe.status === "half_day") return "Half Day";
+  if (safe.status === "sunday") return "Sunday";
+  if (safe.status === "holiday") return "Holiday";
+  if (safe.lateMinutes > 0) return "Late";
   return "Present";
 }
 function statusBadgeClass(r) {
-  if (r.status === "absent") return "b-absent";
-  if (r.status === "half_day") return "b-halfday";
-  if (r.lateMinutes > 0) return "b-late";
+  const safe = r || { status: "absent", lateMinutes: 0 };
+  if (isPaidLeaveRecord(safe)) return "b-paid-leave";
+  if (isUnpaidLeaveRecord(safe)) return "b-unpaid-leave";
+  if (safe.status === "absent") return "b-absent";
+  if (safe.status === "half_day") return "b-halfday";
+  if (safe.lateMinutes > 0) return "b-late";
   return "b-present";
 }
 function heatmapColor(r) {
-  if (!r) return "#F5F7FA";
+  if (!r) return CALENDAR_STATUS_COLORS.no_record.background;
 
-  if (r.status === "sunday") return "#2563eb";
-  if (r.status === "holiday") return "#2A2D42";
-  if (r.status === "absent") return "#3D1C1C";
-  if (r.lateMinutes > 0) return "#3D2A10";
-  if (r.status === "half_day") return "#1E2E3A";
+  if (isPaidLeaveRecord(r)) return CALENDAR_STATUS_COLORS.paid_leave.background;
+  if (isUnpaidLeaveRecord(r)) return CALENDAR_STATUS_COLORS.unpaid_leave.background;
+  if (r.status === "sunday" || r.status === "holiday") return CALENDAR_STATUS_COLORS.holiday.background;
+  if (r.status === "absent") return CALENDAR_STATUS_COLORS.absent.background;
+  if (r.status === "half_day") return CALENDAR_STATUS_COLORS.half_day.background;
+  if (r.lateMinutes > 0) return CALENDAR_STATUS_COLORS.late.background;
 
-  return "#12302A";
+  return CALENDAR_STATUS_COLORS.present.background;
 }
 
 export default function ManagerAttendanceAnalysis() {
@@ -144,6 +187,17 @@ export default function ManagerAttendanceAnalysis() {
           dept: e.department,
           branch: e.branch,
           initials: getInitials(e.full_name || "EM"),
+          salary: e.salary,
+          monthly_salary: e.monthly_salary,
+          daily_salary: e.daily_salary,
+          paid_leave_balance: e.paid_leave_balance,
+          paidLeaveBalance: e.paidLeaveBalance,
+          leave_balance: e.leave_balance,
+          leaveBalance: e.leaveBalance,
+          available_paid_leaves: e.available_paid_leaves,
+          availablePaidLeaves: e.availablePaidLeaves,
+          earned_leave_balance: e.earned_leave_balance,
+          earnedLeaveBalance: e.earnedLeaveBalance,
         }));
       setEmployees(filtered);
     } catch (err) {
@@ -189,7 +243,7 @@ export default function ManagerAttendanceAnalysis() {
         // The API (analysisRoutes.js) already returns camelCase field names:
         // checkIn, checkOut, workHours, breaks, breakMins, breakDetails, lateMinutes, status
         // No transformation needed — just set directly.
-        setRecords(data.records || []);
+        setRecords(normalizeAttendanceAnalysisRecords(data.records || []));
 
         const leavesData = await fetchManagerLeaves("all");
         const empLeaves = leavesData.filter(
@@ -341,14 +395,6 @@ export default function ManagerAttendanceAnalysis() {
     return { avg, exceed, sumB1, sumL, sumB2, sumB3 };
   }, [records]);
 
-  const leaveSalaryKpi = useMemo(() => {
-    const DAILY_DEDUCTION = 6400;
-    const leavesTaken = leaves.reduce((s, l) => s + (l.days || 0), 0);
-    const extra = Math.max(0, leavesTaken - 1);
-    const deduction = extra * DAILY_DEDUCTION;
-    return { leavesTaken, extra, deduction };
-  }, [leaves]);
-
   const filteredDailyLog = useMemo(
     () => records.filter((r) => dailyWeekFilter === "all" || getWeekNumber(r.date) == dailyWeekFilter),
     [records, dailyWeekFilter]
@@ -405,7 +451,13 @@ export default function ManagerAttendanceAnalysis() {
           datasets: [{
             label: "Check-ins",
             data,
-            backgroundColor: data.map((_, i) => i < 3 ? "#16A34A" : i < 5 ? "#FF8C00" : "#DC2626"),
+            backgroundColor: data.map((_, i) =>
+              i < 3
+                ? CALENDAR_STATUS_COLORS.present.background
+                : i < 5
+                  ? CALENDAR_STATUS_COLORS.late.background
+                  : CALENDAR_STATUS_COLORS.absent.background
+            ),
             borderRadius: 4,
           }],
         },
@@ -439,7 +491,9 @@ export default function ManagerAttendanceAnalysis() {
           datasets: [{
             label: "Break (min)",
             data,
-            backgroundColor: data.map((v) => v > 60 ? "#DC2626" : "#16A34A"),
+            backgroundColor: data.map((v) =>
+              v > 60 ? CALENDAR_STATUS_COLORS.absent.background : CALENDAR_STATUS_COLORS.present.background
+            ),
             borderRadius: 4,
           }],
         },
@@ -476,12 +530,12 @@ export default function ManagerAttendanceAnalysis() {
             datasets: [{
               label: "Work Hours",
               data: workDays.map((r) => r.workHours.toFixed(2)),
-              borderColor: "#FF8C00",
-              backgroundColor: "rgba(255, 140, 0,0.1)",
+              borderColor: CALENDAR_STATUS_COLORS.late.border,
+              backgroundColor: CALENDAR_STATUS_COLORS.late.background,
               borderWidth: 2,
               tension: 0.3,
               fill: true,
-              pointBackgroundColor: "#FF8C00",
+              pointBackgroundColor: CALENDAR_STATUS_COLORS.late.border,
             }],
           },
           options: {
@@ -504,7 +558,9 @@ export default function ManagerAttendanceAnalysis() {
             datasets: [{
               label: "Break (min)",
               data: workDays.map((r) => r.breaks),
-              backgroundColor: workDays.map((r) => r.breaks > 60 ? "#DC2626" : "#16A34A"),
+              backgroundColor: workDays.map((r) =>
+                r.breaks > 60 ? CALENDAR_STATUS_COLORS.absent.background : CALENDAR_STATUS_COLORS.present.background
+              ),
               borderRadius: 4,
             }],
           },
@@ -541,7 +597,12 @@ export default function ManagerAttendanceAnalysis() {
                 breakSummaryKpi.sumB2,
                 breakSummaryKpi.sumB3,
               ],
-              backgroundColor: ["#FF8C00","#16A34A","#60A5FA","#A78BFA"],
+              backgroundColor: [
+                CALENDAR_STATUS_COLORS.late.background,
+                CALENDAR_STATUS_COLORS.present.background,
+                CALENDAR_STATUS_COLORS.holiday.background,
+                CALENDAR_STATUS_COLORS.paid_leave.background,
+              ],
               borderWidth: 0,
             }],
           },
@@ -564,8 +625,8 @@ export default function ManagerAttendanceAnalysis() {
             datasets: [{
               label: "Total break (min)",
               data: workDays.map((r) => r.breaks),
-              borderColor: "#FF8C00",
-              backgroundColor: "rgba(255, 140, 0,0.08)",
+              borderColor: CALENDAR_STATUS_COLORS.late.border,
+              backgroundColor: CALENDAR_STATUS_COLORS.late.background,
               borderWidth: 2,
               tension: 0.3,
               fill: true,
@@ -573,7 +634,7 @@ export default function ManagerAttendanceAnalysis() {
             }, {
               label: "60 min limit",
               data: workDays.map(() => 60),
-              borderColor: "#DC2626",
+              borderColor: CALENDAR_STATUS_COLORS.absent.border,
               borderDash: [6, 3],
               borderWidth: 1,
               pointRadius: 0,
@@ -612,6 +673,10 @@ export default function ManagerAttendanceAnalysis() {
     () => employees.find((e) => e.id == selectedEmail),
     [employees, selectedEmail]
   );
+
+  const leaveSalaryKpi = useMemo(() => {
+    return calculateLeaveSalaryImpact(leaves, selectedEmployee);
+  }, [leaves, selectedEmployee]);
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -848,15 +913,20 @@ if (isSunday || r.status === "sunday") {
   numClass = "blue-num";
 } else if (r.status === "holiday") {
   className += " cal-holiday";
+} else if (isPaidLeaveRecord(r)) {
+  className += " cal-paid-leave paid-leave";
+  numClass = "white-num";
+} else if (isUnpaidLeaveRecord(r)) {
+  className += " cal-unpaid-leave unpaid-leave";
 } else if (r.status === "absent") {
     className += " cal-absent";
     numClass = "red-num";
+} else if (r.status === "half_day") {
+    className += " cal-halfday";
+    numClass = "yellow-num";
 } else if (r.lateMinutes > 0) {
     className += " cal-late";
     numClass = "orange-num";
-  } else if (r.status === "half_day") {
-    className += " cal-halfday";
-    numClass = "yellow-num";
   } else {
     className += " cal-present";
     numClass = "green-num";
@@ -895,7 +965,15 @@ if (isSunday || r.status === "sunday") {
 </div>
                   {/* Legend */}
                   <div style={{ display: "flex", gap: "16px", marginTop: "12px", flexWrap: "wrap", fontSize: "11px", color: "#7B8199" }}>
-                    {[["#12302A","Present"],["#3D2A10","Late"],["#1E2E3A","Half Day"],["#3D1C1C","Absent"],["#2A2D42","Holiday/Sun"]].map(([c, l]) => (
+                    {[
+                      [CALENDAR_STATUS_COLORS.present.background, "Present"],
+                      [CALENDAR_STATUS_COLORS.late.background, "Late"],
+                      [CALENDAR_STATUS_COLORS.half_day.background, "Half Day"],
+                      [CALENDAR_STATUS_COLORS.absent.background, "Absent"],
+                      [CALENDAR_STATUS_COLORS.holiday.background, "Holiday/Sun"],
+                      [CALENDAR_STATUS_COLORS.paid_leave.background, "Paid Leave"],
+                      [CALENDAR_STATUS_COLORS.unpaid_leave.background, "Unpaid Leave"],
+                    ].map(([c, l]) => (
                       <span key={l} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <span style={{ width: "12px", height: "12px", borderRadius: "2px", background: c, display: "inline-block" }}></span>{l}
                       </span>
@@ -1126,10 +1204,10 @@ if (isSunday || r.status === "sunday") {
                   <div className="card-title">Leave Balance & Salary Impact</div>
                   {leaveSalaryKpi && (
                     <div className="kpi-grid">
-                      <div className="kpi-tile"><div className="label">Leaves Taken</div><div className="value">{leaveSalaryKpi.leavesTaken}</div></div>
-                      <div className="kpi-tile"><div className="label">Paid Leaves Left</div><div className="value">{Math.max(0, 1 - leaveSalaryKpi.leavesTaken)}</div></div>
-                      <div className="kpi-tile"><div className="label">Extra Days</div><div className="value">{leaveSalaryKpi.extra}</div></div>
-                      <div className="kpi-tile"><div className="label">Salary Deduction</div><div className="value" style={{ fontSize: "22px" }}>₹{leaveSalaryKpi.deduction.toLocaleString("en-IN")}</div></div>
+                      <div className="kpi-tile"><div className="label">Leaves Taken</div><div className="value">{formatLeaveNumber(leaveSalaryKpi.totalLeaves)}</div></div>
+                      <div className="kpi-tile"><div className="label">Paid Leaves Left</div><div className="value">{formatLeaveNumber(leaveSalaryKpi.paidLeavesLeft)}</div></div>
+                      <div className="kpi-tile"><div className="label">Extra Days</div><div className="value">{formatLeaveNumber(leaveSalaryKpi.extraDays)}</div></div>
+                      <div className="kpi-tile"><div className="label">Salary Deduction</div><div className="value" style={{ fontSize: "22px" }}>₹{Math.round(leaveSalaryKpi.salaryDeduction).toLocaleString("en-IN")}</div></div>
                     </div>
                   )}
                  
@@ -1137,21 +1215,23 @@ if (isSunday || r.status === "sunday") {
                     <div className="card-title">Approved Leaves</div>
                     <table className="data-table">
                       <thead>
-                        <tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th></tr>
+                        <tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Paid Days</th><th>Unpaid Days</th><th>Reason</th><th>Status</th></tr>
                       </thead>
                       <tbody>
                         {leaves.length
                           ? leaves.map((l) => (
                               <tr key={l.id}>
-                                <td>{l.leave_type}</td>
-                                <td>{formatDateReadable(l.from_date.slice(0, 10))}</td>
-                                <td>{formatDateReadable(l.to_date.slice(0, 10))}</td>
-                                <td>{l.days}</td>
-                                <td>{l.reason || "—"}</td>
-                                <td><span className="badge b-present">{l.status}</span></td>
+                                <td>{l?.leave_type || l?.leaveType || "—"}</td>
+                                <td>{formatDateReadable(String(l?.from_date || "").slice(0, 10)) || "—"}</td>
+                                <td>{formatDateReadable(String(l?.to_date || "").slice(0, 10)) || "—"}</td>
+                                <td>{formatLeaveNumber(getLeaveDays(l))}</td>
+                                <td>{formatLeaveNumber(getLeavePaidDays(l))}</td>
+                                <td>{formatLeaveNumber(getLeaveUnpaidDays(l))}</td>
+                                <td>{l?.reason || "—"}</td>
+                                <td><span className="badge b-present">{l?.status || "approved"}</span></td>
                               </tr>
                             ))
-                          : <tr><td colSpan="6" style={{ color: "#64748B", textAlign: "center" }}>No approved leaves</td></tr>}
+                          : <tr><td colSpan="8" style={{ color: "#64748B", textAlign: "center" }}>No approved leaves</td></tr>}
                       </tbody>
                     </table>
                   </div>

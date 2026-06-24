@@ -168,7 +168,7 @@ function EmployeeFormModal({
             <input
               id="empJoiningDate"
               type="date"
-              value={form.joiningDate}
+              value={form.joiningDate || ""}
               onChange={(event) =>
                 onChange({ ...form, joiningDate: event.target.value })
               }
@@ -423,7 +423,7 @@ function EmployeeDetailsModal({ open, employee, onClose, onCopyPassword }) {
             <div className="detail-content">
               <div className="detail-label">Salary (INR)</div>
               <div className="detail-value">
-                ${employee.salary.toLocaleString()}
+                ₹{employee.salary.toLocaleString()}
               </div>
             </div>
           </div>

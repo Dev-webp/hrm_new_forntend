@@ -9,6 +9,7 @@
             --muted: #64748B;
             --green: #16A34A;
             --amber: #FF8C00;
+            --yellow: #FACC15;
             --red: #DC2626;
             --blue: #0D47A1;
             --purple: #8B5CF6;
@@ -163,6 +164,7 @@
 
         /* ── TODAY CARD ── */
         .today-card { background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 20px; padding: 18px 22px; margin-top: 14px; }
+        .dashboard-snapshot { margin: 0 0 20px; }
         .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .today-title { font-size: 0.8rem; font-weight: 700; color: var(--text); }
         .today-date { font-size: 0.68rem; color: var(--muted); }
@@ -175,36 +177,49 @@
         .status-chip.late { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
         .status-chip.halfday { background: rgba(139,92,246,0.12); color: var(--purple); border: 1px solid rgba(139,92,246,0.3); }
 
-        /* ── LEAVE SECTION ── */
-        .leave-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-        .leave-card { background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 20px; padding: 18px 22px; }
-        .leave-card-title { font-size: 0.8rem; font-weight: 700; color: var(--gold); margin-bottom: 16px; border-left: 3px solid var(--gold); padding-left: 10px; }
-        .leave-bar-item { margin-bottom: 12px; }
-        .leave-bar-header { display: flex; justify-content: space-between; font-size: 0.73rem; margin-bottom: 5px; }
-        .leave-bar-header span:first-child { font-weight: 600; color: var(--text); }
-        .leave-bar-header span:last-child { color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-        .leave-bar-bg { height: 5px; background: #EAF4FF; border-radius: 10px; overflow: hidden; }
-        .leave-bar-fill { height: 100%; border-radius: 10px; transition: width .8s ease; }
-
-        /* ── KPI MINI GRID ── */
-        .kpi-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .kpi-mini { background: #FFFFFF; border-radius: 14px; padding: 12px; }
-        .kpi-mini-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; font-weight: 600; }
-        .kpi-mini-val { font-size: 1.2rem; font-weight: 800; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
-        .kpi-mini-val.gold { color: var(--gold); }
-        .kpi-mini-val.green { color: var(--green); }
-        .kpi-mini-val.amber { color: var(--amber); }
-        .kpi-mini-val.purple { color: var(--purple); }
+        /* ATTENDANCE CALENDAR */
+        .attendance-calendar-card { background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 20px; padding: 18px 22px; margin-top: 14px; }
+        .calendar-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+        .calendar-title { font-size: 0.8rem; font-weight: 800; color: var(--text); }
+        .calendar-subtitle { font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-top: 3px; }
+        .calendar-legend { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; font-size: 0.66rem; color: var(--muted); font-weight: 700; }
+        .calendar-legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+        .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .legend-dot.present { background: var(--calendar-present-bg, #C8F2D6); border: 1px solid var(--calendar-present-border, #16A34A); }
+        .legend-dot.late { background: var(--calendar-late-bg, #FFD29B); border: 1px solid var(--calendar-late-border, #EA580C); }
+        .legend-dot.halfday { background: var(--calendar-halfday-bg, #FFE066); border: 1px solid var(--calendar-halfday-border, #D4A300); }
+        .legend-dot.holiday { background: var(--calendar-holiday-bg, #B3CEFB); border: 1px solid var(--calendar-holiday-border, #2563EB); }
+        .legend-dot.absent { background: var(--calendar-absent-bg, #FFCBCB); border: 1px solid var(--calendar-absent-border, #DC2626); }
+        .legend-dot.paid-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); border: 1px solid var(--calendar-paid-leave-border, #7C3AED); }
+        .legend-dot.unpaid-leave { background: var(--calendar-unpaid-leave-bg, #FDA4CF); border: 1px solid var(--calendar-unpaid-leave-border, #DB2777); }
+        .legend-dot.no-record { background: var(--calendar-empty-bg, #E2E8F0); border: 1px solid var(--calendar-empty-border, #94A3B8); }
+        .calendar-weekdays, .attendance-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+        .calendar-weekdays { margin-bottom: 8px; }
+        .calendar-weekdays div { color: var(--blue); font-size: 0.66rem; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 0.4px; }
+        .calendar-cell { min-height: 76px; border-radius: 14px; padding: 9px; border: 1px solid transparent; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.45); }
+        .calendar-cell.blank { background: transparent; border: 1px dashed rgba(148,163,184,.18); box-shadow: none; }
+        .calendar-day { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 900; line-height: 1; }
+        .calendar-status { font-size: 0.64rem; font-weight: 800; line-height: 1.15; }
+        .calendar-cell.present { background: var(--calendar-present-bg, #C8F2D6); color: var(--calendar-present-text, #0F5132); border-color: var(--calendar-present-border, #16A34A); }
+        .calendar-cell.late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); border-color: var(--calendar-late-border, #EA580C); }
+        .calendar-cell.halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); border-color: var(--calendar-halfday-border, #D4A300); }
+        .calendar-cell.holiday { background: var(--calendar-holiday-bg, #B3CEFB); color: var(--calendar-holiday-text, #0F2E8C); border-color: var(--calendar-holiday-border, #2563EB); }
+        .calendar-cell.absent { background: var(--calendar-absent-bg, #FFCBCB); color: var(--calendar-absent-text, #8B0000); border-color: var(--calendar-absent-border, #DC2626); }
+        .calendar-cell.no-record { background: var(--calendar-empty-bg, #E2E8F0); color: var(--calendar-empty-text, #334155); border-color: var(--calendar-empty-border, #94A3B8); }
+        .calendar-cell.calendar-present { background: var(--calendar-present-bg, #C8F2D6); color: var(--calendar-present-text, #0F5132); border-color: var(--calendar-present-border, #16A34A); }
+        .calendar-cell.calendar-absent { background: var(--calendar-absent-bg, #FFCBCB); color: var(--calendar-absent-text, #8B0000); border-color: var(--calendar-absent-border, #DC2626); }
+        .calendar-cell.calendar-holiday { background: var(--calendar-holiday-bg, #B3CEFB); color: var(--calendar-holiday-text, #0F2E8C); border-color: var(--calendar-holiday-border, #2563EB); }
+        .calendar-cell.calendar-late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); border-color: var(--calendar-late-border, #EA580C); }
+        .calendar-cell.calendar-halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); border-color: var(--calendar-halfday-border, #D4A300); }
+        .calendar-cell.calendar-empty { background: var(--calendar-empty-bg, #E2E8F0); color: var(--calendar-empty-text, #334155); border-color: var(--calendar-empty-border, #94A3B8); }
+        .calendar-cell.calendar-paid-leave, .calendar-cell.paid-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); border-color: var(--calendar-paid-leave-border, #7C3AED); color: var(--calendar-paid-leave-text, #4C1D95); }
+        .calendar-cell.calendar-unpaid-leave, .calendar-cell.unpaid-leave { background: var(--calendar-unpaid-leave-bg, #FDA4CF); border-color: var(--calendar-unpaid-leave-border, #DB2777); color: var(--calendar-unpaid-leave-text, #831843); }
 
         /* ── DETAIL TABLE ── */
         .detail-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
         .detail-table th { text-align: left; padding: 10px 6px; color: var(--gold); font-weight: 600; border-bottom: 1px solid var(--gold-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .detail-table td { padding: 9px 6px; border-bottom: 1px solid rgba(255, 140, 0,0.06); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
         .detail-table tr:hover td { background: rgba(255, 140, 0,0.02); }
-
-        /* ── TRENDS PLACEHOLDER ── */
-        .trends-placeholder { background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 22px; padding: 48px; text-align: center; color: var(--muted); }
-        .trends-placeholder i { font-size: 2rem; margin-bottom: 12px; display: block; opacity: .25; color: var(--gold); }
 
         /* ── TOAST ── */
         .toast { position: fixed; bottom: 24px; right: 24px; background: #FFFFFF; border-left: 4px solid var(--gold); padding: 10px 20px; border-radius: 40px; color: var(--gold); z-index: 9999; opacity: 0; transform: translateY(10px); transition: .25s; pointer-events: none; font-size: 0.82rem; font-weight: 600; }
@@ -219,14 +234,41 @@
         @media (max-width: 800px) {
             .content { padding: 16px; }
             .overview-grid { grid-template-columns: 1fr; }
-            .leave-row { grid-template-columns: 1fr; }
             .welcome-banner { padding: 18px; }
+            .calendar-header { flex-direction: column; }
+            .calendar-legend { justify-content: flex-start; }
+            .calendar-weekdays, .attendance-calendar-grid { gap: 5px; }
+            .calendar-cell { min-height: 64px; padding: 7px; border-radius: 10px; }
+            .calendar-status { font-size: 0.56rem; }
         }
+.live-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 2px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+}
 
+.live-time {
+  color: #0f172a !important;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: #16a34a;
+  border-radius: 50%;
+}
 /* Employee dashboard readability */
-.employee-dashboard :where(.perf-card, .metric-card, .streak-card, .late-card, .today-card, .leave-card, .month-nav, .trends-placeholder) { border:2px solid #c7d7ea !important; border-radius:18px !important; box-shadow:0 8px 22px rgba(13,71,161,.10) !important; transition:all .2s ease !important; }
-.employee-dashboard :where(.perf-card, .metric-card, .streak-card, .late-card, .today-card, .leave-card):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
+.employee-dashboard :where(.perf-card, .metric-card, .streak-card, .late-card, .today-card, .attendance-calendar-card, .month-nav) { border:2px solid #c7d7ea !important; border-radius:18px !important; box-shadow:0 8px 22px rgba(13,71,161,.10) !important; transition:all .2s ease !important; }
+.employee-dashboard :where(.perf-card, .metric-card, .streak-card, .late-card, .today-card, .attendance-calendar-card):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
 .employee-dashboard .welcome-title { background:none !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; font-size:30px !important; font-weight:800 !important; }
 .employee-dashboard .welcome-sub { color:#334155 !important; font-weight:600 !important; }
-.employee-dashboard :where(.analytics-head-title, .late-title, .today-title, .leave-card-title, .perf-card-title) { color:#0f172a !important; font-weight:800 !important; }
-.employee-dashboard :where(.analytics-head-sub, .metric-label, .metric-sub, .score-hint, .today-date, .ti-label, .leave-bar-header, p) { color:#475569 !important; font-weight:600 !important; }
+.employee-dashboard :where(.analytics-head-title, .late-title, .today-title, .calendar-title, .perf-card-title) { color:#0f172a !important; font-weight:800 !important; }
+.employee-dashboard :where(.analytics-head-sub, .metric-label, .metric-sub, .score-hint, .today-date, .ti-label, .calendar-subtitle, p) { color:#475569 !important; font-weight:600 !important; }

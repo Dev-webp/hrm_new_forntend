@@ -1,5 +1,10 @@
 import api from "./api";
 
+export async function fetchPendingLeaveCount() {
+  const response = await api.get("/leave/pending-count");
+  return response.data;
+}
+
 export async function fetchLeaveRequests(date, branch) {
   const params = {};
 
@@ -27,10 +32,11 @@ export async function fetchLeaveStats(date, branch) {
   };
 }
 
-export async function updateLeaveRequest(leaveId, status, reason) {
-  const response = await api.put(`/leaves/${leaveId}`, {
+export async function updateLeaveRequest(leaveId, status, reason = "", calculation = {}) {
+  const response = await api.patch(`/leave/${leaveId}/status`, {
     status,
     rejection_reason: reason,
+    ...calculation,
   });
 
   return response.data;
@@ -42,6 +48,6 @@ export async function createLeaveRequest(payload) {
 }
 
 export async function fetchLeaveApprovalPreview(leaveId) {
-  const response = await api.get(`/leaves/${leaveId}/approval-preview`);
+  const response = await api.get(`/leave/${leaveId}/approval-preview`);
   return response.data;
 }

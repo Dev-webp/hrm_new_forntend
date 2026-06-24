@@ -19,6 +19,8 @@ export function getStoredBranch() {
 export function setAuthSession({ token, user }) {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("full_name", user?.full_name || user?.name || "Employee");
+  localStorage.setItem("designation", user?.designation || "");
   if (user?.branch) {
     localStorage.setItem("branch", user.branch);
   }
@@ -28,6 +30,8 @@ export function clearAuthSession() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("branch");
+  localStorage.removeItem("full_name");
+  localStorage.removeItem("designation");
 }
 
 export function isAuthenticated() {

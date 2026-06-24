@@ -7,6 +7,7 @@ import {
   updateLeaveRequest,
   fetchLeaveApprovalPreview,
 } from "../../services/leaveApi";
+import LeaveApprovalPreviewModal from "../../components/leaves/LeaveApprovalPreviewModal";
 
 import "../../styles/adminLeave.css";
 
@@ -21,10 +22,18 @@ function formatDate(dateString) {
   });
 }
 
+function formatLeaveDuration(request) {
+  if ((request.leave_duration_type || "full_day") !== "half_day") return "Full Day";
+  return request.half_day_session === "morning"
+    ? "Half Day Morning"
+    : "Half Day Afternoon";
+}
+
 function AdminLeave() {
   const [currentBranch, setCurrentBranch] = useState("all");
 const [currentDate, setCurrentDate] = useState("");
 const [statusFilter, setStatusFilter] = useState("all");
+const [durationFilter, setDurationFilter] = useState("all");
 
 
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -158,7 +167,15 @@ const handleOpenAction = async (leaveId, employeeName, action) => {
       await updateLeaveRequest(
         actionModal.leaveId,
         actionModal.action,
-        actionModal.reason
+        actionModal.reason,
+        actionModal.action === "approved" && approvalPreview ? {
+          paid_days: approvalPreview.paid_days,
+          unpaid_days: approvalPreview.unpaid_days,
+          salary_deduction_days: approvalPreview.salary_deduction_days,
+          leave_category: approvalPreview.final_category,
+          include_sunday_penalty: approvalPreview.include_sunday_penalty,
+          penalty_days: approvalPreview.penalty_days,
+        } : {}
       );
    showToast(
   `✅ Leave request ${actionModal.action === "approved" ? "approved" : "rejected"} for ${actionModal.employeeName}`
@@ -197,12 +214,13 @@ const message =
       </span>
     );
   };
-  const filteredLeaveRequests =
-  statusFilter === "all"
-    ? leaveRequests
-    : leaveRequests.filter(
-        (req) => req.status?.toLowerCase() === statusFilter
-      );
+  const filteredLeaveRequests = leaveRequests.filter((request) => {
+    const statusMatches = statusFilter === "all" || request.status?.toLowerCase() === statusFilter;
+    const durationKey = request.leave_duration_type === "half_day"
+      ? `half_day_${request.half_day_session}`
+      : "full_day";
+    return statusMatches && (durationFilter === "all" || durationKey === durationFilter);
+  });
 
   return (
     <div className="admin-leave-page admin-portal-page">
@@ -307,6 +325,16 @@ const message =
   ))}
 </div>
 
+<div className="admin-leave-duration-filter">
+  <label htmlFor="adminLeaveDuration">Duration</label>
+  <select id="adminLeaveDuration" value={durationFilter} onChange={(event) => setDurationFilter(event.target.value)}>
+    <option value="all">All Durations</option>
+    <option value="full_day">Full Day</option>
+    <option value="half_day_morning">Half Day Morning</option>
+    <option value="half_day_afternoon">Half Day Afternoon</option>
+  </select>
+</div>
+
 
 
     <div className="table-wrapper">
@@ -316,9 +344,12 @@ const message =
             <th>Employee</th>
             <th>Branch</th>
             <th>Leave Type</th>
+            <th>Duration</th>
             <th>From</th>
             <th>To</th>
-            <th>Days</th>
+            <th>Requested</th>
+            <th>Paid</th>
+            <th>Unpaid</th>
             <th>Reason</th>
             <th>Status</th>
             <th>Action</th>
@@ -328,19 +359,19 @@ const message =
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+              <td colSpan="12" style={{ textAlign: "center", padding: "40px" }}>
                 Loading leave requests...
               </td>
             </tr>
           ) : error ? (
             <tr>
-              <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+              <td colSpan="12" style={{ textAlign: "center", padding: "40px" }}>
                 Failed to load leave requests: {error}
               </td>
             </tr>
           ) : filteredLeaveRequests.length === 0 ? (
             <tr>
-              <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+              <td colSpan="12" style={{ textAlign: "center", padding: "40px" }}>
                 No leave requests found
               </td>
             </tr>
@@ -352,9 +383,12 @@ const message =
                 </td>
                 <td>{request.branch}</td>
                 <td>{request.leave_type}</td>
+                <td>{formatLeaveDuration(request)}</td>
                 <td>{formatDate(request.from_date)}</td>
                 <td>{formatDate(request.to_date)}</td>
-                <td>{request.days}</td>
+                <td>{request.requested_days ?? request.days}</td>
+                <td>{request.paid_days ?? 0}</td>
+                <td>{request.unpaid_days ?? 0}</td>
                 <td>{request.reason}</td>
                 <td>{getStatusBadge(request.status)}</td>
                 <td>
@@ -391,7 +425,7 @@ const message =
       </table>
     </div>
 
-    <div
+    {actionModal.action !== "approved" ? <div
       className={`modal ${actionModal.open ? "show" : ""}`}
       onClick={handleCloseModal}
     >
@@ -400,31 +434,6 @@ const message =
           {actionModal.action === "approved" ? "Approve" : "Reject"} Leave -{" "}
           {actionModal.employeeName}
         </h3>
-
-        {actionModal.action === "approved" && (
-          <div className="approval-preview-box">
-            <h4>
-              Leave Balance Preview
-            </h4>
-
-            {previewLoading ? (
-              <p>Loading leave balance...</p>
-            ) : approvalPreview ? (
-              <>
-                <p><b>Leave Type:</b> {approvalPreview.leave_category}</p>
-                <p><b>Requested Leaves:</b> {approvalPreview.requested_days}</p>
-                <p><b>Available Paid Leaves:</b> {approvalPreview.available_paid_balance}</p>
-                <p><b>Paid Leaves:</b> {approvalPreview.paid_days}</p>
-                <p><b>Unpaid Leaves:</b> {approvalPreview.unpaid_days}</p>
-                <p><b>Salary Deduction Days:</b> {approvalPreview.salary_deduction_days}</p>
-              </>
-            ) : (
-              <p style={{ color: "#facc15" }}>
-                Preview not loaded. Check approval-preview API.
-              </p>
-            )}
-          </div>
-        )}
 
         <div className="form-group">
           <label>Reason optional</label>
@@ -452,7 +461,7 @@ const message =
           <button
             className="modal-btn"
             onClick={handleSubmitAction}
-            disabled={saving}
+            disabled={saving || (actionModal.action === "approved" && approvalPreview?.can_approve === false)}
             style={{
               background:
                 actionModal.action === "approved" ? "#16A34A" : "#DC2626",
@@ -464,9 +473,24 @@ const message =
               ? "Approve"
               : "Reject"}
           </button>
+          {actionModal.action === "approved" && approvalPreview?.can_approve === false && (
+            <p style={{ color: "#DC2626", margin: 0 }}>
+              Insufficient paid leave balance
+            </p>
+          )}
         </div>
       </div>
-    </div>
+    </div> : null}
+
+    <LeaveApprovalPreviewModal
+      open={actionModal.open && actionModal.action === "approved"}
+      preview={approvalPreview}
+      loading={previewLoading}
+      error={!previewLoading && !approvalPreview ? "Preview could not be loaded." : ""}
+      saving={saving}
+      onClose={handleCloseModal}
+      onConfirm={handleSubmitAction}
+    />
 
     <div className={`toast ${toast.show ? "show" : ""}`}>
       {toast.message}

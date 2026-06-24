@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { markAllRead, markAsRead } from "../../services/notificationsApi";
+import {
+  deleteNotification,
+  deleteNotificationsByRange,
+  deleteReadNotifications,
+  deleteSelectedNotifications,
+  fetchNotifications,
+  markAllRead,
+  markAsRead,
+} from "../../services/notificationsApi";
 import {
   decodeJwt,
   getAuthToken,
@@ -41,6 +49,12 @@ export default function ManagerNotifications() {
   const [flashIds, setFlashIds] = useState(() => new Set());
   const [, setTimeTick] = useState(0);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [viewFromDate, setViewFromDate] = useState("");
+  const [viewToDate, setViewToDate] = useState("");
+  const [deleteFromDate, setDeleteFromDate] = useState("");
+  const [deleteToDate, setDeleteToDate] = useState("");
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const socketRef = useRef(null);
 
@@ -83,6 +97,23 @@ export default function ManagerNotifications() {
     return () => clearInterval(interval);
   }, []);
 
+  const loadNotifications = useCallback(async () => {
+    setFeedReady(false);
+    try {
+      const rows = await fetchNotifications(500, { fromDate: viewFromDate, toDate: viewToDate });
+      setNotifications(rows);
+      setSelectedIds(new Set());
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to load notifications", "error");
+    } finally {
+      setFeedReady(true);
+    }
+  }, [showToast, viewFromDate, viewToDate]);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -121,12 +152,16 @@ export default function ManagerNotifications() {
 
         socket.on("notifications_list", (list) => {
           if (cancelled) return;
+          if (viewFromDate || viewToDate) return;
           setNotifications(Array.isArray(list) ? list : []);
           setFeedReady(true);
         });
 
         socket.on("new_notification", (notif) => {
           if (cancelled) return;
+          const createdDate = String(notif.created_at || "").slice(0, 10);
+          if ((viewFromDate && createdDate < viewFromDate) ||
+              (viewToDate && createdDate > viewToDate)) return;
           setNotifications((prev) => [notif, ...prev]);
           const icons = actionIcon(notif.action_type);
           showToast(
@@ -153,7 +188,7 @@ export default function ManagerNotifications() {
         socketRef.current = null;
       }
     };
-  }, [addFlash, showToast, token]);
+  }, [addFlash, showToast, token, viewFromDate, viewToDate]);
 
   const handleFilterChip = (filter) => {
     setCurrentFilter(filter);
@@ -169,6 +204,7 @@ export default function ManagerNotifications() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
+      window.dispatchEvent(new Event("notification-count-changed"));
     } catch (err) {
       showToast(`Failed: ${err.message}`, "error");
     }
@@ -178,16 +214,85 @@ export default function ManagerNotifications() {
     try {
       await markAllRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      window.dispatchEvent(new Event("notification-count-changed"));
       showToast("✅ All marked as read", "success");
     } catch (err) {
       showToast(`Failed: ${err.message}`, "error");
     }
   };
 
-  const handleClearRead = () => {
-    setNotifications((prev) => prev.filter((n) => !n.is_read));
-    showToast("🗑️ Read notifications cleared from view");
+  const handleClearRead = async () => {
+    if (!window.confirm("Permanently delete all read notifications for your branch?")) return;
+    setBulkLoading(true);
+    try {
+      const result = await deleteReadNotifications();
+      await loadNotifications();
+      window.dispatchEvent(new Event("notification-count-changed"));
+      showToast(`${result.deletedCount || 0} read notification(s) deleted`, "success");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to delete read notifications", "error");
+    } finally {
+      setBulkLoading(false);
+    }
   };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this notification permanently?")) return;
+    try {
+      await deleteNotification(id);
+      await loadNotifications();
+      window.dispatchEvent(new Event("notification-count-changed"));
+      showToast("Notification deleted", "success");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to delete notification", "error");
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const ids = [...selectedIds];
+    if (!ids.length || !window.confirm(`Permanently delete ${ids.length} selected notification(s)?`)) return;
+    setBulkLoading(true);
+    try {
+      const result = await deleteSelectedNotifications(ids);
+      await loadNotifications();
+      window.dispatchEvent(new Event("notification-count-changed"));
+      showToast(`${result.deletedCount || 0} notification(s) deleted`, "success");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to delete selected notifications", "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleDeleteRange = async () => {
+    if (!deleteFromDate || !deleteToDate) {
+      showToast("Choose both delete range dates", "error");
+      return;
+    }
+    if (!window.confirm(`Permanently delete branch notifications from ${deleteFromDate} through ${deleteToDate}?`)) return;
+    setBulkLoading(true);
+    try {
+      const result = await deleteNotificationsByRange(deleteFromDate, deleteToDate);
+      await loadNotifications();
+      window.dispatchEvent(new Event("notification-count-changed"));
+      showToast(`${result.deletedCount || 0} notification(s) deleted`, "success");
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to delete notifications by range", "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const allVisibleSelected = filteredList.length > 0 &&
+    filteredList.every((item) => selectedIds.has(item.id));
+  const toggleAllVisible = () => setSelectedIds(
+    allVisibleSelected ? new Set() : new Set(filteredList.map((item) => item.id))
+  );
+  const toggleSelected = (id) => setSelectedIds((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   const statCardClass = (filter) =>
     `stat-card${currentFilter === filter ? " active-filter" : ""}`;
@@ -227,8 +332,8 @@ export default function ManagerNotifications() {
           >
             <i className="fas fa-check-double" /> Mark All Read
           </button>
-          <button type="button" className="clear-btn" onClick={handleClearRead}>
-            <i className="fas fa-eye-slash" /> Clear Read
+          <button type="button" className="clear-btn" onClick={handleClearRead} disabled={bulkLoading}>
+            <i className="fas fa-trash-alt" /> Delete All Read
           </button>
         </div>
       </div>
@@ -327,6 +432,23 @@ export default function ManagerNotifications() {
           </div>
         </div>
 
+        <div className="notification-bulk-toolbar">
+          <div className="notification-view-dates">
+            <label>View from<input type="date" value={viewFromDate} onChange={(event) => setViewFromDate(event.target.value)} /></label>
+            <label>View to<input type="date" value={viewToDate} onChange={(event) => setViewToDate(event.target.value)} /></label>
+            <button type="button" onClick={() => { setViewFromDate(""); setViewToDate(""); }}>Clear Filter</button>
+          </div>
+          <div className="notification-selection-actions">
+            <label><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} /> Select visible</label>
+            <button type="button" className="bulk-danger" onClick={handleDeleteSelected} disabled={bulkLoading || !selectedIds.size}>Delete Selected ({selectedIds.size})</button>
+          </div>
+          <div className="notification-delete-range">
+            <label>Delete from<input type="date" value={deleteFromDate} onChange={(event) => setDeleteFromDate(event.target.value)} /></label>
+            <label>Delete to<input type="date" value={deleteToDate} onChange={(event) => setDeleteToDate(event.target.value)} /></label>
+            <button type="button" className="bulk-danger filled" onClick={handleDeleteRange} disabled={bulkLoading}>{bulkLoading ? "Deleting…" : "Delete Date Range"}</button>
+          </div>
+        </div>
+
         <div className="notif-list">
           {!feedReady ? (
             <div className="empty-state">
@@ -356,6 +478,9 @@ export default function ManagerNotifications() {
 
               return (
                 <div key={n.id} className={itemClass} data-id={n.id}>
+                  <label className="notif-select">
+                    <input type="checkbox" checked={selectedIds.has(n.id)} onChange={() => toggleSelected(n.id)} aria-label={`Select notification ${n.id}`} />
+                  </label>
                   {!n.is_read ? <div className="unread-dot" /> : null}
                   <div className={`notif-icon ${icon.cls}`}>
                     <i className={icon.fa} />
@@ -393,6 +518,9 @@ export default function ManagerNotifications() {
                         Mark read
                       </button>
                     ) : null}
+                    <button type="button" className="btn-del" onClick={() => handleDelete(n.id)}>
+                      <i className="fas fa-trash" />
+                    </button>
                   </div>
                 </div>
               );

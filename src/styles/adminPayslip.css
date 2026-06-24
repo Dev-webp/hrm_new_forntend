@@ -101,7 +101,7 @@
   border-radius: 16px;
   min-width: 200px;
   z-index: 300;
-  display: none;
+  display: block;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(26, 43, 75, 0.5);
 }
@@ -185,40 +185,59 @@
   background: #FFFFFF;
 }
 
+
+
 .admin-payslip-page .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .admin-payslip-page .kpi-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(255, 140, 0, 0.25);
-  border-radius: 20px;
-  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #dbe7f3;
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-height: 90px;
+  box-shadow: 0 4px 14px rgba(13, 71, 161, 0.05);
 }
 
 .admin-payslip-page .kpi-label {
-  font-size: 0.72rem;
-  color: #6b7280;
+  font-size: 0.68rem;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
 }
 
 .admin-payslip-page .kpi-value {
-  font-size: 1.7rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  color: #FF8C00;
+  color: #0d47a1;
   font-family: "JetBrains Mono", monospace;
 }
 
 .admin-payslip-page .kpi-sub {
-  font-size: 0.72rem;
-  color: #6b7280;
-  margin-top: 4px;
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 2px;
 }
+
+@media (max-width: 1200px) {
+  .admin-payslip-page .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-payslip-page .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+
 
 .admin-payslip-page .analytics-strip {
   display: flex;
@@ -969,5 +988,60 @@
 
   .admin-payslip-page .ps-detail-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+
+
+.admin-payslip-page .kpi-card {
+  padding: 10px 12px;
+  min-height: 72px;
+}
+
+.admin-payslip-page .kpi-value {
+  font-size: 1.05rem;
+}
+
+.admin-payslip-page .kpi-sub {
+  display: none;
+}
+
+
+
+/* FINAL FIX: Payslip KPI cards always one row on desktop */
+.admin-payslip-page .kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-bottom: 18px !important;
+}
+
+.admin-payslip-page .kpi-card {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+  padding: 12px 14px !important;
+}
+
+.admin-payslip-page .kpi-label,
+.admin-payslip-page .kpi-value {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Responsive only for small screens */
+@media (max-width: 900px) {
+  .admin-payslip-page .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-payslip-page .kpi-grid {
+    grid-template-columns: 1fr !important;
   }
 }

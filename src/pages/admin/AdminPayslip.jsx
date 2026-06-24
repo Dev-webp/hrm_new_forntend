@@ -202,13 +202,14 @@ month: currentMonth.slice(0, 7),
     }
   }, [currentMonth, currentBranch, currentDept, currentSearch, updateKPIs]);
 
-  // Load initial data
-  useEffect(() => {
-    loadBranches();
-    loadDepartments();
-    loadPayslips();
-  }, [loadBranches, loadDepartments, loadPayslips]);
+useEffect(() => {
+  loadBranches();
+  loadDepartments();
+}, [loadBranches, loadDepartments]);
 
+useEffect(() => {
+  loadPayslips();
+}, [loadPayslips]);
   // Auto-refresh every 30s
   useEffect(() => {
     const interval = setInterval(() => {
@@ -218,17 +219,7 @@ month: currentMonth.slice(0, 7),
   }, [loadPayslips]);
 
   // Branch selection
-  const handleBranchSelect = (branch) => {
-    setCurrentBranch(branch);
-    setBranchMenuOpen(false);
-    loadPayslips();
-  };
 
-  // Department selection
-  const handleDeptSelect = (dept) => {
-    setCurrentDept(dept);
-    loadPayslips();
-  };
 
   // Month change
 const handleMonthChange = (e) => {
@@ -243,13 +234,23 @@ const handleMonthChange = (e) => {
 };
 
   // Search debounce
-  const handleSearchChange = (e) => {
-    clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => {
-      setCurrentSearch(e.target.value);
-      loadPayslips();
-    }, 400);
-  };
+const handleBranchSelect = (branch) => {
+  setCurrentBranch(branch);
+  setBranchMenuOpen(false);
+};
+
+const handleDeptSelect = (dept) => {
+  setCurrentDept(dept);
+};
+
+const handleSearchChange = (e) => {
+  const value = e.target.value;
+
+  clearTimeout(searchDebounceRef.current);
+  searchDebounceRef.current = setTimeout(() => {
+    setCurrentSearch(value);
+  }, 400);
+};
 
   // Toggle status
   const handleToggleStatus = async (id, currentStatus) => {
@@ -609,15 +610,20 @@ const salaryPreview = calculateSalaryPreview();
           onChange={handleMonthChange}
         />
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-          {departments.map((d, i) => (
-            <div
-              key={d}
-              className={`chip${i === 0 ? " active" : ""}`}
-              onClick={() => handleDeptSelect(d === "All" ? "all" : d)}
-            >
-              {d}
-            </div>
-          ))}
+        {departments.map((d) => {
+  const value = d === "All" ? "all" : d;
+
+  return (
+    <button
+      key={d}
+      type="button"
+      className={`chip ${currentDept === value ? "active" : ""}`}
+      onClick={() => setCurrentDept(value)}
+    >
+      {d}
+    </button>
+  );
+})}
         </div>
       </div>
 

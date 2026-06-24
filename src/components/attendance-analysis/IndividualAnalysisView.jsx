@@ -12,13 +12,21 @@ import {
 import {
   ANALYSIS_TABS,
   WEEK_FILTER_OPTIONS,
+  calculateLeaveSalaryImpact,
   computeOverviewStats,
   dayName,
   formatDateReadable,
   formatDateYMD,
+  formatLeaveNumber,
   formatTimeDisplay,
   getDailyLogStatus,
+  getLeaveDays,
+  getLeavePaidDays,
+  getLeaveUnpaidDays,
   getWeekNumber,
+  isPaidLeaveRecord,
+  isUnpaidLeaveRecord,
+  normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 
 function WeekFilter({ id, value, onChange }) {
@@ -51,10 +59,14 @@ function IndividualAnalysisView({
   const [weekOffset, setWeekOffset] = useState(0);
   const [dailyWeekFilter, setDailyWeekFilter] = useState("all");
   const [breakWeekFilter, setBreakWeekFilter] = useState("all");
+  const safeRecords = useMemo(
+    () => normalizeAttendanceAnalysisRecords(records || []),
+    [records]
+  );
 
   const overview = useMemo(
-    () => computeOverviewStats(records || []),
-    [records]
+    () => computeOverviewStats(safeRecords),
+    [safeRecords]
   );
 
   const overviewKpis = [
@@ -77,7 +89,7 @@ function IndividualAnalysisView({
       const d = new Date(week.start);
       d.setDate(d.getDate() + i);
       const ds = formatDateYMD(d);
-      const rec = records.find((r) => r.date === ds);
+      const rec = safeRecords.find((r) => r.date === ds);
       const dayLabel = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i];
 
       if (!rec || rec.status === "absent") {
@@ -93,13 +105,21 @@ function IndividualAnalysisView({
         hoursData.push(parseFloat(rec.workHours.toFixed(1)));
         labels.push(dayLabel);
         const badge =
-          rec.lateMinutes > 0
+          isPaidLeaveRecord(rec)
+            ? "b-paid-leave"
+            : isUnpaidLeaveRecord(rec)
+            ? "b-unpaid-leave"
+            : rec.lateMinutes > 0
             ? "b-late"
             : rec.status === "half_day"
               ? "b-halfday"
               : "b-present";
         const statusLabel =
-          rec.lateMinutes > 0
+          isPaidLeaveRecord(rec)
+            ? "Paid Leave"
+            : isUnpaidLeaveRecord(rec)
+            ? "Unpaid Leave"
+            : rec.lateMinutes > 0
             ? "Late"
             : rec.status === "half_day"
               ? "Half Day"
@@ -119,31 +139,31 @@ function IndividualAnalysisView({
     const breakWeek = labels.map((_, i) => {
       const d = new Date(week.start);
       d.setDate(d.getDate() + i);
-      const rec = records.find((r) => r.date === formatDateYMD(d));
+      const rec = safeRecords.find((r) => r.date === formatDateYMD(d));
       return rec ? rec.breaks : 0;
     });
 
     return { dayCards, labels, hoursData, breakWeek };
-  }, [week, records]);
+  }, [week, safeRecords]);
 
   const dailyFiltered = useMemo(
     () =>
-      records.filter(
+      safeRecords.filter(
         (r) =>
           dailyWeekFilter === "all" ||
           getWeekNumber(r.date) == dailyWeekFilter
       ),
-    [records, dailyWeekFilter]
+    [safeRecords, dailyWeekFilter]
   );
 
   const breakFiltered = useMemo(
     () =>
-      records.filter(
+      safeRecords.filter(
         (r) =>
           breakWeekFilter === "all" ||
           getWeekNumber(r.date) == breakWeekFilter
       ),
-    [records, breakWeekFilter]
+    [safeRecords, breakWeekFilter]
   );
 
   const breakStats = useMemo(() => {
@@ -169,12 +189,8 @@ function IndividualAnalysisView({
   }, [breakFiltered]);
 
   const leaveStats = useMemo(() => {
-    const DAILY_DEDUCTION = 6400;
-    const leavesTaken = leaves.reduce((s, l) => s + (l.days || 0), 0);
-    const extra = Math.max(0, leavesTaken - 1);
-    const deduction = extra * DAILY_DEDUCTION;
-    return { leavesTaken, extra, deduction };
-  }, [leaves]);
+    return calculateLeaveSalaryImpact(leaves, employee);
+  }, [leaves, employee]);
 
   if (!employee) return null;
 
@@ -246,11 +262,11 @@ function IndividualAnalysisView({
         <div className="chart-row">
           <div className="card" style={{ maxHeight: 320 }}>
             <div className="chart-subtitle">Check-In Time (Hour of Day)</div>
-            <CheckInChart records={records} />
+            <CheckInChart records={safeRecords} />
           </div>
           <div className="card" style={{ maxHeight: 320 }}>
             <div className="chart-subtitle">Daily Break Duration (min)</div>
-            <BreakDurationChart records={records} />
+            <BreakDurationChart records={safeRecords} />
           </div>
         </div>
         <div className="card">
@@ -258,7 +274,7 @@ function IndividualAnalysisView({
             Attendance Heatmap — hover for details
           </div>
           <div className="cal-heatmap-wrap">
-            <AttendanceCalendarHeatmap monthStr={monthStr} records={records} />
+            <AttendanceCalendarHeatmap monthStr={monthStr} records={safeRecords} />
             {loading ? (
               <div className="cal-loading-overlay" aria-busy="true">
                 <div className="loading-spinner" />
@@ -578,15 +594,15 @@ function IndividualAnalysisView({
           <div className="card-title">Leave Balance & Salary Impact</div>
           <AttendanceAnalysisCards
             items={[
-              { label: "Leaves Taken", value: leaveStats.leavesTaken },
+              { label: "Leaves Taken", value: formatLeaveNumber(leaveStats.totalLeaves) },
               {
                 label: "Paid Leaves Left",
-                value: Math.max(0, 1 - leaveStats.leavesTaken),
+                value: formatLeaveNumber(leaveStats.paidLeavesLeft),
               },
-              { label: "Extra Days", value: leaveStats.extra },
+              { label: "Extra Days", value: formatLeaveNumber(leaveStats.extraDays) },
               {
                 label: "Salary Deduction",
-                value: `₹${leaveStats.deduction.toLocaleString("en-IN")}`,
+                value: `₹${Math.round(leaveStats.salaryDeduction).toLocaleString("en-IN")}`,
                 valueStyle: { fontSize: 22 },
               },
             ]}
@@ -604,6 +620,8 @@ function IndividualAnalysisView({
                   <th>From</th>
                   <th>To</th>
                   <th>Days</th>
+                  <th>Paid Days</th>
+                  <th>Unpaid Days</th>
                   <th>Reason</th>
                   <th>Status</th>
                 </tr>
@@ -612,7 +630,7 @@ function IndividualAnalysisView({
                 {!leaves.length ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={8}
                       style={{ color: "#64748B", textAlign: "center" }}
                     >
                       No approved leaves
@@ -620,14 +638,16 @@ function IndividualAnalysisView({
                   </tr>
                 ) : (
                   leaves.map((l) => (
-                    <tr key={l.id || `${l.from_date}-${l.to_date}`}>
-                      <td>{l.leave_type}</td>
-                      <td>{formatDateReadable(l.from_date.slice(0, 10))}</td>
-                      <td>{formatDateReadable(l.to_date.slice(0, 10))}</td>
-                      <td>{l.days}</td>
-                      <td>{l.reason || "—"}</td>
+                    <tr key={l?.id || `${l?.from_date}-${l?.to_date}`}>
+                      <td>{l?.leave_type || l?.leaveType || "—"}</td>
+                      <td>{formatDateReadable(String(l?.from_date || "").slice(0, 10)) || "—"}</td>
+                      <td>{formatDateReadable(String(l?.to_date || "").slice(0, 10)) || "—"}</td>
+                      <td>{formatLeaveNumber(getLeaveDays(l))}</td>
+                      <td>{formatLeaveNumber(getLeavePaidDays(l))}</td>
+                      <td>{formatLeaveNumber(getLeaveUnpaidDays(l))}</td>
+                      <td>{l?.reason || "—"}</td>
                       <td>
-                        <span className="badge b-present">{l.status}</span>
+                        <span className="badge b-present">{l?.status || "approved"}</span>
                       </td>
                     </tr>
                   ))

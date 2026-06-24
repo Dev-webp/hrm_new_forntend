@@ -140,3 +140,19 @@
 .employee-breaks-page .btn-start { padding:14px 32px !important; border-radius:14px !important; font-size:16px !important; font-weight:800 !important; }
 .employee-breaks-page :where(h1, h2, h3, .bsc-title, .section-title, .usage-title) { color:#0f172a !important; font-weight:800 !important; }
 .employee-breaks-page :where(p, .usage-info p, .bsc-dur, .tb-label, .hs-label, .dc-name, .dc-date, .dc-lbl) { color:#475569 !important; font-weight:600 !important; }
+
+
+
+.usage-nums {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 0.9rem;
+  color: #1A2B4B;
+  font-weight: 600;
+}
+
+.usage-nums strong {
+  color: #0D47A1;
+  margin-right: 4px;
+}

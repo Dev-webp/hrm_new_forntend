@@ -17,7 +17,7 @@
 
 .employee-sidebar.collapsed .logo-text,
 .employee-sidebar.collapsed .emp-info,
-.employee-sidebar.collapsed .nav-item span,
+.employee-sidebar.collapsed .nav-item span:not(.nav-badge),
 .employee-sidebar.collapsed .collapse-text,
 .employee-sidebar.collapsed .nav-label-group {
   display: none;
@@ -127,6 +127,7 @@
   width: 100%;
   text-align: left;
   font-family: inherit;
+  position: relative;
 }
 
 .employee-sidebar .nav-item i {
@@ -226,4 +227,45 @@
   background: linear-gradient(95deg, #0d47a1, #08306f);
   border-left: 3px solid #ff8c00;
   color: #ff8c00;
+}
+
+.employee-sidebar .nav-badge {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #ff8c00;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+.employee-sidebar.collapsed .nav-badge {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  line-height: 18px;
+}
+
+.employee-sidebar .emp-info .designation {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #0d47a1;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

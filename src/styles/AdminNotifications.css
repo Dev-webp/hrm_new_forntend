@@ -461,3 +461,155 @@
     padding: 16px;
   }
 }
+/* ===== NOTIFICATION KPI FIX ===== */
+
+.admin-notifications-page .stats-row {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  flex-wrap: unset !important;
+}
+
+.admin-notifications-page .stat-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: unset !important;
+  box-sizing: border-box !important;
+}
+
+.admin-notifications-page .stat-label {
+  white-space: nowrap;
+}
+
+.admin-notifications-page .stat-num {
+  white-space: nowrap;
+}
+
+.admin-notifications-page .stat-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .admin-notifications-page .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .admin-notifications-page .stats-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+.admin-notifications-page .notification-bulk-toolbar,
+.manager-notifications-page .notification-bulk-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto minmax(300px, 1fr);
+  gap: 14px;
+  align-items: end;
+  margin: 14px 0 18px;
+  padding: 14px;
+  border: 1px solid #d6e3f3;
+  border-radius: 16px;
+  background: #f8fbff;
+}
+.admin-notifications-page .notification-view-dates,
+.admin-notifications-page .notification-selection-actions,
+.admin-notifications-page .notification-delete-range,
+.manager-notifications-page .notification-view-dates,
+.manager-notifications-page .notification-selection-actions,
+.manager-notifications-page .notification-delete-range {
+  display: flex;
+  align-items: end;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.admin-notifications-page .notification-bulk-toolbar label,
+.manager-notifications-page .notification-bulk-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #64748b;
+  font-size: .68rem;
+  font-weight: 700;
+}
+.admin-notifications-page .notification-selection-actions label,
+.manager-notifications-page .notification-selection-actions label {
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 9px;
+}
+.admin-notifications-page .notification-bulk-toolbar input[type="date"],
+.manager-notifications-page .notification-bulk-toolbar input[type="date"] {
+  padding: 8px 9px;
+  border: 1px solid #d6e3f3;
+  border-radius: 9px;
+  background: #fff;
+  color: #1a2b4b;
+}
+.admin-notifications-page .notification-bulk-toolbar button,
+.manager-notifications-page .notification-bulk-toolbar button {
+  min-height: 35px;
+  padding: 8px 12px;
+  border: 1px solid #9fb6d0;
+  border-radius: 9px;
+  background: #fff;
+  color: #1a2b4b;
+  font-weight: 750;
+  cursor: pointer;
+}
+.admin-notifications-page .notification-bulk-toolbar .bulk-danger,
+.manager-notifications-page .notification-bulk-toolbar .bulk-danger {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+.admin-notifications-page .notification-bulk-toolbar .bulk-danger.filled,
+.manager-notifications-page .notification-bulk-toolbar .bulk-danger.filled {
+  background: #dc2626;
+  color: #fff;
+}
+.admin-notifications-page .notification-bulk-toolbar button:disabled,
+.manager-notifications-page .notification-bulk-toolbar button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.admin-notifications-page .notif-select,
+.manager-notifications-page .notif-select {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.admin-notifications-page .notif-select input,
+.manager-notifications-page .notif-select input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff8c00;
+}
+.manager-notifications-page .btn-del {
+  background: transparent;
+  border: 1px solid #fecaca;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #dc2626;
+  cursor: pointer;
+}
+@media (max-width: 1050px) {
+  .admin-notifications-page .notification-bulk-toolbar,
+  .manager-notifications-page .notification-bulk-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .admin-notifications-page .notification-view-dates label,
+  .admin-notifications-page .notification-delete-range label,
+  .manager-notifications-page .notification-view-dates label,
+  .manager-notifications-page .notification-delete-range label {
+    flex: 1;
+    min-width: 130px;
+  }
+}

@@ -18,6 +18,8 @@ import {
   downloadCSV,
   dayName,
   mapEmployeeOption,
+  normalizeAttendanceAnalysisRecord,
+  normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 import "../../styles/adminAttendanceAnalysis.css";
 
@@ -68,6 +70,10 @@ function AdminAttendanceAnalysis() {
       try {
         const signal = getSignal();
         const data = await fetchAnalysisEmployees(branch, signal);
+        console.log(
+          "Loaded users for attendance:",
+          data.map((u) => ({ name: u.full_name, role: u.role }))
+        );
         const mapped = data
           .filter((e) => e.role !== "SUPER_ADMIN")
           .map(mapEmployeeOption);
@@ -147,40 +153,7 @@ function AdminAttendanceAnalysis() {
         ]);
 
         if (fetchId !== fetchIdRef.current) return;
-const transformedRecords = (data.records || []).map((r) => ({
-  date: r.date,
-  status: r.status,
-  checkIn: r.checkIn ?? r.check_in_time ?? "--",
-  checkOut: r.checkOut ?? r.check_out_time ?? "--",
-  lateMinutes: r.lateMinutes ?? r.late_minutes ?? 0,
-  workHours: parseFloat(r.workHours ?? r.production_hours) || 0,
-
-  breaks:
-    r.breaks ??
-    r.total_break_minutes ??
-    r.totalBreakMinutes ??
-    (
-      (r.breakMins?.b1 || 0) +
-      (r.breakMins?.lunch || 0) +
-      (r.breakMins?.b2 || 0) +
-      (r.breakMins?.b3 || 0)
-    ) ||
-    0,
-
-  breakMins: r.breakMins || {
-    b1: 0,
-    lunch: 0,
-    b2: 0,
-    b3: 0,
-  },
-
-  breakDetails: r.breakDetails || {
-    b1: { in: "--", out: "--" },
-    lunch: { in: "--", out: "--" },
-    b2: { in: "--", out: "--" },
-    b3: { in: "--", out: "--" },
-  },
-}));
+        const transformedRecords = normalizeAttendanceAnalysisRecords(data.records || []);
         // Store in cache
         recordsCacheRef.current[cacheKey] = transformedRecords;
 
@@ -327,15 +300,16 @@ const transformedRecords = (data.records || []).map((r) => ({
       ],
     ];
     currentRecords.forEach((r) => {
+      const rec = normalizeAttendanceAnalysisRecord(r);
       rows.push([
-        r.date,
-        dayName(r.date),
-        r.status,
-        r.checkIn,
-        r.checkOut,
-        r.workHours.toFixed(1),
-        r.lateMinutes,
-        r.breaks,
+        rec.date,
+        dayName(rec.date),
+        rec.status,
+        rec.checkIn,
+        rec.checkOut,
+        rec.workHours.toFixed(1),
+        rec.lateMinutes,
+        rec.breaks,
       ]);
     });
     downloadCSV(

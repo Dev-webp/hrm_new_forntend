@@ -81,10 +81,12 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .data-table th { text-align: left; padding: 12px 10px; color: #FF8C00; font-weight: 600; border-bottom: 1px solid rgba(255, 140, 0,0.2); }
 .data-table td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
 .badge { display: inline-block; padding: 3px 10px; border-radius: 40px; font-size: 10px; font-weight: 700; }
-.b-present { background: rgba(74,222,128,0.2); color: #16A34A; }
-.b-late { background: rgba(255,160,0,0.2); color: #FF8C00; }
-.b-absent { background: rgba(255,70,70,0.2); color: #DC2626; }
-.b-halfday { background: rgba(74,143,232,0.2); color: #4A8FE8; }
+.b-present { background: var(--calendar-present-bg, #C8F2D6); color: var(--calendar-present-text, #0F5132); }
+.b-late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); }
+.b-absent { background: var(--calendar-absent-bg, #FFCBCB); color: var(--calendar-absent-text, #8B0000); }
+.b-halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); }
+.b-paid-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); color: var(--calendar-paid-leave-text, #4C1D95); }
+.b-unpaid-leave { background: var(--calendar-unpaid-leave-bg, #FDA4CF); color: var(--calendar-unpaid-leave-text, #831843); }
 .b-manager { background: rgba(255, 140, 0,0.2); color: #FF8C00; }
 .break-pill { background: #F5F7FA; border-radius: 20px; padding: 3px 8px; font-family: monospace; font-size: 10px; display: inline-block; margin: 1px; white-space: nowrap; }
 .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; margin-top: 12px; }
@@ -92,17 +94,49 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .cal-day { background: #FFFFFF; border-radius: 14px; padding: 14px 6px; text-align: center; cursor: pointer; transition: 0.1s; border: 1px solid transparent; position: relative; min-height: 64px; display: flex; align-items: center; justify-content: center; }
 .cal-day:hover { border-color: #FF8C00; transform: scale(1.04); z-index: 10; }
 .cal-day .day-num { font-size: 18px; font-weight: 800; line-height: 1; }
-.cal-present { background: rgba(74,222,128,0.25); }
-.cal-halfday { background: rgba(255,235,59,0.45); }
-.cal-late { background: rgba(255,100,0,0.45); }
-.cal-absent { background: rgba(255,70,70,0.25); }
-.cal-holiday { background: #FFF7ED; border-color: #FDBA74; opacity: 1; }
+.cal-present { background: var(--calendar-present-bg, #C8F2D6); border-color: var(--calendar-present-border, #16A34A); color: var(--calendar-present-text, #0F5132); }
+.cal-halfday { background: var(--calendar-halfday-bg, #FFE066); border-color: var(--calendar-halfday-border, #D4A300); color: var(--calendar-halfday-text, #7A5800); }
+.cal-late { background: var(--calendar-late-bg, #FFD29B); border-color: var(--calendar-late-border, #EA580C); color: var(--calendar-late-text, #9A2E00); }
+.cal-absent { background: var(--calendar-absent-bg, #FFCBCB); border-color: var(--calendar-absent-border, #DC2626); color: var(--calendar-absent-text, #8B0000); }
+.cal-holiday { background: var(--calendar-holiday-bg, #B3CEFB); border-color: var(--calendar-holiday-border, #2563EB); color: var(--calendar-holiday-text, #0F2E8C); opacity: 1; }
+.cal-paid-leave,
+.paid-leave,
+.calendar-day.paid-leave {
+  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  border-color: var(--calendar-paid-leave-border, #7C3AED);
+  color: var(--calendar-paid-leave-text, #4C1D95);
+}
+.cal-unpaid-leave,
+.unpaid-leave,
+.calendar-day.unpaid-leave {
+  background: var(--calendar-unpaid-leave-bg, #FDA4CF);
+  border-color: var(--calendar-unpaid-leave-border, #DB2777);
+  color: var(--calendar-unpaid-leave-text, #831843);
+}
 .cal-empty { background: transparent; border: none; cursor: default; }
-.cal-day .day-num.green-num { color: #16A34A; }
-.cal-day .day-num.yellow-num { color: #FFD966; }
-.cal-day .day-num.orange-num { color: #FF8C42; }
-.cal-day .day-num.red-num { color: #DC2626; }
-.cal-day .day-num.default-num { color: #64748B; }
+.cal-day .day-num.green-num { color: var(--calendar-present-text, #0F5132); }
+.cal-day .day-num.yellow-num {
+  color: #7A5800 !important;
+  font-weight: 900;
+}
+
+.cal-halfday .day-num {
+  color: #7A5800 !important;
+  font-weight: 900;
+}
+.cal-day .day-num.orange-num { color: var(--calendar-late-text, #9A2E00); }
+.cal-day .day-num.red-num { color: var(--calendar-absent-text, #8B0000); }
+.cal-day .day-num.default-num { color: var(--calendar-empty-text, #334155); }
+.cal-day .day-num.white-num { color: var(--calendar-paid-leave-text, #4C1D95); }
+.cal-present .day-num,
+.cal-late .day-num,
+.cal-absent .day-num,
+.cal-holiday .day-num {
+  color: inherit;
+}
+.cal-halfday .day-num {
+  color: var(--calendar-halfday-text, #7A5800);
+}
 .cal-tooltip-custom { visibility: hidden; position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%); background: #FFFFFF; border: 1px solid #FF8C00; border-radius: 16px; padding: 12px 16px; font-size: 11px; font-family: monospace; white-space: nowrap; z-index: 200; color: #1A2B4B; text-align: left; box-shadow: 0 8px 20px rgba(26, 43, 75,0.5); backdrop-filter: blur(4px); pointer-events: none; transition: visibility 0.1s; line-height: 1.7; }
 .cal-day:hover .cal-tooltip-custom { visibility: visible; }
 .cal-tooltip-custom strong { color: #FF8C00; font-family: 'Inter', sans-serif; }

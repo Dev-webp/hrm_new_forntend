@@ -27,6 +27,32 @@ function getStatusText(status, lateMins) {
   return status || "—";
 }
 
+function isPaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === true ||
+    safe.isPaidLeave === true ||
+    status === "paid_leave" ||
+    leaveType === "paid" ||
+    Number(safe.paid_days || safe.paidDays || 0) > 0
+  );
+}
+
+function isUnpaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === false ||
+    safe.isPaidLeave === false ||
+    status === "unpaid_leave" ||
+    leaveType === "unpaid" ||
+    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+  );
+}
+
 export default function EmployeeAttendance() {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
@@ -199,7 +225,7 @@ export default function EmployeeAttendance() {
           const s = rec.status;
           if (s === "full_day" || s === "half_day") presentCount++;
           else absentCount++;
-          if (rec.late_minutes > 0 && s !== "absent") lateCount++;
+          if (Number(rec.late_minutes) > 0 && s !== "absent") lateCount++;
         } else absentCount++;
       }
     }
@@ -238,7 +264,7 @@ export default function EmployeeAttendance() {
       let tooltip = null;
 
       if (isSunday && !entry) {
-        dayClass += " is-sunday";
+        dayClass += " is-sunday calendar-holiday";
         badgeHtml = (
           <div
             className="day-badge"
@@ -254,7 +280,7 @@ export default function EmployeeAttendance() {
           </div>
         );
       } else if (entry?.type === "holiday") {
-        dayClass += " is-holiday";
+        dayClass += " is-holiday calendar-holiday";
         badgeHtml = (
           <div
             className="day-badge"
@@ -270,7 +296,7 @@ export default function EmployeeAttendance() {
           </div>
         );
       } else if (entry?.type === "halfday") {
-        dayClass += " is-halfday-holiday";
+        dayClass += " is-halfday-holiday calendar-halfday";
         badgeHtml = (
           <div
             className="day-badge"
@@ -293,15 +319,29 @@ export default function EmployeeAttendance() {
       if (!isSunday && !entry) {
         if (rec) {
           const s = rec.status;
-          if (s === "full_day") {
-            dayClass += " p-present";
+          if (isPaidLeaveDay(rec)) {
+            dayClass += " p-leave calendar-paid-leave paid-leave";
+            miniHtml = (
+              <div className="day-mini-stats">
+                <div className="mini-row">Paid Leave</div>
+              </div>
+            );
+          } else if (isUnpaidLeaveDay(rec)) {
+            dayClass += " p-leave calendar-unpaid-leave unpaid-leave";
+            miniHtml = (
+              <div className="day-mini-stats">
+                <div className="mini-row">Unpaid Leave</div>
+              </div>
+            );
+          } else if (s === "full_day") {
+            dayClass += " p-present calendar-present";
             miniHtml = (
               <div className="day-mini-stats">
                 <div className="mini-row">✅ Present</div>
               </div>
             );
           } else if (s === "half_day") {
-            dayClass += " p-halfday";
+            dayClass += " p-halfday calendar-halfday";
             miniHtml = (
               <div className="day-mini-stats">
                 <div className="mini-row">🌓 Half Day</div>
@@ -315,16 +355,17 @@ export default function EmployeeAttendance() {
               </div>
             );
           } else {
-            dayClass += " p-absent";
+            dayClass += " p-absent calendar-absent";
             miniHtml = (
               <div className="day-mini-stats">
                 <div className="mini-row">❌ Absent</div>
               </div>
             );
           }
-          if (rec.late_minutes > 0 && s !== "absent") {
+          if (Number(rec.late_minutes) > 0 && !["absent", "half_day"].includes(s) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             dayClass = dayClass.replace(" p-present", "");
-            dayClass += " p-late";
+            dayClass = dayClass.replace(" calendar-present", "");
+            dayClass += " p-late calendar-late";
             miniHtml = (
               <div className="day-mini-stats">
                 <div className="mini-row">⚠️ Late {rec.late_minutes}m</div>
@@ -354,7 +395,7 @@ export default function EmployeeAttendance() {
                   <span className="tv">{formatTime12(rec.check_out_time)}</span>
                 </div>
               )}
-              {rec.late_minutes > 0 && (
+              {Number(rec.late_minutes) > 0 && (
                 <div className="tt-row">
                   <span>Late</span>
                   <span className="tv">{rec.late_minutes} min</span>
@@ -363,7 +404,7 @@ export default function EmployeeAttendance() {
             </div>
           );
         } else {
-          dayClass += " p-absent";
+          dayClass += " calendar-empty";
           miniHtml = (
             <div className="day-mini-stats">
               <div className="mini-row">No Record</div>
@@ -425,7 +466,7 @@ export default function EmployeeAttendance() {
         if (rec) {
           checkIn = rec.check_in_time ? rec.check_in_time.slice(0, 5) : "—";
           checkOut = rec.check_out_time ? rec.check_out_time.slice(0, 5) : "—";
-          lateMin = rec.late_minutes || 0;
+          lateMin = Number(rec.late_minutes) || 0;
           statusLabel = getStatusText(rec.status, lateMin);
           statusClass = getStatusBadgeClass(rec.status, lateMin);
         } else {

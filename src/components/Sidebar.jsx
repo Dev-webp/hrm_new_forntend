@@ -52,8 +52,12 @@ function Sidebar({ role = "admin" }) {
               >
                 <i className={`fas ${item.icon}`} />
              <span className="sb-label">{item.label}</span>
-{item.path.includes("notifications") || item.path.includes("leave") ? (
-  <NotificationBadge />
+{item.path.includes("notifications") ? (
+  <NotificationBadge type="notifications" />
+) : item.path.includes("leave") ? (
+  <NotificationBadge type="leaves" />
+) : item.path.includes("activity-logs") ? (
+  <NotificationBadge type="activityLogs" />
 ) : null}
 
               </NavLink>

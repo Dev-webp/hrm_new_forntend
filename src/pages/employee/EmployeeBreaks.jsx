@@ -529,44 +529,51 @@ export default function EmployeeBreaks() {
         </div>
 
         <div className="content">
-          <div className="usage-banner">
-            <div className="ring-wrap">
-              <svg width="90" height="90" viewBox="0 0 90 90">
-                <circle className="ring-bg" cx="45" cy="45" r="36" />
-                <circle
-                  id="ringFill"
-                  className="ring-fill"
-                  cx="45"
-                  cy="45"
-                  r="36"
-                  strokeDasharray={GAUGE_CIRCUMFERENCE}
-                  strokeDashoffset={meter.offset}
-                  stroke={meter.stroke}
-                />
-              </svg>
-              <div className="ring-center">
-                <span id="ringPct">{meter.pct}%</span>
-              </div>
-            </div>
-            <div className="usage-info">
-              <div className="usage-title">Daily Break Usage</div>
-              <div className="usage-bar-wrap">
-                <div
-                  id="usageBar"
-                  className="usage-bar"
-                  style={{ width: `${meter.pct}%`, background: meter.barBg }}
-                />
-              </div>
-              <div className="usage-nums">
-                <span>
-                  <strong id="usedMin">{meter.total}</strong> min used
-                </span>
-                <span>
-                  <strong id="remMin">{meter.rem}</strong> min remaining
-                </span>
-              </div>
-            </div>
-          </div>
+       <div className="usage-banner">
+  <div className="usage-ring">
+    <svg width="90" height="90" viewBox="0 0 90 90">
+      <circle className="ring-bg" cx="45" cy="45" r="36" />
+
+      <circle
+        className="ring-fill"
+        cx="45"
+        cy="45"
+        r="36"
+        strokeDasharray={GAUGE_CIRCUMFERENCE}
+        strokeDashoffset={meter.offset}
+        stroke={meter.stroke}
+      />
+    </svg>
+
+    <div className="ring-center">
+      <span className="ring-val">{meter.pct}%</span>
+    </div>
+  </div>
+
+  <div className="usage-info">
+    <h3>Daily Break Usage</h3>
+
+    <div className="usage-bar-wrap">
+      <div
+        className="usage-bar"
+        style={{
+          width: `${meter.pct}%`,
+          background: meter.barBg,
+        }}
+      />
+    </div>
+
+    <div className="usage-nums">
+      <span>
+        <strong>{meter.total}</strong> min used
+      </span>
+
+      <span>
+        <strong>{meter.rem}</strong> min remaining
+      </span>
+    </div>
+  </div>
+</div>
 
           <div className="breaks-grid" id="breaksGrid">
             {SLOT_CONFIG.map((cfg) => {

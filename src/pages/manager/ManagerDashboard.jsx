@@ -12,12 +12,14 @@ import {
   WelcomeStat,
 } from "../../components/Cards";
 import { useToast } from "../../hooks/useToast";
+import LeaveApprovalPreviewModal from "../../components/leaves/LeaveApprovalPreviewModal";
 import {
   fetchManagerBulkMonthlyAttendance,
   fetchManagerDashboardStats,
   fetchManagerEmployees,
   fetchManagerHolidays,
   fetchManagerLeaves,
+  fetchManagerLeaveApprovalPreview,
   fetchManagerNotifications,
   fetchManagerProfile,
   fetchManagerTodayAttendance,
@@ -132,6 +134,8 @@ export default function ManagerDashboard() {
   const [attendanceMap, setAttendanceMap] = useState(new Map());
   const [monthKpi, setMonthKpi] = useState(null);
   const [leaveItems, setLeaveItems] = useState([]);
+  const [leaveApproval, setLeaveApproval] = useState({ open: false, leave: null, preview: null, loading: false, error: "" });
+  const [leaveApproving, setLeaveApproving] = useState(false);
   const [alerts, setAlerts] = useState([]);
 
   const [clock, setClock] = useState({
@@ -354,13 +358,50 @@ export default function ManagerDashboard() {
     return () => window.clearInterval(intervalId);
   }, [loadDashboard]);
 
-  const handleLeaveAction = async (leaveId, status) => {
+  const handleLeaveAction = async (leave, status) => {
+    if (status === "approved") {
+      setLeaveApproval({ open: true, leave, preview: null, loading: true, error: "" });
+      try {
+        const preview = await fetchManagerLeaveApprovalPreview(leave.id);
+        setLeaveApproval((current) => ({ ...current, preview, loading: false }));
+      } catch (err) {
+        setLeaveApproval((current) => ({ ...current, loading: false, error: err?.response?.data?.message || "Failed to calculate leave" }));
+      }
+      return;
+    }
+    const reason = window.prompt(`Reason for rejecting ${leave.full_name}'s leave:`);
+    if (reason === null) return;
     try {
-      await updateManagerLeaveStatus(leaveId, status);
-      showToast(`Leave ${status === "approved" ? "approved" : "rejected"}`);
+      await updateManagerLeaveStatus(leave.id, status, { rejection_reason: reason.trim() });
+      window.dispatchEvent(new Event("manager-pending-leave-count-changed"));
+      showToast("Leave rejected");
       loadDashboard();
     } catch (err) {
       showToast(err?.response?.data?.message || "Failed to update leave");
+    }
+  };
+
+  const confirmDashboardLeaveApproval = async () => {
+    if (!leaveApproval.leave || !leaveApproval.preview) return;
+    const preview = leaveApproval.preview;
+    setLeaveApproving(true);
+    try {
+      await updateManagerLeaveStatus(leaveApproval.leave.id, "approved", {
+        paid_days: preview.paid_days,
+        unpaid_days: preview.unpaid_days,
+        salary_deduction_days: preview.salary_deduction_days,
+        leave_category: preview.final_category,
+        include_sunday_penalty: preview.include_sunday_penalty,
+        penalty_days: preview.penalty_days,
+      });
+      setLeaveApproval({ open: false, leave: null, preview: null, loading: false, error: "" });
+      window.dispatchEvent(new Event("manager-pending-leave-count-changed"));
+      showToast("Leave approved");
+      loadDashboard();
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Failed to approve leave");
+    } finally {
+      setLeaveApproving(false);
     }
   };
 
@@ -789,14 +830,14 @@ export default function ManagerDashboard() {
                     <button
                       type="button"
                       className="btn-approve"
-                      onClick={() => handleLeaveAction(leave.id, "approved")}
+                      onClick={() => handleLeaveAction(leave, "approved")}
                     >
                       ✓ Approve
                     </button>
                     <button
                       type="button"
                       className="btn-reject"
-                      onClick={() => handleLeaveAction(leave.id, "rejected")}
+                      onClick={() => handleLeaveAction(leave, "rejected")}
                     >
                       ✗ Reject
                     </button>
@@ -967,6 +1008,16 @@ export default function ManagerDashboard() {
           )}
         </div>
       </div>
+
+      <LeaveApprovalPreviewModal
+        open={leaveApproval.open}
+        preview={leaveApproval.preview}
+        loading={leaveApproval.loading}
+        error={leaveApproval.error}
+        saving={leaveApproving}
+        onClose={() => !leaveApproving && setLeaveApproval({ open: false, leave: null, preview: null, loading: false, error: "" })}
+        onConfirm={confirmDashboardLeaveApproval}
+      />
 
       <Toast message={toast.message} visible={toast.visible} />
     </>

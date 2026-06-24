@@ -48,6 +48,7 @@ export const MANAGER_NAV = [
   {
     section: "HR",
     items: [
+     
       {
         path: "/manager/payslip",
         icon: "fa-file-invoice-dollar",
@@ -87,6 +88,7 @@ export const CONVERTED_MANAGER_ROUTE_PATHS = new Set([
   "/manager/calendar",
   "/manager/department",
   "/manager/notifications",
+  "/manager/activity-logs",
   "/manager/payslip",
 ]);
 

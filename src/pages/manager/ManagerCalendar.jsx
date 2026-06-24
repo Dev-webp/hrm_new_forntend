@@ -47,6 +47,32 @@ function TooltipHoliday({ name }) {
   );
 }
 
+function isPaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === true ||
+    safe.isPaidLeave === true ||
+    status === "paid_leave" ||
+    leaveType === "paid" ||
+    Number(safe.paid_days || safe.paidDays || 0) > 0
+  );
+}
+
+function isUnpaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === false ||
+    safe.isPaidLeave === false ||
+    status === "unpaid_leave" ||
+    leaveType === "unpaid" ||
+    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+  );
+}
+
 export default function ManagerCalendar() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -314,7 +340,7 @@ export default function ManagerCalendar() {
         let tooltipContent = null;
 
         if (isSun && !entry) {
-          cssClasses += " is-sunday";
+          cssClasses += " is-sunday calendar-holiday";
           sundayCount += 1;
           badgeContent = (
             <div
@@ -328,7 +354,7 @@ export default function ManagerCalendar() {
             </div>
           );
         } else if (entry?.type === "holiday") {
-          cssClasses += " is-holiday";
+          cssClasses += " is-holiday calendar-holiday";
           holidayCount += 1;
           badgeContent = (
             <div
@@ -342,7 +368,7 @@ export default function ManagerCalendar() {
             </div>
           );
         } else if (entry?.type === "halfday") {
-          cssClasses += " is-halfday-holiday";
+          cssClasses += " is-halfday-holiday calendar-halfday";
           halfDayCount += 1;
           badgeContent = (
             <div
@@ -372,18 +398,21 @@ export default function ManagerCalendar() {
           }
 
           if (!isSun && !entry && rec) {
-            if (st === "full_day") cssClasses += " p-present";
-            else if (st === "half_day") cssClasses += " p-halfday";
+            if (isPaidLeaveDay(rec)) cssClasses += " p-leave calendar-paid-leave paid-leave";
+            else if (isUnpaidLeaveDay(rec)) cssClasses += " p-leave calendar-unpaid-leave unpaid-leave";
+            else if (st === "full_day") cssClasses += " p-present calendar-present";
+            else if (st === "half_day") cssClasses += " p-halfday calendar-halfday";
             else if (st === "leave") cssClasses += " p-leave";
-            else if (st === "absent") cssClasses += " p-absent";
+            else if (st === "absent") cssClasses += " p-absent calendar-absent";
           }
-          if (!isSun && !entry && rec && rec.lateMinutes > 0 && st !== "absent") {
+          if (!isSun && !entry && rec && rec.lateMinutes > 0 && !["absent", "half_day"].includes(st) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             cssClasses = cssClasses.replace(" p-present", "");
-            cssClasses += " p-late";
+            cssClasses = cssClasses.replace(" calendar-present", "");
+            cssClasses += " p-late calendar-late";
           }
 
           if (rec && !isSun) {
-            const statusLabel = {
+            let statusLabel = {
               full_day: "✅ Present",
               absent: "❌ Absent",
               half_day: "🌓 Half Day",
@@ -391,12 +420,15 @@ export default function ManagerCalendar() {
               holiday: "🎉 Holiday",
             }[st] || "—";
 
+            if (isPaidLeaveDay(rec)) statusLabel = "Paid Leave";
+            if (isUnpaidLeaveDay(rec)) statusLabel = "Unpaid Leave";
+
             miniStatsContent = (
               <div className="day-mini-stats">
                 <div className="mini-row">
                   <span>{statusLabel}</span>
                 </div>
-                {rec.lateMinutes > 0 ? (
+                {rec.lateMinutes > 0 && !isPaidLeaveDay(rec) ? (
                   <div className="mini-row">
                     <span style={{ color: "#FF8C00", fontSize: "0.62rem" }}>
                       ⏰ Late {rec.lateMinutes}m
@@ -462,6 +494,7 @@ export default function ManagerCalendar() {
             else if (entry?.type === "holiday") {
               tooltipContent = <TooltipHoliday name={entry.name} />;
             } else {
+              cssClasses += " calendar-empty";
               tooltipContent = (
                 <div className="tooltip-card">
                   <div className="tt-title">
@@ -820,7 +853,10 @@ export default function ManagerCalendar() {
             <div className="ldot halfday" /> Half Day
           </div>
           <div className="legend-item personal-only">
-            <div className="ldot leave" /> On Leave
+            <div className="ldot leave" /> Paid Leave
+          </div>
+          <div className="legend-item personal-only">
+            <div className="ldot unpaid-leave" /> Unpaid Leave
           </div>
           <div className="legend-item branch-only">
             <div className="ldot present" /> Present
@@ -835,7 +871,10 @@ export default function ManagerCalendar() {
             <div className="ldot halfday" /> Half Day
           </div>
           <div className="legend-item branch-only">
-            <div className="ldot leave" /> Leave
+            <div className="ldot leave" /> Paid Leave
+          </div>
+          <div className="legend-item branch-only">
+            <div className="ldot unpaid-leave" /> Unpaid Leave
           </div>
           <div className="legend-item">
             <div className="ldot holiday" /> Holiday

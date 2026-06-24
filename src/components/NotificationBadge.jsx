@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchUnreadCount } from "../services/notificationsApi";
+import { fetchPendingLeaveCount } from "../services/leaveApi";
+import { fetchActivityLogCount } from "../services/activityLogsApi";
 import { getAuthToken } from "../utils/auth";
 import { loadSocketIoClient, SOCKET_SERVER_URL } from "../utils/socketClient";
 
-export default function NotificationBadge() {
+export default function NotificationBadge({ type = "notifications" }) {
   const [count, setCount] = useState(0);
   const socketRef = useRef(null);
 
   async function loadCount() {
     try {
-      const data = await fetchUnreadCount();
+      const loaders = { notifications: fetchUnreadCount, leaves: fetchPendingLeaveCount, activityLogs: fetchActivityLogCount };
+      const data = await (loaders[type] || fetchUnreadCount)();
       setCount(Number(data.count || 0));
     } catch (err) {
       console.error("Unread count error:", err);
@@ -20,8 +23,12 @@ export default function NotificationBadge() {
     const token = getAuthToken();
 
     loadCount();
+    const countEvent = type === "notifications" ? "notification-count-changed" : `${type}-count-changed`;
+    window.addEventListener(countEvent, loadCount);
 
-    if (!token) return undefined;
+    if (!token) {
+      return () => window.removeEventListener(countEvent, loadCount);
+    }
 
     let cancelled = false;
 
@@ -44,6 +51,7 @@ export default function NotificationBadge() {
         });
 
         socket.on("new_notification", () => {
+          if (type !== "notifications") return;
           if (!cancelled) {
             setCount((prev) => prev + 1);
           }
@@ -66,9 +74,10 @@ export default function NotificationBadge() {
     return () => {
       cancelled = true;
       clearInterval(interval);
+      window.removeEventListener(countEvent, loadCount);
       socketRef.current?.disconnect();
     };
-  }, []);
+  }, [type]);
 
   if (count <= 0) return null;
 

@@ -556,3 +556,4 @@
   color: #FFFFFF;
   border-color: #0D47A1;
 }
+.admin-leave-duration-filter{display:flex;align-items:center;gap:10px;margin:0 0 16px}.admin-leave-duration-filter label{font-size:.78rem;font-weight:800;color:#1a2b4b}.admin-leave-duration-filter select{min-width:210px;padding:9px 12px;border:1px solid #d6e3f3;border-radius:10px;background:#fff;color:#1a2b4b}

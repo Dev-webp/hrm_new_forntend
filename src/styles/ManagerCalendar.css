@@ -14,10 +14,11 @@
   --c-present: #16A34A;
   --c-absent: #DC2626;
   --c-late: #FF8C00;
-  --c-halfday: #8b5cf6;
+  --c-halfday: #FACC15;
   --c-leave: #0D47A1;
-  --c-holiday: #FF8C00;
-  --c-sunday: #b91c1c;
+  --c-holiday: #0D47A1;
+  --c-sunday: #0D47A1;
+  --c-empty: #CBD5E1;
 }
 
 .manager-calendar-page {
@@ -207,31 +208,43 @@
 }
 
 .manager-calendar-page .ldot.present {
-  background: var(--c-present);
+  background: var(--calendar-present-bg, #C8F2D6);
+  border: 1px solid var(--calendar-present-border, #16A34A);
 }
 
 .manager-calendar-page .ldot.absent {
-  background: var(--c-absent);
+  background: var(--calendar-absent-bg, #FFCBCB);
+  border: 1px solid var(--calendar-absent-border, #DC2626);
 }
 
 .manager-calendar-page .ldot.late {
-  background: var(--c-late);
+  background: var(--calendar-late-bg, #FFD29B);
+  border: 1px solid var(--calendar-late-border, #EA580C);
 }
 
 .manager-calendar-page .ldot.halfday {
-  background: var(--c-halfday);
+  background: var(--calendar-halfday-bg, #FFE066);
+  border: 1px solid var(--calendar-halfday-border, #D4A300);
 }
 
 .manager-calendar-page .ldot.leave {
-  background: var(--c-leave);
+  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  border: 1px solid var(--calendar-paid-leave-border, #7C3AED);
+}
+
+.manager-calendar-page .ldot.unpaid-leave {
+  background: var(--calendar-unpaid-leave-bg, #FDA4CF);
+  border: 1px solid var(--calendar-unpaid-leave-border, #DB2777);
 }
 
 .manager-calendar-page .ldot.holiday {
-  background: var(--c-holiday);
+  background: var(--calendar-holiday-bg, #B3CEFB);
+  border: 1px solid var(--calendar-holiday-border, #2563EB);
 }
 
 .manager-calendar-page .ldot.sunday {
-  background: var(--c-sunday);
+  background: var(--calendar-holiday-bg, #B3CEFB);
+  border: 1px solid var(--calendar-holiday-border, #2563EB);
 }
 
 .manager-calendar-page .calendar-grid {
@@ -331,6 +344,77 @@
   opacity: 0.15;
   background: #FFFFFF;
   pointer-events: none;
+}
+
+.manager-calendar-page .cal-day.calendar-present {
+  background: var(--calendar-present-bg, #C8F2D6);
+  border-color: var(--calendar-present-border, #16A34A);
+  color: var(--calendar-present-text, #0F5132);
+}
+
+.manager-calendar-page .cal-day.calendar-absent {
+  background: var(--calendar-absent-bg, #FFCBCB);
+  border-color: var(--calendar-absent-border, #DC2626);
+  color: var(--calendar-absent-text, #8B0000);
+}
+
+.manager-calendar-page .cal-day.calendar-holiday {
+  background: var(--calendar-holiday-bg, #B3CEFB);
+  border-color: var(--calendar-holiday-border, #2563EB);
+  color: var(--calendar-holiday-text, #0F2E8C);
+}
+
+.manager-calendar-page .cal-day.calendar-late {
+  background: var(--calendar-late-bg, #FFD29B);
+  border-color: var(--calendar-late-border, #EA580C);
+  color: var(--calendar-late-text, #9A2E00);
+}
+
+.manager-calendar-page .cal-day.calendar-halfday {
+  background: var(--calendar-halfday-bg, #FFE066);
+  border-color: var(--calendar-halfday-border, #D4A300);
+  color: var(--calendar-halfday-text, #7A5800);
+}
+
+.manager-calendar-page .cal-day.calendar-empty {
+  background: var(--calendar-empty-bg, #E2E8F0);
+  border-color: var(--calendar-empty-border, #94A3B8);
+  color: var(--calendar-empty-text, #334155);
+}
+
+.manager-calendar-page .cal-day.calendar-paid-leave,
+.manager-calendar-page .cal-day.paid-leave,
+.manager-calendar-page .calendar-day.paid-leave {
+  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  border-color: var(--calendar-paid-leave-border, #7C3AED);
+  color: var(--calendar-paid-leave-text, #4C1D95);
+}
+.manager-calendar-page .cal-day.calendar-unpaid-leave,
+.manager-calendar-page .cal-day.unpaid-leave,
+.manager-calendar-page .calendar-day.unpaid-leave {
+  background: var(--calendar-unpaid-leave-bg, #FDA4CF);
+  border-color: var(--calendar-unpaid-leave-border, #DB2777);
+  color: var(--calendar-unpaid-leave-text, #831843);
+}
+
+.manager-calendar-page .cal-day.calendar-paid-leave :where(.day-num, .day-badge, .mini-row),
+.manager-calendar-page .cal-day.paid-leave :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-paid-leave-text, #4C1D95);
+}
+.manager-calendar-page .cal-day.calendar-unpaid-leave :where(.day-num, .day-badge, .mini-row),
+.manager-calendar-page .cal-day.unpaid-leave :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-unpaid-leave-text, #831843);
+}
+
+.manager-calendar-page .cal-day.calendar-present :where(.day-num, .day-badge, .mini-row),
+.manager-calendar-page .cal-day.calendar-absent :where(.day-num, .day-badge, .mini-row),
+.manager-calendar-page .cal-day.calendar-holiday :where(.day-num, .day-badge, .mini-row),
+.manager-calendar-page .cal-day.calendar-late :where(.day-num, .day-badge, .mini-row) {
+  color: inherit;
+}
+
+.manager-calendar-page .cal-day.calendar-halfday :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-halfday-text, #7A5800);
 }
 
 .manager-calendar-page .day-num {

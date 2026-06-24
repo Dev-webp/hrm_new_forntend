@@ -1,466 +1,357 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import LeaveApprovalPreviewModal, { formatLeaveDuration } from "../../components/leaves/LeaveApprovalPreviewModal";
 import {
   createLeaveRequest,
+  fetchManagerLeaveApprovalPreview,
   fetchManagerLeaves,
-  fetchMyLeaves,
   fetchMyLeaveBalance,
+  fetchMyLeaves,
   updateManagerLeaveStatus,
 } from "../../services/managerApi";
+import { getStoredUser } from "../../utils/auth";
 import "./ManagerLeave.css";
 
-function escapeHtml(str) {
-  return str?.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m])) || "";
+const EMPTY_FORM = {
+  leaveType: "Paid",
+  duration: "full_day",
+  halfDaySession: "morning",
+  leaveFrom: "",
+  leaveTo: "",
+  reason: "",
+};
+
+function formatDate(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function formatDate(s) {
-  return s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+function statusLabel(status) {
+  return status ? status.charAt(0).toUpperCase() + status.slice(1) : "—";
 }
 
-function capitalize(s) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
-}
 
-function parseJwt(token) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch (e) {
-    return null;
-  }
-}
 
 export default function ManagerLeave() {
-  const navigate = useNavigate();
-  const [currentStatus, setCurrentStatus] = useState("pending");
-  const [allTeamLeaves, setAllTeamLeaves] = useState([]);
-  const [filteredTeamLeaves, setFilteredTeamLeaves] = useState([]);
+  const manager = getStoredUser() || {};
+  const [teamLeaves, setTeamLeaves] = useState([]);
   const [myLeaves, setMyLeaves] = useState([]);
   const [leaveBalance, setLeaveBalance] = useState(null);
-
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [durationFilter, setDurationFilter] = useState("all");
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [approval, setApproval] = useState({ open: false, leave: null, preview: null, loading: false, error: "" });
+  const [approving, setApproving] = useState(false);
 
-  const [formData, setFormData] = useState({
-    leaveType: "Sick",
-    leaveFrom: "",
-    leaveTo: "",
-    reason: "",
-  });
-
-  const token = localStorage.getItem("token");
-  const decoded = parseJwt(token);
-  const managerBranch = decoded?.branch || "Hyderabad";
-  const managerId = decoded?.id;
-  const managerName = decoded?.full_name || "Manager";
-
-  const showToast = useCallback((msg, type = "") => {
-    setToast({ show: true, message: msg, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+  const showToast = useCallback((message, type = "success") => {
+    setToast({ show: true, message, type });
+    window.setTimeout(() => setToast({ show: false, message: "", type: "" }), 3200);
   }, []);
 
-  const loadAll = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-     const now = new Date();
-
-const [teamAll, teamFiltered, my, balance] = await Promise.all([
-  fetchManagerLeaves("all"),
-  fetchManagerLeaves(currentStatus),
-  fetchMyLeaves(),
-  fetchMyLeaveBalance(
-    now.getFullYear(),
-    now.getMonth() + 1
-  ),
-]);
-
-setAllTeamLeaves(teamAll);
-setFilteredTeamLeaves(teamFiltered);
-setMyLeaves(my);
-setLeaveBalance(balance);
-    } catch (err) {
-      showToast("Error loading data: " + err.message, "error");
+      const now = new Date();
+      const [team, mine, balance] = await Promise.all([
+        fetchManagerLeaves("all"),
+        fetchMyLeaves(),
+        fetchMyLeaveBalance(now.getFullYear(), now.getMonth() + 1),
+      ]);
+      setTeamLeaves(team);
+      setMyLeaves(mine);
+      setLeaveBalance(balance);
+    } catch (error) {
+      showToast(error.response?.data?.message || error.message || "Failed to load leaves", "error");
     } finally {
       setLoading(false);
     }
-  }, [currentStatus, showToast]);
+  }, [showToast]);
 
-  const handleStatusChange = (status) => {
-    setCurrentStatus(status);
-  };
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const handleUpdateLeave = async (id, status) => {
-    try {
-      await updateManagerLeaveStatus(id, status);
-      showToast(status === "approved" ? "✅ Leave approved" : "❌ Leave rejected", status === "approved" ? "success" : "error");
-      loadAll();
-    } catch (err) {
-      showToast("Failed: " + err.message, "error");
-    }
-  };
+  const stats = useMemo(() => ({
+    total: teamLeaves.length,
+    pending: teamLeaves.filter((leave) => leave.status === "pending").length,
+    approved: teamLeaves.filter((leave) => leave.status === "approved").length,
+    rejected: teamLeaves.filter((leave) => leave.status === "rejected").length,
+  }), [teamLeaves]);
 
-  const handleApplyLeave = () => {
-    setShowModal(true);
-    setFormData({
-      leaveType: "Sick",
-      leaveFrom: "",
-      leaveTo: "",
-      reason: "",
+  const filteredLeaves = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return teamLeaves.filter((leave) => {
+      const duration = leave.leave_duration_type === "half_day"
+        ? `half_day_${leave.half_day_session}`
+        : "full_day";
+      const matchesSearch = !query || [leave.full_name, leave.leave_type, leave.reason, leave.branch]
+        .some((value) => String(value || "").toLowerCase().includes(query));
+      return matchesSearch
+        && (statusFilter === "all" || leave.status === statusFilter)
+        && (durationFilter === "all" || duration === durationFilter);
     });
-  };
+  }, [durationFilter, search, statusFilter, teamLeaves]);
 
-  const handleSubmitLeave = async () => {
-    const { leaveType, leaveFrom, leaveTo, reason } = formData;
-    if (!leaveFrom || !leaveTo) {
-      showToast("Select dates", "error");
-      return;
-    }
-    if (new Date(leaveTo) < new Date(leaveFrom)) {
-      showToast("End date must be after start date", "error");
-      return;
-    }
-    const days = Math.ceil((new Date(leaveTo) - new Date(leaveFrom)) / 86400000) + 1;
-
-    const payload = {
-      user_id: managerId,
-      leave_type: leaveType,
-      from_date: leaveFrom,
-      to_date: leaveTo,
-      days: days,
-      reason: reason,
-    };
-
+  const openApproval = async (leave) => {
+    setApproval({ open: true, leave, preview: null, loading: true, error: "" });
     try {
-      await createLeaveRequest(payload);
-      showToast("✅ Leave request submitted", "success");
-      setShowModal(false);
-      setFormData({
-        leaveType: "Sick",
-        leaveFrom: "",
-        leaveTo: "",
-        reason: "",
+      const preview = await fetchManagerLeaveApprovalPreview(leave.id);
+      setApproval((current) => ({ ...current, preview, loading: false }));
+    } catch (error) {
+      setApproval((current) => ({
+        ...current,
+        loading: false,
+        error: error.response?.data?.message || "Could not calculate this leave request.",
+      }));
+    }
+  };
+
+  const confirmApproval = async () => {
+    if (!approval.leave || !approval.preview) return;
+    setApproving(true);
+    try {
+      const preview = approval.preview;
+      await updateManagerLeaveStatus(approval.leave.id, "approved", {
+        paid_days: preview.paid_days,
+        unpaid_days: preview.unpaid_days,
+        salary_deduction_days: preview.salary_deduction_days,
+        leave_category: preview.final_category,
+        include_sunday_penalty: preview.include_sunday_penalty,
+        penalty_days: preview.penalty_days,
       });
-      loadAll();
-    } catch (err) {
-      showToast("Failed: " + err.message, "error");
+      setApproval({ open: false, leave: null, preview: null, loading: false, error: "" });
+      showToast(`Leave approved for ${approval.leave.full_name}`);
+      await loadData();
+    } catch (error) {
+      showToast(error.response?.data?.message || "Approval failed", "error");
+    } finally {
+      setApproving(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const getDaysPreview = () => {
-    const { leaveFrom, leaveTo } = formData;
-    if (leaveFrom && leaveTo && new Date(leaveTo) >= new Date(leaveFrom)) {
-      const days = Math.ceil((new Date(leaveTo) - new Date(leaveFrom)) / 86400000) + 1;
-      return `📅 ${days} day${days > 1 ? "s" : ""} of leave`;
+  const rejectLeave = async (leave) => {
+    const reason = window.prompt(`Reason for rejecting ${leave.full_name}'s leave:`);
+    if (reason === null) return;
+    if (reason.trim().length < 3) {
+      showToast("Please enter a clear rejection reason.", "error");
+      return;
     }
-    return "Select dates to see duration";
+    try {
+      await updateManagerLeaveStatus(leave.id, "rejected", { rejection_reason: reason.trim() });
+      showToast(`Leave rejected for ${leave.full_name}`);
+      await loadData();
+    } catch (error) {
+      showToast(error.response?.data?.message || "Rejection failed", "error");
+    }
   };
 
-  const today = new Date().toISOString().slice(0, 10);
-
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
-
-  const pendingCount = allTeamLeaves.filter((l) => l.status === "pending").length;
-  const approvedCount = allTeamLeaves.filter((l) => l.status === "approved").length;
-  const latestMyLeave = myLeaves[0];
+  const submitLeave = async () => {
+    const toDate = form.duration === "half_day" ? form.leaveFrom : form.leaveTo;
+    if (!form.leaveFrom || !toDate || !form.reason.trim()) {
+      showToast("Dates and reason are required.", "error");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await createLeaveRequest({
+        user_id: manager.id,
+        leave_type: form.leaveType,
+        from_date: form.leaveFrom,
+        to_date: toDate,
+        reason: form.reason.trim(),
+        leave_duration_type: form.duration,
+        half_day_session: form.duration === "half_day" ? form.halfDaySession : null,
+      });
+      setApplyOpen(false);
+      setForm(EMPTY_FORM);
+      showToast("Leave request submitted.");
+      await loadData();
+    } catch (error) {
+      showToast(error.response?.data?.message || error.message || "Submission failed", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <>
-      <div className="main-content manager-portal-page manager-leave-page">
-        <div className="page-header">
-          <div className="title">
-            <h1>
-              <i className="fas fa-umbrella-beach"></i> Leave Management
-            </h1>
-            <p>
-              Branch: <span>{managerBranch}</span> · Manage team leaves & apply for your own
-            </p>
-          </div>
-          <button className="apply-btn" onClick={handleApplyLeave}>
-            <i className="fas fa-plus"></i> Apply Leave
-          </button>
+    <div className="manager-leave-page manager-portal-page">
+      <header className="manager-leave-header">
+        <div><span className="manager-leave-eyebrow">Team operations</span><h1>Leave Management</h1><p>{manager.branch || "Your branch"} · Review team requests and track your leave.</p></div>
+        <button type="button" className="manager-leave-apply" onClick={() => setApplyOpen(true)}><i className="fas fa-plus" /> Apply Leave</button>
+      </header>
+
+      <section className="manager-leave-kpis" aria-label="Leave summary">
+        {[['Total Requests', stats.total, 'fa-layer-group'], ['Pending', stats.pending, 'fa-clock'], ['Approved', stats.approved, 'fa-check-circle'], ['Rejected', stats.rejected, 'fa-times-circle']].map(([label, value, icon]) => (
+          <article className="manager-leave-kpi" key={label}><i className={`fas ${icon}`} /><div><span>{label}</span><strong>{loading ? "—" : value}</strong></div></article>
+        ))}
+      </section>
+
+      <section className="manager-leave-balance">
+        <div><span>Available paid leave</span><strong>{leaveBalance?.paid_leave_balance ?? 0}</strong></div>
+        <div><span>Paid leave used</span><strong>{leaveBalance?.paid_used ?? 0}</strong></div>
+        <div><span>Unpaid leave used</span><strong>{leaveBalance?.unpaid_used ?? 0}</strong></div>
+      </section>
+
+      <section className="manager-leave-panel">
+        <div className="manager-leave-panel-heading"><div><h2>Team Leave Requests</h2><p>Showing {filteredLeaves.length} of {teamLeaves.length} requests</p></div></div>
+        <div className="manager-leave-toolbar">
+          <label className="manager-leave-search"><i className="fas fa-search" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search employee, type, or reason" /></label>
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter by status"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+          <select value={durationFilter} onChange={(event) => setDurationFilter(event.target.value)} aria-label="Filter by duration"><option value="all">All Durations</option><option value="full_day">Full Day</option><option value="half_day_morning">Half Day Morning</option><option value="half_day_afternoon">Half Day Afternoon</option></select>
         </div>
 
-        {pendingCount > 0 && (
-          <div className="notification-bar">
-            <i className="fas fa-bell"></i>
-            <span>
-              You have <strong>{pendingCount}</strong> pending leave request(s) awaiting your approval.
-            </span>
-          </div>
-        )}
+    <div className="manager-leave-table-wrap">
+  <table className="manager-leave-table">
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Branch</th>
+        <th>Leave Type</th>
+        <th>Duration</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Requested</th>
+        <th>Paid</th>
+        <th>Unpaid</th>
+        <th>Reason</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
 
-        <div className="stats-row">
-          {leaveBalance && (
-  <div className="stats-row">
-    <div className="stat-card">
-      <div className="stat-label">Sick Balance</div>
-      <div className="stat-number">
-        {leaveBalance.sick_available}
-      </div>
-    </div>
+    <tbody>
+      {loading ? (
+        <tr>
+          <td colSpan={12} className="manager-leave-empty">
+            <i className="fas fa-spinner fa-spin" /> Loading requests…
+          </td>
+        </tr>
+      ) : filteredLeaves.length ? (
+        filteredLeaves.map((leave) => (
+          <tr key={leave.id}>
+            <td className="employee-cell">
+              <i className="fas fa-user-circle" /> {leave.full_name}
+            </td>
+            <td>{leave.branch || "—"}</td>
+            <td>{leave.leave_type}</td>
+            <td>{formatLeaveDuration(leave)}</td>
+            <td>{formatDate(leave.from_date)}</td>
+            <td>{formatDate(leave.to_date)}</td>
+            <td>{leave.requested_days ?? leave.days ?? "—"}</td>
+            <td>{leave.paid_days ?? "0.0"}</td>
+            <td>{leave.unpaid_days ?? "0.0"}</td>
+            <td className="reason-cell">{leave.reason || "—"}</td>
+            <td>
+              <span className={`manager-leave-status ${leave.status}`}>
+                {statusLabel(leave.status)}
+              </span>
+            </td>
+            <td>
+              {leave.status === "pending" ? (
+                <div className="table-actions">
+                  <button
+                    type="button"
+                    className="approve-icon"
+                    onClick={() => openApproval(leave)}
+                    title="Approve"
+                  >
+                    <i className="fas fa-check" />
+                  </button>
 
-    <div className="stat-card">
-      <div className="stat-label">Casual Balance</div>
-      <div className="stat-number">
-        {leaveBalance.casual_available}
-      </div>
-    </div>
+                  <button
+                    type="button"
+                    className="reject-icon"
+                    onClick={() => rejectLeave(leave)}
+                    title="Reject"
+                  >
+                    <i className="fas fa-times" />
+                  </button>
+                </div>
+              ) : (
+                <span className="reviewed-text">
+                  {leave.approved_by_name || "—"}
+                </span>
+              )}
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="12" className="manager-leave-empty">
+            <i className="fas fa-inbox" /> No leave requests match these filters.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
 
-    <div className="stat-card">
-      <div className="stat-label">Paid Taken</div>
-      <div className="stat-number">
-        {leaveBalance.paid_taken}
-      </div>
-    </div>
+      </section>
 
-    <div className="stat-card">
-      <div className="stat-label">Unpaid Taken</div>
-      <div className="stat-number">
-        {leaveBalance.unpaid_taken}
-      </div>
+<section className="manager-leave-panel manager-my-leaves">
+  <div className="manager-leave-panel-heading">
+    <div>
+      <h2>My Leave History</h2>
+      <p>Your latest requests and outcomes</p>
     </div>
   </div>
-)}
-          <div className="stat-card">
-            <div className="stat-label">Pending (Team)</div>
-            <div className="stat-number">{pendingCount}</div>
-            <div className="stat-sub">Awaiting approval</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Approved (Team)</div>
-            <div className="stat-number">{approvedCount}</div>
-            <div className="stat-sub">This month</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">My Leaves</div>
-            <div className="stat-number">{myLeaves.length}</div>
-            <div className="stat-sub">Total applied</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">My Status</div>
-            <div
-              className="stat-number"
-              style={{ fontSize: "20px", paddingTop: "6px", color: latestMyLeave ? (latestMyLeave.status === "approved" ? "#16A34A" : latestMyLeave.status === "rejected" ? "#DC2626" : "#FF8C00") : "#FF8C00" }}
-            >
-              {latestMyLeave ? latestMyLeave.status.toUpperCase() : "—"}
-            </div>
-            <div className="stat-sub">Latest request</div>
-          </div>
-        </div>
 
-        <div className="section-title">
-          <i className="fas fa-user"></i> My Leave History
-        </div>
-        <div className="table-card" style={{ marginBottom: "28px" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table className="leave-table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Days</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Approved/Rejected By</th>
-                  <th>Approved/Rejected On</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr className="loading-row">
-                    <td colSpan="8">
-                      <span className="spinner"></span> Loading...
-                    </td>
-                  </tr>
-                ) : !myLeaves.length ? (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: "center", padding: "30px", color: "#64748B" }}>
-                      No leave applications yet
-                    </td>
-                  </tr>
-                ) : (
-                  myLeaves.map((l) => (
-                    <tr key={l.id}>
-                      <td>{escapeHtml(l.leave_type)}</td>
-                      <td>{formatDate(l.from_date)}</td>
-                      <td>{formatDate(l.to_date)}</td>
-                      <td>{l.days}</td>
-                      <td>{escapeHtml(l.reason || "—")}</td>
-                      <td>
-                        <span className={`status-${l.status}`}>{capitalize(l.status)}</span>
-                      </td>
-                      <td>{escapeHtml(l.approved_by_name || "—")}</td>
-                      <td>{l.approved_at ? new Date(l.approved_at).toLocaleString() : "—"}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <div className="manager-leave-table-wrap">
+    <table className="manager-leave-table manager-my-leave-table">
+      <thead>
+        <tr>
+          <th>Leave Type</th>
+          <th>Duration</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Requested</th>
+          <th>Paid</th>
+          <th>Unpaid</th>
+          <th>Reason</th>
+          <th>Status</th>
+        </tr>
+      </thead>
 
-        <div className="tabs-container">
-          {["pending", "approved", "rejected", "all"].map((status) => (
-            <button
-              key={status}
-              className={`tab-btn ${currentStatus === status ? "active" : ""}`}
-              onClick={() => handleStatusChange(status)}
-            >
-              {capitalize(status)}
-            </button>
-          ))}
-        </div>
+      <tbody>
+        {myLeaves.length ? (
+          myLeaves.map((leave) => (
+            <tr key={leave.id}>
+              <td>{leave.leave_type || "—"}</td>
+              <td>{formatLeaveDuration(leave)}</td>
+              <td>{formatDate(leave.from_date)}</td>
+              <td>{formatDate(leave.to_date)}</td>
+              <td>{leave.requested_days ?? leave.days ?? "—"}</td>
+              <td>{leave.paid_days ?? "0.0"}</td>
+              <td>{leave.unpaid_days ?? "0.0"}</td>
+              <td className="reason-cell">{leave.reason || "—"}</td>
+              <td>
+                <span className={`manager-leave-status ${leave.status}`}>
+                  {statusLabel(leave.status)}
+                </span>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={9} className="manager-leave-empty">
+              No leave requests yet.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</section>
 
-        <div className="section-title">
-          <i className="fas fa-users"></i> Team Leave Requests
-        </div>
-        <div className="table-card">
-          <div style={{ overflowX: "auto" }}>
-            <table className="leave-table">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Type</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Days</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                  <th>Approved/Rejected By</th>
-                  <th>Approved/Rejected On</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr className="loading-row">
-                    <td colSpan="10">
-                      <span className="spinner"></span> Loading...
-                    </td>
-                  </tr>
-                ) : !filteredTeamLeaves.length ? (
-                  <tr>
-                    <td colSpan="10" style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
-                      No {currentStatus} leave requests
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTeamLeaves.map((l) => (
-                    <tr key={l.id}>
-                      <td>
-                        <i className="fas fa-user-circle" style={{ color: "#FF8C00", marginRight: "6px" }}></i>
-                        {escapeHtml(l.full_name)}
-                      </td>
-                      <td>{escapeHtml(l.leave_type)}</td>
-                      <td>{formatDate(l.from_date)}</td>
-                      <td>{formatDate(l.to_date)}</td>
-                      <td>{l.days}</td>
-                      <td>{escapeHtml(l.reason || "—")}</td>
-                      <td>
-                        <span className={`status-${l.status}`}>{capitalize(l.status)}</span>
-                      </td>
-                      <td>
-                        {l.status === "pending" ? (
-                          <>
-                            <button className="action-btn approve" onClick={() => handleUpdateLeave(l.id, "approved")}>
-                              <i className="fas fa-check"></i> Approve
-                            </button>
-                            <button className="action-btn reject" onClick={() => handleUpdateLeave(l.id, "rejected")}>
-                              <i className="fas fa-times"></i> Reject
-                            </button>
-                          </>
-                        ) : (
-                          <span style={{ color: "#64748B", fontSize: "11px" }}>—</span>
-                        )}
-                      </td>
-                      <td>{escapeHtml(l.approved_by_name || "—")}</td>
-                      <td>{l.approved_at ? new Date(l.approved_at).toLocaleString() : "—"}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
-      {showModal && (
-        <div className="modal" style={{ display: "flex" }} onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              <i className="fas fa-calendar-plus"></i> Apply for Leave
-            </h3>
-            <div className="form-group">
-              <label>Leave Type</label>
-            <select
-  name="leaveType"
-  value={formData.leaveType}
-  onChange={handleInputChange}
->
-  <option
-    value="Sick"
-    disabled={!leaveBalance?.sick_available}
-  >
-    Sick Leave{" "}
-    {leaveBalance?.sick_available > 0
-      ? `(${leaveBalance.sick_available} paid left)`
-      : "(No paid balance)"}
-  </option>
 
-  <option
-    value="Casual"
-    disabled={!leaveBalance?.casual_available}
-  >
-    Casual Leave{" "}
-    {leaveBalance?.casual_available > 0
-      ? `(${leaveBalance.casual_available} paid left)`
-      : "(No paid balance)"}
-  </option>
 
-  <option value="Unpaid">
-    Unpaid Leave
-  </option>
-</select>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>From Date</label>
-                <input type="date" name="leaveFrom" value={formData.leaveFrom} onChange={handleInputChange} min={today} />
-              </div>
-              <div className="form-group">
-                <label>To Date</label>
-                <input type="date" name="leaveTo" value={formData.leaveTo} onChange={handleInputChange} min={today} />
-              </div>
-            </div>
-            <div className="days-preview">{getDaysPreview()}</div>
-            <div className="form-group" style={{ marginTop: "12px" }}>
-              <label>Reason</label>
-              <textarea name="reason" value={formData.reason} onChange={handleInputChange} placeholder="Briefly describe your reason..."></textarea>
-            </div>
-            <div className="modal-actions">
-              <button className="modal-btn cancel" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              <button className="modal-btn" onClick={handleSubmitLeave}>
-                Submit Request
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {applyOpen ? <div className="manager-leave-modal-overlay" onMouseDown={() => setApplyOpen(false)}><section className="manager-leave-apply-modal" onMouseDown={(event) => event.stopPropagation()}><h2>Apply for Leave</h2><div className="manager-leave-form-grid"><label>Leave Type<select value={form.leaveType} onChange={(event) => setForm({ ...form, leaveType: event.target.value })}><option value="Paid">Paid Leave</option><option value="Unpaid">Unpaid Leave</option></select></label><label>Duration<select value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })}><option value="full_day">Full Day</option><option value="half_day">Half Day</option></select></label>{form.duration === "half_day" ? <label>Session<select value={form.halfDaySession} onChange={(event) => setForm({ ...form, halfDaySession: event.target.value })}><option value="morning">Morning</option><option value="afternoon">Afternoon</option></select></label> : null}<label>From Date<input type="date" value={form.leaveFrom} onChange={(event) => setForm({ ...form, leaveFrom: event.target.value })} /></label>{form.duration === "full_day" ? <label>To Date<input type="date" min={form.leaveFrom} value={form.leaveTo} onChange={(event) => setForm({ ...form, leaveTo: event.target.value })} /></label> : null}<label className="wide">Reason<textarea value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} /></label></div><div className="manager-leave-modal-actions"><button type="button" className="cancel" onClick={() => setApplyOpen(false)}>Cancel</button><button type="button" className="submit" onClick={submitLeave} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</button></div></section></div> : null}
 
-      {toast.show && (
-        <div className={`toast show ${toast.type}`}>
-          {toast.message}
-        </div>
-      )}
-    </>
+      <LeaveApprovalPreviewModal open={approval.open} preview={approval.preview} loading={approval.loading} error={approval.error} saving={approving} onClose={() => !approving && setApproval({ open: false, leave: null, preview: null, loading: false, error: "" })} onConfirm={confirmApproval} />
+      {toast.show ? <div className={`manager-leave-toast ${toast.type}`}>{toast.message}</div> : null}
+    </div>
   );
 }

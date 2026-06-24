@@ -1,6 +1,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; overflow: hidden; height: 100vh; }
-        :root { --gold: #FF8C00; --gold-dim: rgba(255, 140, 0,0.3); --gold-bg: rgba(255, 140, 0,0.08); --bg-page: #F5F7FA; --bg-card: #FFFFFF; --bg-day: #FFFFFF; --text-main: #1A2B4B; --text-muted: #64748B; --c-present: #16A34A; --c-absent: #DC2626; --c-late: #FF8C00; --c-halfday: #8B5CF6; --c-leave: #0D47A1; --c-holiday: #FF8C00; --c-sunday: #B91C1C; }
+        :root { --gold: #FF8C00; --gold-dim: rgba(255, 140, 0,0.3); --gold-bg: rgba(255, 140, 0,0.08); --bg-page: #F5F7FA; --bg-card: #FFFFFF; --bg-day: #FFFFFF; --text-main: #1A2B4B; --text-muted: #64748B; --c-present: #16A34A; --c-absent: #DC2626; --c-late: #FF8C00; --c-halfday: #FACC15; --c-leave: #0D47A1; --c-holiday: #0D47A1; --c-sunday: #0D47A1; --c-empty: #CBD5E1; }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #FFFFFF; } ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
         .app-layout { display: flex; height: 100vh; overflow: hidden; }
@@ -196,12 +196,12 @@
         .att-table td { padding: 10px 8px; border-bottom: 1px solid rgba(255, 140, 0,0.08); vertical-align: middle; }
         .att-table tr:hover td { background: rgba(255, 140, 0,0.02); }
         .badge-sm { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
-        .badge-present { background: rgba(74,222,128,0.15); color: #16A34A; }
-        .badge-absent { background: rgba(239,68,68,0.15); color: #DC2626; }
-        .badge-late { background: rgba(245,158,11,0.15); color: #FF8C00; }
-        .badge-halfday { background: rgba(139,92,246,0.15); color: #8B5CF6; }
-        .badge-leave { background: rgba(59,130,246,0.15); color: #0D47A1; }
-        .badge-holiday { background: rgba(255, 140, 0,0.2); color: #FF8C00; }
+        .badge-present { background: var(--calendar-present-bg, #C8F2D6); color: var(--calendar-present-text, #0F5132); }
+        .badge-absent { background: var(--calendar-absent-bg, #FFCBCB); color: var(--calendar-absent-text, #8B0000); }
+        .badge-late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); }
+        .badge-halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); }
+        .badge-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); color: var(--calendar-paid-leave-text, #4C1D95); }
+        .badge-holiday { background: var(--calendar-holiday-bg, #B3CEFB); color: var(--calendar-holiday-text, #0F2E8C); }
         .badge-sunday { background: rgba(185,28,28,0.14); color: #991B1B; }
 
         .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--gold); border-radius: 50%; border-top-color: transparent; animation: spin 0.6s linear infinite; }
@@ -231,3 +231,40 @@
 .employee-attendance-page .day-num { color:#0f172a !important; font-size:24px !important; font-weight:800 !important; }
 .employee-attendance-page :where(h1, h2, h3, .section-title, .month-label, .sv) { color:#0f172a !important; font-weight:800 !important; }
 .employee-attendance-page :where(p, .title p, .today-timings, .legend-item, .sl, .mini-row) { color:#475569 !important; font-weight:600 !important; }
+.employee-attendance-page .cal-day.calendar-present { background: var(--calendar-present-bg, #C8F2D6) !important; border-color: var(--calendar-present-border, #16A34A) !important; color: var(--calendar-present-text, #0F5132) !important; }
+.employee-attendance-page .cal-day.calendar-absent { background: var(--calendar-absent-bg, #FFCBCB) !important; border-color: var(--calendar-absent-border, #DC2626) !important; color: var(--calendar-absent-text, #8B0000) !important; }
+.employee-attendance-page .cal-day.calendar-holiday { background: var(--calendar-holiday-bg, #B3CEFB) !important; border-color: var(--calendar-holiday-border, #2563EB) !important; color: var(--calendar-holiday-text, #0F2E8C) !important; }
+.employee-attendance-page .cal-day.calendar-late { background: var(--calendar-late-bg, #FFD29B) !important; border-color: var(--calendar-late-border, #EA580C) !important; color: var(--calendar-late-text, #9A2E00) !important; }
+.employee-attendance-page .cal-day.calendar-halfday { background: var(--calendar-halfday-bg, #FFE066) !important; border-color: var(--calendar-halfday-border, #D4A300) !important; color: var(--calendar-halfday-text, #7A5800) !important; }
+.employee-attendance-page .cal-day.calendar-empty { background: var(--calendar-empty-bg, #E2E8F0) !important; border-color: var(--calendar-empty-border, #94A3B8) !important; color: var(--calendar-empty-text, #334155) !important; }
+.employee-attendance-page .cal-day.calendar-present :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-absent :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-holiday :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-late :where(.day-num, .day-badge, .mini-row) {
+  color: inherit !important;
+}
+.employee-attendance-page .cal-day.calendar-halfday :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-halfday-text, #7A5800) !important;
+}
+.employee-attendance-page .cal-day.calendar-paid-leave,
+.employee-attendance-page .cal-day.paid-leave,
+.employee-attendance-page .calendar-day.paid-leave {
+  background: var(--calendar-paid-leave-bg, #CBB9FF) !important;
+  border-color: var(--calendar-paid-leave-border, #7C3AED) !important;
+  color: var(--calendar-paid-leave-text, #4C1D95) !important;
+}
+.employee-attendance-page .cal-day.calendar-unpaid-leave,
+.employee-attendance-page .cal-day.unpaid-leave,
+.employee-attendance-page .calendar-day.unpaid-leave {
+  background: var(--calendar-unpaid-leave-bg, #FDA4CF) !important;
+  border-color: var(--calendar-unpaid-leave-border, #DB2777) !important;
+  color: var(--calendar-unpaid-leave-text, #831843) !important;
+}
+.employee-attendance-page .cal-day.calendar-paid-leave :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.paid-leave :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-paid-leave-text, #4C1D95) !important;
+}
+.employee-attendance-page .cal-day.calendar-unpaid-leave :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.unpaid-leave :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-unpaid-leave-text, #831843) !important;
+}

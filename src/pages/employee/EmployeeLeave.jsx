@@ -23,11 +23,14 @@ export default function EmployeeLeave() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({
     leaveType: "Unpaid",
+    leaveDurationType: "full_day",
+    halfDaySession: "",
     fromDate: "",
     toDate: "",
     reason: "",
   });
   const [calculatedDays, setCalculatedDays] = useState(null);
+  const [holidayDates, setHolidayDates] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState({ msg: "", visible: false, type: "" });
 
@@ -106,21 +109,61 @@ export default function EmployeeLeave() {
     return allLeaves.filter((l) => l.status === currentFilter);
   }, [allLeaves, currentFilter]);
 
-  const calcDays = useCallback((from, to) => {
+  useEffect(() => {
+    if (!form.fromDate) {
+      setHolidayDates(new Set());
+      return;
+    }
+
+    const start = new Date(`${form.fromDate}T00:00:00`);
+    const end = new Date(`${form.toDate || form.fromDate}T00:00:00`);
+    const months = [];
+    for (const cursor = new Date(start.getFullYear(), start.getMonth(), 1); cursor <= end; cursor.setMonth(cursor.getMonth() + 1)) {
+      months.push([cursor.getFullYear(), cursor.getMonth() + 1]);
+    }
+
+    let active = true;
+    Promise.all(months.map(([year, month]) => apiFetch(`/holidays?year=${year}&month=${month}`)))
+      .then((responses) => {
+        if (!active) return;
+        const dates = new Set(
+          responses.flatMap(normalizeArray)
+            .filter((holiday) =>
+              holiday.type === "holiday" &&
+              (!holiday.branch || holiday.branch.toLowerCase() === "all" || holiday.branch === decoded.branch)
+            )
+            .map((holiday) => String(holiday.date).slice(0, 10))
+        );
+        setHolidayDates(dates);
+      })
+      .catch(() => active && setHolidayDates(new Set()));
+
+    return () => { active = false; };
+  }, [apiFetch, decoded.branch, form.fromDate, form.toDate]);
+
+  const calcDays = useCallback((from, to, durationType) => {
+    if (durationType === "half_day" && from && to && from === to) {
+      setCalculatedDays(0.5);
+      return;
+    }
     if (from && to && new Date(to) >= new Date(from)) {
-      const d = Math.ceil((new Date(to) - new Date(from)) / 86400000) + 1;
-      setCalculatedDays(d);
+      let workingDays = 0;
+      for (const day = new Date(`${from}T00:00:00`); day <= new Date(`${to}T00:00:00`); day.setDate(day.getDate() + 1)) {
+        const dateString = day.toISOString().slice(0, 10);
+        if (day.getDay() !== 0 && !holidayDates.has(dateString)) workingDays += 1;
+      }
+      setCalculatedDays(workingDays);
     } else {
       setCalculatedDays(null);
     }
-  }, []);
+  }, [holidayDates]);
 
   useEffect(() => {
-    calcDays(form.fromDate, form.toDate);
-  }, [form.fromDate, form.toDate, calcDays]);
+    calcDays(form.fromDate, form.toDate, form.leaveDurationType);
+  }, [form.fromDate, form.toDate, form.leaveDurationType, calcDays]);
 
   const submitLeave = async () => {
-    const { leaveType, fromDate, toDate, reason } = form;
+    const { leaveType, leaveDurationType, halfDaySession, fromDate, toDate, reason } = form;
 
     if (!fromDate || !toDate) {
       showToast("Please select dates", "error");
@@ -132,8 +175,17 @@ export default function EmployeeLeave() {
       return;
     }
 
-    const days =
-      Math.ceil((new Date(toDate) - new Date(fromDate)) / 86400000) + 1;
+    if (leaveDurationType === "half_day" && fromDate !== toDate) {
+      showToast("Half-day leave must be for a single date", "error");
+      return;
+    }
+
+    if (leaveDurationType === "half_day" && !halfDaySession) {
+      showToast("Please select morning or afternoon", "error");
+      return;
+    }
+
+    const days = leaveDurationType === "half_day" ? 0.5 : Number(calculatedDays || 0);
 
     if (
       leaveType === "Paid" &&
@@ -154,14 +206,22 @@ export default function EmployeeLeave() {
           leave_type: leaveType,
           from_date: fromDate,
           to_date: toDate,
-          days,
           reason: reason.trim(),
+          leave_duration_type: leaveDurationType,
+          half_day_session: leaveDurationType === "half_day" ? halfDaySession : null,
         },
       });
 
       showToast("✅ Leave request submitted!", "success");
       setModalOpen(false);
-      setForm({ leaveType: "Unpaid", fromDate: "", toDate: "", reason: "" });
+      setForm({
+        leaveType: "Unpaid",
+        leaveDurationType: "full_day",
+        halfDaySession: "",
+        fromDate: "",
+        toDate: "",
+        reason: "",
+      });
       setCalculatedDays(null);
       load();
     } catch (e) {
@@ -323,6 +383,11 @@ export default function EmployeeLeave() {
                     <div className="lc-body">
                       <div className="lc-type">{l.leave_type} Leave</div>
                       <div className="lc-dates">
+                        {(l.leave_duration_type || "full_day") === "half_day"
+                          ? `Half Day · ${l.half_day_session === "morning" ? "Morning" : "Afternoon"}`
+                          : "Full Day"}
+                      </div>
+                      <div className="lc-dates">
                         {fromDate} → {toDate}
                       </div>
                       {l.reason && (
@@ -331,7 +396,7 @@ export default function EmployeeLeave() {
                     </div>
 
                     <div className="lc-days">
-                      <div className="days-num">{l.days}</div>
+                      <div className="days-num">{l.requested_days ?? l.days}</div>
                       <div className="days-label">days</div>
                     </div>
 
@@ -380,6 +445,41 @@ export default function EmployeeLeave() {
               </select>
             </div>
 
+            <div className="form-group">
+              <label htmlFor="lDuration">Leave Duration</label>
+              <select
+                id="lDuration"
+                value={form.leaveDurationType}
+                onChange={(e) => {
+                  const leaveDurationType = e.target.value;
+                  setForm((f) => ({
+                    ...f,
+                    leaveDurationType,
+                    halfDaySession: leaveDurationType === "half_day" ? f.halfDaySession : "",
+                    toDate: leaveDurationType === "half_day" ? f.fromDate : f.toDate,
+                  }));
+                }}
+              >
+                <option value="full_day">Full Day</option>
+                <option value="half_day">Half Day</option>
+              </select>
+            </div>
+
+            {form.leaveDurationType === "half_day" && (
+              <div className="form-group">
+                <label htmlFor="lSession">Half-Day Session</label>
+                <select
+                  id="lSession"
+                  value={form.halfDaySession}
+                  onChange={(e) => setForm((f) => ({ ...f, halfDaySession: e.target.value }))}
+                >
+                  <option value="">Select session</option>
+                  <option value="morning">Morning Half Day</option>
+                  <option value="afternoon">Afternoon Half Day</option>
+                </select>
+              </div>
+            )}
+
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="lFrom">From Date</label>
@@ -388,9 +488,11 @@ export default function EmployeeLeave() {
                   id="lFrom"
                   min={today}
                   value={form.fromDate}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, fromDate: e.target.value }))
-                  }
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    fromDate: e.target.value,
+                    toDate: f.leaveDurationType === "half_day" ? e.target.value : f.toDate,
+                  }))}
                 />
               </div>
 
@@ -401,6 +503,7 @@ export default function EmployeeLeave() {
                   id="lTo"
                   min={today}
                   value={form.toDate}
+                  disabled={form.leaveDurationType === "half_day"}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, toDate: e.target.value }))
                   }
@@ -414,6 +517,11 @@ export default function EmployeeLeave() {
                     calculatedDays > 1 ? "s" : ""
                   } of leave requested`
                 : "Select dates to calculate duration"}
+            </div>
+
+            <div className="days-badge" style={{ marginTop: 10 }}>
+              Available paid leave: {Number(leaveBalance?.paid_leave_balance || 0).toFixed(1)} days
+              <br />Two half-day leaves will consume one full paid leave.
             </div>
 
             <div className="form-group" style={{ marginTop: 14 }}>

@@ -73,8 +73,18 @@ export async function fetchManagerLeaves(status = "all") {
 }
 
 /** PUT /leaves/:id — leaveRoutes.js */
-export async function updateManagerLeaveStatus(id, status) {
-  const response = await api.put(`/leaves/${id}`, { status });
+export async function updateManagerLeaveStatus(id, status, payload = {}) {
+  const response = await api.patch(`/leave/${id}/status`, { status, ...payload });
+  return response.data;
+}
+
+export async function fetchManagerPendingLeaveCount() {
+  const response = await api.get("/manager-leaves/pending-count");
+  return response.data;
+}
+
+export async function fetchManagerLeaveApprovalPreview(id) {
+  const response = await api.get(`/leave/${id}/approval-preview`);
   return response.data;
 }
 

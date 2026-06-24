@@ -3,12 +3,17 @@ import api from "./api";
 // Fetch all employees (SUPER_ADMIN only)
 export async function fetchEmployees() {
   const response = await api.get("/admin/employees");
+  console.log(
+    "Loaded users for attendance:",
+    response.data.map((u) => ({ name: u.full_name, role: u.role }))
+  );
   // Map to our expected structure
   return response.data.map((emp) => ({
     id: emp.id,
     name: emp.full_name,
     department: emp.department,
     branch: emp.branch,
+    role: emp.role,
   }));
 }
 

@@ -507,7 +507,7 @@ export default function ManagerEmployee() {
                 </div>
                 <div className="detail-content">
                   <div className="detail-label">Salary (INR)</div>
-                  <div className="detail-value">${Number(selectedEmployee.salary).toLocaleString()}</div>
+                  <div className="detail-value">₹{Number(selectedEmployee.salary).toLocaleString()}</div>
                 </div>
               </div>
               <div className="detail-item">

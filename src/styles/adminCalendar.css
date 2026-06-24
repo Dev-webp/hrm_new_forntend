@@ -202,19 +202,23 @@
 }
 
 .admin-calendar-page .color-dot.halfday {
-  background: #8b5cf6;
+  background: #FACC15;
 }
 
 .admin-calendar-page .color-dot.leave {
-  background: #0D47A1;
+  background: #7C3AED;
+}
+
+.admin-calendar-page .color-dot.unpaid-leave {
+  background: #DB2777;
 }
 
 .admin-calendar-page .color-dot.holiday {
-  background: #FF8C00;
+  background: #0D47A1;
 }
 
 .admin-calendar-page .color-dot.sunday {
-  background: #b91c1c;
+  background: #0D47A1;
 }
 
 .admin-calendar-page .calendar-grid {
@@ -508,6 +512,87 @@
 
 .calendar-day.employee-day.late-day {
   box-shadow: 0 0 0 2px #FF8C00 inset;
+}
+
+.admin-calendar-page .calendar-day.calendar-present {
+  background: #15803D;
+  border-color: #1a805b30;
+  color: #FFFFFF;
+}
+
+.admin-calendar-page .calendar-day.calendar-absent {
+  background: #B91C1C;
+  border-color: #7F1D1D;
+  color: #FFFFFF;
+}
+
+.admin-calendar-page .calendar-day.calendar-holiday {
+  background: #0D47A1;
+  border-color: #08306F;
+  color: #FFFFFF;
+}
+
+.admin-calendar-page .calendar-day.calendar-late {
+  background: #F97316;
+  border-color: #C2410C;
+  color: #FFFFFF;
+}
+
+.admin-calendar-page .calendar-day.calendar-halfday {
+  background: #FACC15;
+  border-color: #CA8A04;
+  color: #854D0E;
+}
+
+.admin-calendar-page .calendar-day.calendar-empty {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.admin-calendar-page .calendar-day.calendar-paid-leave,
+.admin-calendar-page .calendar-day.paid-leave {
+  background: #CBB9FF;
+  border-color: #7C3AED;
+  color: #4C1D95;
+}
+
+.admin-calendar-page .calendar-day.calendar-unpaid-leave,
+.admin-calendar-page .calendar-day.unpaid-leave {
+  background: #FDA4CF;
+  border-color: #DB2777;
+  color: #831843;
+}
+
+.admin-calendar-page .calendar-day.calendar-present .status-label,
+.admin-calendar-page .calendar-day.calendar-absent .status-label,
+.admin-calendar-page .calendar-day.calendar-holiday .status-label,
+.admin-calendar-page .calendar-day.calendar-late .status-label,
+.admin-calendar-page .calendar-day.calendar-halfday .status-label,
+.admin-calendar-page .calendar-day.calendar-empty .status-label,
+.admin-calendar-page .calendar-day.calendar-paid-leave .status-label,
+.admin-calendar-page .calendar-day.calendar-unpaid-leave .status-label {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-calendar-page .calendar-day.calendar-paid-leave :where(.day-number, .status-label),
+.admin-calendar-page .calendar-day.paid-leave :where(.day-number, .status-label) {
+  color: #FFFFFF;
+}
+
+.admin-calendar-page .calendar-day.calendar-paid-leave .status-label,
+.admin-calendar-page .calendar-day.paid-leave .status-label {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.admin-calendar-page .calendar-day.calendar-present :where(.day-number, .status-label),
+.admin-calendar-page .calendar-day.calendar-absent :where(.day-number, .status-label),
+.admin-calendar-page .calendar-day.calendar-holiday :where(.day-number, .status-label),
+.admin-calendar-page .calendar-day.calendar-late :where(.day-number, .status-label) {
+  color: #FFFFFF;
+}
+
+.admin-calendar-page .calendar-day.calendar-halfday :where(.day-number, .status-label) {
+  color: #854D0E;
 }
 
 .attendance-modal {

@@ -2,16 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
+import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
 import { MONTH_NAMES, normalizeArray, WEEK_DAYS } from "./employeeUtils";
 import "../../styles/EmployeeDashboard.css";
 
-const LEAVE_LIMITS = { Sick: 12, Casual: 6, Annual: 18, Emergency: 3 };
-const LEAVE_COLORS = {
-  Sick: "#0D47A1",
-  Casual: "#FF8C00",
-  Annual: "#16A34A",
-  Emergency: "#DC2626",
-};
 const GAUGE_CIRCUMFERENCE = 226.2;
 const LATE_MAX = 6;
 
@@ -20,6 +14,32 @@ function getGreeting() {
   if (h < 12) return "Good Morning";
   if (h < 17) return "Good Afternoon";
   return "Good Evening";
+}
+
+function isPaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === true ||
+    safe.isPaidLeave === true ||
+    status === "paid_leave" ||
+    leaveType === "paid" ||
+    Number(safe.paid_days || safe.paidDays || 0) > 0
+  );
+}
+
+function isUnpaidLeaveDay(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === false ||
+    safe.isPaidLeave === false ||
+    status === "unpaid_leave" ||
+    leaveType === "unpaid" ||
+    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+  );
 }
 
 export default function EmployeeDashboard() {
@@ -179,12 +199,12 @@ export default function EmployeeDashboard() {
           : "Attendance needs attention";
     const gaugeColor =
       score >= 95
-        ? "#16A34A"
+        ? CALENDAR_STATUS_COLORS.present.border
         : score >= 80
-          ? "#FF8C00"
+          ? CALENDAR_STATUS_COLORS.half_day.border
           : score >= 60
-            ? "#FF8C00"
-            : "#DC2626";
+            ? CALENDAR_STATUS_COLORS.late.border
+            : CALENDAR_STATUS_COLORS.absent.border;
 
     const today = new Date().toISOString().slice(0, 10);
     let currentStreak = 0;
@@ -201,7 +221,7 @@ export default function EmployeeDashboard() {
         : 0;
     const approvedDays = allLeaves
       .filter((l) => l.status === "approved")
-      .reduce((s, l) => s + (l.days || 0), 0);
+      .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
     const leaveBalance = Math.max(0, 24 - approvedDays);
     const lateCount = allAttendance.filter(
       (r) => (r.late_minutes || 0) > 0 && r.status !== "absent"
@@ -263,20 +283,6 @@ export default function EmployeeDashboard() {
     return { lateRecs, lateCount, remaining, info };
   }, [allAttendance]);
 
-  const leaveBars = useMemo(() => {
-    const usageMap = {};
-    allLeaves
-      .filter((l) => l.status === "approved")
-      .forEach((l) => {
-        usageMap[l.leave_type] = (usageMap[l.leave_type] || 0) + (l.days || 0);
-      });
-    return Object.entries(LEAVE_LIMITS).map(([type, max]) => {
-      const used = usageMap[type] || 0;
-      const pct = Math.min(100, Math.round((used / max) * 100));
-      return { type, max, used, pct, color: LEAVE_COLORS[type] };
-    });
-  }, [allLeaves]);
-
   const todayCard = useMemo(() => {
     const d = todayData;
     let statusText = "Absent";
@@ -299,6 +305,72 @@ export default function EmployeeDashboard() {
       statusCls,
     };
   }, [todayData]);
+
+  const calendarDays = useMemo(() => {
+    const { y, m, mm, lastDay } = monthMeta;
+    const holidaySet = new Set(
+      holidayList.map((h) => {
+        const d = h.date;
+        return typeof d === "string" ? d.slice(0, 10) : d?.toISOString?.()?.slice(0, 10);
+      })
+    );
+    const attendanceByDate = new Map(
+      allAttendance.map((rec) => {
+        const dateKey =
+          typeof rec.date === "string" ? rec.date.slice(0, 10) : rec.date?.toISOString?.()?.slice(0, 10);
+        return [dateKey, rec];
+      })
+    );
+    const firstDayOffset = new Date(y, m, 1).getDay();
+    const cells = Array.from({ length: firstDayOffset }, (_, i) => ({
+      key: `blank-${i}`,
+      blank: true,
+    }));
+
+    for (let d = 1; d <= lastDay; d++) {
+      const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
+      const dow = new Date(y, m, d).getDay();
+      const rec = attendanceByDate.get(ds);
+      const isHoliday = holidaySet.has(ds);
+      const isSunday = dow === 0;
+      let status = "No record";
+      let className = "no-record calendar-empty";
+
+      if (isHoliday || isSunday) {
+        status = isSunday ? "Sunday" : "Holiday";
+        className = "holiday calendar-holiday";
+      } else if (rec) {
+        if (isPaidLeaveDay(rec)) {
+          status = "Paid Leave";
+          className = "paid-leave calendar-paid-leave";
+        } else if (isUnpaidLeaveDay(rec)) {
+          status = "Unpaid Leave";
+          className = "unpaid-leave calendar-unpaid-leave";
+        } else if (rec.status === "absent") {
+          status = "Absent";
+          className = "absent calendar-absent";
+        } else if (rec.status === "half_day") {
+          status = "Half Day";
+          className = "halfday calendar-halfday";
+        } else if ((rec.late_minutes || 0) > 0) {
+          status = "Late";
+          className = "late calendar-late";
+        } else if (rec.status === "full_day" || rec.status === "present") {
+          status = "Present";
+          className = "present calendar-present";
+        }
+      }
+
+      cells.push({
+        key: ds,
+        day: d,
+        status,
+        className,
+      });
+    }
+
+    return cells;
+  }, [allAttendance, holidayList, monthMeta]);
 
   const detailRows = useMemo(() => {
     const { y, m, mm, lastDay } = monthMeta;
@@ -451,8 +523,37 @@ export default function EmployeeDashboard() {
             </div>
           </div>
 
+          <div className="today-card dashboard-snapshot">
+            <div className="today-header">
+              <div className="today-title">Today&apos;s Snapshot</div>
+              <span className="today-date">{todayDateLabel}</span>
+            </div>
+            <div className="today-grid">
+              <div>
+                <div className="ti-label">Check In</div>
+                <div className="ti-val">{todayCard.checkIn}</div>
+              </div>
+              <div>
+                <div className="ti-label">Check Out</div>
+                <div className="ti-val">{todayCard.checkOut}</div>
+              </div>
+              <div>
+                <div className="ti-label">Late (min)</div>
+                <div className="ti-val">{todayCard.late}</div>
+              </div>
+              <div>
+                <div className="ti-label">Status</div>
+                <div style={{ marginTop: 4 }}>
+                  <span className={`status-chip ${todayCard.statusCls}`}>
+                    {todayCard.statusText}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="tabs">
-            {["overview", "trends", "details"].map((tab) => (
+            {["overview", "details"].map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -576,6 +677,47 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
 
+              <div className="attendance-calendar-card">
+                <div className="calendar-header">
+                  <div>
+                    <div className="calendar-title">Monthly Attendance Calendar</div>
+                    <div className="calendar-subtitle">
+                      {viewDate.toLocaleDateString("en-IN", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+                  </div>
+                  <div className="calendar-legend">
+                    <span><i className="legend-dot present" />Present</span>
+                    <span><i className="legend-dot late" />Late</span>
+                    <span><i className="legend-dot halfday" />Half Day</span>
+                    <span><i className="legend-dot holiday" />Holiday</span>
+                    <span><i className="legend-dot absent" />Absent</span>
+                    <span><i className="legend-dot paid-leave" />Paid Leave</span>
+                    <span><i className="legend-dot unpaid-leave" />Unpaid Leave</span>
+                    <span><i className="legend-dot no-record" />No record</span>
+                  </div>
+                </div>
+                <div className="calendar-weekdays">
+                  {WEEK_DAYS.map((day) => (
+                    <div key={day}>{day}</div>
+                  ))}
+                </div>
+                <div className="attendance-calendar-grid">
+                  {calendarDays.map((cell) =>
+                    cell.blank ? (
+                      <div key={cell.key} className="calendar-cell blank" />
+                    ) : (
+                      <div key={cell.key} className={`calendar-cell ${cell.className}`}>
+                        <div className="calendar-day">{cell.day}</div>
+                        <div className="calendar-status">{cell.status}</div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
               <div className="streak-card">
                 <div className="streak-left">
                   <div className="streak-icon">⚡</div>
@@ -634,102 +776,6 @@ export default function EmployeeDashboard() {
                 <div className="late-info">{lateTracker.info}</div>
               </div>
 
-              <div className="today-card">
-                <div className="today-header">
-                  <div className="today-title">Today&apos;s Snapshot</div>
-                  <span className="today-date">{todayDateLabel}</span>
-                </div>
-                <div className="today-grid">
-                  <div>
-                    <div className="ti-label">Check In</div>
-                    <div className="ti-val">{todayCard.checkIn}</div>
-                  </div>
-                  <div>
-                    <div className="ti-label">Check Out</div>
-                    <div className="ti-val">{todayCard.checkOut}</div>
-                  </div>
-                  <div>
-                    <div className="ti-label">Late (min)</div>
-                    <div className="ti-val">{todayCard.late}</div>
-                  </div>
-                  <div>
-                    <div className="ti-label">Status</div>
-                    <div style={{ marginTop: 4 }}>
-                      <span className={`status-chip ${todayCard.statusCls}`}>
-                        {todayCard.statusText}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="leave-row">
-                <div className="leave-card">
-                  <div className="leave-card-title">
-                    <i className="fas fa-umbrella-beach" style={{ marginRight: 6 }} />
-                    Leave Usage
-                  </div>
-                  {leaveBars.map((bar) => (
-                    <div key={bar.type} className="leave-bar-item">
-                      <div className="leave-bar-header">
-                        <span>{bar.type} Leave</span>
-                        <span>
-                          {bar.used}/{bar.max} days
-                        </span>
-                      </div>
-                      <div className="leave-bar-bg">
-                        <div
-                          className="leave-bar-fill"
-                          style={{
-                            width: `${bar.pct}%`,
-                            background: bar.color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="leave-card">
-                  <div className="leave-card-title">
-                    <i className="fas fa-chart-bar" style={{ marginRight: 6 }} />
-                    This Month KPIs
-                  </div>
-                  <div className="kpi-mini-grid">
-                    <div className="kpi-mini">
-                      <div className="kpi-mini-label">Attendance Rate</div>
-                      <div className="kpi-mini-val gold">{analytics.rate}%</div>
-                    </div>
-                    <div className="kpi-mini">
-                      <div className="kpi-mini-label">Leave Balance</div>
-                      <div className="kpi-mini-val green">
-                        {analytics.leaveBalance}d
-                      </div>
-                    </div>
-                    <div className="kpi-mini">
-                      <div className="kpi-mini-label">Late Logins</div>
-                      <div
-                        className={`kpi-mini-val ${analytics.lateCount > 6 ? "red" : "amber"}`}
-                      >
-                        {analytics.lateCount}/6
-                      </div>
-                    </div>
-                    <div className="kpi-mini">
-                      <div className="kpi-mini-label">Paid Leave</div>
-                      <div className="kpi-mini-val purple">1/mo</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "trends" && (
-            <div className="tab-content active">
-              <div className="trends-placeholder">
-                <i className="fas fa-chart-line" />
-                Trend data coming soon. Visit the Attendance page for full
-                calendar view.
-              </div>
             </div>
           )}
 

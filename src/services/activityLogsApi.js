@@ -9,6 +9,7 @@ function appendFilterParams(params, filters) {
   if (filters.severity) params.severity = filters.severity;
   if (filters.from) params.startDate = filters.from;
   if (filters.to) params.endDate = filters.to;
+  if (filters.date) params.date = filters.date;
   if (filters.sort) params.sort = filters.sort;
 }
 
@@ -41,6 +42,26 @@ export async function fetchActivityLogStats(branch = "all") {
 
 export async function fetchActivityLogById(id) {
   const response = await api.get(`/activity-logs/${id}`);
+  return response.data;
+}
+
+export async function deleteActivityLog(id) {
+  const response = await api.delete(`/activity-logs/${id}`);
+  return response.data;
+}
+
+export async function deleteSelectedActivityLogs(ids) {
+  const response = await api.delete("/activity-logs/selected", { data: { ids } });
+  return response.data;
+}
+
+export async function deleteActivityLogsByRange(fromDate, toDate) {
+  const response = await api.delete("/activity-logs/range", { data: { fromDate, toDate } });
+  return response.data;
+}
+
+export async function fetchActivityLogCount() {
+  const response = await api.get("/activity-logs/count");
   return response.data;
 }
 

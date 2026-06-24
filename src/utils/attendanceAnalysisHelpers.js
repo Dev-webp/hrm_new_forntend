@@ -39,12 +39,13 @@ export const WEEK_FILTER_OPTIONS = [
 ];
 
 export function parseLocalDate(s) {
-  const [y, m, d] = s.slice(0, 10).split("-").map(Number);
+  const [y, m, d] = String(s || "").slice(0, 10).split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
 export function formatDateReadable(s) {
-  const [, m, d] = s.slice(0, 10).split("-").map(Number);
+  if (!s) return "";
+  const [, m, d] = String(s).slice(0, 10).split("-").map(Number);
   return `${MONTH_NAMES[m - 1]} ${d}`;
 }
 
@@ -53,6 +54,7 @@ export function formatDateYMD(date) {
 }
 
 export function dayName(s) {
+  if (!s) return "";
   return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
     parseLocalDate(s).getDay()
   ];
@@ -76,20 +78,209 @@ export function mapEmployeeOption(e) {
     dept: e.department,
     branch: e.branch,
     initials: (e.full_name?.split(" ").map((n) => n[0]).join("").slice(0, 2) || "EM").toUpperCase(),
+    salary: e.salary,
+    monthly_salary: e.monthly_salary,
+    daily_salary: e.daily_salary,
+    paid_leave_balance: e.paid_leave_balance,
+    paidLeaveBalance: e.paidLeaveBalance,
+    leave_balance: e.leave_balance,
+    leaveBalance: e.leaveBalance,
+    available_paid_leaves: e.available_paid_leaves,
+    availablePaidLeaves: e.availablePaidLeaves,
+    earned_leave_balance: e.earned_leave_balance,
+    earnedLeaveBalance: e.earnedLeaveBalance,
   };
 }
 
+export function safeNumber(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+export function getLeaveDays(leave = {}) {
+  return safeNumber(leave?.days ?? leave?.requested_days ?? leave?.requestedDays ?? 0);
+}
+
+export function getLeavePaidDays(leave = {}) {
+  const explicit = leave?.paid_days ?? leave?.paidDays;
+  if (explicit !== undefined && explicit !== null && explicit !== "") {
+    return safeNumber(explicit);
+  }
+  const type = String(leave?.leave_type || leave?.leaveType || leave?.leave_category || leave?.leaveCategory || "").toLowerCase();
+  const status = String(leave?.status || leave?.day_status || "").toLowerCase();
+  return type === "paid" || status === "paid_leave" ? getLeaveDays(leave) : 0;
+}
+
+export function getLeaveUnpaidDays(leave = {}) {
+  const explicit = leave?.unpaid_days ?? leave?.unpaidDays;
+  if (explicit !== undefined && explicit !== null && explicit !== "") {
+    return safeNumber(explicit);
+  }
+  const type = String(leave?.leave_type || leave?.leaveType || leave?.leave_category || leave?.leaveCategory || "").toLowerCase();
+  const status = String(leave?.status || leave?.day_status || "").toLowerCase();
+  return type === "unpaid" || status === "unpaid_leave" ? getLeaveDays(leave) : 0;
+}
+
+export function getAvailablePaidLeaves(employee = {}) {
+  return safeNumber(
+    employee?.paid_leave_balance ??
+      employee?.paidLeaveBalance ??
+      employee?.leave_balance ??
+      employee?.leaveBalance ??
+      employee?.available_paid_leaves ??
+      employee?.availablePaidLeaves ??
+      employee?.earned_leave_balance ??
+      employee?.earnedLeaveBalance ??
+      0
+  );
+}
+
+export function getEmployeeDailySalary(employee = {}) {
+  const directDaily = safeNumber(employee?.daily_salary ?? employee?.dailySalary ?? 0);
+  if (directDaily > 0) return directDaily;
+  const monthlySalary = safeNumber(
+    employee?.salary ??
+      employee?.monthly_salary ??
+      employee?.monthlySalary ??
+      employee?.base_salary ??
+      employee?.monthly_ctc ??
+      employee?.monthlyCTC ??
+      0
+  );
+  return monthlySalary > 0 ? monthlySalary / 30 : 0;
+}
+
+export function formatLeaveNumber(value) {
+  const num = safeNumber(value);
+  return Number.isInteger(num) ? String(num) : num.toFixed(1);
+}
+
+export function calculateLeaveSalaryImpact(leaves = [], employee = {}) {
+  const totalLeaves = (leaves || []).reduce(
+    (total, leave) => total + getLeaveDays(leave),
+    0
+  );
+  const paidLeavesLeft = getAvailablePaidLeaves(employee);
+  const extraDays = Math.max(0, totalLeaves - paidLeavesLeft);
+  const employeeDailySalary = getEmployeeDailySalary(employee);
+  const salaryDeduction = extraDays * employeeDailySalary;
+
+  return {
+    totalLeaves,
+    paidLeavesLeft,
+    extraDays,
+    salaryDeduction,
+  };
+}
+
+export function isPaidLeaveRecord(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === true ||
+    safe.isPaidLeave === true ||
+    status === "paid_leave" ||
+    leaveType === "paid" ||
+    Number(safe.paid_days || safe.paidDays || 0) > 0
+  );
+}
+
+export function isUnpaidLeaveRecord(rec = {}) {
+  const safe = rec || {};
+  const status = String(safe.status || safe.day_status || "").toLowerCase();
+  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+  return (
+    safe.is_paid_leave === false ||
+    safe.isPaidLeave === false ||
+    status === "unpaid_leave" ||
+    leaveType === "unpaid" ||
+    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+  );
+}
+
+export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
+  const safe = rec || {};
+  const breakMins = safe.breakMins || {
+    b1: 0,
+    lunch: 0,
+    b2: 0,
+    b3: 0,
+  };
+  const breakDetails = safe.breakDetails || {
+    b1: { in: "--", out: "--" },
+    lunch: { in: "--", out: "--" },
+    b2: { in: "--", out: "--" },
+    b3: { in: "--", out: "--" },
+  };
+
+  return {
+    ...safe,
+    date: safe.date || fallbackDate || "",
+    status: safe.status || safe.day_status || "absent",
+    checkIn: safe.checkIn ?? safe.check_in_time ?? "--",
+    checkOut: safe.checkOut ?? safe.check_out_time ?? "--",
+    lateMinutes: Number(safe.lateMinutes ?? safe.late_minutes ?? 0) || 0,
+    workHours: parseFloat(safe.workHours ?? safe.production_hours) || 0,
+    production_hours: parseFloat(safe.production_hours ?? safe.workHours) || 0,
+    breaks:
+      Number(
+        safe.breaks ??
+          safe.total_break_minutes ??
+          safe.totalBreakMinutes ??
+          ((breakMins.b1 || 0) +
+            (breakMins.lunch || 0) +
+            (breakMins.b2 || 0) +
+            (breakMins.b3 || 0))
+      ) || 0,
+    breakMins: {
+      b1: Number(breakMins.b1) || 0,
+      lunch: Number(breakMins.lunch) || 0,
+      b2: Number(breakMins.b2) || 0,
+      b3: Number(breakMins.b3) || 0,
+    },
+    breakDetails: {
+      b1: {
+        in: breakDetails.b1?.in || "--",
+        out: breakDetails.b1?.out || "--",
+      },
+      lunch: {
+        in: breakDetails.lunch?.in || "--",
+        out: breakDetails.lunch?.out || "--",
+      },
+      b2: {
+        in: breakDetails.b2?.in || "--",
+        out: breakDetails.b2?.out || "--",
+      },
+      b3: {
+        in: breakDetails.b3?.in || "--",
+        out: breakDetails.b3?.out || "--",
+      },
+    },
+    employee_name: safe.employee_name || safe.full_name || "Unknown Employee",
+    reason: safe.reason || "",
+  };
+}
+
+export function normalizeAttendanceAnalysisRecords(records = []) {
+  return (records || [])
+    .filter(Boolean)
+    .map((rec) => normalizeAttendanceAnalysisRecord(rec));
+}
+
 export function getAttendanceStyle(rec) {
-  if (!rec) return { className: "cal-absent", numClass: "red-num" };
-if (rec.status === "sunday") {
+  const safe = normalizeAttendanceAnalysisRecord(rec);
+if (safe.status === "sunday") {
   return { className: "cal-sunday", numClass: "blue-num" };
 }
-  if (rec.status === "holiday") return { className: "cal-holiday", numClass: "default-num" };
-  if (rec.status === "absent") return { className: "cal-absent", numClass: "red-num" };
-  if (rec.lateMinutes > 0) return { className: "cal-late", numClass: "orange-num" };
-  if (rec.status === "full_day") return { className: "cal-present", numClass: "green-num" };
-  if (rec.status === "half_day") return { className: "cal-halfday", numClass: "yellow-num" };
-  return { className: "cal-holiday", numClass: "default-num" };
+  if (safe.status === "holiday") return { className: "cal-holiday", numClass: "default-num" };
+  if (isPaidLeaveRecord(safe)) return { className: "cal-paid-leave paid-leave", numClass: "white-num" };
+  if (isUnpaidLeaveRecord(safe)) return { className: "cal-unpaid-leave unpaid-leave", numClass: "default-num" };
+  if (safe.status === "absent") return { className: "cal-absent", numClass: "red-num" };
+  if (safe.status === "half_day") return { className: "cal-halfday", numClass: "yellow-num" };
+  if (safe.lateMinutes > 0) return { className: "cal-late", numClass: "orange-num" };
+  if (safe.status === "full_day") return { className: "cal-present", numClass: "green-num" };
+  return { className: "cal-absent", numClass: "red-num" };
 }
 
 export function getWeekNumber(dateStr) {
@@ -116,14 +307,15 @@ export function buildWeeksCache(monthStr) {
 }
 
 export function computeOverviewStats(records) {
-  const workDays = records.filter(
+  const safeRecords = normalizeAttendanceAnalysisRecords(records);
+  const workDays = safeRecords.filter(
     (r) => !["absent", "sunday", "holiday"].includes(r.status)
   );
-  const presentDays = records.filter((r) => r.status === "full_day").length;
-  const lateDays = records.filter((r) => r.lateMinutes > 0).length;
-  const halfDays = records.filter((r) => r.status === "half_day").length;
-  const absent = records.filter((r) => r.status === "absent").length;
-  const totalDays = records.filter(
+  const presentDays = safeRecords.filter((r) => r.status === "full_day").length;
+  const lateDays = safeRecords.filter((r) => r.lateMinutes > 0).length;
+  const halfDays = safeRecords.filter((r) => r.status === "half_day").length;
+  const absent = safeRecords.filter((r) => r.status === "absent").length;
+  const totalDays = safeRecords.filter(
     (r) => !["sunday", "holiday"].includes(r.status)
   ).length;
   const attRate = totalDays
@@ -148,11 +340,14 @@ export function computeOverviewStats(records) {
 }
 
 export function getDailyLogStatus(rec) {
-  if (rec.status === "absent") return { label: "Absent", badge: "b-absent" };
-  if (rec.status === "half_day") return { label: "Half Day", badge: "b-halfday" };
-  if (rec.status === "sunday") return { label: "Sunday", badge: "b-absent" };
-  if (rec.status === "holiday") return { label: "Holiday", badge: "b-absent" };
-  if (rec.lateMinutes > 0) return { label: "Late", badge: "b-late" };
+  const safe = normalizeAttendanceAnalysisRecord(rec);
+  if (isPaidLeaveRecord(safe)) return { label: "Paid Leave", badge: "b-paid-leave" };
+  if (isUnpaidLeaveRecord(safe)) return { label: "Unpaid Leave", badge: "b-unpaid-leave" };
+  if (safe.status === "absent") return { label: "Absent", badge: "b-absent" };
+  if (safe.status === "half_day") return { label: "Half Day", badge: "b-halfday" };
+  if (safe.status === "sunday") return { label: "Sunday", badge: "b-absent" };
+  if (safe.status === "holiday") return { label: "Holiday", badge: "b-absent" };
+  if (safe.lateMinutes > 0) return { label: "Late", badge: "b-late" };
   return { label: "Present", badge: "b-present" };
 }
 

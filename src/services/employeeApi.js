@@ -71,3 +71,8 @@ export async function fetchMyLeaveBalance() {
   const response = await api.get("/leaves/my/balance");
   return response.data;
 }
+
+export async function updateEmployeeStatus(id, status, reason = "") {
+  const response = await api.patch(`/admin/employees/${id}/status`, { status, reason });
+  return response.data;
+}

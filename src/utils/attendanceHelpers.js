@@ -1,4 +1,5 @@
 /** Attendance admin page — shared constants and display helpers (from adminadentendance.html) */
+import { CALENDAR_STATUS_COLORS } from "./calendarStatusColors";
 
 export const ATTENDANCE_DEPARTMENTS = [
   { value: "all", label: "All Departments" },
@@ -43,13 +44,21 @@ export function getStatusMeta(status) {
   if (s === "full_day") {
     return {
       label: "PRESENT",
-      style: { background: "rgba(74,222,128,0.2)", color: "#16A34A" },
+      style: {
+        background: CALENDAR_STATUS_COLORS.present.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.present.border}`,
+        color: CALENDAR_STATUS_COLORS.present.text,
+      },
     };
   }
   if (s === "half_day") {
     return {
       label: "HALF DAY",
-      style: { background: "rgba(255,160,0,0.2)", color: "#FF8C00" },
+      style: {
+        background: CALENDAR_STATUS_COLORS.half_day.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.half_day.border}`,
+        color: CALENDAR_STATUS_COLORS.half_day.text,
+      },
     };
   }
   return {
@@ -64,8 +73,9 @@ export function getLatePillMeta(emp) {
     return {
       label: "Absent",
       style: {
-        background: "rgba(255,70,70,0.15)",
-        color: "#DC2626",
+        background: CALENDAR_STATUS_COLORS.absent.background,
+        color: CALENDAR_STATUS_COLORS.absent.text,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.absent.border}`,
         padding: "6px 12px",
         borderRadius: "30px",
         fontWeight: 700,
@@ -77,8 +87,8 @@ export function getLatePillMeta(emp) {
     return {
       label: `${emp.late_minutes} min late`,
       style: {
-        background: "#FFF7ED",
-        color: "#B45309",
+        background: CALENDAR_STATUS_COLORS.late.background,
+        color: CALENDAR_STATUS_COLORS.late.text,
         padding: "6px 12px",
         borderRadius: "30px",
         fontWeight: 700,
@@ -86,15 +96,16 @@ export function getLatePillMeta(emp) {
         display: "inline-block",
         minWidth: "75px",
         textAlign: "center",
-        border: "1px solid rgba(255,70,70,0.3)",
+        border: `1px solid ${CALENDAR_STATUS_COLORS.late.border}`,
       },
     };
   }
   return {
     label: "On Time",
     style: {
-      background: "rgba(74,222,128,0.15)",
-      color: "#16A34A",
+      background: CALENDAR_STATUS_COLORS.present.background,
+      color: CALENDAR_STATUS_COLORS.present.text,
+      border: `1px solid ${CALENDAR_STATUS_COLORS.present.border}`,
       padding: "6px 12px",
       borderRadius: "30px",
       fontWeight: 600,
@@ -106,12 +117,12 @@ export function getLatePillMeta(emp) {
 export function getLateEmployeeStatusMeta(status) {
   const finalStatus = (status || "absent").toLowerCase();
   if (finalStatus === "full_day") {
-    return { label: "FULL DAY", color: "#16A34A", bg: "rgba(74,222,128,0.2)" };
+    return { label: "FULL DAY", color: CALENDAR_STATUS_COLORS.present.text, bg: CALENDAR_STATUS_COLORS.present.background };
   }
   if (finalStatus === "half_day") {
-    return { label: "HALF DAY", color: "#FF8C00", bg: "rgba(255,160,0,0.2)" };
+    return { label: "HALF DAY", color: CALENDAR_STATUS_COLORS.half_day.text, bg: CALENDAR_STATUS_COLORS.half_day.background };
   }
-  return { label: "ABSENT", color: "#DC2626", bg: "rgba(255,70,70,0.2)" };
+  return { label: "ABSENT", color: CALENDAR_STATUS_COLORS.absent.text, bg: CALENDAR_STATUS_COLORS.absent.background };
 }
 
 export function filterAttendanceRows(records, deptFilter, search) {

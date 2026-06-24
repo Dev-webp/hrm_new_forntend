@@ -26,6 +26,30 @@
   --red: #dc2626;
   --orange: #ff8c00;
   --blue: #0d47a1;
+  --calendar-present-bg: #C8F2D6;
+  --calendar-present-border: #16A34A;
+  --calendar-present-text: #0F5132;
+  --calendar-absent-bg: #FFCBCB;
+  --calendar-absent-border: #DC2626;
+  --calendar-absent-text: #8B0000;
+  --calendar-late-bg: #FFD29B;
+  --calendar-late-border: #EA580C;
+  --calendar-late-text: #9A2E00;
+  --calendar-halfday-bg: #FFE066;
+  --calendar-halfday-border: #D4A300;
+  --calendar-halfday-text: #7A5800;
+  --calendar-holiday-bg: #B3CEFB;
+  --calendar-holiday-border: #2563EB;
+  --calendar-holiday-text: #0F2E8C;
+  --calendar-paid-leave-bg: #CBB9FF;
+  --calendar-paid-leave-border: #7C3AED;
+  --calendar-paid-leave-text: #4C1D95;
+  --calendar-unpaid-leave-bg: #FDA4CF;
+  --calendar-unpaid-leave-border: #DB2777;
+  --calendar-unpaid-leave-text: #831843;
+  --calendar-empty-bg: #E2E8F0;
+  --calendar-empty-border: #94A3B8;
+  --calendar-empty-text: #334155;
 }
 
 body,
@@ -1747,6 +1771,162 @@ textarea::placeholder {
   background: #eaf4ff !important;
   color: var(--color-text-main) !important;
   font-weight: 650 !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-present,
+.manager-calendar-page .cal-day.calendar-present,
+.employee-attendance-page .cal-day.calendar-present,
+.employee-dashboard .calendar-cell.calendar-present,
+.admin-analysis-page .cal-present,
+.manager-analysis-page .cal-present,
+.cal-day.cal-present {
+  background: var(--calendar-present-bg) !important;
+  border-color: var(--calendar-present-border) !important;
+  color: var(--calendar-present-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-absent,
+.manager-calendar-page .cal-day.calendar-absent,
+.employee-attendance-page .cal-day.calendar-absent,
+.employee-dashboard .calendar-cell.calendar-absent,
+.admin-analysis-page .cal-absent,
+.manager-analysis-page .cal-absent,
+.cal-day.cal-absent {
+  background: var(--calendar-absent-bg) !important;
+  border-color: var(--calendar-absent-border) !important;
+  color: var(--calendar-absent-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-holiday,
+.manager-calendar-page .cal-day.calendar-holiday,
+.employee-attendance-page .cal-day.calendar-holiday,
+.employee-dashboard .calendar-cell.calendar-holiday,
+.admin-analysis-page .cal-holiday,
+.manager-analysis-page .cal-holiday,
+.cal-day.cal-holiday,
+.cal-day.cal-sunday {
+  background: var(--calendar-holiday-bg) !important;
+  border-color: var(--calendar-holiday-border) !important;
+  color: var(--calendar-holiday-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-late,
+.manager-calendar-page .cal-day.calendar-late,
+.employee-attendance-page .cal-day.calendar-late,
+.employee-dashboard .calendar-cell.calendar-late,
+.admin-analysis-page .cal-late,
+.manager-analysis-page .cal-late,
+.cal-day.cal-late {
+  background: var(--calendar-late-bg) !important;
+  border-color: var(--calendar-late-border) !important;
+  color: var(--calendar-late-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-halfday,
+.manager-calendar-page .cal-day.calendar-halfday,
+.employee-attendance-page .cal-day.calendar-halfday,
+.employee-dashboard .calendar-cell.calendar-halfday,
+.admin-analysis-page .cal-halfday,
+.manager-analysis-page .cal-halfday,
+.cal-day.cal-halfday {
+  background: var(--calendar-halfday-bg) !important;
+  border-color: var(--calendar-halfday-border) !important;
+  color: var(--calendar-halfday-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-empty,
+.manager-calendar-page .cal-day.calendar-empty,
+.employee-attendance-page .cal-day.calendar-empty,
+.employee-dashboard .calendar-cell.calendar-empty {
+  background: var(--calendar-empty-bg) !important;
+  border-color: var(--calendar-empty-border) !important;
+  color: var(--calendar-empty-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-paid-leave,
+.admin-calendar-page .calendar-day.paid-leave,
+.manager-calendar-page .cal-day.calendar-paid-leave,
+.manager-calendar-page .cal-day.paid-leave,
+.employee-attendance-page .cal-day.calendar-paid-leave,
+.employee-attendance-page .cal-day.paid-leave,
+.employee-dashboard .calendar-cell.calendar-paid-leave,
+.employee-dashboard .calendar-cell.paid-leave,
+.admin-analysis-page .cal-paid-leave,
+.admin-analysis-page .paid-leave,
+.manager-analysis-page .cal-paid-leave,
+.manager-analysis-page .paid-leave,
+.cal-day.cal-paid-leave,
+.calendar-day.paid-leave {
+  background: var(--calendar-paid-leave-bg) !important;
+  border-color: var(--calendar-paid-leave-border) !important;
+  color: var(--calendar-paid-leave-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-unpaid-leave,
+.admin-calendar-page .calendar-day.unpaid-leave,
+.manager-calendar-page .cal-day.calendar-unpaid-leave,
+.manager-calendar-page .cal-day.unpaid-leave,
+.employee-attendance-page .cal-day.calendar-unpaid-leave,
+.employee-attendance-page .cal-day.unpaid-leave,
+.employee-dashboard .calendar-cell.calendar-unpaid-leave,
+.employee-dashboard .calendar-cell.unpaid-leave,
+.admin-analysis-page .cal-unpaid-leave,
+.admin-analysis-page .unpaid-leave,
+.manager-analysis-page .cal-unpaid-leave,
+.manager-analysis-page .unpaid-leave,
+.cal-day.cal-unpaid-leave,
+.calendar-day.unpaid-leave {
+  background: var(--calendar-unpaid-leave-bg) !important;
+  border-color: var(--calendar-unpaid-leave-border) !important;
+  color: var(--calendar-unpaid-leave-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-paid-leave :where(.day-number, .status-label),
+.admin-calendar-page .calendar-day.paid-leave :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-paid-leave :where(.day-num, .day-badge, .mini-row),
+.manager-calendar-page .cal-day.paid-leave :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-paid-leave :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.paid-leave :where(.day-num, .day-badge, .mini-row),
+.admin-analysis-page .cal-paid-leave :where(.day-num),
+.manager-analysis-page .cal-paid-leave :where(.day-num),
+.cal-day.cal-paid-leave :where(.day-num) {
+  color: var(--calendar-paid-leave-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-present :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-present :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-present :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-present-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-absent :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-absent :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-absent :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-absent-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-holiday :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-holiday :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-holiday :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-holiday-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-late :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-late :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-late :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-late-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-halfday :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-halfday :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-halfday :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-halfday-text) !important;
+}
+
+.admin-calendar-page .calendar-day.calendar-empty :where(.day-number, .status-label),
+.manager-calendar-page .cal-day.calendar-empty :where(.day-num, .day-badge, .mini-row),
+.employee-attendance-page .cal-day.calendar-empty :where(.day-num, .day-badge, .mini-row) {
+  color: var(--calendar-empty-text) !important;
 }
 
 /* Dashboard employee performance readability only */
