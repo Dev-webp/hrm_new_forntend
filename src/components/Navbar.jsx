@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BRANCH_LABELS } from "../utils/dashboardHelpers";
 import { BRANCH_OPTIONS } from "../config/adminNav";
+import NotificationBadge from "./NotificationBadge";
 
 function Navbar({
   title,
@@ -9,7 +11,9 @@ function Navbar({
   onBranchChange,
   month,
   onMonthChange,
+  showAdminActions = false,
 }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -29,17 +33,14 @@ function Navbar({
   }, []);
 
   const branchLabel = BRANCH_LABELS[branch] || branch;
-  const profileName = localStorage.getItem("full_name") || "VJC User";
-  const profileInitials = profileName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const profileName = "Super Admin";
 
   return (
     <div className="topbar">
       <div className="topbar-left">
+        <button type="button" className="topbar-menu-btn" aria-label="Toggle navigation">
+          <i className="fas fa-bars" />
+        </button>
         <div className="topbar-title">
           <h1>
             <i
@@ -59,7 +60,11 @@ function Navbar({
       <div className="topbar-controls">
         <label className="topbar-search">
           <i className="fas fa-search" />
-          <input type="search" placeholder="Search workspace" aria-label="Search workspace" />
+          <input
+            type="search"
+            placeholder="Search employees, departments..."
+            aria-label="Search employees and departments"
+          />
           <span>Ctrl K</span>
         </label>
 
@@ -105,13 +110,47 @@ function Navbar({
           </div>
         </div>
 
-        <button type="button" className="topbar-icon-btn" aria-label="Notifications">
-          <i className="fas fa-bell" />
-          <span className="topbar-notification-dot" />
-        </button>
+        {showAdminActions ? (
+          <>
+            <button
+              type="button"
+              className="topbar-icon-btn"
+              aria-label="Notifications"
+              onClick={() => navigate("/admin/notifications")}
+            >
+              <i className="fas fa-bell" />
+              <NotificationBadge type="notifications" />
+              <span>Notifications</span>
+            </button>
+
+            <button
+              type="button"
+              className="topbar-icon-btn topbar-action-btn"
+              aria-label="Leave requests"
+              onClick={() => navigate("/admin/leave")}
+            >
+              <i className="fas fa-briefcase" />
+              <NotificationBadge type="leaves" />
+              <span>Leave Requests</span>
+            </button>
+
+            <button
+              type="button"
+              className="topbar-icon-btn topbar-action-btn"
+              aria-label="Activity logs"
+              onClick={() => navigate("/admin/activity-logs")}
+            >
+              <i className="fas fa-list-alt" />
+              <NotificationBadge type="activityLogs" />
+              <span>Activity Logs</span>
+            </button>
+          </>
+        ) : null}
 
         <div className="topbar-profile" aria-label={`Signed in as ${profileName}`}>
-          <div className="topbar-avatar">{profileInitials}</div>
+          <div className="topbar-avatar">
+            <i className="fas fa-user" />
+          </div>
           <div className="topbar-profile-copy">
             <strong>{profileName}</strong>
             <span>VJC Overseas</span>

@@ -1,10 +1,20 @@
 // Reusable stat/card widgets used across admin dashboard sections
 
-export function WelcomeStat({ value, label, colorClass }) {
+export function WelcomeStat({ value, label, colorClass, icon, accentColor }) {
   return (
-    <div className="welcome-stat">
-      <div className={`ws-val ${colorClass}`}>{value}</div>
-      <div className="ws-lbl">{label}</div>
+    <div
+      className="welcome-stat"
+      style={accentColor ? { "--stat-accent": accentColor } : undefined}
+    >
+      {icon ? (
+        <div className="ws-icon">
+          <i className={icon} />
+        </div>
+      ) : null}
+      <div className="ws-copy">
+        <div className={`ws-val ${colorClass}`}>{value}</div>
+        <div className="ws-lbl">{label}</div>
+      </div>
     </div>
   );
 }
@@ -18,8 +28,10 @@ export function StripTile({ icon, label, value, accentColor }) {
       <div className="tile-icon">
         <i className={icon} />
       </div>
-      <div className="tile-val">{value}</div>
-      <div className="tile-lbl">{label}</div>
+      <div className="tile-copy">
+        <div className="tile-val">{value}</div>
+        <div className="tile-lbl">{label}</div>
+      </div>
     </div>
   );
 }

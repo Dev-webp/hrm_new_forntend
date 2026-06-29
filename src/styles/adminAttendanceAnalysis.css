@@ -574,6 +574,12 @@
   cursor: default;
 }
 
+.admin-analysis-page .cal-no-record {
+  background: var(--calendar-empty-bg, #E2E8F0);
+  border-color: var(--calendar-empty-border, #94A3B8);
+  color: var(--calendar-empty-text, #334155);
+}
+
 .admin-analysis-page .day-num.green-num {
   color: #16A34A;
 }

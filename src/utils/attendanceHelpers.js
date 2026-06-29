@@ -1,16 +1,8 @@
 /** Attendance admin page — shared constants and display helpers (from adminadentendance.html) */
 import { CALENDAR_STATUS_COLORS } from "./calendarStatusColors";
+import { formatTime12Hour } from "./timeFormat";
 
-export const ATTENDANCE_DEPARTMENTS = [
-  { value: "all", label: "All Departments" },
-  { value: "Branch Manager", label: "Branch Manager" },
-  { value: "Reception", label: "Reception" },
-  { value: "Sales Team", label: "Sales Team" },
-  { value: "Process Team", label: "Process Team" },
-  { value: "Accounts", label: "Accounts" },
-  { value: "Digital Marketing Team", label: "Digital Marketing Team" },
-  { value: "IT", label: "IT" },
-];
+export const LATE_LOGIN_LIMIT = 6;
 
 export const ATTENDANCE_BRANCH_MENU = [
   { value: "all", label: "🌍 All Branches (Consolidated)" },
@@ -31,16 +23,41 @@ export function branchSelectorLabel(branch) {
 }
 
 export function formatTimeShort(time) {
-  if (!time) return "--";
-  return String(time).substring(0, 5);
+  return formatTime12Hour(time);
 }
 
 export function isSundayDate(dateStr) {
   return new Date(dateStr).getDay() === 0;
 }
 
+export function normalizeAttendanceStatusValue(status) {
+  return String(status || "absent").toLowerCase();
+}
+
+export function isWorkingStatus(status) {
+  return ["in_progress", "working"].includes(normalizeAttendanceStatusValue(status));
+}
+
+export function isPresentLikeStatus(status) {
+  return ["full_day", "half_day", "leave", "present", "in_progress", "working"].includes(
+    normalizeAttendanceStatusValue(status)
+  );
+}
+
+const WORKING_BADGE_STYLE = {
+  background: "#DBEAFE",
+  border: "1px solid #93C5FD",
+  color: "#1D4ED8",
+};
+
 export function getStatusMeta(status) {
-  const s = (status || "absent").toLowerCase();
+  const s = normalizeAttendanceStatusValue(status);
+  if (isWorkingStatus(s)) {
+    return {
+      label: "WORKING",
+      style: WORKING_BADGE_STYLE,
+    };
+  }
   if (s === "full_day") {
     return {
       label: "PRESENT",
@@ -61,6 +78,46 @@ export function getStatusMeta(status) {
       },
     };
   }
+  if (s === "present") {
+    return {
+      label: "PRESENT",
+      style: {
+        background: CALENDAR_STATUS_COLORS.present.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.present.border}`,
+        color: CALENDAR_STATUS_COLORS.present.text,
+      },
+    };
+  }
+  if (s === "leave") {
+    return {
+      label: "LEAVE",
+      style: {
+        background: CALENDAR_STATUS_COLORS.paid_leave.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.paid_leave.border}`,
+        color: CALENDAR_STATUS_COLORS.paid_leave.text,
+      },
+    };
+  }
+  if (s === "holiday") {
+    return {
+      label: "HOLIDAY",
+      style: {
+        background: CALENDAR_STATUS_COLORS.holiday.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.holiday.border}`,
+        color: CALENDAR_STATUS_COLORS.holiday.text,
+      },
+    };
+  }
+  if (s === "late") {
+    return {
+      label: "LATE",
+      style: {
+        background: CALENDAR_STATUS_COLORS.late.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.late.border}`,
+        color: CALENDAR_STATUS_COLORS.late.text,
+      },
+    };
+  }
   return {
     label: "ABSENT",
     className: "badge badge-absent",
@@ -68,7 +125,23 @@ export function getStatusMeta(status) {
 }
 
 export function getLatePillMeta(emp) {
-  const status = (emp.status || "absent").toLowerCase();
+  const status = normalizeAttendanceStatusValue(emp.status);
+  if (isWorkingStatus(status)) {
+    const lateMinutes = Number(emp.late_minutes || 0);
+    return {
+      label: lateMinutes > 0 ? `Working - ${lateMinutes} min late` : "Working",
+      style: {
+        ...WORKING_BADGE_STYLE,
+        padding: "6px 12px",
+        borderRadius: "30px",
+        fontWeight: 700,
+        fontSize: "12px",
+        display: "inline-block",
+        minWidth: "75px",
+        textAlign: "center",
+      },
+    };
+  }
   if (status === "absent") {
     return {
       label: "Absent",
@@ -114,8 +187,57 @@ export function getLatePillMeta(emp) {
   };
 }
 
+export function getLateLoginStatus(record = {}) {
+  if (record.late_login_status) return record.late_login_status;
+  const lateMinutes = Number(record.late_minutes || 0);
+  const checkIn = String(record.check_in_time || "");
+  if (!checkIn) return "No Login";
+  if (Number(record.late_login_count || 0) > LATE_LOGIN_LIMIT) return "Limit Exceeded";
+  if (lateMinutes <= 0) return "On Time";
+  return lateMinutes <= 15 ? "Late Within Grace" : "Late Beyond Grace";
+}
+
+export function formatLateLoginCount(recordOrCount = 0) {
+  const count =
+    typeof recordOrCount === "object"
+      ? Number(recordOrCount.late_login_count || 0)
+      : Number(recordOrCount || 0);
+  const limit =
+    typeof recordOrCount === "object"
+      ? Number(recordOrCount.late_login_limit || LATE_LOGIN_LIMIT)
+      : LATE_LOGIN_LIMIT;
+  return `${count} / ${limit}${count > limit ? " (Limit Exceeded)" : ""}`;
+}
+
+export function getRemainingGraceLateLogins(recordOrCount = 0) {
+  const count =
+    typeof recordOrCount === "object"
+      ? Number(recordOrCount.late_login_count || 0)
+      : Number(recordOrCount || 0);
+  const limit =
+    typeof recordOrCount === "object"
+      ? Number(recordOrCount.late_login_limit || LATE_LOGIN_LIMIT)
+      : LATE_LOGIN_LIMIT;
+  return Math.max(0, limit - count);
+}
+
+export function getLateLoginStatusClass(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "limit exceeded") return "late-login-status danger";
+  if (normalized === "limit reached" || normalized === "near limit") return "late-login-status warning";
+  if (normalized === "monthly warning") return "late-login-status caution";
+  if (normalized === "within limit") return "late-login-status good";
+  if (normalized === "late beyond grace") return "late-login-status warning";
+  if (normalized === "late within grace") return "late-login-status caution";
+  if (normalized === "on time") return "late-login-status good";
+  return "late-login-status muted";
+}
+
 export function getLateEmployeeStatusMeta(status) {
-  const finalStatus = (status || "absent").toLowerCase();
+  const finalStatus = normalizeAttendanceStatusValue(status);
+  if (isWorkingStatus(finalStatus)) {
+    return { label: "WORKING", color: "#1D4ED8", bg: "#DBEAFE" };
+  }
   if (finalStatus === "full_day") {
     return { label: "FULL DAY", color: CALENDAR_STATUS_COLORS.present.text, bg: CALENDAR_STATUS_COLORS.present.background };
   }
@@ -125,7 +247,7 @@ export function getLateEmployeeStatusMeta(status) {
   return { label: "ABSENT", color: CALENDAR_STATUS_COLORS.absent.text, bg: CALENDAR_STATUS_COLORS.absent.background };
 }
 
-export function filterAttendanceRows(records, deptFilter, search) {
+export function filterAttendanceRows(records, deptFilter, search, lateStatusFilter = "all") {
   const q = search.trim().toLowerCase();
   return (records || []).filter((emp) => {
     const dept =
@@ -136,7 +258,14 @@ export function filterAttendanceRows(records, deptFilter, search) {
       !q ||
       (emp.full_name || "").toLowerCase().includes(q) ||
       dept.toLowerCase().includes(q);
-    return deptMatch && searchMatch;
+    const lateStatus = getLateLoginStatus(emp);
+    const lateStatusMatch =
+      lateStatusFilter === "all" ||
+      (lateStatusFilter === "limit_exceeded" && lateStatus === "Limit Exceeded") ||
+      (lateStatusFilter === "on_time" && lateStatus === "On Time") ||
+      (lateStatusFilter === "within_grace" && lateStatus === "Late Within Grace") ||
+      (lateStatusFilter === "beyond_grace" && lateStatus === "Late Beyond Grace");
+    return deptMatch && searchMatch && lateStatusMatch;
   });
 }
 

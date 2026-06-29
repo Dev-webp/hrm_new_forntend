@@ -11,6 +11,7 @@ import {
   fetchDepartmentLeaderboard,
   updateAttendance,
 } from "../../services/attendanceApi";
+import { fetchActiveDepartments } from "../../services/departmentApi";
 import {
   ATTENDANCE_BRANCH_MENU,
   branchDisplayLabel,
@@ -27,6 +28,7 @@ function AdminAttendance() {
   const [currentBranch, setCurrentBranch] = useState("all");
   const [currentDateStr, setCurrentDateStr] = useState(todayStr);
   const [deptFilter, setDeptFilter] = useState("all");
+  const [lateStatusFilter, setLateStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [lateAlertsVisible, setLateAlertsVisible] = useState(true);
@@ -35,6 +37,7 @@ function AdminAttendance() {
   const [stats, setStats] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [records, setRecords] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -42,8 +45,7 @@ function AdminAttendance() {
     open: false,
     userId: null,
     name: "",
-    checkIn: "",
-    checkOut: "",
+    initialValues: {},
   });
   const [saving, setSaving] = useState(false);
 
@@ -105,6 +107,27 @@ function AdminAttendance() {
   }, [loadData]);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchActiveDepartments({ branch: currentBranch })
+      .then((data) => {
+        if (!cancelled) {
+          setDepartments([
+            { value: "all", label: "All Departments" },
+            ...data.map((dept) => ({ value: dept.name, label: dept.name })),
+          ]);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDepartments([{ value: "all", label: "All Departments" }]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentBranch]);
+
+  useEffect(() => {
     const interval = window.setInterval(() => {
       loadData().catch(console.error);
     }, AUTO_REFRESH_MS);
@@ -115,6 +138,7 @@ const handleBranchSelect = (branch) => {
   setCurrentBranch(branch);
   setBranchMenuOpen(false);
   setDeptFilter("all");
+  setLateStatusFilter("all");
   setSearch("");
   setSearchDebounced("");
 
@@ -136,8 +160,7 @@ const handleBranchSelect = (branch) => {
       open: true,
       userId: payload.userId,
       name: payload.name,
-      checkIn: payload.checkIn,
-      checkOut: payload.checkOut,
+      initialValues: payload.initialValues || {},
     });
   };
 
@@ -147,15 +170,13 @@ const handleBranchSelect = (branch) => {
     }
   };
 
-  const handleSaveAttendance = async (checkIn, checkOut, reason) => {
+  const handleSaveAttendance = async (updates) => {
     setSaving(true);
     try {
       await updateAttendance(
         editModal.userId,
         currentDateStr,
-        checkIn,
-        checkOut,
-        reason
+        updates
       );
       setEditModal((prev) => ({ ...prev, open: false }));
       await loadData();
@@ -265,8 +286,11 @@ const handleBranchSelect = (branch) => {
         <AttendanceFilters
           deptFilter={deptFilter}
           onDeptFilterChange={handleDeptFilterChange}
+          departments={departments}
           search={search}
           onSearchChange={setSearch}
+          lateStatusFilter={lateStatusFilter}
+          onLateStatusFilterChange={setLateStatusFilter}
         />
 
         <div className="att-table-container">
@@ -279,7 +303,8 @@ const handleBranchSelect = (branch) => {
                 <th>Check-Out</th>
                 <th>Status</th>
                 <th>Late</th>
-                <th>Production (hrs)</th>
+                <th>Late Login Count</th>
+                <th>Production</th>
                 <th>Break (min)</th>
                 <th>Action</th>
               </tr>
@@ -289,6 +314,7 @@ const handleBranchSelect = (branch) => {
               dateStr={currentDateStr}
               deptFilter={deptFilter}
               search={searchDebounced}
+              lateStatusFilter={lateStatusFilter}
               loading={loading}
               onEdit={handleEdit}
             />
@@ -300,8 +326,7 @@ const handleBranchSelect = (branch) => {
         open={editModal.open}
         employeeName={editModal.name}
         dateStr={currentDateStr}
-        initialCheckIn={editModal.checkIn}
-        initialCheckOut={editModal.checkOut}
+        initialValues={editModal.initialValues}
         saving={saving}
         onClose={handleCloseModal}
         onSave={handleSaveAttendance}
@@ -311,3 +336,4 @@ const handleBranchSelect = (branch) => {
 }
 
 export default AdminAttendance;
+

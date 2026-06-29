@@ -8,23 +8,55 @@ import {
   normalizeArray,
   WEEK_DAYS,
 } from "./employeeUtils";
+import {
+  formatLateLoginCount,
+  getLateLoginStatusClass,
+  getRemainingGraceLateLogins,
+  LATE_LOGIN_LIMIT,
+} from "../../utils/attendanceHelpers";
 import "../../styles/EmployeeAttendance.css";
 
 function getStatusBadgeClass(status, lateMins) {
+  if (status === "in_progress" || status === "working") return "badge-working";
   if (status === "full_day") return "badge-present";
+  if (status === "present") return "badge-present";
   if (status === "half_day") return "badge-halfday";
   if (status === "leave") return "badge-leave";
+  if (status === "holiday") return "badge-leave";
   if (lateMins > 0 && status !== "absent") return "badge-late";
   return "badge-absent";
 }
 
 function getStatusText(status, lateMins) {
+  if (status === "in_progress" || status === "working") return "Working";
   if (status === "full_day") return "Present";
+  if (status === "present") return "Present";
   if (status === "half_day") return "Half Day";
   if (status === "leave") return "On Leave";
+  if (status === "holiday") return "Holiday";
   if (lateMins > 0 && status !== "absent") return `Late (${lateMins}m)`;
   if (status === "absent") return "Absent";
   return status || "—";
+}
+
+function getLateUsageTone(count) {
+  if (count > LATE_LOGIN_LIMIT) return "danger";
+  if (count === LATE_LOGIN_LIMIT) return "near";
+  if (count === 5) return "near";
+  if (count >= 3) return "warning";
+  return "good";
+}
+
+function getLateUsageText(count) {
+  if (count > LATE_LOGIN_LIMIT) return "Limit Exceeded";
+  if (count === LATE_LOGIN_LIMIT) return "Limit Reached";
+  if (count === 5) return "Near Limit";
+  if (count >= 3) return "Monthly Warning";
+  return "Within Limit";
+}
+
+function getMonthlyLateStatus(count) {
+  return count > LATE_LOGIN_LIMIT ? "Limit Exceeded" : getLateUsageText(count);
 }
 
 function isPaidLeaveDay(rec = {}) {
@@ -225,8 +257,8 @@ export default function EmployeeAttendance() {
           const s = rec.status;
           if (s === "full_day" || s === "half_day") presentCount++;
           else absentCount++;
-          if (Number(rec.late_minutes) > 0 && s !== "absent") lateCount++;
-        } else absentCount++;
+          if (Number(rec.late_minutes) > 0) lateCount++;
+        } else if (dateStr <= todayStr) absentCount++;
       }
     }
 
@@ -362,7 +394,7 @@ export default function EmployeeAttendance() {
               </div>
             );
           }
-          if (Number(rec.late_minutes) > 0 && !["absent", "half_day"].includes(s) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
+          if (Number(rec.late_minutes) > 0 && !["absent", "half_day", "full_day"].includes(s) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             dayClass = dayClass.replace(" p-present", "");
             dayClass = dayClass.replace(" calendar-present", "");
             dayClass += " p-late calendar-late";
@@ -401,6 +433,21 @@ export default function EmployeeAttendance() {
                   <span className="tv">{rec.late_minutes} min</span>
                 </div>
               )}
+            </div>
+          );
+        } else if (dateStr <= todayStr) {
+          dayClass += " p-absent calendar-absent";
+          miniHtml = (
+            <div className="day-mini-stats">
+              <div className="mini-row">Absent</div>
+            </div>
+          );
+          tooltip = (
+            <div className="tooltip-card">
+              <div className="tt-title">
+                {MONTH_NAMES[month]} {d}
+              </div>
+              <div>Absent</div>
             </div>
           );
         } else {
@@ -464,14 +511,17 @@ export default function EmployeeAttendance() {
       } else {
         const rec = personalData[dateStr];
         if (rec) {
-          checkIn = rec.check_in_time ? rec.check_in_time.slice(0, 5) : "—";
-          checkOut = rec.check_out_time ? rec.check_out_time.slice(0, 5) : "—";
+          checkIn = formatTime12(rec.check_in_time);
+          checkOut = formatTime12(rec.check_out_time);
           lateMin = Number(rec.late_minutes) || 0;
           statusLabel = getStatusText(rec.status, lateMin);
           statusClass = getStatusBadgeClass(rec.status, lateMin);
+        } else if (dateStr <= todayStr) {
+          statusLabel = "Absent";
+          statusClass = "badge-absent";
         } else {
           statusLabel = "No Record";
-          statusClass = "badge-absent";
+          statusClass = "badge-no-record";
         }
       }
 
@@ -523,7 +573,7 @@ export default function EmployeeAttendance() {
       return {
         statusHtml: statusText,
         color,
-        timings: `In: ${data.check_in_time ? data.check_in_time.slice(0, 5) : "--"} | Out: ${data.check_out_time ? data.check_out_time.slice(0, 5) : "--"}`,
+        timings: `In: ${formatTime12(data.check_in_time)} | Out: ${formatTime12(data.check_out_time)}`,
         checkInDisabled: !!data.check_in_time,
         checkOutDisabled: !data.check_in_time || !!data.check_out_time,
       };
@@ -622,6 +672,23 @@ export default function EmployeeAttendance() {
           <div className="stat-pill">
             <div className="sv">{monthStats.lateCount}</div>
             <div className="sl">Late</div>
+          </div>
+          <div
+            className={`stat-pill late-usage-card ${getLateUsageTone(monthStats.lateCount)}`}
+            title="Late Login Policy: Maximum allowed late logins per month is 6. Grace login time is 10:15 AM. After reaching the limit, attendance is calculated according to company policy. The count resets automatically every month."
+          >
+            <div className="late-usage-title">
+              <i className="fas fa-circle-info" /> Late Login Count
+            </div>
+            <div className="sv">{formatLateLoginCount(monthStats.lateCount)}</div>
+            <div className="sl">
+              <span className={getLateLoginStatusClass(getMonthlyLateStatus(monthStats.lateCount))}>
+                {getMonthlyLateStatus(monthStats.lateCount)}
+              </span>
+            </div>
+            {monthStats.lateCount <= LATE_LOGIN_LIMIT && (
+              <div className="sl">Remaining Grace: {getRemainingGraceLateLogins(monthStats.lateCount)}</div>
+            )}
           </div>
           <div className="stat-pill">
             <div className="sv">{monthStats.holidayCount}</div>
@@ -825,3 +892,4 @@ export default function EmployeeAttendance() {
     </div>
   );
 }
+

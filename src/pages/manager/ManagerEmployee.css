@@ -55,10 +55,11 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 }
 .employee-card:hover { border-color: #FF8C00; transform: translateY(-3px); }
 .card-header {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 14px;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 .avatar {
     width: 68px;
@@ -76,6 +77,18 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .employee-info h4 {
     font-size: 1.2rem;
     font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+.employee-info { min-width: 0; flex: 1; }
+.employee-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
 }
 .employee-dept {
     font-size: 0.85rem;
@@ -90,11 +103,11 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 }
 .employee-details i { width: 24px; color: #FF8C00; }
 .card-actions {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    position: static;
+    margin-left: auto;
     display: flex;
     gap: 10px;
+    flex-shrink: 0;
 }
 .action-icon {
     background: transparent;
@@ -113,6 +126,8 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 }
 .action-icon:hover { background: rgba(255, 140, 0,0.2); }
 .delete-icon:hover { color: #ff5e5e; background: rgba(255,94,94,0.15); }
+.activate-icon { color: #15803d; border-color: rgba(21, 128, 61, 0.3); background: #f0fdf4; }
+.activate-icon:hover { color: #166534; background: #dcfce7; }
 .full-details-btn {
     background: #FF8C00;
     border: none;
@@ -126,7 +141,14 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
     margin-top: 8px;
 }
 .full-details-btn:hover { background: #FF8C00; transform: scale(1.01); }
-.role-badge { display: inline-block; background: rgba(255, 140, 0,0.2); font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; vertical-align: middle; }
+.role-badge { display: inline-block; background: rgba(255, 140, 0,0.2); font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 0; vertical-align: middle; }
+.status-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; font-weight: 700; }
+.status-badge.active { background: #dcfce7; color: #15803d; }
+.status-badge.inactive { background: #fee2e2; color: #dc2626; }
+.employee-id-chip { display: inline-flex; max-width: 100%; padding: 2px 8px; border-radius: 999px; background: #eaf4ff; color: #0d47a1; border: 1px solid #cfe4fb; font-weight: 800; white-space: nowrap; }
+.details-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin: -4px 0 18px; padding-bottom: 14px; border-bottom: 1px solid #edf2f7; }
+.modal-btn.danger { background: #dc2626; color: #fff; }
+.modal-btn.activate { background: #16a34a; color: #fff; }
 
 .insights-panel { background: #FFFFFF; border-radius: 28px; border: 1px solid var(--border-gold); padding: 24px; height: fit-content; }
 .insights-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; border-left: 3px solid #FF8C00; padding-left: 12px; color: var(--gold); }
@@ -175,3 +197,187 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .main-content .employee-card .avatar { width: 44px; height: 44px; border: 0; background: #EAF4FF; color: #0D47A1; font-size: 14px; }
 .main-content .employee-card .card-header { gap: 12px; margin-bottom: 12px; }
 .main-content .employee-card .full-details-btn { background: #FFFFFF; color: #0D47A1; border: 1px solid #CFE4FB; border-radius: 8px; }
+
+/* Premium enterprise manager employee cards */
+.manager-employees-page {
+  background: #F8FAFC !important;
+}
+
+.manager-employees-page .employees-grid {
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.manager-employees-page .employee-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 18px;
+  border: 1px solid #DDE7F3;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.manager-employees-page .employee-card:hover {
+  transform: translateY(-3px);
+  border-color: #B9D5F6;
+  box-shadow: 0 18px 36px rgba(13, 71, 161, 0.12);
+}
+
+.manager-employees-page .employee-card .card-header {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.manager-employees-page .employee-card .avatar {
+  width: 52px;
+  height: 52px;
+  border: 1px solid #CFE4FB;
+  background: #EAF4FF;
+  color: #0D47A1;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.manager-employees-page .employee-info h4 {
+  color: #0F172A;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.manager-employees-page .employee-dept {
+  margin-top: 4px;
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.manager-employees-page .status-badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.manager-employees-page .employee-details {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 16px;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+.manager-employees-page .employee-details > div {
+  display: grid;
+  grid-template-columns: 20px 82px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  font-size: 12px;
+}
+
+.manager-employees-page .employee-details i {
+  width: 20px;
+  color: #0D47A1;
+  text-align: center;
+}
+
+.manager-employees-page .employee-details span {
+  color: #64748B;
+  font-weight: 750;
+}
+
+.manager-employees-page .employee-details strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #0F172A;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-full-details-btn {
+  min-height: 38px;
+  margin-top: auto;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #DDE7F3;
+  border-radius: 9px;
+  background: #EAF4FF;
+  color: #0D47A1;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  width: 100%;
+}
+
+.manager-full-details-btn:hover {
+  transform: translateY(-1px);
+  border-color: #0D47A1;
+  background: #FFFFFF;
+}
+
+.employee-details-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.employee-details-modal-header h3 {
+  margin: 0;
+}
+
+.employee-details-modal-header .details-actions {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.manager-employees-page .manager-stats-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.manager-employees-page .manager-branch-locked {
+  min-height: 44px;
+  cursor: default;
+  background: #FFFFFF;
+}
+
+.manager-employees-page .employee-modal-content #empBranch,
+.manager-employees-page .employee-modal-content #empRole {
+  pointer-events: none;
+  background: #EAF4FF;
+}
+
+@media (max-width: 760px) {
+  .employee-details-modal-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 900px) {
+  .manager-employees-page .manager-stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .manager-employees-page .manager-stats-row {
+    grid-template-columns: 1fr !important;
+  }
+}

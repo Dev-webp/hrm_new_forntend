@@ -1,9 +1,32 @@
 import { useChart } from "./useChart";
 import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 
 const GOLD_LEGEND = { color: "#64748B", font: { size: 11, family: "Inter" } };
 const GRID_X = { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } };
 const GRID_Y = { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" } };
+
+function timeToHourValue(time) {
+  if (!time) return 0;
+  const match = String(time).match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!match) return 0;
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const suffix = match[3]?.toUpperCase();
+  if (suffix === "PM" && hours < 12) hours += 12;
+  if (suffix === "AM" && hours === 12) hours = 0;
+  return parseFloat((hours + minutes / 60).toFixed(2));
+}
+
+function hourValueToTime(value) {
+  const totalMinutes = Math.round(Number(value || 0) * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return formatTime12Hour(`${hours}:${String(minutes).padStart(2, "0")}`);
+}
 
 /** Branch-level 6-month trends — present / late / absent (optional) */
 export function BranchTrendsChart({ trends }) {
@@ -67,10 +90,7 @@ export function BranchTrendsChart({ trends }) {
 export function CheckInChart({ records }) {
   const presentRecs = (records || []).filter((r) => r?.date && r?.checkIn && r.checkIn !== "--");
   const labels = presentRecs.map((r) => parseInt(r.date.slice(8, 10), 10));
-  const ciData = presentRecs.map((r) => {
-    const [h, mi] = r.checkIn.split(":").map(Number);
-    return parseFloat((h + mi / 60).toFixed(2));
-  });
+  const ciData = presentRecs.map((r) => timeToHourValue(r.checkIn));
 
   const canvasRef = useChart(
     () => ({
@@ -111,14 +131,21 @@ export function CheckInChart({ records }) {
             title: { display: true, text: "Hour", color: "#64748B" },
             ticks: {
               color: "#64748B",
-              callback: (v) => `${v}:00`,
+              callback: (v) => hourValueToTime(v),
             },
             min: 7,
             max: 12,
             grid: { color: "#E5E7EB" },
           },
         },
-        plugins: { legend: { labels: GOLD_LEGEND } },
+        plugins: {
+          legend: { labels: GOLD_LEGEND },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${hourValueToTime(ctx.parsed.y)}`,
+            },
+          },
+        },
       },
     }),
     [labels.join(","), ciData.join(",")]
@@ -163,7 +190,14 @@ export function BreakDurationChart({ records }) {
         maintainAspectRatio: true,
         animation: { duration: 400 },
         scales: { x: GRID_X, y: GRID_Y },
-        plugins: { legend: { labels: GOLD_LEGEND } },
+        plugins: {
+          legend: { labels: GOLD_LEGEND },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `Hours Worked: ${formatProductionHours(ctx.parsed.y)}`,
+            },
+          },
+        },
       },
     }),
     [labels.join(","), breakData.join(",")]

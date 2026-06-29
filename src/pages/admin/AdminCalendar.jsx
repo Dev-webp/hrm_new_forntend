@@ -18,6 +18,10 @@ import {
   monthRangeBounds,
 } from "../../utils/calendarHelper";
 import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 
 import "../../styles/adminCalendar.css";
 
@@ -91,22 +95,23 @@ function hasApprovedLeave(record = {}) {
   );
 }
 
-function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayHoliday } = {}) {
+function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayHoliday, dateStr, todayStr } = {}) {
   if (isSunday) return "sunday";
   if (isHoliday) return "holiday";
   if (isHalfDayHoliday && !record) return "half_day";
-  if (!record) return "no_record";
+  if (!record) return dateStr && todayStr && dateStr <= todayStr ? "absent" : "no_record";
 
   const status = normalizeAttendanceStatus(record.status || record.day_status);
   const hours = getRecordHours(record);
   const lateMinutes = Number(record.lateMinutes ?? record.late_minutes ?? 0);
 
+  if (status === "full_day") return "present";
+  if (status === "half_day") return "half_day";
+
   if (hasValidAttendance(record)) {
-    if (status === "half_day") return "half_day";
     if ((status === "late" || lateMinutes > 0) && hours >= 8) return "late";
     if (status === "absent" && hours < 4) return "absent";
     if (hours >= 8) return "present";
-    if (hours >= 4) return "half_day";
     return "absent";
   }
 
@@ -500,6 +505,7 @@ function AdminCalendar() {
     const month = currentDate.getMonth();
     const mm = String(month + 1).padStart(2, "0");
     const cacheKey = `${year}-${mm}|${currentBranch}|${refreshKey}`;
+    const todayStr = new Date().toISOString().slice(0, 10);
 
     setLoading(true);
     setError("");
@@ -554,6 +560,8 @@ function AdminCalendar() {
             isSunday: isSun,
             isHoliday: isCompanyHoliday,
             isHalfDayHoliday: isCompanyHalfDay,
+            dateStr,
+            todayStr,
           });
           const normalizedStatus = normalizeAttendanceStatus(st);
           const lateMinutes = Number(employeeRecord?.lateMinutes || employeeRecord?.late_minutes || 0);
@@ -615,9 +623,20 @@ function AdminCalendar() {
             <div className="tooltip-card">
               <div className="tooltip-title">{dateStr}</div>
               <div className="tooltip-row">Status: {labelText}</div>
-              <div className="tooltip-row">Login: {employeeRecord?.checkIn || "--"}</div>
-              <div className="tooltip-row">Logout: {employeeRecord?.checkOut || "--"}</div>
-              <div className="tooltip-row">Hours: {employeeRecord?.workHours || 0}</div>
+              <div className="tooltip-row">Login: {formatTime12Hour(employeeRecord?.checkIn)}</div>
+              <div className="tooltip-row">Logout: {formatTime12Hour(employeeRecord?.checkOut)}</div>
+              <div className="tooltip-row">Hours: {formatProductionHours(employeeRecord?.workHours)}</div>
+              {employeeRecord?.half_day_effective_minutes !== undefined && employeeRecord?.half_day_effective_minutes !== null ? (
+                <div className="tooltip-row">
+                  Half-Day Effective: {Math.floor(Number(employeeRecord.half_day_effective_minutes || 0) / 60)}h {Number(employeeRecord.half_day_effective_minutes || 0) % 60}m
+                </div>
+              ) : null}
+              {employeeRecord?.half_day_slot_checked ? (
+                <div className="tooltip-row">Slot Checked: {employeeRecord.half_day_slot_checked}</div>
+              ) : null}
+              {employeeRecord?.half_day_invalid_reason ? (
+                <div className="tooltip-row">Reason: {employeeRecord.half_day_invalid_reason}</div>
+              ) : null}
               <div className="tooltip-row">Late: {employeeRecord?.lateMinutes || 0} min</div>
             </div>
           );
@@ -1166,10 +1185,10 @@ function AdminCalendar() {
 
             <p><b>Date:</b> {selectedDayRecord.date}</p>
             <p><b>Status:</b> {selectedDayRecord.status}</p>
-            <p><b>Login:</b> {selectedDayRecord.checkIn}</p>
-            <p><b>Logout:</b> {selectedDayRecord.checkOut}</p>
+            <p><b>Login:</b> {formatTime12Hour(selectedDayRecord.checkIn)}</p>
+            <p><b>Logout:</b> {formatTime12Hour(selectedDayRecord.checkOut)}</p>
             <p><b>Late:</b> {selectedDayRecord.lateMinutes} minutes</p>
-            <p><b>Production:</b> {selectedDayRecord.workHours} hrs</p>
+            <p><b>Production:</b> {formatProductionHours(selectedDayRecord.workHours)}</p>
 
             <hr />
 
@@ -1278,6 +1297,9 @@ function AdminCalendar() {
                   setEditError("");
                   setEditRecord(null);
                   setSelectedDayRecord(null);
+                  setEmployeeRecordsMap(new Map());
+                  setCalendarDaysCache({});
+                  setMonthlyStatsCache({});
                   setRefreshKey((prev) => prev + 1);
                   showToast("Attendance updated successfully");
                 } catch (err) {

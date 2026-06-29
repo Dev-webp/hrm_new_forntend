@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { clearAuthSession } from "../../utils/auth";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 import "../../styles/ManagerCalendar.css";
 
 const MONTH_NAMES = [
@@ -22,11 +26,7 @@ const MONTH_NAMES = [
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function fmt12(timeStr) {
-  if (!timeStr) return "";
-  const [h, m] = timeStr.split(":").map(Number);
-  const suffix = h >= 12 ? "PM" : "AM";
-  const hh = h % 12 || 12;
-  return `${hh}:${String(m).padStart(2, "0")} ${suffix}`;
+  return formatTime12Hour(timeStr);
 }
 
 function TooltipSunday() {
@@ -395,6 +395,8 @@ export default function ManagerCalendar() {
             else if (st === "half_day") pHalfDay += 1;
             else if (st === "leave") pLeave += 1;
             if (rec.lateMinutes > 0 && st !== "absent") pLate += 1;
+          } else if (!isSun && !entry && dateStr <= today) {
+            pAbsent += 1;
           }
 
           if (!isSun && !entry && rec) {
@@ -405,7 +407,7 @@ export default function ManagerCalendar() {
             else if (st === "leave") cssClasses += " p-leave";
             else if (st === "absent") cssClasses += " p-absent calendar-absent";
           }
-          if (!isSun && !entry && rec && rec.lateMinutes > 0 && !["absent", "half_day"].includes(st) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
+          if (!isSun && !entry && rec && rec.lateMinutes > 0 && !["absent", "half_day", "full_day"].includes(st) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             cssClasses = cssClasses.replace(" p-present", "");
             cssClasses = cssClasses.replace(" calendar-present", "");
             cssClasses += " p-late calendar-late";
@@ -477,7 +479,7 @@ export default function ManagerCalendar() {
                   {rec.prodHours ? (
                     <div className="tt-row">
                       <span>Production</span>
-                      <span className="tv">{rec.prodHours}h</span>
+                      <span className="tv">{formatProductionHours(rec.prodHours)}</span>
                     </div>
                   ) : null}
                   {rec.breakMinutes > 0 ? (
@@ -493,6 +495,21 @@ export default function ManagerCalendar() {
             if (isSun) tooltipContent = <TooltipSunday />;
             else if (entry?.type === "holiday") {
               tooltipContent = <TooltipHoliday name={entry.name} />;
+            } else if (dateStr <= today) {
+              cssClasses += " p-absent calendar-absent";
+              miniStatsContent = (
+                <div className="day-mini-stats">
+                  <div className="mini-row">Absent</div>
+                </div>
+              );
+              tooltipContent = (
+                <div className="tooltip-card">
+                  <div className="tt-title">
+                    {MONTH_NAMES[month]} {d}
+                  </div>
+                  <div style={{ color: "var(--c-absent)" }}>Absent</div>
+                </div>
+              );
             } else {
               cssClasses += " calendar-empty";
               tooltipContent = (

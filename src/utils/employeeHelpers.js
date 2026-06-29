@@ -1,13 +1,3 @@
-export const DEPARTMENTS = [
-  "Branch Manager",
-  "Reception",
-  "Sales Team",
-  "Process Team",
-  "Accounts",
-  "Digital Marketing Team",
-  "IT Department",
-];
-
 export const BRANCH_OPTIONS = [
   { value: "all", label: "All Branches" },
   { value: "Hyderabad", label: "🏢 Hyderabad Branch" },
@@ -58,6 +48,7 @@ export function mapApiEmployee(emp) {
     initials: emp.profile_initials,
     designation: emp.designation || "",
     department: emp.department,
+    departmentCode: emp.department_code || "",
     email: emp.email,
     branch: emp.branch,
     joined: emp.joining_date,
@@ -96,7 +87,7 @@ export function buildAutoEmail(name) {
 export const EMPTY_EMPLOYEE_FORM = {
   name: "",
   designation: "",
-  department: "Branch Manager",
+  department: "",
   branch: "Hyderabad",
   role: "Employee",
   employeeCode: "",
@@ -106,13 +97,14 @@ export const EMPTY_EMPLOYEE_FORM = {
   bankName: "",
   bankAccount: "",
   bankIfsc: "",
+  departmentCode: "",
   aadharNumber: "",
   password: "",
 };
 
 export function validateEmployeeForm(form) {
-  if (!form.name.trim() || !form.salary.trim() || !form.loginEmail.trim()) {
-    return "Please fill all required fields (Name, Email, Salary)";
+  if (!form.name.trim() || !form.department || !form.salary.trim() || !form.loginEmail.trim()) {
+    return "Please fill all required fields (Name, Department, Email, Salary)";
   }
 
   if (Number.isNaN(parseFloat(form.salary))) {
@@ -133,6 +125,7 @@ export function buildEmployeePayload(form) {
     email: form.loginEmail.trim(),
     role: mapRoleToBackend(form.role),
     department: form.department,
+    department_code: form.departmentCode.trim() || undefined,
     branch: form.branch,
     employee_code: form.employeeCode.trim() || undefined,
     salary: parseFloat(form.salary),
@@ -150,6 +143,7 @@ export function employeeToForm(employee) {
     name: employee.name,
     designation: employee.designation || "",
     department: employee.department,
+    departmentCode: employee.departmentCode || "",
     branch: employee.branch,
     role: employee.role,
     employeeCode: employee.empId || "",

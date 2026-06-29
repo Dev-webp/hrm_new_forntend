@@ -1,3 +1,5 @@
+import { formatTime12Hour } from "../../utils/timeFormat";
+
 export function escapeHtml(str) {
   if (!str) return "";
   return String(str).replace(
@@ -7,11 +9,7 @@ export function escapeHtml(str) {
 }
 
 export function formatTime12(timeStr) {
-  if (!timeStr) return "";
-  const [h, m] = timeStr.split(":").map(Number);
-  const suffix = h >= 12 ? "PM" : "AM";
-  const hh = h % 12 || 12;
-  return `${hh}:${String(m).padStart(2, "0")} ${suffix}`;
+  return formatTime12Hour(timeStr);
 }
 
 export const MONTH_NAMES = [

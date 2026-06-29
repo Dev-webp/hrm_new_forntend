@@ -1,4 +1,5 @@
 /** Attendance analysis — date/format/compute helpers (from adminAttendanceAnalysis.html) */
+import { formatTime12Hour } from "./timeFormat";
 
 export const MONTH_NAMES = [
   "Jan",
@@ -63,7 +64,7 @@ export function dayName(s) {
 export function formatTimeDisplay(t) {
   if (!t || t === "--" || t === "—") return "--";
   const [h, mi] = String(t).split(":").map(Number);
-  return `${h % 12 || 12}:${String(mi).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+  return formatTime12Hour(t);
 }
 
 export function monthLabel(yearMonth) {
@@ -201,11 +202,16 @@ export function isUnpaidLeaveRecord(rec = {}) {
 
 export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
   const safe = rec || {};
+  const date = safe.date || fallbackDate || "";
+  const today = new Date().toISOString().slice(0, 10);
+  const defaultStatus = date && date > today ? "no_record" : "absent";
   const breakMins = safe.breakMins || {
     b1: 0,
     lunch: 0,
     b2: 0,
     b3: 0,
+    b3Count: 0,
+    b3History: [],
   };
   const breakDetails = safe.breakDetails || {
     b1: { in: "--", out: "--" },
@@ -216,8 +222,8 @@ export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
 
   return {
     ...safe,
-    date: safe.date || fallbackDate || "",
-    status: safe.status || safe.day_status || "absent",
+    date,
+    status: safe.status || safe.day_status || defaultStatus,
     checkIn: safe.checkIn ?? safe.check_in_time ?? "--",
     checkOut: safe.checkOut ?? safe.check_out_time ?? "--",
     lateMinutes: Number(safe.lateMinutes ?? safe.late_minutes ?? 0) || 0,
@@ -238,6 +244,8 @@ export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
       lunch: Number(breakMins.lunch) || 0,
       b2: Number(breakMins.b2) || 0,
       b3: Number(breakMins.b3) || 0,
+      b3Count: Number(breakMins.b3Count) || 0,
+      b3History: Array.isArray(breakMins.b3History) ? breakMins.b3History : [],
     },
     breakDetails: {
       b1: {
@@ -278,8 +286,9 @@ if (safe.status === "sunday") {
   if (isUnpaidLeaveRecord(safe)) return { className: "cal-unpaid-leave unpaid-leave", numClass: "default-num" };
   if (safe.status === "absent") return { className: "cal-absent", numClass: "red-num" };
   if (safe.status === "half_day") return { className: "cal-halfday", numClass: "yellow-num" };
-  if (safe.lateMinutes > 0) return { className: "cal-late", numClass: "orange-num" };
   if (safe.status === "full_day") return { className: "cal-present", numClass: "green-num" };
+  if (safe.lateMinutes > 0) return { className: "cal-late", numClass: "orange-num" };
+  if (safe.status === "no_record") return { className: "cal-no-record", numClass: "default-num" };
   return { className: "cal-absent", numClass: "red-num" };
 }
 
@@ -347,6 +356,7 @@ export function getDailyLogStatus(rec) {
   if (safe.status === "half_day") return { label: "Half Day", badge: "b-halfday" };
   if (safe.status === "sunday") return { label: "Sunday", badge: "b-absent" };
   if (safe.status === "holiday") return { label: "Holiday", badge: "b-absent" };
+  if (safe.status === "no_record") return { label: "No Record", badge: "b-neutral" };
   if (safe.lateMinutes > 0) return { label: "Late", badge: "b-late" };
   return { label: "Present", badge: "b-present" };
 }

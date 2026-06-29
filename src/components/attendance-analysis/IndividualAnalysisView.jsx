@@ -28,6 +28,7 @@ import {
   isUnpaidLeaveRecord,
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
+import { formatProductionHours } from "../../utils/timeFormat";
 
 function WeekFilter({ id, value, onChange }) {
   return (
@@ -109,20 +110,20 @@ function IndividualAnalysisView({
             ? "b-paid-leave"
             : isUnpaidLeaveRecord(rec)
             ? "b-unpaid-leave"
-            : rec.lateMinutes > 0
-            ? "b-late"
             : rec.status === "half_day"
               ? "b-halfday"
+            : rec.lateMinutes > 0
+            ? "b-late"
               : "b-present";
         const statusLabel =
           isPaidLeaveRecord(rec)
             ? "Paid Leave"
             : isUnpaidLeaveRecord(rec)
             ? "Unpaid Leave"
-            : rec.lateMinutes > 0
-            ? "Late"
             : rec.status === "half_day"
               ? "Half Day"
+            : rec.lateMinutes > 0
+            ? "Late"
               : "Present";
         dayCards.push({
           key: ds,
@@ -174,18 +175,20 @@ function IndividualAnalysisView({
     let sumL = 0;
     let sumB2 = 0;
     let sumB3 = 0;
+    let break3Count = 0;
     workFiltered.forEach((r) => {
       sumB1 += r.breakMins.b1;
       sumL += r.breakMins.lunch;
       sumB2 += r.breakMins.b2;
       sumB3 += r.breakMins.b3;
+      break3Count += r.breakMins.b3Count || 0;
     });
     const totalBreak = sumB1 + sumL + sumB2 + sumB3;
     const avg = workFiltered.length
       ? Math.round(totalBreak / workFiltered.length)
       : 0;
     const exceed = workFiltered.filter((r) => r.breaks > 60).length;
-    return { sumB1, sumL, sumB2, sumB3, avg, exceed, workFiltered };
+    return { sumB1, sumL, sumB2, sumB3, break3Count, avg, exceed, workFiltered };
   }, [breakFiltered]);
 
   const leaveStats = useMemo(() => {
@@ -419,9 +422,7 @@ function IndividualAnalysisView({
                             : "--"}
                         </td>
                         <td style={{ fontWeight: 700 }}>
-                          {r.workHours > 0
-                            ? `${r.workHours.toFixed(1)}h`
-                            : "--"}
+                          {r.workHours > 0 ? formatProductionHours(r.workHours) : "--"}
                         </td>
                         <td
                           style={{
@@ -463,6 +464,7 @@ function IndividualAnalysisView({
             { label: "Lunch Total", value: `${breakStats.sumL}m` },
             { label: "Break2 Total", value: `${breakStats.sumB2}m` },
             { label: "Break3 Total", value: `${breakStats.sumB3}m` },
+            { label: "Break3 Sessions", value: breakStats.break3Count },
           ]}
           loading={loading}
         />
@@ -513,6 +515,7 @@ function IndividualAnalysisView({
                   <th>Break 3 In</th>
                   <th>Break 3 Out</th>
                   <th>B3 Dur</th>
+                  <th>B3 Sessions</th>
                   <th>Total (min)</th>
                   <th>Remaining</th>
                   <th>Status</th>
@@ -553,6 +556,7 @@ function IndividualAnalysisView({
                       <td>{bCell(r.breakDetails.b3.in)}</td>
                       <td>{bCell(r.breakDetails.b3.out)}</td>
                       <td>{dCell(r.breakMins.b3)}</td>
+                      <td>{r.breakMins.b3Count || 0}</td>
                       <td
                         style={{
                           fontWeight: 700,

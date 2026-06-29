@@ -509,7 +509,7 @@
 .admin-notifications-page .notification-bulk-toolbar,
 .manager-notifications-page .notification-bulk-toolbar {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto minmax(300px, 1fr);
+  grid-template-columns: auto auto minmax(260px, 1fr) auto minmax(300px, 1fr);
   gap: 14px;
   align-items: end;
   margin: 14px 0 18px;
@@ -566,6 +566,17 @@
 .admin-notifications-page .notification-bulk-toolbar .bulk-danger,
 .manager-notifications-page .notification-bulk-toolbar .bulk-danger {
   border-color: #dc2626;
+  color: #dc2626;
+}
+.admin-notifications-page .notification-bulk-toolbar .range-toggle-btn,
+.manager-notifications-page .notification-bulk-toolbar .range-toggle-btn {
+  border-color: #cfe4fb;
+  color: #0d47a1;
+  background: #fff;
+}
+.admin-notifications-page .notification-bulk-toolbar .range-toggle-btn.danger,
+.manager-notifications-page .notification-bulk-toolbar .range-toggle-btn.danger {
+  border-color: #fecaca;
   color: #dc2626;
 }
 .admin-notifications-page .notification-bulk-toolbar .bulk-danger.filled,

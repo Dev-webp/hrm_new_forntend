@@ -10,6 +10,10 @@ import {
 } from "../../services/activityLogsApi";
 import { getAuthToken, getStoredUser } from "../../utils/auth";
 import { loadSocketIoClient, SOCKET_SERVER_URL } from "../../utils/socketClient";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 import "../../styles/AdminActivityLogs.css";
 
 const PAGE_LIMIT = 20;
@@ -37,6 +41,7 @@ function fmtDate(iso) {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
+    hour12: true,
   });
 }
 
@@ -148,6 +153,7 @@ function normalizeLogFields(log) {
     branch: decodeHtmlEntities(log.branch || ""),
     timestamp: log.timestamp || log.created_at || "",
     severity: decodeHtmlEntities(log.severity || ""),
+    metadata: decodeMetadata(log.metadata),
   };
 }
 
@@ -156,7 +162,49 @@ function displayValue(value) {
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
+function formatLogDetails(value) {
+  return displayValue(value)
+    .replace(/\b\d{1,2}:\d{2}(?::\d{2})?\b/g, (time) =>
+      formatTime12Hour(time)
+    )
+    .replace(/\b(\d+(?:\.\d+)?)\s*h(?:rs?|ours?)?\b/gi, (_match, hours) =>
+      formatProductionHours(Number(hours))
+    );
+}
 
+function StructuredDetailsPreview({ fields }) {
+  const metadata = fields.metadata && typeof fields.metadata === "object" ? fields.metadata : {};
+  const details = formatLogDetails(fields.details);
+  const employeeName =
+    metadata.employeeName ||
+    metadata.employee_name ||
+    metadata.full_name ||
+    metadata.target_name ||
+    metadata.employee ||
+    "";
+  const dateValue = metadata.date || metadata.attendance_date || metadata.changed_date || "";
+  const reasonValue = metadata.reason || metadata.edit_reason || metadata.remarks || "";
+
+  if (!employeeName && !dateValue && !reasonValue) {
+    return <>{details}</>;
+  }
+
+  return (
+    <div className="structured-details">
+      <span>{fields.action || "Updated"} for:</span>
+      {employeeName ? <strong>{employeeName}</strong> : null}
+      {dateValue ? <em>Date: {new Date(dateValue).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</em> : null}
+      {reasonValue ? <em>Reason: {reasonValue}</em> : null}
+      {!reasonValue && details ? <em>{details}</em> : null}
+    </div>
+  );
+}
+function displayLogField(label, value) {
+  if (/check-(in|out)|break times/i.test(label)) {
+    return formatLogDetails(value);
+  }
+  return displayValue(value);
+}
 function StructuredLogDetails({ log }) {
   const m = log?.metadata || {};
   const old = m.oldValues || {};
@@ -191,7 +239,7 @@ function StructuredLogDetails({ log }) {
         {fields.map(([label, value]) => (
           <div className="meta-item" key={label}>
             <div className="meta-label">{label}</div>
-            <div className="meta-value">{displayValue(value)}</div>
+            <div className="meta-value">{displayLogField(label, value)}</div>
           </div>
         ))}
       </div>
@@ -212,6 +260,9 @@ export default function AdminActivityLogs() {
   const [selectedDate, setSelectedDate] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [rangePanel, setRangePanel] = useState("");
+  const [viewFromDate, setViewFromDate] = useState("");
+  const [viewToDate, setViewToDate] = useState("");
   const [sortFilter, setSortFilter] = useState("desc");
 
   const [logsData, setLogsData] = useState([]);
@@ -502,7 +553,6 @@ export default function AdminActivityLogs() {
         "Action",
         "Severity",
         "Details",
-        "IP",
         "Branch",
       ];
       const rows = logs.map((l) => [
@@ -512,7 +562,6 @@ export default function AdminActivityLogs() {
         l.action || l.action_type,
         l.severity || l.status,
         l.details || l.target_name || "",
-        l.ip_address,
         l.branch,
       ]);
       const csv = [headers, ...rows]
@@ -576,11 +625,14 @@ export default function AdminActivityLogs() {
   };
 
   const handleDeleteLogsByRange = async () => {
-    if (!deleteFromDate || !deleteToDate) return showToast("Choose both delete range dates", "error");
-    if (!window.confirm(`Permanently delete activity logs from ${deleteFromDate} through ${deleteToDate}?`)) return;
+    const from = deleteFromDate || deleteToDate;
+    const to = deleteToDate || deleteFromDate;
+    if (!from || !to) return showToast("Choose a delete date or date range", "error");
+    if (from > to) return showToast("Delete from date cannot be after delete to date", "error");
+    if (!window.confirm(`Permanently delete activity logs from ${from} through ${to}?`)) return;
     setBulkDeleting(true);
     try {
-      const result = await deleteActivityLogsByRange(deleteFromDate, deleteToDate);
+      const result = await deleteActivityLogsByRange(from, to);
       await Promise.all([loadLogs(), loadStats()]);
       showToast(`${result.deletedCount || 0} activity log(s) deleted`, "success");
     } catch (err) {
@@ -588,6 +640,27 @@ export default function AdminActivityLogs() {
     } finally {
       setBulkDeleting(false);
     }
+  };
+
+  const handleViewLogsByRange = () => {
+    const from = viewFromDate || viewToDate;
+    const to = viewToDate || viewFromDate;
+    if (!from || !to) return showToast("Choose a view date or date range", "error");
+    if (from > to) return showToast("View from date cannot be after view to date", "error");
+    setSelectedDate("");
+    setStartDate(from);
+    setEndDate(to);
+    setCurrentPage(1);
+    showToast(`Showing logs from ${from} through ${to}`, "success");
+  };
+
+  const clearLogDateRange = () => {
+    setViewFromDate("");
+    setViewToDate("");
+    setSelectedDate("");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
   };
 
   const deletablePageLogs = logsData.filter((log) => isSuperAdmin || log.branch === managerBranch);
@@ -626,7 +699,7 @@ export default function AdminActivityLogs() {
         role: detailLog.role || detailLog.user_role || "—",
         ip: detailLog.ip_address || "—",
         branchVal: detailLog.branch || "—",
-        details: detailLog.details || "—",
+        details: formatLogDetails(detailLog.details),
         sev: detailLog.severity || detailLog.status || "—",
         timestamp: detailLog.timestamp || detailLog.created_at || "",
         device: detailLog.device_info || "—",
@@ -737,7 +810,7 @@ export default function AdminActivityLogs() {
       </div>
 
       <div className="advanced-filters">
-        <div className="filter-group calendar-filter">
+        <div className="filter-group calendar-filter legacy-date-filter">
           <label htmlFor="selectedDate">Log date</label>
           <input
             type="date"
@@ -759,7 +832,7 @@ export default function AdminActivityLogs() {
             />
           </div>
         </div>
-        <div className="filter-group">
+        <div className="filter-group legacy-date-filter">
           <label htmlFor="startDate">From</label>
           <input
             type="date"
@@ -768,7 +841,7 @@ export default function AdminActivityLogs() {
             onChange={handleFilterChange(setStartDate)}
           />
         </div>
-        <div className="filter-group">
+        <div className="filter-group legacy-date-filter">
           <label htmlFor="endDate">To</label>
           <input
             type="date"
@@ -833,6 +906,9 @@ export default function AdminActivityLogs() {
           <button type="button" className="export-btn" onClick={handleRefresh}>
             <i className="fas fa-sync-alt" /> Refresh
           </button>
+          <button type="button" className="export-btn" onClick={() => setRangePanel((mode) => mode === "view" ? "" : "view")}>
+            <i className="fas fa-eye" /> View
+          </button>
           <button type="button" className="export-btn" onClick={handleExportCSV}>
             <i className="fas fa-file-csv" /> CSV
           </button>
@@ -848,13 +924,29 @@ export default function AdminActivityLogs() {
           <button type="button" className="bulk-delete-btn" onClick={handleDeleteSelectedLogs} disabled={bulkDeleting || !selectedLogIds.size}>
             <i className="fas fa-trash" /> Delete Selected Logs ({selectedLogIds.size})
           </button>
-          <div className="bulk-range-fields">
+          <button type="button" className="bulk-delete-btn" onClick={() => setRangePanel((mode) => mode === "delete" ? "" : "delete")}>
+            <i className="fas fa-calendar-times" /> Delete
+          </button>
+          <div className="bulk-range-fields" style={{ display: rangePanel === "delete" ? undefined : "none" }}>
             <label>Delete from<input type="date" value={deleteFromDate} onChange={(event) => setDeleteFromDate(event.target.value)} /></label>
             <label>Delete to<input type="date" value={deleteToDate} onChange={(event) => setDeleteToDate(event.target.value)} /></label>
-            <button type="button" className="bulk-delete-btn danger" onClick={handleDeleteLogsByRange} disabled={bulkDeleting || !deleteFromDate || !deleteToDate}>
+            <button type="button" className="bulk-delete-btn danger" onClick={handleDeleteLogsByRange} disabled={bulkDeleting || (!deleteFromDate && !deleteToDate)}>
               {bulkDeleting ? "Deletingâ€¦" : "Delete Date Range"}
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {rangePanel === "view" ? (
+        <div className="activity-range-panel view">
+          <div className="range-panel-copy">
+            <strong>View logs by date</strong>
+            <p>Pick one date or a date range, then load only those logs.</p>
+          </div>
+          <label>From Date<input type="date" value={viewFromDate} onChange={(event) => setViewFromDate(event.target.value)} /></label>
+          <label>To Date<input type="date" value={viewToDate} onChange={(event) => setViewToDate(event.target.value)} /></label>
+          <button type="button" className="export-btn" onClick={handleViewLogsByRange}>Load Logs</button>
+          <button type="button" className="export-btn" onClick={clearLogDateRange}>Clear</button>
         </div>
       ) : null}
 
@@ -869,29 +961,28 @@ export default function AdminActivityLogs() {
             <thead>
               <tr>
                 <th className="select-column"><input type="checkbox" checked={allPageLogsSelected} onChange={toggleAllPageLogs} aria-label="Select all logs on page" /></th>
-                <th className="sorted">
+                <th className="timestamp-column sorted">
                   Timestamp <span className="sort-icon sorted">↓</span>
                 </th>
-                <th>User / Role</th>
-                <th>Action</th>
-                <th>Severity</th>
-                <th>Details</th>
-                <th>IP Address</th>
-                <th>Branch</th>
-                <th />
+                <th className="user-column">User / Role</th>
+                <th className="action-column">Action</th>
+                <th className="severity-column">Severity</th>
+                <th className="details-column">Details</th>
+                <th className="branch-column">Branch</th>
+                <th className="actions-column">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && !logsData.length ? (
                 <tr>
-                  <td colSpan={9} className="table-message">
+                  <td colSpan={8} className="table-message">
                     <i className="fas fa-spinner fa-spin" />
                     Loading logs…
                   </td>
                 </tr>
               ) : !loading && loadError ? (
                 <tr>
-                  <td colSpan={9} className="table-message">
+                  <td colSpan={8} className="table-message">
                     <i
                       className="fas fa-exclamation-triangle"
                       style={{ color: "#DC2626" }}
@@ -901,7 +992,7 @@ export default function AdminActivityLogs() {
                 </tr>
               ) : !loading && !logsData.length ? (
                 <tr>
-                  <td colSpan={9} className="table-message">
+                  <td colSpan={8} className="table-message">
                     <i className="fas fa-inbox" />
                     No logs found
                   </td>
@@ -955,22 +1046,19 @@ export default function AdminActivityLogs() {
                         ) : null}
                       </td>
                       <td className="details-cell">
-                        {fields.details}
+                        <StructuredDetailsPreview fields={fields} />
                       </td>
-                      <td>
-                        <span className="ip-code">{fields.ip}</span>
-                      </td>
-                      <td>
+                      <td className="branch-cell">
                         <BranchChip branch={fields.branch} />
                       </td>
-                      <td>
+                      <td className="actions-cell">
                         <div className="row-actions">
                           <button
                             type="button"
                             className="details-btn"
                             data-id={fields.id}
                             onClick={() => showDetailModal(fields.id)}
-                            title="View details"
+                            title="View Log"
                           >
                             <i className="fas fa-eye" />
                           </button>
@@ -979,7 +1067,7 @@ export default function AdminActivityLogs() {
                               type="button"
                               className="details-btn delete-log-btn"
                               onClick={() => handleDeleteLog(fields.id)}
-                              title="Delete activity log"
+                              title="Delete Log"
                             >
                               <i className="fas fa-trash" />
                             </button>
@@ -1077,12 +1165,6 @@ export default function AdminActivityLogs() {
                   </div>
                 </div>
                 <div className="meta-item">
-                  <div className="meta-label">IP Address</div>
-                  <div className="meta-value">
-                    <span className="ip-code">{detailFields.ip}</span>
-                  </div>
-                </div>
-                <div className="meta-item">
                   <div className="meta-label">Branch</div>
                   <div className="meta-value">{detailFields.branchVal}</div>
                 </div>
@@ -1155,3 +1237,6 @@ export default function AdminActivityLogs() {
     </div>
   );
 }
+
+
+

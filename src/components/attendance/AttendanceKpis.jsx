@@ -1,3 +1,5 @@
+import { formatProductionHours } from "../../utils/timeFormat";
+
 function AttendanceKpis({ stats, records = [], loading, error }) {
   if (loading && !stats) {
     return (
@@ -99,7 +101,7 @@ function AttendanceKpis({ stats, records = [], loading, error }) {
         <div className="kpi-title">
           <i className="fas fa-business-time" /> Production Hours
         </div>
-        <div className="kpi-value">{productionHours.toFixed(1)}</div>
+        <div className="kpi-value">{formatProductionHours(productionHours)}</div>
         <div className="trend-up">{stats.attendanceRate ?? 0}% attendance rate</div>
       </div>
     </div>

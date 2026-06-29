@@ -197,7 +197,9 @@
         .att-table tr:hover td { background: rgba(255, 140, 0,0.02); }
         .badge-sm { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
         .badge-present { background: var(--calendar-present-bg, #C8F2D6); color: var(--calendar-present-text, #0F5132); }
+        .badge-working { background: #DBEAFE; color: #1D4ED8; }
         .badge-absent { background: var(--calendar-absent-bg, #FFCBCB); color: var(--calendar-absent-text, #8B0000); }
+        .badge-no-record { background: var(--calendar-empty-bg, #E2E8F0); color: var(--calendar-empty-text, #334155); }
         .badge-late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); }
         .badge-halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); }
         .badge-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); color: var(--calendar-paid-leave-text, #4C1D95); }
@@ -243,6 +245,61 @@
 .employee-attendance-page .cal-day.calendar-late :where(.day-num, .day-badge, .mini-row) {
   color: inherit !important;
 }
+
+.late-usage-card {
+  border-left: 4px solid #16A34A;
+  position: relative;
+}
+
+.late-usage-card .late-usage-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #64748B;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.late-usage-card.good {
+  border-left-color: #16A34A;
+  background: #F0FDF4;
+}
+
+.late-usage-card.warning {
+  border-left-color: #FF8C00;
+  background: #FFF7ED;
+}
+
+.late-usage-card.near {
+  border-left-color: #C2410C;
+  background: #FFEDD5;
+}
+
+.late-usage-card.danger {
+  border-left-color: #DC2626;
+  background: #FEF2F2;
+}
+
+.late-usage-card.good .sv { color: #166534; }
+.late-usage-card.warning .sv { color: #C2410C; }
+.late-usage-card.near .sv { color: #9A3412; }
+.late-usage-card.danger .sv { color: #991B1B; }
+.employee-attendance-page .late-login-status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+.employee-attendance-page .late-login-status.good { background: #dcfce7; color: #166534; }
+.employee-attendance-page .late-login-status.caution { background: #fef3c7; color: #92400e; }
+.employee-attendance-page .late-login-status.warning { background: #ffedd5; color: #c2410c; }
+.employee-attendance-page .late-login-status.danger { background: #fee2e2; color: #991b1b; }
+.employee-attendance-page .late-login-status.muted { background: #e2e8f0; color: #475569; }
 .employee-attendance-page .cal-day.calendar-halfday :where(.day-num, .day-badge, .mini-row) {
   color: var(--calendar-halfday-text, #7A5800) !important;
 }

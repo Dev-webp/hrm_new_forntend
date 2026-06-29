@@ -166,12 +166,14 @@ export async function checkOut() {
 
 /** PUT /attendance/:userId — attendanceRoutes.js */
 export async function editAttendanceRecord(userId, date, checkIn, checkOut, reason) {
-  const response = await api.put(`/attendance/${userId}`, {
+  const payload = {
     date,
-    check_in_time: checkIn,
-    check_out_time: checkOut,
     reason,
-  });
+  };
+  if (checkIn !== undefined) payload.check_in_time = checkIn;
+  if (checkOut !== undefined) payload.check_out_time = checkOut;
+
+  const response = await api.put(`/attendance/${userId}`, payload);
   return response.data;
 }
 

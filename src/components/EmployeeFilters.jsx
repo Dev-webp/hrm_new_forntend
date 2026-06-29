@@ -1,10 +1,11 @@
-import { DEPARTMENTS, ROLE_OPTIONS, STATUS_OPTIONS } from "../utils/employeeHelpers";
+import { ROLE_OPTIONS, STATUS_OPTIONS } from "../utils/employeeHelpers";
 
 function EmployeeFilters({
   search,
   onSearchChange,
   department,
   onDepartmentChange,
+  departments = [],
   roleFilter,
   onRoleFilterChange,
   statusFilter,
@@ -59,14 +60,14 @@ function EmployeeFilters({
           All Departments
         </button>
 
-        {DEPARTMENTS.map((dept) => (
+        {departments.map((dept) => (
           <button
             key={dept}
             type="button"
             className={`filter-chip${department === dept ? " active" : ""}`}
             onClick={() => onDepartmentChange(dept)}
           >
-            {dept === "Digital Marketing Team" ? "Digital Marketing" : dept}
+            {dept}
           </button>
         ))}
       </div>

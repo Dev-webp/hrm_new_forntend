@@ -269,3 +269,119 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Compact dark employee sidebar */
+.employee-sidebar {
+  width: 248px;
+  background: #08306F;
+  border-right: 1px solid rgba(255, 140, 0, 0.22);
+  padding-bottom: 8px;
+}
+
+.employee-sidebar .logo-area {
+  padding: 16px 16px 14px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.employee-sidebar .company-logo {
+  width: 138px;
+  background: #FFFFFF;
+  padding: 6px;
+  border-radius: 12px;
+}
+
+.employee-sidebar .emp-avatar-area {
+  padding: 0 16px 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.employee-sidebar .emp-avatar {
+  width: 42px;
+  height: 42px;
+  background: #FF8C00;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+}
+
+.employee-sidebar .emp-info .name {
+  color: #FFFFFF;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.employee-sidebar .emp-info .designation {
+  background: rgba(255, 255, 255, 0.1);
+  color: #DDE7F3;
+  padding: 3px 0;
+  max-width: 170px;
+}
+
+.employee-sidebar .nav-section {
+  padding: 0 12px;
+}
+
+.employee-sidebar .nav-label-group {
+  color: rgba(221, 231, 243, 0.68);
+  padding: 6px 10px;
+}
+
+.employee-sidebar .nav-item {
+  min-height: 40px;
+  margin: 4px 0;
+  border-radius: 12px;
+  color: #DDE7F3;
+  font-weight: 750;
+  gap: 13px;
+}
+
+.employee-sidebar .nav-item i {
+  color: #FFB45C;
+  font-size: 1rem;
+}
+
+.employee-sidebar .nav-item:hover {
+  background: rgba(37, 99, 235, 0.22);
+  color: #FFFFFF;
+  transform: translateX(2px);
+}
+
+.employee-sidebar .nav-item.active {
+  background: #0D47A1;
+  color: #FFFFFF;
+  border-left: 0;
+  box-shadow: 0 10px 22px rgba(13, 71, 161, 0.28);
+}
+
+.employee-sidebar .nav-item.active i {
+  color: #FFFFFF;
+}
+
+.employee-sidebar .sidebar-bottom {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.employee-sidebar .nav-badge {
+  background: #FFFFFF;
+  color: #0D47A1;
+}
+
+.employee-sidebar .online-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: #BBF7D0;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.employee-sidebar .online-status span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+}

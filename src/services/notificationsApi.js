@@ -11,8 +11,10 @@ function normalizeNotificationsList(raw) {
 
 export async function fetchNotifications(limit = 100, filters = {}) {
   const params = { limit };
-  if (filters.fromDate) params.fromDate = filters.fromDate;
-  if (filters.toDate) params.toDate = filters.toDate;
+  const fromDate = filters.fromDate || filters.toDate || "";
+  const toDate = filters.toDate || filters.fromDate || "";
+  if (fromDate) params.fromDate = fromDate;
+  if (toDate) params.toDate = toDate;
   const response = await api.get("/notifications", { params });
   return normalizeNotificationsList(response.data);
 }

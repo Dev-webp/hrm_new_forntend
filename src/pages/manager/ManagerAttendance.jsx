@@ -9,27 +9,88 @@ import {
   fetchSelfHistory,
   fetchSelfToday,
 } from "../../services/managerApi";
+import { fetchActiveDepartments } from "../../services/departmentApi";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
+import {
+  formatLateLoginCount,
+  getLateLoginStatus,
+  getLateLoginStatusClass,
+  getRemainingGraceLateLogins,
+} from "../../utils/attendanceHelpers";
 import "./ManagerAttendance.css";
 
-function formatProductionHours(decimalHours) {
-  const h = Math.floor(decimalHours);
-  const m = Math.round((decimalHours - h) * 60);
-  if (h === 0) return `${m} minutes`;
-  if (m === 0) return `${h} hours`;
-  return `${h} hours ${m} minutes`;
+function formatTimeForInput(time) {
+  return time ? String(time).slice(0, 5) : "";
+}
+
+function formatTimeForEdit(time) {
+  const raw = formatTimeForInput(time);
+  if (!raw) return "";
+  const [h, m] = raw.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return "";
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+function parseEditTime(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const match12 = text.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (match12) {
+    let hour = Number(match12[1]);
+    const minute = Number(match12[2]);
+    const suffix = match12[3].toUpperCase();
+    if (hour < 1 || hour > 12 || minute > 59) return null;
+    if (suffix === "PM" && hour !== 12) hour += 12;
+    if (suffix === "AM" && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+  }
+  const match24 = text.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24) {
+    const hour = Number(match24[1]);
+    const minute = Number(match24[2]);
+    if (hour > 23 || minute > 59) return null;
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+  }
+  return null;
 }
 
 function getStatusBadge(status) {
   const s = (status || "absent").toLowerCase();
+  if (s === "in_progress" || s === "working") {
+    return <span className="badge" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>WORKING</span>;
+  }
   if (s === "full_day") return <span className="badge badge-full-day">FULL DAY</span>;
+  if (s === "present") return <span className="badge badge-full-day">PRESENT</span>;
   if (s === "half_day") return <span className="badge badge-half-day">HALF DAY</span>;
   if (s === "leave") return <span className="badge badge-leave">LEAVE</span>;
+  if (s === "holiday") return <span className="badge badge-leave">HOLIDAY</span>;
   return <span className="badge badge-absent">ABSENT</span>;
+}
+
+function getStatusLabel(status) {
+  const s = String(status || "absent").toLowerCase();
+  if (s === "in_progress" || s === "working") return "WORKING";
+  if (s === "full_day") return "FULL DAY";
+  if (s === "present") return "PRESENT";
+  if (s === "half_day") return "HALF DAY";
+  if (s === "leave") return "LEAVE";
+  if (s === "holiday") return "HOLIDAY";
+  return "Not Checked In";
 }
 
 function getLatePill(emp) {
   const status = (emp.status || "absent").toLowerCase();
   const lateMins = Number(emp.late_minutes || 0);
+  if (status === "in_progress" || status === "working") {
+    return (
+      <span className="on-time-pill" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>
+        {lateMins > 0 ? `Working - ${lateMins} min late` : "Working"}
+      </span>
+    );
+  }
   if (status === "absent") return <span className="absent-pill">Absent</span>;
   if (status === "leave") return <span className="badge badge-leave" style={{ padding: "4px 10px" }}>Leave</span>;
   if (lateMins > 0) return <span className="late-pill">🔴 {lateMins} min</span>;
@@ -43,6 +104,37 @@ function getInitials(name) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+const LATE_LOGIN_LIMIT = 6;
+
+function getLateUsageTone(count) {
+  if (count > 6) return "danger";
+  if (count === 5) return "near";
+  if (count === 6) return "near";
+  if (count >= 3) return "warning";
+  return "good";
+}
+
+function getLateUsageText(count) {
+  if (count > 6) return "Limit Exceeded";
+  if (count === 6) return "Limit Reached";
+  if (count === 5) return "Near Limit";
+  if (count >= 3) return "Monthly Warning";
+  return "Within Limit";
+}
+
+function LateLoginCountCell({ record }) {
+  const status = getLateLoginStatus(record);
+  return (
+    <div className="late-login-count-cell">
+      <strong>{formatLateLoginCount(record)}</strong>
+      <span className={getLateLoginStatusClass(status)}>{status}</span>
+      {status !== "Limit Exceeded" && (
+        <small>Remaining Grace: {getRemainingGraceLateLogins(record)}</small>
+      )}
+    </div>
+  );
 }
 
 export default function ManagerAttendance() {
@@ -67,6 +159,8 @@ export default function ManagerAttendance() {
   const [historyEnd, setHistoryEnd] = useState("");
   const [toast, setToast] = useState("");
   const [lateEmployees, setLateEmployees] = useState([]);
+  const [departments, setDepartments] = useState(["all"]);
+  const [monthlyLateCount, setMonthlyLateCount] = useState(0);
 
   const branch = localStorage.getItem("branch") || "Hyderabad";
   const managerName = localStorage.getItem("full_name") || "Manager";
@@ -87,6 +181,20 @@ export default function ManagerAttendance() {
       console.warn(err);
     }
   }, []);
+
+  const loadMonthlyLateUsage = useCallback(async () => {
+    try {
+      const date = new Date(currentDate);
+      const start = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().slice(0, 10);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().slice(0, 10);
+      const records = await fetchSelfHistory(start, end);
+      const lateCount = records.filter((record) => Number(record.late_minutes || 0) > 0).length;
+      setMonthlyLateCount(lateCount);
+    } catch (err) {
+      console.warn(err);
+      setMonthlyLateCount(0);
+    }
+  }, [currentDate]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -160,20 +268,22 @@ export default function ManagerAttendance() {
   };
 
   const handleEditSave = async () => {
-    if (!editCI || !editCO) {
-      showToast("Fill both fields");
-      return;
-    }
     if (editReason.trim().length < 5) {
       showToast("Enter a reason of at least 5 characters");
       return;
     }
-    if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(editCI) || !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(editCO)) {
-      showToast("Use HH:MM 24h format");
+    const nextCheckIn = editCI.trim() ? parseEditTime(editCI) : undefined;
+    const nextCheckOut = editCO.trim() ? parseEditTime(editCO) : undefined;
+    if ((editCI.trim() && !nextCheckIn) || (editCO.trim() && !nextCheckOut)) {
+      showToast("Use 12-hour time format, for example 10:00 AM");
+      return;
+    }
+    if (nextCheckIn === undefined && nextCheckOut === undefined) {
+      showToast("Update at least one time field");
       return;
     }
     try {
-      await editAttendanceRecord(editTarget, currentDate, editCI, editCO, editReason.trim());
+      await editAttendanceRecord(editTarget, currentDate, nextCheckIn, nextCheckOut, editReason.trim());
       showToast("✅ Attendance updated");
       setEditModal(false);
       setEditReason("");
@@ -212,32 +322,36 @@ export default function ManagerAttendance() {
     [records, currentDept, currentSearch]
   );
 
-  const departments = useMemo(
-    () => [
-      "all",
-      "Branch Manager",
-      "Reception",
-      "Sales Team",
-      "Process Team",
-      "Accounts",
-      "Digital Marketing Team",
-      "IT",
-    ],
-    []
-  );
-
   useEffect(() => {
     loadSelfAttendance();
+    loadMonthlyLateUsage();
     refresh();
-  }, [loadSelfAttendance, refresh]);
+  }, [loadMonthlyLateUsage, loadSelfAttendance, refresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchActiveDepartments({ branch })
+      .then((data) => {
+        if (!cancelled) {
+          setDepartments(["all", ...data.map((dept) => dept.name).filter(Boolean)]);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setDepartments(["all"]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [branch]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
       loadSelfAttendance();
+      loadMonthlyLateUsage();
       refresh();
     }, 30000);
     return () => clearInterval(intervalId);
-  }, [loadSelfAttendance, refresh]);
+  }, [loadMonthlyLateUsage, loadSelfAttendance, refresh]);
 
   return (
     <>
@@ -274,13 +388,7 @@ export default function ManagerAttendance() {
               {selfAttendance && selfAttendance.id ? (
                 <span className="self-status">
                   <i className="fas fa-circle" style={{ color: "#16A34A", fontSize: "10px" }}></i>{" "}
-                  {selfAttendance.status === "full_day"
-                    ? "FULL DAY"
-                    : selfAttendance.status === "half_day"
-                    ? "HALF DAY"
-                    : selfAttendance.status === "absent"
-                    ? "Not Checked In"
-                    : selfAttendance.status}
+                  {getStatusLabel(selfAttendance.status)}
                 </span>
               ) : (
                 <span className="self-status">
@@ -291,8 +399,8 @@ export default function ManagerAttendance() {
             <div>
               {selfAttendance && selfAttendance.id ? (
                 <span>
-                  In: {selfAttendance.check_in_time ? selfAttendance.check_in_time.slice(0, 5) : "--"} | Out:{" "}
-                  {selfAttendance.check_out_time ? selfAttendance.check_out_time.slice(0, 5) : "--"}
+                  In: {formatTime12Hour(selfAttendance.check_in_time)} | Out:{" "}
+                  {formatTime12Hour(selfAttendance.check_out_time)}
                 </span>
               ) : null}
             </div>
@@ -366,6 +474,16 @@ export default function ManagerAttendance() {
             <div className="kpi-value">{loading ? <span className="spinner"></span> : stats.totalLeave}</div>
             <div className="kpi-sub">On this day</div>
           </div>
+          <div
+            className={`kpi late-usage-kpi ${getLateUsageTone(monthlyLateCount)}`}
+            title="Late Login Policy: Maximum allowed late logins per month is 6. Grace login time is 10:15 AM. After reaching the limit, attendance is calculated according to company policy. The count resets automatically every month."
+          >
+            <div className="kpi-title">
+              <i className="fas fa-circle-info"></i> Late Logins
+            </div>
+            <div className="kpi-value">{monthlyLateCount} / {LATE_LOGIN_LIMIT}</div>
+            <div className="kpi-sub">{getLateUsageText(monthlyLateCount)}</div>
+          </div>
         </div>
 
         <div className="two-cols">
@@ -428,7 +546,8 @@ export default function ManagerAttendance() {
                   <th>Check-Out</th>
                   <th>Status</th>
                   <th>Late</th>
-                  <th>Production (hrs)</th>
+                  <th>Late Login Count</th>
+                  <th>Production</th>
                   <th>Break (min)</th>
                   <th>Edit</th>
                 </tr>
@@ -436,13 +555,13 @@ export default function ManagerAttendance() {
               <tbody>
                 {loading && filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+                    <td colSpan="10" style={{ textAlign: "center", padding: "40px" }}>
                       <span className="spinner"></span>
                     </td>
                   </tr>
                 ) : filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="9" style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
+                    <td colSpan="10" style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
                       No records found
                     </td>
                   </tr>
@@ -454,12 +573,13 @@ export default function ManagerAttendance() {
                         {r.full_name}
                       </td>
                       <td>{r.department || "—"}</td>
-                      <td>{r.check_in_time ? r.check_in_time.slice(0, 5) : "—"}</td>
-                      <td>{r.check_out_time ? r.check_out_time.slice(0, 5) : "—"}</td>
+                      <td>{formatTime12Hour(r.check_in_time)}</td>
+                      <td>{formatTime12Hour(r.check_out_time)}</td>
                       <td>{getStatusBadge(r.status)}</td>
                       <td>{getLatePill(r)}</td>
+                      <td><LateLoginCountCell record={r} /></td>
                       <td style={{ color: "#FF8C00", fontWeight: "600" }}>
-                        {Number(r.production_hours || 0).toFixed(2)} hrs
+                        {formatProductionHours(r.production_hours)}
                       </td>
                       <td style={{ color: "#64748B" }}>{Number(r.total_break_minutes || 0)} min</td>
                       <td>
@@ -468,8 +588,8 @@ export default function ManagerAttendance() {
                           className="edit-btn"
                           onClick={() => {
                             setEditTarget(r.user_id);
-                            setEditCI(r.check_in_time ? r.check_in_time.slice(0, 5) : "09:00");
-                            setEditCO(r.check_out_time ? r.check_out_time.slice(0, 5) : "18:00");
+                            setEditCI(formatTimeForEdit(r.check_in_time));
+                            setEditCO(formatTimeForEdit(r.check_out_time));
                             setEditReason("");
                             setEditModal(true);
                           }}
@@ -494,10 +614,10 @@ export default function ManagerAttendance() {
             </h3>
             <label>Employee</label>
             <input type="text" value={editTarget} readOnly style={{ opacity: 0.6 }} />
-            <label>Check-In (HH:MM)</label>
-            <input type="text" value={editCI} onChange={(e) => setEditCI(e.target.value)} placeholder="09:00" />
-            <label>Check-Out (HH:MM)</label>
-            <input type="text" value={editCO} onChange={(e) => setEditCO(e.target.value)} placeholder="18:00" />
+            <label>Check-In (AM/PM)</label>
+            <input type="text" value={editCI} onChange={(e) => setEditCI(e.target.value)} placeholder="10:00 AM" />
+            <label>Check-Out (AM/PM)</label>
+            <input type="text" value={editCO} onChange={(e) => setEditCO(e.target.value)} placeholder="7:00 PM" />
             <label>Reason</label>
             <textarea
               value={editReason}
@@ -545,7 +665,7 @@ export default function ManagerAttendance() {
                     <th>Check Out</th>
                     <th>Status</th>
                     <th>Late (min)</th>
-                    <th>Production (hrs)</th>
+                    <th>Production</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -557,8 +677,8 @@ export default function ManagerAttendance() {
                     historyRecords.map((r, index) => (
                       <tr key={index}>
                         <td>{r.date}</td>
-                        <td>{r.check_in_time ? r.check_in_time.slice(0, 5) : "—"}</td>
-                        <td>{r.check_out_time ? r.check_out_time.slice(0, 5) : "—"}</td>
+                        <td>{formatTime12Hour(r.check_in_time)}</td>
+                        <td>{formatTime12Hour(r.check_out_time)}</td>
                         <td>{getStatusBadge(r.status)}</td>
                         <td>{Number(r.late_minutes || 0)}</td>
                         <td style={{ color: "#FF8C00" }}>{formatProductionHours(Number(r.production_hours || 0))}</td>
@@ -581,3 +701,5 @@ export default function ManagerAttendance() {
     </>
   );
 }
+
+

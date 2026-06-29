@@ -9,6 +9,7 @@ import {
   isUnpaidLeaveRecord,
   normalizeAttendanceAnalysisRecord,
 } from "../../utils/attendanceAnalysisHelpers";
+import { formatProductionHours } from "../../utils/timeFormat";
 
 /** O(1) lookup map: "YYYY-MM-DD" → record */
 function buildRecordMap(records) {
@@ -35,6 +36,8 @@ function CalendarDay({ dateStr, dayNum, record }) {
       ? "Full Day"
       : safeRecord.status === "half_day"
         ? "Half Day"
+        : safeRecord.status === "no_record"
+          ? "No Record"
         : safeRecord.status === "sunday"
           ? "Sunday"
           : safeRecord.status === "holiday"
@@ -70,7 +73,7 @@ function CalendarDay({ dateStr, dayNum, record }) {
             {safeRecord.workHours > 0 ? (
               <>
                 <br />
-                Hours: {safeRecord.workHours.toFixed(1)}h
+                Hours: {formatProductionHours(safeRecord.workHours)}
               </>
             ) : null}
             <hr />

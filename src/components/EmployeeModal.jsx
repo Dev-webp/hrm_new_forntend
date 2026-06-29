@@ -1,5 +1,4 @@
 import {
-  DEPARTMENTS,
   FORM_BRANCH_OPTIONS,
   FORM_ROLE_OPTIONS,
   buildAutoEmail,
@@ -13,11 +12,16 @@ function EmployeeFormModal({
   form,
   formError,
   saving,
+  departments = [],
   onClose,
   onChange,
   onSave,
 }) {
   if (!open) return null;
+
+  const departmentOptions = Array.from(
+    new Set([form.department, ...departments].filter(Boolean))
+  );
 
   const title =
     mode === "edit" ? (
@@ -94,12 +98,30 @@ function EmployeeFormModal({
                 onChange({ ...form, department: event.target.value })
               }
             >
-              {DEPARTMENTS.map((dept) => (
+              {departmentOptions.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
                 </option>
               ))}
             </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="empDeptCode">Department Code</label>
+            <input
+              id="empDeptCode"
+              type="text"
+              placeholder="e.g., SALES"
+              value={form.departmentCode}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  departmentCode: event.target.value
+                    .replace(/[^A-Za-z0-9_-]/g, "")
+                    .slice(0, 30)
+                    .toUpperCase(),
+                })
+              }
+            />
           </div>
           <div className="form-group">
             <label htmlFor="empBranch">Branch</label>
@@ -141,11 +163,9 @@ function EmployeeFormModal({
             <input
               id="empId"
               type="text"
-              placeholder="Unique ID (e.g., VJC1234)"
-              value={form.employeeCode}
-              onChange={(event) =>
-                onChange({ ...form, employeeCode: event.target.value })
-              }
+              placeholder="Auto-generated after save"
+              value={mode === "add" ? "Auto-generated" : form.employeeCode}
+              readOnly
             />
           </div>
         </div>
@@ -287,7 +307,15 @@ function EmployeeFormModal({
   );
 }
 
-function EmployeeDetailsModal({ open, employee, onClose, onCopyPassword }) {
+function EmployeeDetailsModal({
+  open,
+  employee,
+  onClose,
+  onCopyPassword,
+  onEdit,
+  onDeactivate,
+  onActivate,
+}) {
   if (!open || !employee) return null;
 
   return (
@@ -305,6 +333,21 @@ function EmployeeDetailsModal({ open, employee, onClose, onCopyPassword }) {
         <h3>
           <i className="fas fa-id-card" /> Full Employee Details
         </h3>
+
+        <div className="employee-detail-actions">
+          <button type="button" className="modal-btn" onClick={() => onEdit?.(employee.id)}>
+            <i className="fas fa-pen" /> Edit employee
+          </button>
+          {employee.status === "inactive" ? (
+            <button type="button" className="modal-btn activate" onClick={() => onActivate?.(employee.id)}>
+              <i className="fas fa-user-check" /> Activate
+            </button>
+          ) : (
+            <button type="button" className="modal-btn danger" onClick={() => onDeactivate?.(employee.id)}>
+              <i className="fas fa-user-slash" /> Deactivate
+            </button>
+          )}
+        </div>
 
         <div className="details-grid">
           <div className="section-title">
@@ -418,6 +461,16 @@ function EmployeeDetailsModal({ open, employee, onClose, onCopyPassword }) {
 
           <div className="detail-item">
             <div className="detail-icon">
+              <i className="fas fa-code-branch" />
+            </div>
+            <div className="detail-content">
+              <div className="detail-label">Department Code</div>
+              <div className="detail-value">{employee.departmentCode || "—"}</div>
+            </div>
+          </div>
+
+          <div className="detail-item">
+            <div className="detail-icon">
               <i className="fas fa-dollar-sign" />
             </div>
             <div className="detail-content">
@@ -519,6 +572,7 @@ function EmployeeModal({
   form,
   formError,
   saving,
+  departments,
   detailsOpen,
   selectedEmployee,
   onFormClose,
@@ -526,6 +580,9 @@ function EmployeeModal({
   onFormSave,
   onDetailsClose,
   onCopyPassword,
+  onEditEmployee,
+  onDeactivateEmployee,
+  onActivateEmployee,
 }) {
   return (
     <>
@@ -535,6 +592,7 @@ function EmployeeModal({
         form={form}
         formError={formError}
         saving={saving}
+        departments={departments}
         onClose={onFormClose}
         onChange={onFormChange}
         onSave={onFormSave}
@@ -545,6 +603,9 @@ function EmployeeModal({
         employee={selectedEmployee}
         onClose={onDetailsClose}
         onCopyPassword={onCopyPassword}
+        onEdit={onEditEmployee}
+        onDeactivate={onDeactivateEmployee}
+        onActivate={onActivateEmployee}
       />
     </>
   );

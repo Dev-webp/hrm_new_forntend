@@ -84,18 +84,20 @@ export function computeEmpStats(
 
     const record = recordMap.get(dateStr);
 
-    if (!record || record.status === "absent") {
+    const status = String(record?.status || "absent").toLowerCase();
+
+    if (!record || status === "absent") {
       absent += 1;
       continue;
     }
 
-    if (record.status === "half_day") {
+    if (status === "half_day") {
       half += 1;
       if ((record.late_minutes || 0) > 0) late += 1;
       continue;
     }
 
-    if (record.status === "full_day") {
+    if (["full_day", "present", "leave", "in_progress", "working"].includes(status)) {
       present += 1;
       if ((record.late_minutes || 0) > 0) late += 1;
     }

@@ -10,6 +10,7 @@ import {
   generatePayslip,
   updatePayslipStatus,
 } from "../../services/payslipApi";
+import { fetchDepartments as fetchManagedDepartments } from "../../services/departmentApi";
 import "../../styles/adminPayslip.css";
 
 const DEF_MONTH = `${new Date().getFullYear()}-${String(
@@ -138,17 +139,16 @@ function AdminPayslip() {
   // Load departments
   const loadDepartments = useCallback(async () => {
     try {
-      const emps = await fetchPayrollEmployees();
-      const safeEmps = Array.isArray(emps) ? emps : [];
-      if (!Array.isArray(emps)) {
-        console.warn("[AdminPayslip] fetchPayrollEmployees returned non-array:", emps);
-      }
-      const depts = ["All", ...new Set(safeEmps.map((e) => e.department).filter(Boolean))];
-      setDepartments(depts);
+      const data = await fetchManagedDepartments({
+        branch: currentBranch,
+        status: "all",
+      });
+      setDepartments(["All", ...data.map((dept) => dept.name).filter(Boolean)]);
     } catch (e) {
       console.error(e);
+      setDepartments(["All"]);
     }
-  }, []);
+  }, [currentBranch]);
 
   // Update KPIs
   const updateKPIs = useCallback((rows) => {

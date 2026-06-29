@@ -46,12 +46,28 @@ function normalizeTime(value) {
 }
 
 /** PUT /api/attendance/:userId */
-export async function updateAttendance(userId, date, checkIn, checkOut, reason) {
-  const { data } = await api.put(`/attendance/${userId}`, {
+export async function updateAttendance(userId, date, updatesOrCheckIn, checkOut, reason) {
+  const updates =
+    typeof updatesOrCheckIn === "object" && updatesOrCheckIn !== null
+      ? updatesOrCheckIn
+      : {
+          check_in_time: normalizeTime(updatesOrCheckIn),
+          check_out_time: normalizeTime(checkOut),
+          reason,
+        };
+
+  const payload = {
     date: normalizeDate(date),
-    check_in_time: normalizeTime(checkIn),
-    check_out_time: normalizeTime(checkOut),
-    reason,
+    ...updates,
+    reason: updates.reason || reason,
+  };
+
+  Object.keys(payload).forEach((key) => {
+    if (payload[key] === undefined) delete payload[key];
+  });
+
+  const { data } = await api.put(`/attendance/${userId}`, {
+    ...payload,
   });
 
   return data;

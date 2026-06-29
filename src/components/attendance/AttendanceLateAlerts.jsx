@@ -2,6 +2,7 @@ import {
   formatTimeShort,
   getLateEmployeeStatusMeta,
 } from "../../utils/attendanceHelpers";
+import { formatProductionHours } from "../../utils/timeFormat";
 
 function AttendanceLateAlerts({
   records,
@@ -96,7 +97,7 @@ function AttendanceLateAlerts({
                         Check-in: {formatTimeShort(emp.check_in_time)}
                       </span>
                       <span style={{ color: "#FF8C00" }}>
-                        Production: {emp.production_hours || "0.00"} hrs
+                        Production: {formatProductionHours(emp.production_hours)}
                       </span>
                     </div>
                   </div>

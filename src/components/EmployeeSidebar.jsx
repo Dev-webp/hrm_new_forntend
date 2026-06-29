@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { id: "breaks", path: "/employee/breaks", icon: "fa-coffee", label: "Breaks" },
   { id: "messages", path: "/employee/messages", icon: "fa-envelope", label: "Messages" },
   { id: "payslip", path: "/employee/payslip", icon: "fa-file-invoice-dollar", label: "Payslip" },
+  { id: "instructions", path: "/employee/instructions", icon: "fa-book-open", label: "Instructions" },
 ];
 
 export default function EmployeeSidebar({ activePage = "dashboard" }) {
@@ -89,6 +90,7 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
         <div className="emp-info">
           <div className="name">{profile.fullName}</div>
           <div className="designation">{profile.designation}</div>
+          <div className="online-status"><span /> Online</div>
         </div>
       </div>
 

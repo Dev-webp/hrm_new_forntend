@@ -16,8 +16,18 @@ const EMPTY_BREAKS = {
   lunch: { start: "", end: "" },
   break2: { start: "", end: "" },
   break3: { start: "", end: "" },
+  break3Sessions: [],
 };
 
+const SLOT_META = {
+  break1: { label: "Tea Break 1", limit: 15, icon: "fa-mug-hot" },
+  lunch: { label: "Lunch", limit: 30, icon: "fa-utensils" },
+  break2: { label: "Tea Break 2", limit: 15, icon: "fa-mug-saucer" },
+  break3: { label: "Break 3", limit: 0, icon: "fa-cookie-bite" },
+};
+
+const MAX_BREAK_MINUTES = 60;
+const MAX_DAILY_BREAK_SESSIONS = 6;
 const GAUGE_CIRCUMFERENCE = 226.2;
 
 function getNow12h() {
@@ -43,6 +53,19 @@ function timeToMin(t) {
 function getDur(start, end) {
   if (!start || !end) return 0;
   return Math.max(0, timeToMin(end) - timeToMin(start));
+}
+
+function slotDuration(slot = {}) {
+  return Number(slot.duration_minutes ?? slot.duration ?? getDur(slot.start, slot.end)) || 0;
+}
+
+function normalizeBreak3Sessions(list) {
+  return Array.isArray(list)
+    ? list
+        .filter((item) => item?.start || item?.end)
+        .slice(0, MAX_DAILY_BREAK_SESSIONS)
+        .map((item, index) => ({ ...item, number: item.number || index + 1 }))
+    : [];
 }
 
 function getWeekRange(offset) {
@@ -112,6 +135,7 @@ export default function EmployeeBreaks() {
           lunch: data.lunch || { start: "", end: "" },
           break2: data.break2 || { start: "", end: "" },
           break3: data.break3 || { start: "", end: "" },
+          break3Sessions: normalizeBreak3Sessions(data.break3Sessions),
         });
       }
     } catch {
@@ -137,18 +161,22 @@ export default function EmployeeBreaks() {
   }, [loadBreaks, loadHistory]);
 
   const getTotal = useCallback(
-    () =>
-      SLOT_CONFIG.reduce(
-        (s, c) => s + getDur(myBreaks[c.key].start, myBreaks[c.key].end),
+    () => {
+      const standardTotal = SLOT_CONFIG.filter((cfg) => cfg.key !== "break3").reduce(
+        (s, c) => s + slotDuration(myBreaks[c.key]),
         0
-      ),
+      );
+      const break3Total = normalizeBreak3Sessions(myBreaks.break3Sessions)
+        .reduce((sum, item) => sum + slotDuration(item), 0);
+      return standardTotal + break3Total;
+    },
     [myBreaks]
   );
 
   const meter = useMemo(() => {
     const total = getTotal();
-    const pct = Math.min(100, Math.round((total / 60) * 100));
-    const rem = Math.max(0, 60 - total);
+    const pct = Math.min(100, Math.round((total / MAX_BREAK_MINUTES) * 100));
+    const rem = Math.max(0, MAX_BREAK_MINUTES - total);
     const stroke =
       total > 60 ? "#DC2626" : total > 45 ? "#FBB824" : "#FF8C00";
     const barBg =
@@ -167,11 +195,64 @@ export default function EmployeeBreaks() {
     };
   }, [getTotal]);
 
+  const break3Sessions = useMemo(
+    () => normalizeBreak3Sessions(myBreaks.break3Sessions),
+    [myBreaks.break3Sessions]
+  );
+
+  const standardTotal = useMemo(
+    () => SLOT_CONFIG
+      .filter((cfg) => cfg.key !== "break3")
+      .reduce((sum, cfg) => sum + slotDuration(myBreaks[cfg.key]), 0),
+    [myBreaks]
+  );
+
+  const break3Total = useMemo(
+    () => break3Sessions.reduce((sum, item) => sum + slotDuration(item), 0),
+    [break3Sessions]
+  );
+
+  const standardSessionsUsed = useMemo(
+    () =>
+      SLOT_CONFIG.filter((cfg) => cfg.key !== "break3").reduce((sum, cfg) => {
+        const b = myBreaks[cfg.key] || {};
+        return sum + (b.start || b.end ? 1 : 0);
+      }, 0),
+    [myBreaks]
+  );
+
+  const totalBreakSessionsUsed = standardSessionsUsed + break3Sessions.length;
+
+  const activeStandardKey = SLOT_CONFIG.filter((cfg) => cfg.key !== "break3").find((cfg) => {
+    const b = myBreaks[cfg.key] || {};
+    return b.start && !b.end;
+  })?.key;
+  const activeBreak3Index = break3Sessions.findIndex((item) => item.start && !item.end);
+  const hasActiveBreak = Boolean(activeStandardKey) || activeBreak3Index >= 0;
+  const canStartBreak3 =
+    !hasActiveBreak &&
+    meter.rem > 0 &&
+    totalBreakSessionsUsed < MAX_DAILY_BREAK_SESSIONS;
+
   const handleBreak = async (key) => {
     const b = myBreaks[key];
     const now = getNow12h();
     const next = { ...myBreaks, [key]: { ...b } };
-    if (!b.start) next[key].start = now;
+    if (!b.start) {
+      if (hasActiveBreak) {
+        showToast("End the current break before starting another");
+        return;
+      }
+      if (meter.rem <= 0) {
+        showToast("Daily break limit reached");
+        return;
+      }
+      if (totalBreakSessionsUsed >= MAX_DAILY_BREAK_SESSIONS) {
+        showToast("Daily break session limit reached");
+        return;
+      }
+      next[key].start = now;
+    }
     else if (!b.end) next[key].end = now;
     else return;
 
@@ -187,6 +268,54 @@ export default function EmployeeBreaks() {
       );
     } catch {
       showToast("Failed to save break");
+      await loadBreaks();
+      return;
+    }
+    await loadHistory();
+  };
+
+  const handleBreak3Session = async () => {
+    const now = getNow12h();
+    const nextBreak3Sessions = break3Sessions.map((item) => ({ ...item }));
+    const activeIndex = nextBreak3Sessions.findIndex((item) => item.start && !item.end);
+
+    if (activeIndex >= 0) {
+      nextBreak3Sessions[activeIndex].end = now;
+    } else {
+      if (!canStartBreak3) {
+        showToast(
+          meter.rem <= 0
+            ? "Daily break limit reached"
+            : totalBreakSessionsUsed >= MAX_DAILY_BREAK_SESSIONS
+              ? "Daily break session limit reached"
+              : "End the current break before starting another"
+        );
+        return;
+      }
+      nextBreak3Sessions.push({ start: now, end: "", number: nextBreak3Sessions.length + 1 });
+    }
+
+    const break3TotalNext = nextBreak3Sessions.reduce((sum, item) => sum + slotDuration(item), 0);
+    const active = nextBreak3Sessions.find((item) => item.start && !item.end);
+    const completed = nextBreak3Sessions.filter((item) => item.start && item.end);
+    const next = {
+      ...myBreaks,
+      break3Sessions: nextBreak3Sessions,
+      break3: {
+        start: nextBreak3Sessions[0]?.start || "",
+        end: active ? "" : completed.at(-1)?.end || "",
+        duration_minutes: break3TotalNext,
+      },
+    };
+    setMyBreaks(next);
+    try {
+      await apiFetch("/employee/my-breaks", {
+        method: "PUT",
+        body: { date: today, breaks: next },
+      });
+      showToast(activeIndex >= 0 ? "Break 3 ended" : "Break 3 started", "success");
+    } catch (error) {
+      showToast(error?.message || "Failed to save Break 3");
       await loadBreaks();
       return;
     }
@@ -302,6 +431,14 @@ export default function EmployeeBreaks() {
           <span style={{ color: "#1A2B4B" }}>—</span>
         );
       };
+      const fmtBreak3Sessions = (day) => {
+        const items = normalizeBreak3Sessions(day.break3Sessions);
+        return items.length ? (
+          <span className="break-time-cell">{items.length} entries / {items.reduce((sum, item) => sum + slotDuration(item), 0)}m</span>
+        ) : (
+          <span style={{ color: "#1A2B4B" }}>—</span>
+        );
+      };
 
       return (
         <>
@@ -314,6 +451,7 @@ export default function EmployeeBreaks() {
                 <th>Lunch</th>
                 <th>Break 2</th>
                 <th>Break 3</th>
+                <th>Break 3 Sessions</th>
                 <th>Total</th>
               </tr>
             </thead>
@@ -334,6 +472,7 @@ export default function EmployeeBreaks() {
                     <td>{fmtSlot(day, "lunch")}</td>
                     <td>{fmtSlot(day, "break2")}</td>
                     <td>{fmtSlot(day, "break3")}</td>
+                    <td>{fmtBreak3Sessions(day)}</td>
                     <td className={totalCls}>{day.total} min</td>
                   </tr>
                 );
@@ -464,6 +603,14 @@ export default function EmployeeBreaks() {
         <span style={{ color: "#1A2B4B" }}>—</span>
       );
     };
+    const fmtBreak3Sessions = (day) => {
+      const items = normalizeBreak3Sessions(day.break3Sessions);
+      return items.length ? (
+        <span className="break-time-cell">{items.length} entries / {items.reduce((sum, item) => sum + slotDuration(item), 0)}m</span>
+      ) : (
+        <span style={{ color: "#1A2B4B" }}>—</span>
+      );
+    };
 
     return (
       <table className="hist-table">
@@ -474,6 +621,7 @@ export default function EmployeeBreaks() {
             <th>Lunch</th>
             <th>Break 2</th>
             <th>Break 3</th>
+            <th>Break 3 Sessions</th>
             <th>Total</th>
           </tr>
         </thead>
@@ -494,6 +642,7 @@ export default function EmployeeBreaks() {
                 <td>{fmtSlot(day, "lunch")}</td>
                 <td>{fmtSlot(day, "break2")}</td>
                 <td>{fmtSlot(day, "break3")}</td>
+                <td>{fmtBreak3Sessions(day)}</td>
                 <td className={totalCls}>{day.total} min</td>
               </tr>
             );
@@ -578,9 +727,16 @@ export default function EmployeeBreaks() {
           <div className="breaks-grid" id="breaksGrid">
             {SLOT_CONFIG.map((cfg) => {
               const b = myBreaks[cfg.key];
-              const dur = getDur(b.start, b.end);
-              const isOnBreak = b.start && !b.end;
-              const isDone = b.start && b.end;
+              const meta = SLOT_META[cfg.key] || cfg;
+              const isBreak3 = cfg.key === "break3";
+              const dur = isBreak3 ? break3Total : slotDuration(b);
+              const isOnBreak = isBreak3 ? activeBreak3Index >= 0 : b.start && !b.end;
+              const isDone = !isBreak3 && b.start && b.end;
+              const cannotStartStandard =
+                !isOnBreak &&
+                (hasActiveBreak ||
+                  meter.rem <= 0 ||
+                  totalBreakSessionsUsed >= MAX_DAILY_BREAK_SESSIONS);
               let cardCls = "break-slot-card";
               if (isOnBreak) cardCls += " active-break";
               if (isDone) cardCls += " done-break";
@@ -589,7 +745,7 @@ export default function EmployeeBreaks() {
                 <div key={cfg.key} className={cardCls}>
                   <div className="bsc-header">
                     <div className="bsc-title">
-                      {cfg.emoji} {cfg.label}
+                      <i className={`fas ${meta.icon}`} /> {meta.label}
                     </div>
                     <div className="bsc-dur">{dur ? `${dur} min` : "—"}</div>
                   </div>
@@ -611,7 +767,24 @@ export default function EmployeeBreaks() {
                       )}
                     </div>
                   </div>
-                  {isDone ? (
+                  {isBreak3 && (
+                    <div className="break3-session-summary">
+                      <span>Total Break Sessions Used: <strong>{totalBreakSessionsUsed} / {MAX_DAILY_BREAK_SESSIONS}</strong></span>
+                      <span>Break 3 Used: <strong>{break3Total} min</strong></span>
+                      <span>Remaining Daily Break Balance: <strong>{meter.rem} min</strong></span>
+                    </div>
+                  )}
+                  {isBreak3 ? (
+                    <button
+                      type="button"
+                      className={`break-btn ${isOnBreak ? "btn-end" : "btn-start"}`}
+                      onClick={handleBreak3Session}
+                      disabled={!isOnBreak && !canStartBreak3}
+                    >
+                      <i className={`fas ${isOnBreak ? "fa-stop" : "fa-play"}`} />
+                      {isOnBreak ? "End Break 3" : "Start Break 3"}
+                    </button>
+                  ) : isDone ? (
                     <button type="button" className="break-btn btn-done" disabled>
                       <i className="fas fa-check" /> {dur} min done
                     </button>
@@ -628,9 +801,26 @@ export default function EmployeeBreaks() {
                       type="button"
                       className="break-btn btn-start"
                       onClick={() => handleBreak(cfg.key)}
+                      disabled={cannotStartStandard}
                     >
                       <i className="fas fa-play" /> Start Break
                     </button>
+                  )}
+                  {isBreak3 && (
+                    <div className="break3-session-history">
+                      <h4>Break 3 Session History</h4>
+                      {break3Sessions.length ? (
+                        break3Sessions.map((item, index) => (
+                          <div className="break3-session-row" key={`${item.start}-${index}`}>
+                            <span>Session {index + 1}</span>
+                            <strong>{item.start || "--"} - {item.end || (item.start ? "Active" : "--")}</strong>
+                            <em>{slotDuration(item)} min</em>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="empty-break3-history">No Break 3 sessions used today</div>
+                      )}
+                    </div>
                   )}
                 </div>
               );

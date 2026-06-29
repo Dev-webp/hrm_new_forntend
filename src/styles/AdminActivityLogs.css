@@ -274,6 +274,10 @@
   gap: 6px;
 }
 
+.admin-activity-logs-page .legacy-date-filter {
+  display: none;
+}
+
 .admin-activity-logs-page .filter-group label,
 .admin-activity-logs-page .bulk-range-fields label {
   color: var(--muted);
@@ -360,12 +364,61 @@
 
 .admin-activity-logs-page .activity-bulk-toolbar {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto auto 1fr;
   align-items: end;
   gap: 12px;
   border-radius: 16px;
   padding: 15px 18px;
   margin-bottom: 16px;
+}
+
+.admin-activity-logs-page .activity-range-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 180px)) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+  padding: 15px 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.admin-activity-logs-page .activity-range-panel.delete {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+
+.admin-activity-logs-page .activity-range-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-activity-logs-page .activity-range-panel input {
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 11px;
+  color: var(--text);
+  background: #f8fafc;
+}
+
+.admin-activity-logs-page .range-panel-copy strong {
+  color: var(--primary);
+  display: block;
+  font-size: 0.9rem;
+}
+
+.admin-activity-logs-page .range-panel-copy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .admin-activity-logs-page .bulk-select-all {
@@ -453,7 +506,7 @@
 
 .admin-activity-logs-page .log-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 1100px;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -477,7 +530,7 @@
 }
 
 .admin-activity-logs-page .log-table td {
-  padding: 15px 14px;
+  padding: 11px 12px;
   min-height: 58px;
   vertical-align: top;
   border-bottom: 1px solid #EAF1F8;
@@ -507,18 +560,50 @@
 }
 
 .admin-activity-logs-page .select-column {
-  width: 44px;
+  width: 50px;
   text-align: center;
 }
 
+.admin-activity-logs-page .timestamp-column,
 .admin-activity-logs-page .timestamp-cell {
-  width: 170px;
+  width: 180px;
   white-space: nowrap;
   font-size: 0.78rem;
 }
 
+.admin-activity-logs-page .user-column,
 .admin-activity-logs-page .user-cell {
+  width: 180px;
+}
+
+.admin-activity-logs-page .action-column {
   width: 170px;
+}
+
+.admin-activity-logs-page .severity-column {
+  width: 120px;
+}
+
+.admin-activity-logs-page .branch-column,
+.admin-activity-logs-page .branch-cell {
+  width: 90px;
+  text-align: center;
+}
+
+.admin-activity-logs-page .actions-column,
+.admin-activity-logs-page .actions-cell {
+  width: 100px;
+  text-align: center;
+  position: sticky;
+  right: 0;
+  z-index: 5;
+  background: #FFFFFF;
+  box-shadow: -8px 0 16px rgba(15, 23, 42, 0.04);
+}
+
+.admin-activity-logs-page .actions-column {
+  z-index: 7;
+  background: #F8FBFF;
 }
 
 .admin-activity-logs-page .user-cell strong {
@@ -528,10 +613,32 @@
 }
 
 .admin-activity-logs-page .details-cell {
-  max-width: 360px;
+  max-width: none;
   color: #334155;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
   word-break: normal;
+}
+
+.admin-activity-logs-page .structured-details {
+  display: grid;
+  gap: 2px;
+  line-height: 1.3;
+}
+
+.admin-activity-logs-page .structured-details span {
+  color: #64748B;
+  font-size: 0.72rem;
+}
+
+.admin-activity-logs-page .structured-details strong {
+  color: #0D47A1;
+  font-size: 0.84rem;
+}
+
+.admin-activity-logs-page .structured-details em {
+  color: #334155;
+  font-style: normal;
+  font-size: 0.73rem;
 }
 
 .admin-activity-logs-page .badge,
@@ -637,8 +744,9 @@
 
 .admin-activity-logs-page .row-actions {
   display: flex;
-  gap: 7px;
-  justify-content: flex-end;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
 }
 
 .admin-activity-logs-page .details-btn {

@@ -5,6 +5,8 @@ import EmployeeDashboard from "./EmployeeDashboard";
 import EmployeeLeave from "./EmployeeLeave";
 import EmployeeMessages from "./EmployeeMessages";
 import EmployeePayslip from "./EmployeePayslip";
+import EmployeeInstructions from "./EmployeeInstructions";
+import EmployeeHelpCenter from "./EmployeeHelpCenter";
 
 export default function EmployeeRoutes() {
   return (
@@ -15,6 +17,8 @@ export default function EmployeeRoutes() {
       <Route path="leave" element={<EmployeeLeave />} />
       <Route path="messages" element={<EmployeeMessages />} />
       <Route path="payslip" element={<EmployeePayslip />} />
+      <Route path="instructions" element={<EmployeeInstructions />} />
+      <Route path="help-center" element={<EmployeeHelpCenter />} />
       <Route index element={<Navigate to="dashboard" replace />} />
     </Routes>
   );

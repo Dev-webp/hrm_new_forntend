@@ -1,566 +1,360 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Toast } from "../../components/Cards";
+import EmployeeFilters from "../../components/EmployeeFilters";
+import EmployeeModal from "../../components/EmployeeModal";
+import { useToast } from "../../hooks/useToast";
+import api from "../../services/api";
+import { fetchActiveDepartments, fetchDepartments } from "../../services/departmentApi";
+import { updateEmployeeStatus } from "../../services/employeeApi";
 import {
-  createEmployee,
-  deleteEmployee,
-  fetchEmployeeById,
-  fetchManagerEmployees,
-  updateEmployee,
-} from "../../services/managerApi";
+  EMPTY_EMPLOYEE_FORM,
+  buildEmployeePayload,
+  employeeToForm,
+  mapApiEmployee,
+  validateEmployeeForm,
+} from "../../utils/employeeHelpers";
+import "../../styles/adminEmployees.css";
 import "./ManagerEmployee.css";
 
-function escapeHtml(str) {
-  return str
-    ?.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m])) || "";
-}
+const API_PATH = "/admin/employees";
 
-function formatDate(dateStr) {
-  if (!dateStr) return "N/A";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-}
-
-function generatePassword() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
-  let pass = "";
-  for (let i = 0; i < 10; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
-  return pass;
-}
-
-function getInitials(name) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-export default function ManagerEmployee() {
+function ManagerEmployee() {
   const [employees, setEmployees] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [activeDepartmentOptions, setActiveDepartmentOptions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDept, setSelectedDept] = useState("all");
-  const [showModal, setShowModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [toast, setToast] = useState("");
-  const [managerProfile, setManagerProfile] = useState(null);
 
-  const [formData, setFormData] = useState({
-    full_name: "",
-    designation: "",
-    department: "Branch Manager",
-    salary: "",
-    email: "",
-    password: "",
-  });
+  const [currentDept, setCurrentDept] = useState("all");
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState("add");
+  const [form, setForm] = useState(EMPTY_EMPLOYEE_FORM);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+
+  const { toast, showToast } = useToast(3000);
   const branch = localStorage.getItem("branch") || "Hyderabad";
-  const managerName = localStorage.getItem("full_name") || "Manager";
-
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2500);
-  }, []);
 
   const loadEmployees = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchManagerEmployees({
-        department: selectedDept,
-        search: searchTerm,
-        status: "all",
+      const response = await api.get(API_PATH, {
+        params: {
+          branch,
+          department: currentDept,
+          search,
+          status: "all",
+        },
       });
-      setEmployees(data);
-    } catch (err) {
-      showToast(err.message);
+      setEmployees(response.data.map(mapApiEmployee));
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || "Request failed";
+      showToast(`Error loading employees: ${message}`);
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedDept, searchTerm, showToast]);
+  }, [branch, currentDept, search, showToast]);
 
-  const handleDeptFilter = (dept) => {
-    setSelectedDept(dept);
-  };
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleAddEmployee = () => {
-    setEditingId(null);
-    setFormData({
-      full_name: "",
-      designation: "",
-      department: "Branch Manager",
-      salary: "",
-      email: "",
-      password: generatePassword(),
-    });
-    setShowModal(true);
-  };
-
-  const handleEditEmployee = async (id) => {
+  const loadDepartmentOptions = useCallback(async () => {
     try {
-      const emp = await fetchEmployeeById(id);
-      setEditingId(id);
-      setFormData({
-        full_name: emp.full_name,
-        designation: emp.designation || "",
-        department: emp.department,
-        salary: emp.salary,
-        email: emp.email,
-        password: "",
-      });
-      setShowModal(true);
-    } catch (err) {
-      showToast(err.message);
+      const [all, active] = await Promise.all([
+        fetchDepartments({ branch, status: "all" }),
+        fetchActiveDepartments({ branch }),
+      ]);
+      setDepartmentOptions(all.map((dept) => dept.name).filter(Boolean));
+      setActiveDepartmentOptions(active.map((dept) => dept.name).filter(Boolean));
+    } catch (error) {
+      showToast(error.response?.data?.message || "Failed to load departments");
+      setDepartmentOptions([]);
+      setActiveDepartmentOptions([]);
     }
-  };
-
-  const handleDeleteEmployee = async (id) => {
-    if (!window.confirm("Mark this employee inactive? This keeps their records and related data.")) return;
-    try {
-      await deleteEmployee(id);
-      showToast("Employee marked as inactive");
-      loadEmployees();
-    } catch (err) {
-      showToast(err.message);
-    }
-  };
-
-  const handleShowDetails = async (id) => {
-    try {
-      const emp = await fetchEmployeeById(id);
-      setSelectedEmployee(emp);
-      setShowDetailsModal(true);
-    } catch (err) {
-      showToast("Could not load details: " + err.message);
-    }
-  };
-
-  const handleSaveEmployee = async () => {
-    const { full_name, designation, department, salary, email, password } = formData;
-    if (!full_name || !department || !salary || !email) {
-      showToast("Fill all required fields");
-      return;
-    }
-
-    const payload = {
-      full_name,
-      designation,
-      department,
-      salary: parseFloat(salary),
-      email,
-      password: password || undefined,
-    };
-
-    try {
-      if (editingId) {
-        await updateEmployee(editingId, payload);
-        showToast("Employee updated");
-      } else {
-        const result = await createEmployee(payload);
-        showToast(`Employee added. HRMS Login: ${result.hrmsLogin} | Password: ${result.hrmsPassword}`);
-      }
-      setShowModal(false);
-      loadEmployees();
-    } catch (err) {
-      showToast(err.message);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  }, [branch, showToast]);
 
   useEffect(() => {
     loadEmployees();
   }, [loadEmployees]);
 
-  const totalEmployees = employees.length;
-  const activeEmployees = employees.filter((e) => e.status === "active").length;
-  const deptCount = new Set(employees.map((e) => e.department)).size;
+  useEffect(() => {
+    loadDepartmentOptions();
+  }, [loadDepartmentOptions]);
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((employee) => {
+      const roleMatch = roleFilter === "all" || employee.role === roleFilter;
+      const statusMatch = statusFilter === "all" || employee.status === statusFilter;
+      return roleMatch && statusMatch;
+    });
+  }, [employees, roleFilter, statusFilter]);
+
+  const stats = useMemo(() => {
+    const total = filteredEmployees.length;
+    const activeCount = filteredEmployees.filter((employee) => employee.status === "active").length;
+    const uniqueDepts = new Set(filteredEmployees.map((employee) => employee.department));
+    return {
+      total,
+      activeCount,
+      inactiveCount: total - activeCount,
+      deptCount: uniqueDepts.size,
+    };
+  }, [filteredEmployees]);
+
+  const selectedEmployee = useMemo(
+    () => employees.find((employee) => employee.id === selectedEmployeeId),
+    [employees, selectedEmployeeId]
+  );
+
+  const openAddModal = () => {
+    setFormMode("add");
+    setEditingEmployeeId(null);
+    setForm({
+      ...EMPTY_EMPLOYEE_FORM,
+      branch,
+      role: "Employee",
+      department: activeDepartmentOptions[0] || "",
+    });
+    setFormError("");
+    setFormOpen(true);
+  };
+
+  const openEditModal = (employeeId) => {
+    const employee = employees.find((item) => item.id === employeeId);
+    if (!employee) return;
+
+    setDetailsOpen(false);
+    setFormMode("edit");
+    setEditingEmployeeId(employeeId);
+    setForm({ ...employeeToForm(employee), branch, role: "Employee" });
+    setFormError("");
+    setFormOpen(true);
+  };
+
+  const handleSaveEmployee = async () => {
+    const managerForm = { ...form, branch, role: "Employee" };
+    const validationError = validateEmployeeForm(managerForm);
+    if (validationError) {
+      setFormError(validationError);
+      showToast(validationError);
+      return;
+    }
+
+    setFormError("");
+    setSaving(true);
+    const payload = buildEmployeePayload(managerForm);
+
+    try {
+      if (editingEmployeeId !== null) {
+        await api.put(`${API_PATH}/${editingEmployeeId}`, payload);
+        showToast(`${managerForm.name.trim()} updated`);
+      } else {
+        const response = await api.post(API_PATH, payload);
+        const result = response.data;
+        showToast(`${managerForm.name.trim()} added. HRMS Login: ${result.hrmsLogin} | Password: ${result.hrmsPassword}`);
+      }
+
+      setFormOpen(false);
+      await loadEmployees();
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || "Save failed";
+      setFormError(message);
+      showToast(`Save failed: ${message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeactivateEmployee = async (employeeId) => {
+    const employee = employees.find((item) => item.id === employeeId);
+    if (!employee) return;
+    if (!window.confirm(`Mark ${employee.name} inactive? This keeps their records and related data.`)) return;
+    const reason = window.prompt("Reason for deactivation (optional):", "") ?? null;
+    if (reason === null) return;
+
+    try {
+      await updateEmployeeStatus(employeeId, "inactive", reason);
+      setEmployees((prev) => prev.map((item) =>
+        item.id === employeeId ? { ...item, status: "inactive" } : item
+      ));
+      showToast("Employee marked as inactive");
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || "Mark inactive failed";
+      showToast(`Mark inactive failed: ${message}`);
+    }
+  };
+
+  const handleActivateEmployee = async (employeeId) => {
+    const employee = employees.find((item) => item.id === employeeId);
+    if (!employee || !window.confirm(`Activate ${employee.name}?`)) return;
+    const reason = window.prompt("Reason for activation (optional):", "") ?? null;
+    if (reason === null) return;
+
+    try {
+      await updateEmployeeStatus(employeeId, "active", reason);
+      setEmployees((prev) => prev.map((item) =>
+        item.id === employeeId ? { ...item, status: "active" } : item
+      ));
+      showToast(`${employee.name} activated`);
+    } catch (error) {
+      showToast(error.response?.data?.message || "Activation failed");
+    }
+  };
+
+  const handleCopyPassword = async (password) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      showToast("Password copied to clipboard");
+    } catch {
+      showToast("Could not copy password");
+    }
+  };
 
   return (
-    <>
-      <div className="main-content manager-portal-page manager-employees-page">
-        <div className="header">
-          <div className="title">
-            <h1>
-              Employee Management
-            </h1>
-            <p>
-              Branch: <span>{branch}</span> · Your team
-            </p>
-          </div>
-          <div className="controls-group">
-            <div className="branch-pill">
-              <i className="fas fa-store"></i> <span>{branch}</span>
-            </div>
-            <button className="add-employee-btn" onClick={handleAddEmployee}>
-              <i className="fas fa-plus"></i> Add Employee
-            </button>
-          </div>
+    <div className="admin-employees-page manager-employees-page manager-portal-page">
+      <div className="header">
+        <div className="title">
+          <h1>Employee Management</h1>
+          <p>Manage employee profiles, departments, and status for {branch}.</p>
         </div>
 
-        <div className="stats-row">
-          <div className="stat-card">
-            <div className="stat-label">Total Employees</div>
-            <div className="stat-number">{totalEmployees}</div>
-            <div className="stat-trend">Your branch team</div>
+        <div className="header-actions">
+          <button type="button" className="add-employee-btn" onClick={openAddModal}>
+            <i className="fas fa-plus" /> Add Employee
+          </button>
+          <div className="branch-selector manager-branch-locked">
+            <i className="fas fa-store" />
+            <span>{branch}</span>
           </div>
-          <div className="stat-card">
-            <div className="stat-label">Active Employees</div>
-            <div className="stat-number">{activeEmployees}</div>
-            <div className="stat-trend">Currently active</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Inactive Employees</div>
-            <div className="stat-number">{totalEmployees - activeEmployees}</div>
-            <div className="stat-trend neutral">Require review</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Departments</div>
-            <div className="stat-number">{deptCount}</div>
-            <div className="stat-trend">In your branch</div>
-          </div>
-        </div>
-
-        <div className="filter-bar">
-          <div className="search-box">
-            <i className="fas fa-search" style={{ color: "#FF8C00" }}></i>
-            <input
-              type="text"
-              placeholder="Search by name, department, email..."
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-          <div className="dept-filters">
-            {["all", "Branch Manager", "Reception", "Sales Team", "Process Team", "Accounts", "Digital Marketing Team", "IT Department"].map((dept) => (
-              <div
-                key={dept}
-                className={`filter-chip ${selectedDept === dept ? "active" : ""}`}
-                onClick={() => handleDeptFilter(dept)}
-              >
-                {dept === "all" ? "All Departments" : dept}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="employees-grid">
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              <span className="spinner"></span> Loading employees...
-            </div>
-          ) : !employees.length ? (
-            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px" }}>
-              No employees found
-            </div>
-          ) : (
-            employees.map((emp) => (
-              <div key={emp.id} className="employee-card">
-                <div className="card-actions">
-                  <button className="action-icon" onClick={() => handleEditEmployee(emp.id)}>
-                    <i className="fas fa-pencil-alt"></i>
-                  </button>
-                  <button className="action-icon delete-icon" onClick={() => handleDeleteEmployee(emp.id)} title="Mark inactive">
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
-                </div>
-                <div className="card-header">
-                  <div className="avatar">{escapeHtml(emp.profile_initials || "E")}</div>
-                  <div className="employee-info">
-                    <h4>
-                      {escapeHtml(emp.full_name)}{" "}
-                      <span className="role-badge">
-                        {emp.role === "MANAGER"
-                          ? "Admin"
-                          : emp.role === "SUPER_ADMIN"
-                          ? "Super Admin"
-                          : "Employee"}
-                      </span>
-                    </h4>
-                    <div className="employee-dept">{escapeHtml(emp.designation || emp.role)}</div>
-                  </div>
-                </div>
-                <div className="employee-details">
-                  <div>
-                    <i className="fas fa-building"></i> {escapeHtml(emp.department)}
-                  </div>
-                  <div>
-                    <i className="fas fa-id-card"></i> ID: {escapeHtml(emp.employee_code)}
-                  </div>
-                  <div>
-                    <i className="fas fa-envelope"></i> {escapeHtml(emp.email)}
-                  </div>
-                </div>
-                <button className="full-details-btn" onClick={() => handleShowDetails(emp.id)}>
-                  📄 Full Details
-                </button>
-              </div>
-            ))
-          )}
         </div>
       </div>
 
-      {showModal && (
-        <div className="modal" style={{ display: "flex" }}>
-          <div className="modal-content">
-            <h3>
-              <i className="fas fa-user-plus"></i> {editingId ? "Edit Employee" : "Add Employee"}
-            </h3>
-            <div className="form-group">
-              <label>Full Name</label>
-              <input
-                type="text"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleInputChange}
-                placeholder="e.g., John Doe"
-              />
-            </div>
-            <div className="form-group">
-              <label>Designation</label>
-              <input
-                type="text"
-                name="designation"
-                value={formData.designation}
-                onChange={handleInputChange}
-                placeholder="e.g., Team Lead"
-              />
-            </div>
-            <div className="form-group">
-              <label>Department</label>
-              <select name="department" value={formData.department} onChange={handleInputChange}>
-                <option value="Branch Manager">Branch Manager</option>
-                <option value="Reception">Reception</option>
-                <option value="Sales Team">Sales Team</option>
-                <option value="Process Team">Process Team</option>
-                <option value="Accounts">Accounts</option>
-                <option value="Digital Marketing Team">Digital Marketing Team</option>
-                <option value="IT Department">IT Department</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Branch</label>
-              <input type="text" value={branch} readOnly style={{ background: "#EAF4FF" }} />
-            </div>
-            <div className="form-group">
-              <label>Salary (INR)</label>
-              <input
-                type="number"
-                name="salary"
-                value={formData.salary}
-                onChange={handleInputChange}
-                placeholder="e.g., 50000"
-              />
-            </div>
-            <div className="form-group">
-              <label>Employee ID</label>
-              <input
-                type="text"
-                value={editingId ? selectedEmployee?.employee_code : "Auto-generated"}
-                readOnly
-                style={{ background: "#EAF4FF" }}
-              />
-            </div>
-            <div className="form-group">
-              <label>HRMS Login Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="auto@company.com"
-              />
-            </div>
-            <div className="form-group">
-              <label>HRMS Password</label>
-              <input
-                type="text"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Auto-generated"
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="modal-btn cancel" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              <button className="modal-btn" onClick={handleSaveEmployee}>
-                Save Employee
-              </button>
-            </div>
-          </div>
+      <div className="stats-row manager-stats-row">
+        <div className="stat-card">
+          <div className="stat-label">Total Employees</div>
+          <div className="stat-number">{stats.total}</div>
+          <div className="stat-trend">Your branch team</div>
         </div>
-      )}
+        <div className="stat-card">
+          <div className="stat-label">Active Employees</div>
+          <div className="stat-number">{stats.activeCount}</div>
+          <div className="stat-trend">Currently active</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Inactive Employees</div>
+          <div className="stat-number">{stats.inactiveCount}</div>
+          <div className="stat-trend neutral">Require review</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Departments</div>
+          <div className="stat-number">{stats.deptCount}</div>
+          <div className="stat-trend">In your branch</div>
+        </div>
+      </div>
 
-      {showDetailsModal && selectedEmployee && (
-        <div className="modal" style={{ display: "flex" }} onClick={() => setShowDetailsModal(false)}>
-          <div className="modal-content" style={{ maxWidth: "720px" }} onClick={(e) => e.stopPropagation()}>
-            <h3>
-              <i className="fas fa-id-card"></i> Employee Full Details
-            </h3>
-            <div className="details-grid">
-              <div className="section-title">
-                <i className="fas fa-user-circle"></i> Personal Information
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-user"></i>
+      <EmployeeFilters
+        search={search}
+        onSearchChange={setSearch}
+        department={currentDept}
+        onDepartmentChange={setCurrentDept}
+        departments={departmentOptions}
+        roleFilter={roleFilter}
+        onRoleFilterChange={setRoleFilter}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+      />
+
+      <div className="admin-employee-card-grid">
+        {loading ? (
+          <div className="loading-state">Loading employees...</div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="empty-state">No employees found</div>
+        ) : (
+          filteredEmployees.map((employee) => (
+            <div key={employee.id} className="admin-employee-card">
+              <div className="admin-card-header">
+                <div className="admin-avatar">
+                  {employee.initials || employee.name?.slice(0, 2)?.toUpperCase() || "E"}
                 </div>
-                <div className="detail-content">
-                  <div className="detail-label">Full Name</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.full_name)}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-briefcase"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Designation</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.designation || "—")}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-id-card"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Employee ID</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.employee_code)}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-envelope"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Email (HRMS Login)</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.email)}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-venus-mars"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Role</div>
-                  <div className="detail-value">
-                    {selectedEmployee.role === "MANAGER"
-                      ? "Admin (Manager)"
-                      : selectedEmployee.role === "SUPER_ADMIN"
-                      ? "Super Admin"
-                      : "Employee"}{" "}
-                    <span className="sensitive-badge">
-                      {selectedEmployee.role === "MANAGER" ? "Branch Access" : "Restricted"}
+
+                <div className="admin-card-person">
+                  <h4>{employee.name}</h4>
+                  <div className="admin-role-line">
+                    {employee.role === "Admin"
+                      ? "MANAGER"
+                      : employee.role === "Super Admin"
+                      ? "SUPER ADMIN"
+                      : "EMPLOYEE"}
+                    <span className={`admin-status-dot ${employee.status || "active"}`}>
+                      {employee.status || "active"}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-circle"></i>
+
+              <div className="admin-card-details">
+                <div>
+                  <i className="fas fa-building" /> {employee.department || "-"}
                 </div>
-                <div className="detail-content">
-                  <div className="detail-label">Status</div>
-                  <div className="detail-value">
-                    {selectedEmployee.status === "active" ? (
-                      <span style={{ color: "#16A34A" }}>● Active</span>
-                    ) : (
-                      <span style={{ color: "#F87171" }}>● Inactive</span>
-                    )}
-                  </div>
+                <div>
+                  <i className="fas fa-id-card" /> <span className="employee-id-chip">ID: {employee.empId || "-"}</span>
+                </div>
+                <div>
+                  <i className="fas fa-code-branch" /> Dept Code: {employee.departmentCode || "-"}
+                </div>
+                <div>
+                  <i className="fas fa-envelope" /> {employee.email || "-"}
+                </div>
+                <div>
+                  <i className="fas fa-store" /> {employee.branch || branch}
                 </div>
               </div>
 
-              <div className="section-title">
-                <i className="fas fa-building"></i> Employment & Branch
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-store"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Branch</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.branch)}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-chalkboard-user"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Department</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.department)}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-dollar-sign"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Salary (INR)</div>
-                  <div className="detail-value">₹{Number(selectedEmployee.salary).toLocaleString()}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-calendar-alt"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Joining Date</div>
-                  <div className="detail-value">{formatDate(selectedEmployee.joining_date)}</div>
-                </div>
-              </div>
-
-              <div className="section-title">
-                <i className="fas fa-university"></i> Bank Details
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-university"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Bank Name</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.bank_name || "—")}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-credit-card"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">Account Number</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.bank_account || "—")}</div>
-                </div>
-              </div>
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="fas fa-code-branch"></i>
-                </div>
-                <div className="detail-content">
-                  <div className="detail-label">IFSC Code</div>
-                  <div className="detail-value">{escapeHtml(selectedEmployee.bank_ifsc || "—")}</div>
-                </div>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="modal-btn cancel" onClick={() => setShowDetailsModal(false)}>
-                Close
+              <button
+                type="button"
+                className="admin-full-details-btn"
+                onClick={() => {
+                  setSelectedEmployeeId(employee.id);
+                  setDetailsOpen(true);
+                }}
+              >
+                <i className="fas fa-file-alt" /> Full Details
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
-      {toast && <div className="toast-msg show">{toast}</div>}
-    </>
+      <EmployeeModal
+        formOpen={formOpen}
+        formMode={formMode}
+        form={form}
+        formError={formError}
+        saving={saving}
+        departments={activeDepartmentOptions}
+        detailsOpen={detailsOpen}
+        selectedEmployee={selectedEmployee}
+        onFormClose={() => setFormOpen(false)}
+        onFormChange={(nextForm) => setForm({ ...nextForm, branch, role: "Employee" })}
+        onFormSave={handleSaveEmployee}
+        onDetailsClose={() => {
+          setDetailsOpen(false);
+          setSelectedEmployeeId(null);
+        }}
+        onCopyPassword={handleCopyPassword}
+        onEditEmployee={openEditModal}
+        onDeactivateEmployee={handleDeactivateEmployee}
+        onActivateEmployee={handleActivateEmployee}
+      />
+
+      <Toast message={toast.message} visible={toast.visible} />
+    </div>
   );
 }
+
+export default ManagerEmployee;

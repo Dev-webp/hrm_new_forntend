@@ -7,6 +7,8 @@ import {
 import "../../styles/adminBreaks.css";
 
 const MAX_BREAK_MINUTES = 60;
+const MAX_DAILY_BREAK_SESSIONS = 6;
+const STANDARD_BREAK_TYPES = ["break1", "lunch", "break2", "break3"];
 
 // Helper: convert "10:30 AM" -> minutes
 function timeToMinutes(timeStr) {
@@ -29,9 +31,45 @@ function getBreakDuration(breakObj) {
   return Math.max(0, end - start);
 }
 
+function getBreak3Sessions(breaks = {}) {
+  return Array.isArray(breaks.break3Sessions)
+    ? breaks.break3Sessions
+    : breaks.break3?.start || breaks.break3?.end
+      ? [breaks.break3]
+      : [];
+}
+
+function getVisibleBreak3Sessions(breaks = {}) {
+  return getBreak3Sessions(breaks).filter((item) => {
+    if (item?.start && !item?.end) return true;
+    return getBreakDuration(item) > 0;
+  });
+}
+
+function getTotalBreakSessions(breaks = {}) {
+  const standardCount = ["break1", "lunch", "break2"].reduce((sum, type) => {
+    const item = breaks[type] || {};
+    return sum + (item.start || item.end ? 1 : 0);
+  }, 0);
+  const break3Count = getBreak3Sessions(breaks).filter((item) => item?.start || item?.end).length;
+  return standardCount + break3Count;
+}
+
+function getStandardBreakMinutes(breaks) {
+  return STANDARD_BREAK_TYPES
+    .filter((type) => type !== "break3")
+    .reduce((sum, type) => sum + getBreakDuration(breaks[type] || {}), 0);
+}
+
+function getBreak3Minutes(breaks) {
+  return getVisibleBreak3Sessions(breaks).reduce(
+    (sum, item) => sum + (Number(item.duration_minutes ?? item.duration) || getBreakDuration(item)),
+    0
+  );
+}
+
 function getTotalBreakMinutes(breaks) {
-  const items = [breaks.break1, breaks.lunch, breaks.break2, breaks.break3];
-  return items.reduce((sum, b) => sum + getBreakDuration(b), 0);
+  return getStandardBreakMinutes(breaks) + getBreak3Minutes(breaks);
 }
 
 function escapeHtml(str) {
@@ -39,6 +77,20 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, (m) =>
     m === "&" ? "&amp;" : m === "<" ? "&lt;" : "&gt;"
   );
+}
+
+function normalizeBreaksForEdit(breaks = {}) {
+  return {
+    break1: { start: breaks.break1?.start || "", end: breaks.break1?.end || "" },
+    lunch: { start: breaks.lunch?.start || "", end: breaks.lunch?.end || "" },
+    break2: { start: breaks.break2?.start || "", end: breaks.break2?.end || "" },
+    break3: { start: breaks.break3?.start || "", end: breaks.break3?.end || "" },
+    break3Sessions: getBreak3Sessions(breaks).map((item, index) => ({
+      start: item.start || "",
+      end: item.end || "",
+      number: item.number || index + 1,
+    })),
+  };
 }
 
 function AdminLeave() {
@@ -63,6 +115,7 @@ function AdminLeave() {
       lunch: { start: "", end: "" },
       break2: { start: "", end: "" },
       break3: { start: "", end: "" },
+      break3Sessions: [],
     },
     reason: "",
   });
@@ -148,6 +201,7 @@ function AdminLeave() {
         lunch: { start: "", end: "" },
         break2: { start: "", end: "" },
         break3: { start: "", end: "" },
+        break3Sessions: [],
       };
 
     setEditModal({
@@ -155,7 +209,7 @@ function AdminLeave() {
       employeeId: empId,
       employeeName: emp.name,
       department: emp.department,
-      breaks: empBreaks,
+      breaks: normalizeBreaksForEdit(empBreaks),
       reason: "",
     });
   };
@@ -172,6 +226,16 @@ function AdminLeave() {
     if (editModal.employeeId === null) return;
     if (editModal.reason.trim().length < 5) {
       window.alert("Please enter a reason of at least 5 characters.");
+      return;
+    }
+    const totalUsed = getTotalBreakMinutes(editModal.breaks);
+    const totalSessions = getTotalBreakSessions(editModal.breaks);
+    if (totalUsed > MAX_BREAK_MINUTES) {
+      window.alert("Total break time cannot exceed 60 minutes.");
+      return;
+    }
+    if (totalSessions > MAX_DAILY_BREAK_SESSIONS) {
+      window.alert("Maximum 6 total break sessions are allowed per day.");
       return;
     }
 
@@ -209,6 +273,25 @@ function AdminLeave() {
     }));
   };
 
+  const handleBreak3SessionChange = (index, field, value) => {
+    setEditModal((prev) => {
+      const sessions = [...(prev.breaks.break3Sessions || [])];
+      while (sessions.length <= index) {
+        sessions.push({ start: "", end: "", number: sessions.length + 1 });
+      }
+      sessions[index] = { ...sessions[index], [field]: value, number: index + 1 };
+      return {
+        ...prev,
+        breaks: {
+          ...prev.breaks,
+          break3Sessions: sessions
+            .map((item, itemIndex) => ({ ...item, number: itemIndex + 1 }))
+            .slice(0, MAX_DAILY_BREAK_SESSIONS),
+        },
+      };
+    });
+  };
+
   // Filter employees by branch
   const filteredEmployees =
     currentBranch === "all"
@@ -235,10 +318,15 @@ function AdminLeave() {
         break3: { start: "", end: "" },
       };
     const totalUsed = getTotalBreakMinutes(empBreaks);
-    if ([empBreaks.break1, empBreaks.lunch, empBreaks.break2, empBreaks.break3]
+    if ([empBreaks.break1, empBreaks.lunch, empBreaks.break2, ...getBreak3Sessions(empBreaks)]
       .some((item) => item?.start && !item?.end)) onBreak++;
     totalUsedSum += totalUsed;
     if (totalUsed > MAX_BREAK_MINUTES) exceeding++;
+    const break3Used = getBreak3Minutes(empBreaks);
+    const break3Count = getVisibleBreak3Sessions(empBreaks).length;
+    const break3History = getVisibleBreak3Sessions(empBreaks)
+      .join(", ") || "—";
+    const limitStatus = totalUsed > MAX_BREAK_MINUTES ? "Exceeded" : "Within limit";
 
     const remaining = Math.max(0, MAX_BREAK_MINUTES - totalUsed);
     let remainingClass = "remaining-badge";
@@ -254,11 +342,18 @@ function AdminLeave() {
         <td>{formatBreakCell(empBreaks.break1)}</td>
         <td>{formatBreakCell(empBreaks.lunch)}</td>
         <td>{formatBreakCell(empBreaks.break2)}</td>
-        <td>{formatBreakCell(empBreaks.break3)}</td>
+        <td>
+          <div className="break3-summary-cell">
+            <strong>Break 3</strong>
+            <span>{break3Used ? `${break3Used} min` : "—"}</span>
+            <em>{break3Count} sessions</em>
+          </div>
+        </td>
         <td style={{ fontWeight: "600" }}>{totalUsed}</td>
         <td>
           <span className={remainingClass}>{remaining}</span>
         </td>
+        <td>{limitStatus}</td>
         <td>
           <button
             className="edit-btn"
@@ -275,6 +370,18 @@ function AdminLeave() {
   const avgUsed = filteredEmployees.length
     ? Math.round(totalUsedSum / filteredEmployees.length)
     : 0;
+
+  const modalTotalUsed = getTotalBreakMinutes(editModal.breaks);
+  const modalRemaining = Math.max(0, MAX_BREAK_MINUTES - modalTotalUsed);
+  const modalTotalSessions = getTotalBreakSessions(editModal.breaks);
+  const modalStandardSessions = ["break1", "lunch", "break2"].reduce((sum, type) => {
+    const item = editModal.breaks[type] || {};
+    return sum + (item.start || item.end ? 1 : 0);
+  }, 0);
+  const modalBreak3Rows = Array.from(
+    { length: Math.max(MAX_DAILY_BREAK_SESSIONS - modalStandardSessions, editModal.breaks.break3Sessions?.length || 0, 1) },
+    (_, index) => editModal.breaks.break3Sessions?.[index] || { start: "", end: "", number: index + 1 }
+  ).slice(0, MAX_DAILY_BREAK_SESSIONS);
 
   const branchDisplay =
     currentBranch === "Hyderabad"
@@ -395,25 +502,26 @@ function AdminLeave() {
               <th>Break 3 (In → Out)</th>
               <th>Total Used (min)</th>
               <th>Remaining (min)</th>
+              <th>Status</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+                <td colSpan="10" style={{ textAlign: "center", padding: "40px" }}>
                   <div className="loading-spinner"></div> Loading breaks...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+                <td colSpan="10" style={{ textAlign: "center", padding: "40px" }}>
                   Failed to load breaks: {error}
                 </td>
               </tr>
             ) : filteredEmployees.length === 0 ? (
               <tr>
-                <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
+                <td colSpan="10" style={{ textAlign: "center", padding: "40px" }}>
                   No employees found for this branch
                 </td>
               </tr>
@@ -437,6 +545,16 @@ function AdminLeave() {
             Edit Breaks - {editModal.employeeName} ({editModal.department}) ·{" "}
             {currentDate}
           </h3>
+          <div className="break-detail-summary">
+            <div><span>Employee</span><strong>{editModal.employeeName || "-"}</strong></div>
+            <div><span>Department</span><strong>{editModal.department || "-"}</strong></div>
+            <div><span>Date</span><strong>{currentDate}</strong></div>
+            <div><span>Daily Limit</span><strong>{MAX_BREAK_MINUTES} min</strong></div>
+            <div><span>Total Used</span><strong>{modalTotalUsed} min</strong></div>
+            <div><span>Remaining</span><strong>{modalRemaining} min</strong></div>
+            <div><span>Total Sessions</span><strong>{modalTotalSessions} / {MAX_DAILY_BREAK_SESSIONS}</strong></div>
+          </div>
+          <div className="modal-section-title">Standard Breaks</div>
           <div className="form-group">
             <label>
               <i className="fas fa-mug-hot"></i> Break 1
@@ -509,7 +627,28 @@ function AdminLeave() {
               />
             </div>
           </div>
-          <div className="form-group">
+          <div className="modal-section-title">Break 3 Sessions</div>
+          <div className="break3-session-editor">
+            {modalBreak3Rows.map((session, index) => (
+              <div className="break3-edit-row" key={`admin-b3-${index}`}>
+                <span>Session {index + 1}</span>
+                <input
+                  type="text"
+                  placeholder="Start"
+                  value={session.start || ""}
+                  onChange={(e) => handleBreak3SessionChange(index, "start", e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="End"
+                  value={session.end || ""}
+                  onChange={(e) => handleBreak3SessionChange(index, "end", e.target.value)}
+                />
+                <em>{getBreakDuration(session)} min</em>
+              </div>
+            ))}
+          </div>
+          <div className="form-group break3-legacy-group">
             <label>
               <i className="fas fa-mug-saucer"></i> Break 3
             </label>

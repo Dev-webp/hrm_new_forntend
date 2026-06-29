@@ -82,6 +82,7 @@ export default function AdminNotifications() {
   const [viewToDate, setViewToDate] = useState("");
   const [deleteFromDate, setDeleteFromDate] = useState("");
   const [deleteToDate, setDeleteToDate] = useState("");
+  const [datePanel, setDatePanel] = useState("");
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
 
@@ -229,7 +230,9 @@ export default function AdminNotifications() {
         socket.on("new_notification", (notif) => {
           if (cancelled) return;
           const createdDate = String(notif.created_at || "").slice(0, 10);
-          if ((viewFromDate && createdDate < viewFromDate) || (viewToDate && createdDate > viewToDate)) return;
+          const effectiveFrom = viewFromDate || viewToDate;
+          const effectiveTo = viewToDate || viewFromDate;
+          if ((effectiveFrom && createdDate < effectiveFrom) || (effectiveTo && createdDate > effectiveTo)) return;
           setNotifications((prev) => [notif, ...prev]);
           const icons = actionIcon(notif.action_type);
           showToast(
@@ -324,11 +327,14 @@ export default function AdminNotifications() {
   };
 
   const handleDeleteRange = async () => {
-    if (!deleteFromDate || !deleteToDate) return showToast("Choose both delete range dates", "error");
-    if (!window.confirm(`Permanently delete notifications from ${deleteFromDate} through ${deleteToDate}?`)) return;
+    const from = deleteFromDate || deleteToDate;
+    const to = deleteToDate || deleteFromDate;
+    if (!from || !to) return showToast("Choose a delete date or date range", "error");
+    if (from > to) return showToast("Delete from date cannot be after delete to date", "error");
+    if (!window.confirm(`Permanently delete notifications from ${from} through ${to}?`)) return;
     setBulkLoading(true);
     try {
-      const result = await deleteNotificationsByRange(deleteFromDate, deleteToDate);
+      const result = await deleteNotificationsByRange(from, to);
       await loadNotifications();
       window.dispatchEvent(new Event("notification-count-changed"));
       showToast(`${result.deletedCount || 0} notification(s) deleted`, "success");
@@ -475,16 +481,23 @@ export default function AdminNotifications() {
         </div>
 
         <div className="notification-bulk-toolbar">
-          <div className="notification-view-dates">
+          <button type="button" className="range-toggle-btn" onClick={() => setDatePanel((panel) => panel === "view" ? "" : "view")}>
+            <i className="fas fa-eye" /> View
+          </button>
+          <button type="button" className="range-toggle-btn danger" onClick={() => setDatePanel((panel) => panel === "delete" ? "" : "delete")}>
+            <i className="fas fa-calendar-times" /> Delete
+          </button>
+          <div className="notification-view-dates" style={{ display: datePanel === "view" ? undefined : "none" }}>
             <label>View from<input type="date" value={viewFromDate} onChange={(event) => setViewFromDate(event.target.value)} /></label>
             <label>View to<input type="date" value={viewToDate} onChange={(event) => setViewToDate(event.target.value)} /></label>
+            <button type="button" onClick={loadNotifications}>Load Notifications</button>
             <button type="button" onClick={() => { setViewFromDate(""); setViewToDate(""); }}>Clear Filter</button>
           </div>
           <div className="notification-selection-actions">
             <label><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} /> Select visible</label>
             <button type="button" className="bulk-danger" onClick={handleDeleteSelected} disabled={bulkLoading || !selectedIds.size}>Delete Selected ({selectedIds.size})</button>
           </div>
-          <div className="notification-delete-range">
+          <div className="notification-delete-range" style={{ display: datePanel === "delete" ? undefined : "none" }}>
             <label>Delete from<input type="date" value={deleteFromDate} onChange={(event) => setDeleteFromDate(event.target.value)} /></label>
             <label>Delete to<input type="date" value={deleteToDate} onChange={(event) => setDeleteToDate(event.target.value)} /></label>
             <button type="button" className="bulk-danger filled" onClick={handleDeleteRange} disabled={bulkLoading}>{bulkLoading ? "Deletingâ€¦" : "Delete Date Range"}</button>

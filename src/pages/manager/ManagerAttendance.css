@@ -95,3 +95,45 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .toast { position: fixed; bottom: 20px; right: 20px; background: #FFF4E5; border-left: 4px solid #FF8C00; padding: 10px 20px; border-radius: 40px; color: #FFF4E5; z-index: 2000; opacity: 0; transition: 0.25s; pointer-events: none; }
 .toast.show { opacity: 1; }
 @media (max-width: 1000px) { .two-cols { grid-template-columns: 1fr; } .att-dashboard { padding: 20px; } }
+
+.late-usage-kpi { border-left: 4px solid #16A34A; }
+.late-usage-kpi.good { background: #F0FDF4; border-left-color: #16A34A; }
+.late-usage-kpi.warning { background: #FFF7ED; border-left-color: #FF8C00; }
+.late-usage-kpi.near { background: #FFEDD5; border-left-color: #C2410C; }
+.late-usage-kpi.danger { background: #FEF2F2; border-left-color: #DC2626; }
+.late-usage-kpi.good .kpi-value { color: #166534; }
+.late-usage-kpi.warning .kpi-value { color: #C2410C; }
+.late-usage-kpi.near .kpi-value { color: #9A3412; }
+.late-usage-kpi.danger .kpi-value { color: #991B1B; }
+
+.manager-attendance-page .late-login-count-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.manager-attendance-page .late-login-count-cell strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.manager-attendance-page .late-login-count-cell small {
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.manager-attendance-page .late-login-status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.manager-attendance-page .late-login-status.good { background: #dcfce7; color: #166534; }
+.manager-attendance-page .late-login-status.caution { background: #fef3c7; color: #92400e; }
+.manager-attendance-page .late-login-status.warning { background: #ffedd5; color: #c2410c; }
+.manager-attendance-page .late-login-status.danger { background: #fee2e2; color: #991b1b; }
+.manager-attendance-page .late-login-status.muted { background: #e2e8f0; color: #475569; }

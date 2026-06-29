@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import {
   AttendanceTrendChart,
@@ -14,6 +15,7 @@ import {
 } from "../../components/Cards";
 import { useToast } from "../../hooks/useToast";
 import api from "../../services/api";
+import { fetchDepartmentCount } from "../../services/departmentApi";
 import { getStoredUser } from "../../utils/auth";
 import {
   attPctColor,
@@ -28,6 +30,7 @@ import {
 } from "../../utils/dashboardHelpers";
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const today = useMemo(() => new Date(), []);
   const todayStr = today.toISOString().slice(0, 10);
 
@@ -50,6 +53,7 @@ function AdminDashboard() {
     absent: "--",
     late: "--",
     pendingLeaves: "--",
+    departments: "--",
   });
   const [notifications, setNotifications] = useState([
     { cls: "info", icon: "fa-spinner fa-spin", text: "Loading notifications…" },
@@ -236,6 +240,21 @@ function AdminDashboard() {
     }
   }, []);
 
+  const loadDepartmentCount = useCallback(async () => {
+    try {
+      const count = await fetchDepartmentCount();
+      setWelcomeStats((prev) => ({
+        ...prev,
+        departments: count,
+      }));
+    } catch {
+      setWelcomeStats((prev) => ({
+        ...prev,
+        departments: "--",
+      }));
+    }
+  }, []);
+
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     showToast("Loading dashboard…");
@@ -280,12 +299,13 @@ function AdminDashboard() {
       setAttendanceMap(nextAttendanceMap);
       setMonthKpi(summary.monthKpi);
 
-      setWelcomeStats({
+      setWelcomeStats((prev) => ({
         present: summary.today.present,
         absent: summary.today.absent,
         late: summary.today.late,
         pendingLeaves: summary.pendingLeaves,
-      });
+        departments: prev.departments,
+      }));
 
       setNotifications(
         buildNotifications(summary.today, summary.pendingLeaves)
@@ -313,7 +333,8 @@ function AdminDashboard() {
   useEffect(() => {
     loadDashboard();
     loadLeavePanel();
-  }, [loadDashboard, loadLeavePanel]);
+    loadDepartmentCount();
+  }, [loadDashboard, loadLeavePanel, loadDepartmentCount]);
 
   // Lightweight 60s poll for live banner stats (same as original admin.html)
   useEffect(() => {
@@ -371,7 +392,7 @@ function AdminDashboard() {
         icon: "fas fa-briefcase",
         label: "Working Days",
         value: monthStats.working,
-        accent: "#FF8C00",
+        accent: "#16A34A",
       },
       {
         icon: "fas fa-clock",
@@ -547,25 +568,30 @@ function AdminDashboard() {
         onBranchChange={setCurrentBranch}
         month={currentMonthStr}
         onMonthChange={setCurrentMonthStr}
+        showAdminActions
       />
 
       <div className="scroll-content admin-portal-page admin-dashboard-page">
         <div className="welcome-banner">
           <div className="welcome-left">
-            <div className="welcome-avatar">{getInitials(displayName)}</div>
+            <div className="welcome-avatar">
+              <i className="fas fa-user" />
+            </div>
 
             <div className="welcome-text">
               <h2>
-                Good {clock.greeting}, <span>{displayName}</span>
+                Good {clock.greeting}, <span>{displayName} 👋</span>
               </h2>
-              <p>
-                Here&apos;s what&apos;s happening today. <strong>{clock.dateLabel}</strong>
-              </p>
-            </div>
-
-            <div className="datetime-pill">
-              <i className="fas fa-clock" style={{ fontSize: "0.65rem" }} />
-              <span className="live-clock">{clock.time}</span>
+              <div className="welcome-meta">
+                <span>
+                  <i className="fas fa-calendar-day" />
+                  {clock.dateLabel}
+                </span>
+                <span>
+                  <i className="fas fa-clock" />
+                  {clock.time}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -574,21 +600,36 @@ function AdminDashboard() {
               value={welcomeStats.present}
               label="Present Today"
               colorClass="ws-green"
+              icon="fas fa-users"
+              accentColor="#10b981"
             />
             <WelcomeStat
               value={welcomeStats.absent}
               label="Absent Today"
               colorClass="ws-red"
+              icon="fas fa-user-minus"
+              accentColor="#ef4444"
             />
             <WelcomeStat
               value={welcomeStats.late}
               label="Late Today"
               colorClass="ws-orange"
+              icon="fas fa-clock"
+              accentColor="#ff8c00"
             />
             <WelcomeStat
               value={welcomeStats.pendingLeaves}
               label="Leave Requests"
               colorClass="ws-gold"
+              icon="fas fa-briefcase"
+              accentColor="#7c3aed"
+            />
+            <WelcomeStat
+              value={welcomeStats.departments}
+              label="Departments"
+              colorClass="ws-blue"
+              icon="fas fa-building"
+              accentColor="#0d47a1"
             />
           </div>
         </div>
@@ -605,6 +646,14 @@ function AdminDashboard() {
               </div>
             ))}
           </div>
+          <button
+            type="button"
+            className="notif-view-all"
+            onClick={() => navigate("/admin/notifications")}
+          >
+            <span>View All</span>
+            <i className="fas fa-arrow-right" />
+          </button>
         </div>
 
         <div className="month-strip">

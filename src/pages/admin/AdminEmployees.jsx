@@ -4,6 +4,7 @@ import EmployeeFilters from "../../components/EmployeeFilters";
 import EmployeeModal from "../../components/EmployeeModal";
 import { useToast } from "../../hooks/useToast";
 import api from "../../services/api";
+import { fetchActiveDepartments, fetchDepartments } from "../../services/departmentApi";
 import { updateEmployeeStatus } from "../../services/employeeApi";
 import {
   BRANCH_OPTIONS,
@@ -20,6 +21,8 @@ const API_PATH = "/admin/employees";
 
 function AdminEmployees() {
   const [employees, setEmployees] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [activeDepartmentOptions, setActiveDepartmentOptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [currentBranch, setCurrentBranch] = useState("all");
@@ -87,6 +90,25 @@ function AdminEmployees() {
     loadEmployees();
   }, [loadEmployees]);
 
+  const loadDepartmentOptions = useCallback(async () => {
+    try {
+      const [all, active] = await Promise.all([
+        fetchDepartments({ branch: currentBranch, status: "all" }),
+        fetchActiveDepartments({ branch: currentBranch }),
+      ]);
+      setDepartmentOptions(all.map((dept) => dept.name).filter(Boolean));
+      setActiveDepartmentOptions(active.map((dept) => dept.name).filter(Boolean));
+    } catch (error) {
+      showToast(error.response?.data?.message || "Failed to load departments");
+      setDepartmentOptions([]);
+      setActiveDepartmentOptions([]);
+    }
+  }, [currentBranch, showToast]);
+
+  useEffect(() => {
+    loadDepartmentOptions();
+  }, [loadDepartmentOptions]);
+
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const roleMatch =
@@ -129,9 +151,10 @@ function AdminEmployees() {
     currentBranch;
 
   const openAddModal = () => {
+    const nextDepartment = activeDepartmentOptions[0] || "";
     setFormMode("add");
     setEditingEmployeeId(null);
-    setForm(EMPTY_EMPLOYEE_FORM);
+    setForm({ ...EMPTY_EMPLOYEE_FORM, department: nextDepartment });
     setFormError("");
     setFormOpen(true);
   };
@@ -141,6 +164,7 @@ function AdminEmployees() {
 
     if (!employee) return;
 
+    setDetailsOpen(false);
     setFormMode("edit");
     setEditingEmployeeId(employeeId);
     setForm(employeeToForm(employee));
@@ -320,6 +344,7 @@ function AdminEmployees() {
         onSearchChange={setSearch}
         department={currentDept}
         onDepartmentChange={setCurrentDept}
+        departments={departmentOptions}
         roleFilter={roleFilter}
         onRoleFilterChange={setRoleFilter}
         statusFilter={statusFilter}
@@ -334,43 +359,12 @@ function AdminEmployees() {
   ) : (
     filteredEmployees.map((employee) => (
       <div key={employee.id} className="admin-employee-card">
-        <div className="admin-card-actions">
-          <button
-            type="button"
-            className="admin-action-icon"
-            onClick={() => openEditModal(employee.id)}
-            title="Edit"
-          >
-            <i className="fas fa-pencil-alt" />
-          </button>
-
-          {employee.status === "inactive" ? (
-            <button
-              type="button"
-              className="admin-action-icon activate"
-              onClick={() => handleActivateEmployee(employee.id)}
-              title="Activate employee"
-            >
-              <i className="fas fa-user-check" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="admin-action-icon delete"
-              onClick={() => handleDeleteEmployee(employee.id)}
-              title="Mark inactive"
-            >
-              <i className="fas fa-user-slash" />
-            </button>
-          )}
-        </div>
-
         <div className="admin-card-header">
           <div className="admin-avatar">
             {employee.initials || employee.name?.slice(0, 2)?.toUpperCase() || "E"}
           </div>
 
-          <div>
+          <div className="admin-card-person">
             <h4>{employee.name}</h4>
             <div className="admin-role-line">
               {employee.role === "MANAGER"
@@ -390,7 +384,10 @@ function AdminEmployees() {
             <i className="fas fa-building" /> {employee.department || "—"}
           </div>
           <div>
-            <i className="fas fa-id-card" /> ID: {employee.empId  || "—"}
+            <i className="fas fa-id-card" /> <span className="employee-id-chip">ID: {employee.empId || "—"}</span>
+          </div>
+          <div>
+            <i className="fas fa-code-branch" /> Dept Code: {employee.departmentCode || "—"}
           </div>
           <div>
             <i className="fas fa-envelope" /> {employee.email || "—"}
@@ -421,6 +418,7 @@ function AdminEmployees() {
         form={form}
         formError={formError}
         saving={saving}
+        departments={activeDepartmentOptions}
         detailsOpen={detailsOpen}
         selectedEmployee={selectedEmployee}
         onFormClose={() => setFormOpen(false)}
@@ -431,6 +429,9 @@ function AdminEmployees() {
           setSelectedEmployeeId(null);
         }}
         onCopyPassword={handleCopyPassword}
+        onEditEmployee={openEditModal}
+        onDeactivateEmployee={handleDeleteEmployee}
+        onActivateEmployee={handleActivateEmployee}
       />
 
       <Toast message={toast.message} visible={toast.visible} />

@@ -20,6 +20,7 @@ import {
   normalizeAttendanceAnalysisRecord,
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
+import { formatProductionHours } from "../../utils/timeFormat";
 import "../../styles/adminAttendanceAnalysis.css";
 
 
@@ -307,7 +308,7 @@ function AdminAttendanceAnalysis() {
         rec.status,
         rec.checkIn,
         rec.checkOut,
-        rec.workHours.toFixed(1),
+        formatProductionHours(rec.workHours),
         rec.lateMinutes,
         rec.breaks,
       ]);

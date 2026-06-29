@@ -155,6 +155,15 @@
   border-bottom: 1px solid rgba(255, 140, 0, 0.2);
 }
 
+.admin-breaks-page .breaks-table th:nth-child(6) {
+  font-size: 0;
+}
+
+.admin-breaks-page .breaks-table th:nth-child(6)::after {
+  content: "Break 3 Summary";
+  font-size: 0.8rem;
+}
+
 .admin-breaks-page .breaks-table td {
   padding: 14px 12px;
   border-bottom: 1px solid rgba(255, 140, 0, 0.1);
@@ -168,6 +177,28 @@
   padding: 6px 10px;
   border-radius: 20px;
   display: inline-block;
+}
+
+.admin-breaks-page .break3-summary-cell {
+  display: grid;
+  gap: 2px;
+  min-width: 92px;
+}
+
+.admin-breaks-page .break3-summary-cell strong {
+  color: #1A2B4B;
+  font-size: 0.78rem;
+}
+
+.admin-breaks-page .break3-summary-cell span {
+  color: #0D47A1;
+  font-weight: 800;
+}
+
+.admin-breaks-page .break3-summary-cell em {
+  color: #64748B;
+  font-size: 0.72rem;
+  font-style: normal;
 }
 
 .admin-breaks-page .edit-btn {
@@ -219,8 +250,8 @@
 
 .admin-breaks-page .modal-content {
   background: #FFFFFF;
-  border-radius: 32px;
-  max-width: 550px;
+  border-radius: 24px;
+  max-width: 860px;
   width: 90%;
   padding: 28px;
   border: 1px solid #FF8C00;
@@ -231,6 +262,81 @@
 .admin-breaks-page .modal-content h3 {
   margin-bottom: 20px;
   color: #FF8C00;
+}
+
+.admin-breaks-page .break-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.admin-breaks-page .break-detail-summary div {
+  border: 1px solid #DBE7F3;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #F8FAFC;
+}
+
+.admin-breaks-page .break-detail-summary span {
+  display: block;
+  color: #64748B;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-breaks-page .break-detail-summary strong {
+  display: block;
+  color: #1A2B4B;
+  margin-top: 4px;
+  font-size: 0.86rem;
+}
+
+.admin-breaks-page .modal-section-title {
+  margin: 18px 0 10px;
+  color: #0D47A1;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.admin-breaks-page .break3-session-editor {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.admin-breaks-page .break3-edit-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1fr) 72px;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-breaks-page .break3-edit-row span {
+  color: #1A2B4B;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-breaks-page .break3-edit-row input {
+  background: #F5F7FA;
+  border: 1px solid #EAF4FF;
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: #1A2B4B;
+  font-family: monospace;
+  outline: none;
+}
+
+.admin-breaks-page .break3-edit-row em {
+  color: #16A34A;
+  font-style: normal;
+  font-weight: 800;
+  text-align: right;
+}
+
+.admin-breaks-page .break3-legacy-group {
+  display: none;
 }
 
 .admin-breaks-page .form-group {

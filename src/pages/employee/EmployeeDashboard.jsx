@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
-import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 import { MONTH_NAMES, normalizeArray, WEEK_DAYS } from "./employeeUtils";
 import "../../styles/EmployeeDashboard.css";
 
-const GAUGE_CIRCUMFERENCE = 226.2;
 const LATE_MAX = 6;
 
 function getGreeting() {
@@ -45,18 +47,31 @@ function isUnpaidLeaveDay(rec = {}) {
 export default function EmployeeDashboard() {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
+  const [profileData, setProfileData] = useState(null);
 
   const userProfile = useMemo(() => {
     const decoded = parseJwt(token) || {};
+    let storedUser = {};
+    try {
+      storedUser = JSON.parse(localStorage.getItem("user") || "null") || {};
+    } catch {
+      storedUser = {};
+    }
+    const source = { ...decoded, ...storedUser, ...(profileData || {}) };
+    const employeeCode =
+      source.employee_code ||
+      source.employeeId ||
+      localStorage.getItem("employee_code") ||
+      "—";
     return {
-      full_name: decoded.full_name || "Employee",
-      department: decoded.department || "",
-      branch: decoded.branch || "Hyderabad",
-      email: decoded.email || "",
-      employee_code: decoded.employee_code || "—",
-      firstName: (decoded.full_name || "Employee").split(" ")[0],
+      full_name: source.full_name || "Employee",
+      department: source.department || "",
+      branch: source.branch || "Hyderabad",
+      email: source.email || "",
+      employee_code: employeeCode,
+      firstName: (source.full_name || "Employee").split(" ")[0],
     };
-  }, [token]);
+  }, [token, profileData]);
 
   const [viewDate, setViewDate] = useState(() => new Date());
   const [allAttendance, setAllAttendance] = useState([]);
@@ -64,23 +79,57 @@ export default function EmployeeDashboard() {
   const [todayData, setTodayData] = useState(null);
   const [holidayList, setHolidayList] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [policyExpanded, setPolicyExpanded] = useState(false);
   const [greetingMsg, setGreetingMsg] = useState("");
-  const [liveDateTime, setLiveDateTime] = useState("—");
+  const [liveDateLabel, setLiveDateLabel] = useState("—");
+  const [liveTimeLabel, setLiveTimeLabel] = useState("—");
 
   useEffect(() => {
     if (!token) navigate("/login");
   }, [token, navigate]);
 
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    apiFetch("/employee/profile")
+      .then((profile) => {
+        if (cancelled || !profile) return;
+        setProfileData(profile);
+        let storedUser = {};
+        try {
+          storedUser = JSON.parse(localStorage.getItem("user") || "null") || {};
+        } catch {
+          storedUser = {};
+        }
+        const nextUser = { ...storedUser, ...profile };
+        localStorage.setItem("user", JSON.stringify(nextUser));
+        if (profile.employee_code) {
+          localStorage.setItem("employee_code", profile.employee_code);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [apiFetch, token]);
+
   const updateDateTime = useCallback(() => {
     const now = new Date();
-    setGreetingMsg(`${getGreeting()}, ${userProfile.firstName} 👋`);
-    setLiveDateTime(
-      now.toLocaleString("en-IN", {
+    setGreetingMsg(`${getGreeting()}, ${userProfile.firstName}`);
+    setLiveDateLabel(
+      now.toLocaleDateString("en-IN", {
         weekday: "short",
-        month: "short",
         day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    );
+    setLiveTimeLabel(
+      now.toLocaleTimeString("en-IN", {
         hour: "2-digit",
         minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
       })
     );
   }, [userProfile.firstName]);
@@ -150,6 +199,9 @@ export default function EmployeeDashboard() {
     let absentDays = 0;
     let totalProdHours = 0;
     let prodCount = 0;
+    let totalBreakMinutes = 0;
+    let breakCount = 0;
+    let lateMinutes = 0;
 
     for (let d = 1; d <= lastDay; d++) {
       const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
@@ -159,12 +211,18 @@ export default function EmployeeDashboard() {
       if (!isSun && !isHol) workingDays++;
       const rec = allAttendance.find((r) => r.date === ds);
       if (rec) {
-        if (rec.status === "full_day") fullDays++;
-        else if (rec.status === "half_day") halfDays++;
+        const status = String(rec.status || "").toLowerCase();
+        if (["full_day", "present", "in_progress", "working", "leave"].includes(status)) fullDays++;
+        else if (status === "half_day") halfDays++;
         else if (!isSun && !isHol) absentDays++;
+        lateMinutes += Number(rec.late_minutes || 0);
         if (rec.production_hours > 0) {
           totalProdHours += parseFloat(rec.production_hours);
           prodCount++;
+        }
+        if (Number(rec.total_break_minutes || 0) > 0) {
+          totalBreakMinutes += Number(rec.total_break_minutes || 0);
+          breakCount++;
         }
       } else if (!isSun && !isHol) absentDays++;
     }
@@ -173,8 +231,7 @@ export default function EmployeeDashboard() {
       workingDays > 0
         ? Math.round(((fullDays + halfDays * 0.5) / workingDays) * 100)
         : 0;
-    const avgHours =
-      prodCount > 0 ? (totalProdHours / prodCount).toFixed(1) : "0.0";
+    const avgHours = prodCount > 0 ? totalProdHours / prodCount : 0;
     const grade =
       score >= 95
         ? "Excellent"
@@ -197,14 +254,6 @@ export default function EmployeeDashboard() {
         : score >= 80
           ? "Room to improve"
           : "Attendance needs attention";
-    const gaugeColor =
-      score >= 95
-        ? CALENDAR_STATUS_COLORS.present.border
-        : score >= 80
-          ? CALENDAR_STATUS_COLORS.half_day.border
-          : score >= 60
-            ? CALENDAR_STATUS_COLORS.late.border
-            : CALENDAR_STATUS_COLORS.absent.border;
 
     const today = new Date().toISOString().slice(0, 10);
     let currentStreak = 0;
@@ -234,16 +283,22 @@ export default function EmployeeDashboard() {
       absentDays,
       score,
       avgHours,
+      avgBreakMinutes: breakCount > 0 ? Math.round(totalBreakMinutes / breakCount) : 0,
       grade,
       gradeClass,
       hint,
-      gaugeColor,
-      gaugeOffset: GAUGE_CIRCUMFERENCE - GAUGE_CIRCUMFERENCE * (score / 100),
       currentStreak,
       rate,
       leaveBalance,
+      approvedLeaveDays: approvedDays,
       lateCount,
+      lateMinutes,
       holidayCount: holidayList.length,
+      totalDays: lastDay,
+      sundays: Array.from({ length: lastDay }, (_, index) => index + 1).filter(
+        (day) => new Date(y, m, day).getDay() === 0
+      ).length,
+      leaveRequests: allLeaves.length,
     };
   }, [allAttendance, allLeaves, holidayList, monthMeta]);
 
@@ -269,7 +324,7 @@ export default function EmployeeDashboard() {
           <strong>
             {lateCount} late login{lateCount > 1 ? "s" : ""} used
           </strong>{" "}
-          · {remaining} remaining before half-day deduction.
+          Â· {remaining} remaining before half-day deduction.
         </>
       );
     } else {
@@ -287,22 +342,34 @@ export default function EmployeeDashboard() {
     const d = todayData;
     let statusText = "Absent";
     let statusCls = "absent";
-    if (d?.status === "full_day") {
-      statusText = "Present";
-      statusCls = "present";
-    } else if (d?.status === "half_day") {
+    if (d?.status === "half_day") {
       statusText = "Half Day";
       statusCls = "halfday";
-    } else if (d?.late_minutes > 0) {
+    } else if (d?.status === "leave") {
+      statusText = "Leave";
+      statusCls = "leave";
+    } else if (d?.late_minutes > 0 && d?.status !== "absent") {
       statusText = "Late";
       statusCls = "late";
+    } else if (d?.status === "full_day") {
+      statusText = "Present";
+      statusCls = "present";
+    } else if (d?.status === "present" || d?.status === "in_progress" || d?.status === "working") {
+      statusText = d?.status === "in_progress" || d?.status === "working" ? "Working" : "Present";
+      statusCls = "present";
     }
     return {
-      checkIn: d?.check_in_time?.slice(0, 5) || "—",
-      checkOut: d?.check_out_time?.slice(0, 5) || "—",
+      checkIn: formatTime12Hour(d?.check_in_time),
+      checkOut: formatTime12Hour(d?.check_out_time),
       late: d?.late_minutes || 0,
       statusText,
       statusCls,
+      message:
+        d?.status === "absent" || !d
+          ? "Attendance not completed."
+          : Number(d?.late_minutes || 0) > 0
+            ? `You are late by ${Number(d.late_minutes)} minutes.`
+            : "Great! You are on time today.",
     };
   }, [todayData]);
 
@@ -335,6 +402,7 @@ export default function EmployeeDashboard() {
       const isSunday = dow === 0;
       let status = "No record";
       let className = "no-record calendar-empty";
+      const todayStr = new Date().toISOString().slice(0, 10);
 
       if (isHoliday || isSunday) {
         status = isSunday ? "Sunday" : "Holiday";
@@ -359,6 +427,9 @@ export default function EmployeeDashboard() {
           status = "Present";
           className = "present calendar-present";
         }
+      } else if (ds <= todayStr) {
+        status = "Absent";
+        className = "absent calendar-absent";
       }
 
       cells.push({
@@ -381,27 +452,37 @@ export default function EmployeeDashboard() {
       })
     );
     const rows = [];
+    const todayStr = new Date().toISOString().slice(0, 10);
     for (let d = 1; d <= lastDay; d++) {
       const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
       const dow = new Date(ds).getDay();
       if (dow === 0 || holidaySet.has(ds)) continue;
       const rec = allAttendance.find((r) => r.date === ds);
-      let statusNode = (
+      let statusNode = ds <= todayStr ? (
+        <span className="status-chip absent">Absent</span>
+      ) : (
         <span style={{ color: "var(--muted)" }}>No Record</span>
       );
+      let statusText = ds <= todayStr ? "Absent" : "No Record";
       if (rec) {
+        const safeStatus = String(rec.status || "").toLowerCase();
         const cls =
-          rec.status === "full_day"
+          ["full_day", "present", "in_progress", "working", "leave"].includes(safeStatus)
             ? "present"
-            : rec.status === "half_day"
+            : safeStatus === "half_day"
               ? "halfday"
               : "absent";
         const txt =
-          rec.status === "full_day"
+          safeStatus === "in_progress" || safeStatus === "working"
+            ? "Working"
+            : safeStatus === "leave"
+              ? "Leave"
+            : ["full_day", "present", "leave"].includes(safeStatus)
             ? "Present"
-            : rec.status === "half_day"
+            : safeStatus === "half_day"
               ? "Half Day"
               : "Absent";
+        statusText = txt;
         statusNode = (
           <>
             <span className={`status-chip ${cls}`}>{txt}</span>
@@ -423,9 +504,10 @@ export default function EmployeeDashboard() {
         key: ds,
         date: ds,
         day: WEEK_DAYS[dow],
-        in: rec?.check_in_time?.slice(0, 5) || "—",
-        out: rec?.check_out_time?.slice(0, 5) || "—",
+        in: formatTime12Hour(rec?.check_in_time),
+        out: formatTime12Hour(rec?.check_out_time),
         status: statusNode,
+        statusText,
       });
     }
     return rows;
@@ -435,12 +517,37 @@ export default function EmployeeDashboard() {
   const analyticsSubTitle = `${viewDate.toLocaleDateString("en-IN", {
     month: "long",
     year: "numeric",
-  })} · Personal Report`;
+  })} Â· Personal Report`;
   const todayDateLabel = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
+
+  const overviewItems = [
+    { label: "Total Days", value: analytics.totalDays, icon: "fa-calendar-days", tone: "blue" },
+    { label: "Working Days", value: analytics.workingDays, icon: "fa-briefcase", tone: "success" },
+    { label: "Sundays", value: analytics.sundays, icon: "fa-sun", tone: "purple" },
+    { label: "Total Present", value: analytics.fullDays, icon: "fa-user-check", tone: "success" },
+    { label: "Late Logins", value: analytics.lateCount, icon: "fa-business-time", tone: "warning" },
+    { label: "Absences", value: analytics.absentDays, icon: "fa-user-slash", tone: "danger" },
+  ];
+
+  const quickActions = [
+    { label: "Apply Leave", subtitle: "Request time off", icon: "fa-paper-plane", path: "/employee/leave" },
+    { label: "My Attendance", subtitle: "View daily logs", icon: "fa-calendar-check", path: "/employee/attendance" },
+    { label: "Breaks", subtitle: "Manage break time", icon: "fa-mug-hot", path: "/employee/breaks" },
+    { label: "Payslip", subtitle: "Salary documents", icon: "fa-file-invoice-dollar", path: "/employee/payslip" },
+    { label: "Messages", subtitle: "Contact HR team", icon: "fa-envelope", path: "/employee/messages" },
+  ];
+
+  const monthlySummaryCards = [
+    { label: "Present Days", value: analytics.fullDays, max: analytics.workingDays, tone: "success", icon: "fa-user-check" },
+    { label: "Absent Days", value: analytics.absentDays, max: analytics.workingDays, tone: "danger", icon: "fa-user-xmark" },
+    { label: "Late Logins", value: analytics.lateCount, max: LATE_MAX, tone: "warning", icon: "fa-clock" },
+    { label: "Leave Requests", value: analytics.leaveRequests, max: Math.max(analytics.leaveRequests, 6), tone: "purple", icon: "fa-umbrella-beach" },
+    { label: "Attendance %", value: `${analytics.rate}%`, rawValue: analytics.rate, max: 100, tone: "blue", icon: "fa-chart-simple" },
+  ];
 
   const changeMonth = (delta) => {
     setViewDate((prev) => {
@@ -454,397 +561,178 @@ export default function EmployeeDashboard() {
     <div className="layout employee-dashboard">
       <EmployeeSidebar activePage="dashboard" />
       <div className="main">
-        <div className="welcome-banner">
-          <div className="banner-inner">
-            <div>
-              <div className="welcome-title">{greetingMsg}</div>
-              <div className="welcome-sub">Here&apos;s your snapshot for today.</div>
-            </div>
-            <div className="live-pill">
-              <span className="live-dot" />
-              <span className="live-time">{liveDateTime}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="info-strip">
-          <div className="info-cell">
-            <div className="info-icon gold">
-              <i className="fas fa-envelope" />
-            </div>
-            <div>
-              <div className="info-label">Email</div>
-              <div className="info-value">{userProfile.email || "—"}</div>
-            </div>
-          </div>
-          <div className="info-cell">
-            <div className="info-icon blue">
-              <i className="fas fa-briefcase" />
-            </div>
-            <div>
-              <div className="info-label">Department</div>
-              <div className="info-value">{userProfile.department || "—"}</div>
-            </div>
-          </div>
-          <div className="info-cell">
-            <div className="info-icon green">
-              <i className="fas fa-map-marker-alt" />
-            </div>
-            <div>
-              <div className="info-label">Location</div>
-              <div className="info-value">{userProfile.branch || "—"}</div>
-            </div>
-          </div>
-          <div className="info-cell">
-            <div className="info-icon purple">
-              <i className="fas fa-id-badge" />
-            </div>
-            <div>
-              <div className="info-label">Employee ID</div>
-              <div className="info-value">{userProfile.employee_code}</div>
-            </div>
-          </div>
-        </div>
-
         <div className="content">
-          <div className="analytics-head">
-            <div>
-              <div className="analytics-head-title">Attendance Analytics</div>
-              <div className="analytics-head-sub">{analyticsSubTitle}</div>
-            </div>
-            <div className="month-nav">
-              <button type="button" onClick={() => changeMonth(-1)}>
-                <i className="fas fa-chevron-left" />
-              </button>
-              <span>{monthLabel}</span>
-              <button type="button" onClick={() => changeMonth(1)}>
-                <i className="fas fa-chevron-right" />
-              </button>
-            </div>
-          </div>
-
-          <div className="today-card dashboard-snapshot">
-            <div className="today-header">
-              <div className="today-title">Today&apos;s Snapshot</div>
-              <span className="today-date">{todayDateLabel}</span>
-            </div>
-            <div className="today-grid">
-              <div>
-                <div className="ti-label">Check In</div>
-                <div className="ti-val">{todayCard.checkIn}</div>
-              </div>
-              <div>
-                <div className="ti-label">Check Out</div>
-                <div className="ti-val">{todayCard.checkOut}</div>
-              </div>
-              <div>
-                <div className="ti-label">Late (min)</div>
-                <div className="ti-val">{todayCard.late}</div>
-              </div>
-              <div>
-                <div className="ti-label">Status</div>
-                <div style={{ marginTop: 4 }}>
-                  <span className={`status-chip ${todayCard.statusCls}`}>
-                    {todayCard.statusText}
-                  </span>
-                </div>
+          <section className="employee-top-card">
+            <div className="employee-greeting">
+              <div className="welcome-kicker">{getGreeting()},</div>
+              <div className="welcome-title">{userProfile.full_name}</div>
+              <div className="employee-date-row">
+                <span><i className="fas fa-calendar-day" /> {liveDateLabel}</span>
+                <span><i className="fas fa-clock" /> {liveTimeLabel}</span>
               </div>
             </div>
-          </div>
-
-          <div className="tabs">
-            {["overview", "details"].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                className={`tab${activeTab === tab ? " active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === "overview" && (
-            <div className="tab-content active">
-              <div className="overview-grid">
-                <div className="perf-card">
-                  <div className="perf-card-title">Monthly Performance</div>
-                  <div className="score-row">
-                    <div className="gauge-wrap">
-                      <svg width="90" height="90" viewBox="0 0 90 90">
-                        <circle className="gauge-bg" cx="45" cy="45" r="36" />
-                        <circle
-                          className="gauge-fill"
-                          cx="45"
-                          cy="45"
-                          r="36"
-                          strokeDasharray={GAUGE_CIRCUMFERENCE}
-                          strokeDashoffset={analytics.gaugeOffset}
-                          stroke={analytics.gaugeColor}
-                        />
-                      </svg>
-                      <div className="gauge-center">
-                        <span className="gauge-val">{analytics.score}</span>
-                        <span className="gauge-max">/100</span>
-                      </div>
-                    </div>
-                    <div className="score-info">
-                      <div className="score-label">Attendance Score</div>
-                      <div className={`score-grade ${analytics.gradeClass}`}>
-                        {analytics.grade}
-                      </div>
-                      <div className="score-hint">{analytics.hint}</div>
-                    </div>
-                  </div>
-                  <div className="perf-stats">
-                    <div>
-                      <div className="psi-label">Work Days</div>
-                      <div className="psi-val">{analytics.workingDays}</div>
-                    </div>
-                    <div>
-                      <div className="psi-label">Avg Hours</div>
-                      <div className="psi-val">{analytics.avgHours}h</div>
-                    </div>
-                    <div>
-                      <div className="psi-label">Holidays</div>
-                      <div className="psi-val">{analytics.holidayCount}</div>
-                    </div>
-                    <div>
-                      <div className="psi-label">Paid Leave</div>
-                      <div className="psi-val">1</div>
-                    </div>
-                  </div>
+            <div className="employee-details-card">
+              {[
+                ["Email", userProfile.email || "—"],
+                ["Department", userProfile.department || "—"],
+                ["Location", userProfile.branch || "—"],
+                ["Employee ID", userProfile.employee_code],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
                 </div>
+              ))}
+            </div>
+          </section>
 
-                <div className="metric-card green-top">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div className="metric-label">Full Days</div>
-                    <span className="metric-icon green">
-                      <i className="fas fa-check-circle" />
-                    </span>
-                  </div>
-                  <div className="metric-value">{analytics.fullDays}</div>
-                  <div className="metric-sub green">
-                    {analytics.workingDays
-                      ? `${Math.round((analytics.fullDays / analytics.workingDays) * 100)}% of workdays`
-                      : "—"}
-                  </div>
-                </div>
-
-                <div className="metric-card amber-top">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div className="metric-label">Half Days</div>
-                    <span className="metric-icon amber">
-                      <i className="fas fa-adjust" />
-                    </span>
-                  </div>
-                  <div className="metric-value">{analytics.halfDays}</div>
-                  <div className="metric-sub amber">Partial attendance</div>
-                </div>
-
-                <div className="metric-card red-top">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div className="metric-label">Absent</div>
-                    <span className="metric-icon red">
-                      <i className="fas fa-times-circle" />
-                    </span>
-                  </div>
-                  <div className="metric-value">{analytics.absentDays}</div>
-                  <div className="metric-sub red">
-                    {analytics.absentDays === 1
-                      ? "1 day missed"
-                      : `${analytics.absentDays} days missed`}
-                  </div>
-                </div>
+          <section className="monthly-overview-card">
+            <div className="monthly-overview-head">
+              <div>
+                <h2>{viewDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" })} Overview</h2>
+                <p>Month-to-date attendance summary</p>
               </div>
-
-              <div className="attendance-calendar-card">
-                <div className="calendar-header">
-                  <div>
-                    <div className="calendar-title">Monthly Attendance Calendar</div>
-                    <div className="calendar-subtitle">
-                      {viewDate.toLocaleDateString("en-IN", {
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </div>
-                  </div>
-                  <div className="calendar-legend">
-                    <span><i className="legend-dot present" />Present</span>
-                    <span><i className="legend-dot late" />Late</span>
-                    <span><i className="legend-dot halfday" />Half Day</span>
-                    <span><i className="legend-dot holiday" />Holiday</span>
-                    <span><i className="legend-dot absent" />Absent</span>
-                    <span><i className="legend-dot paid-leave" />Paid Leave</span>
-                    <span><i className="legend-dot unpaid-leave" />Unpaid Leave</span>
-                    <span><i className="legend-dot no-record" />No record</span>
-                  </div>
-                </div>
-                <div className="calendar-weekdays">
-                  {WEEK_DAYS.map((day) => (
-                    <div key={day}>{day}</div>
-                  ))}
-                </div>
-                <div className="attendance-calendar-grid">
-                  {calendarDays.map((cell) =>
-                    cell.blank ? (
-                      <div key={cell.key} className="calendar-cell blank" />
-                    ) : (
-                      <div key={cell.key} className={`calendar-cell ${cell.className}`}>
-                        <div className="calendar-day">{cell.day}</div>
-                        <div className="calendar-status">{cell.status}</div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-
-              <div className="streak-card">
-                <div className="streak-left">
-                  <div className="streak-icon">⚡</div>
-                  <div>
-                    <div className="streak-label">Current Streak</div>
-                    <div className="streak-val">
-                      {analytics.currentStreak} full day
-                      {analytics.currentStreak !== 1 ? "s" : ""}
-                    </div>
-                  </div>
-                </div>
-                <button type="button" className="streak-btn">
-                  Keep going
+              <div className="month-nav">
+                <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month">
+                  <i className="fas fa-chevron-left" />
+                </button>
+                <span>{monthLabel}</span>
+                <button type="button" onClick={() => changeMonth(1)} aria-label="Next month">
+                  <i className="fas fa-chevron-right" />
                 </button>
               </div>
-
-              <div className="late-card">
-                <div className="late-header">
-                  <div className="late-title">
-                    Late Login Usage{" "}
-                    <span
-                      style={{
-                        color: "var(--muted)",
-                        fontWeight: 400,
-                        fontSize: "0.72rem",
-                      }}
-                    >
-                      (grace: 6 per month)
-                    </span>
-                  </div>
-                  <span className="late-badge">
-                    {lateTracker.lateCount}/{LATE_MAX}
+            </div>
+            <div className="overview-kpi-row">
+              {overviewItems.map((item) => (
+                <div className="overview-kpi" key={item.label}>
+                  <span className={`dash-icon mini ${item.tone}`}>
+                    <i className={`fas ${item.icon}`} />
                   </span>
+                  <strong>{item.value}</strong>
+                  <small>{item.label}</small>
                 </div>
-                <div className="late-track">
-                  {Array.from({ length: LATE_MAX }, (_, i) => {
-                    if (i < lateTracker.lateCount) {
-                      const rec = lateTracker.lateRecs[i];
-                      return (
-                        <div
-                          key={i}
-                          className="late-dot used"
-                          title={`${rec?.date}: ${rec?.late_minutes || 0}min late`}
-                        >
-                          {i + 1}
-                        </div>
-                      );
-                    }
-                    return (
-                      <div key={i} className="late-dot available">
-                        {i + 1}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="late-info">{lateTracker.info}</div>
-              </div>
-
+              ))}
             </div>
-          )}
+          </section>
 
-          {activeTab === "details" && (
-            <div className="tab-content active">
-              <div
-                style={{
-                  background: "var(--card2)",
-                  border: "1px solid var(--gold-dim)",
-                  borderRadius: 22,
-                  padding: 22,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: ".82rem",
-                    fontWeight: 700,
-                    marginBottom: 16,
-                    color: "var(--gold)",
-                    borderLeft: "3px solid var(--gold)",
-                    paddingLeft: 10,
-                  }}
-                >
-                  Monthly Attendance Details
+          <div className="employee-main-grid">
+            <section className="today-card dashboard-snapshot">
+              <div className="today-header">
+                <div>
+                  <div className="today-title">Today&apos;s Attendance</div>
+                  <span className="today-date">{todayDateLabel}</span>
                 </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table className="detail-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Day</th>
-                        <th>In</th>
-                        <th>Out</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detailRows.length ? (
-                        detailRows.map((row) => (
-                          <tr key={row.key}>
-                            <td>{row.date}</td>
-                            <td style={{ color: "var(--muted)" }}>{row.day}</td>
-                            <td>{row.in}</td>
-                            <td>{row.out}</td>
-                            <td>{row.status}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            style={{
-                              textAlign: "center",
-                              padding: 24,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            No records found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                <span className={`status-chip ${todayCard.statusCls}`}>{todayCard.statusText}</span>
+              </div>
+              <div className="today-grid">
+                <div>
+                  <i className="fas fa-right-to-bracket ti-icon" />
+                  <div className="ti-label">Check In</div>
+                  <div className="ti-val">{todayCard.checkIn}</div>
+                </div>
+                <div>
+                  <i className="fas fa-right-from-bracket ti-icon" />
+                  <div className="ti-label">Check Out</div>
+                  <div className="ti-val">{todayCard.checkOut}</div>
+                </div>
+                <div>
+                  <i className="fas fa-clock ti-icon" />
+                  <div className="ti-label">Late Minutes</div>
+                  <div className="ti-val">{todayCard.late} min</div>
+                </div>
+                <div>
+                  <i className="fas fa-id-badge ti-icon" />
+                  <div className="ti-label">Status</div>
+                  <div className="ti-val">{todayCard.statusText}</div>
                 </div>
               </div>
+              <div className={`attendance-message ${todayCard.statusCls}`}>
+                <i className={`fas ${todayCard.statusCls === "absent" ? "fa-circle-xmark" : todayCard.statusCls === "late" ? "fa-triangle-exclamation" : "fa-circle-check"}`} />
+                {todayCard.message}
+              </div>
+            </section>
+          </div>
+
+          <section className="quick-actions-card">
+            <div className="section-title">Quick Actions</div>
+            <div className="quick-actions-grid">
+              {quickActions.map((action) => (
+                <button key={action.label} type="button" onClick={() => navigate(action.path)}>
+                  <span><i className={`fas ${action.icon}`} /></span>
+                  <div>
+                    <strong>{action.label}</strong>
+                    <small>{action.subtitle}</small>
+                  </div>
+                  <i className="fas fa-arrow-right action-arrow" />
+                </button>
+              ))}
             </div>
-          )}
+          </section>
+
+          <section className="monthly-summary-card">
+            {monthlySummaryCards.map((item) => {
+              const rawValue = item.rawValue ?? Number(item.value || 0);
+              const percent = item.max > 0 ? Math.min(100, Math.round((rawValue / item.max) * 100)) : 0;
+              return (
+                <div className={`summary-progress-card ${item.tone}`} key={item.label}>
+                  <i className={`fas ${item.icon} summary-icon`} />
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                  <small>{percent}%</small>
+                  <div className="summary-progress-track">
+                    <div style={{ width: `${percent}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="performance-section single">
+            <div className="performance-card-simple">
+              <div className="performance-head">
+                <div>
+                  <div className="section-title">Performance Overview</div>
+                  <div className="analytics-head-sub">{analyticsSubTitle}</div>
+                </div>
+              </div>
+              <div className="perf-stats simple">
+                <div className="performance-metric blue">
+                  <span><i className="fas fa-percent" /> Attendance %</span>
+                  <strong>{analytics.rate}%</strong>
+                  <small className={`score-grade ${analytics.gradeClass}`}>{analytics.grade}</small>
+                </div>
+                <div className="performance-metric success">
+                  <span><i className="fas fa-business-time" /> Avg Working Hours</span>
+                  <strong>{formatProductionHours(analytics.avgHours)}</strong>
+                  <small>{analytics.hint}</small>
+                </div>
+                <div className="performance-metric purple">
+                  <span><i className="fas fa-mug-hot" /> Avg Break Time</span>
+                  <strong>{analytics.avgBreakMinutes}m</strong>
+                  <small>Daily average</small>
+                </div>
+                <div className="performance-metric warning">
+                  <span><i className="fas fa-clock" /> Late Minutes (Monthly)</span>
+                  <strong>{analytics.lateMinutes}</strong>
+                  <small>{analytics.lateCount} late logins</small>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
+      <button
+        type="button"
+        className="employee-help-floating-btn"
+        onClick={() => navigate("/employee/help-center")}
+        aria-label="Open employee help center"
+      >
+        <span>🎧</span>
+        Need Help
+      </button>
     </div>
   );
 }
+
+
+

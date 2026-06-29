@@ -21,6 +21,9 @@ export function setAuthSession({ token, user }) {
   localStorage.setItem("user", JSON.stringify(user));
   localStorage.setItem("full_name", user?.full_name || user?.name || "Employee");
   localStorage.setItem("designation", user?.designation || "");
+  if (user?.employee_code) {
+    localStorage.setItem("employee_code", user.employee_code);
+  }
   if (user?.branch) {
     localStorage.setItem("branch", user.branch);
   }
@@ -32,6 +35,7 @@ export function clearAuthSession() {
   localStorage.removeItem("branch");
   localStorage.removeItem("full_name");
   localStorage.removeItem("designation");
+  localStorage.removeItem("employee_code");
 }
 
 export function isAuthenticated() {

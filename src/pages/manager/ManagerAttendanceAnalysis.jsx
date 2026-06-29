@@ -14,6 +14,10 @@ import {
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 import "./ManagerAttendanceAnalysis.css";
 
 // ─── Chart.js lazy import ───────────────────────────────────────────────────
@@ -49,9 +53,7 @@ function dayName(dateStr) {
 }
 
 function formatTimeDisplay(t) {
-  if (!t || t === "--") return "--";
-  const [h, mi] = t.split(":").map(Number);
-  return `${h % 12 || 12}:${String(mi).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+  return formatTime12Hour(t);
 }
 
 function getWeekNumber(dateStr) {
@@ -324,8 +326,8 @@ export default function ManagerAttendanceAnalysis() {
       const headers = ["Date","Day","Status","Check In","Check Out","Hours","Late Minutes","Break Minutes"];
       const rows = [headers];
       records.forEach((r) => {
-        rows.push([r.date, dayName(r.date), r.status, r.checkIn, r.checkOut,
-          r.workHours.toFixed(1), r.lateMinutes, r.breaks]);
+        rows.push([r.date, dayName(r.date), r.status, formatTimeDisplay(r.checkIn), formatTimeDisplay(r.checkOut),
+          formatProductionHours(r.workHours), r.lateMinutes, r.breaks]);
       });
       const csv = rows.map((r) => r.join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -529,7 +531,7 @@ export default function ManagerAttendanceAnalysis() {
             labels,
             datasets: [{
               label: "Work Hours",
-              data: workDays.map((r) => r.workHours.toFixed(2)),
+              data: workDays.map((r) => Number(r.workHours || 0)),
               borderColor: CALENDAR_STATUS_COLORS.late.border,
               backgroundColor: CALENDAR_STATUS_COLORS.late.background,
               borderWidth: 2,
@@ -540,7 +542,15 @@ export default function ManagerAttendanceAnalysis() {
           },
           options: {
             responsive: true,
-            plugins: { legend: { labels: { color: "#64748B" } } },
+            plugins: {
+              legend: { labels: { color: "#64748B" } },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) =>
+                    `Work Hours: ${formatProductionHours(ctx.parsed.y)}`,
+                },
+              },
+            },
             scales: {
               x: { ticks: { color: "#64748B", font: { size: 9 } }, grid: { color: "#E5E7EB" } },
               y: { ticks: { color: "#64748B" }, grid: { color: "#E5E7EB" }, min: 0, max: 10 },
@@ -947,7 +957,7 @@ if (isSunday || r.status === "sunday") {
         <br />
         Logout: {r.checkOut !== "--" ? formatTimeDisplay(r.checkOut) : "—"}
         <br />
-        Production: {Number(r.workHours || 0).toFixed(2)} hrs
+        Production: {formatProductionHours(r.workHours)}
         <br />
         Total Break: {r.breaks || 0} min
         <hr />
@@ -1022,13 +1032,13 @@ if (isSunday || r.status === "sunday") {
                           {isWork && (
                             <>
                               <div style={{ fontSize: "11px", color: "#64748B", marginTop: "8px" }}>
-                                {r.checkIn !== "--" ? `In: ${r.checkIn}` : "No check-in"}
+                                {r.checkIn !== "--" ? `In: ${formatTimeDisplay(r.checkIn)}` : "No check-in"}
                               </div>
                               <div style={{ fontSize: "11px", color: "#64748B" }}>
-                                {r.checkOut !== "--" ? `Out: ${r.checkOut}` : "No check-out"}
+                                {r.checkOut !== "--" ? `Out: ${formatTimeDisplay(r.checkOut)}` : "No check-out"}
                               </div>
                               <div style={{ fontSize: "12px", fontWeight: 700, marginTop: "4px" }}>
-                                {r.workHours > 0 ? `${r.workHours.toFixed(1)}h` : "--"}
+                                {r.workHours > 0 ? formatProductionHours(r.workHours) : "--"}
                                 {r.breaks > 0 && (
                                   <span style={{ fontSize: "10px", color: r.breaks > 60 ? "#DC2626" : "#16A34A", marginLeft: "6px" }}>
                                     {r.breaks}m break
@@ -1089,7 +1099,7 @@ if (isSunday || r.status === "sunday") {
                             <td><span className={`badge ${statusBadgeClass(r)}`}>{statusLabel(r)}</span></td>
                             <td>{r.checkIn !== "--" ? formatTimeDisplay(r.checkIn) : "--"}</td>
                             <td>{r.checkOut !== "--" ? formatTimeDisplay(r.checkOut) : "--"}</td>
-                            <td style={{ fontWeight: 700 }}>{r.workHours > 0 ? r.workHours.toFixed(1) + "h" : "--"}</td>
+                            <td style={{ fontWeight: 700 }}>{r.workHours > 0 ? formatProductionHours(r.workHours) : "--"}</td>
                             <td style={{ color: r.lateMinutes > 0 ? "#FF8C00" : "#7B8199" }}>
                               {r.lateMinutes > 0 ? r.lateMinutes + " min" : "--"}
                             </td>
