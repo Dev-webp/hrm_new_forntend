@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   addHoliday,
@@ -22,6 +22,7 @@ import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
+import { getStoredUser } from "../../utils/auth";
 
 import "../../styles/adminCalendar.css";
 
@@ -180,9 +181,15 @@ function escapeHtml(str) {
 
 function AdminCalendar() {
   const today = new Date();
+  const currentUser = useMemo(() => getStoredUser(), []);
+  const isOperationalManager = currentUser?.role === "OPERATIONAL_MANAGER";
+  const canManageCalendar = currentUser?.role === "SUPER_ADMIN";
 
   const [currentDate, setCurrentDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+  const [calendarMode, setCalendarMode] = useState(
+    isOperationalManager ? "my" : "branch"
   );
   const [currentBranch, setCurrentBranch] = useState("all");
   const [monthlyStatsCache, setMonthlyStatsCache] = useState({});
@@ -211,6 +218,7 @@ function AdminCalendar() {
 
   // --- NEW: Employee mode states ---
   const [employees, setEmployees] = useState([]);
+  const [departmentFilter, setDepartmentFilter] = useState("all");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("all");
   const [employeeRecordsMap, setEmployeeRecordsMap] = useState(new Map());
   const [selectedDayRecord, setSelectedDayRecord] = useState(null);
@@ -251,7 +259,11 @@ function AdminCalendar() {
       try {
         const data = await fetchEmployees(currentBranch);
         setEmployees(data);
-        setSelectedEmployeeId("all");
+        if (calendarMode === "my" && currentUser?.id) {
+          setSelectedEmployeeId(String(currentUser.id));
+        } else {
+          setSelectedEmployeeId("all");
+        }
       } catch (err) {
         console.error("Failed to load employees:", err);
         setEmployees([]);
@@ -259,7 +271,37 @@ function AdminCalendar() {
     }
 
     loadEmployees();
-  }, [currentBranch]);
+  }, [calendarMode, currentBranch, currentUser?.id]);
+
+  useEffect(() => {
+    setCalendarDaysCache({});
+    setMonthlyStatsCache({});
+    setEmployeeRecordsMap(new Map());
+    setSelectedDayRecord(null);
+    setEditRecord(null);
+
+    if (calendarMode === "my" && currentUser?.id) {
+      setSelectedEmployeeId(String(currentUser.id));
+      setDepartmentFilter("all");
+    } else if (calendarMode === "branch") {
+      setSelectedEmployeeId("all");
+    }
+
+    setRefreshKey((prev) => prev + 1);
+  }, [calendarMode, currentUser?.id]);
+
+  const departmentOptions = useMemo(
+    () => [
+      "all",
+      ...new Set(employees.map((emp) => emp.department).filter(Boolean)),
+    ],
+    [employees]
+  );
+
+  const filteredEmployees = useMemo(() => {
+    if (departmentFilter === "all") return employees;
+    return employees.filter((emp) => emp.department === departmentFilter);
+  }, [departmentFilter, employees]);
 
   const fetchHolidays = useCallback(async (year, month) => {
     try {
@@ -844,6 +886,8 @@ function AdminCalendar() {
 
   const handleBranchSelect = (branch) => {
     setCurrentBranch(branch);
+    setDepartmentFilter("all");
+    setSelectedEmployeeId("all");
     setBranchMenuOpen(false);
     setCalendarDaysCache({});
     setMonthlyStatsCache({});
@@ -911,7 +955,29 @@ function AdminCalendar() {
           <h1>
             <i className="fas fa-calendar-alt"></i> Attendance Calendar
           </h1>
-          <p>Live from attendance_records table | Hover for real stats</p>
+          <p>
+            {calendarMode === "my"
+              ? "Your monthly attendance, leave, break, and production summary"
+              : "Live from attendance_records table | Hover for real stats"}
+          </p>
+          {isOperationalManager && (
+            <div className="calendar-mode-toggle" aria-label="Attendance calendar mode">
+              <button
+                type="button"
+                className={calendarMode === "my" ? "active" : ""}
+                onClick={() => setCalendarMode("my")}
+              >
+                My Attendance
+              </button>
+              <button
+                type="button"
+                className={calendarMode === "branch" ? "active" : ""}
+                onClick={() => setCalendarMode("branch")}
+              >
+                Branch Attendance
+              </button>
+            </div>
+          )}
         </div>
 
         <div
@@ -922,47 +988,79 @@ function AdminCalendar() {
             flexWrap: "wrap",
           }}
         >
-          <button
-            onClick={handleAddHoliday}
-            style={{
-              background: "#FF8C00",
-              border: "none",
-              padding: "10px 22px",
-              borderRadius: "40px",
-              fontWeight: "600",
-              cursor: "pointer",
-              color: "#1A2B4B",
-            }}
-          >
-            + Add Holiday
-          </button>
+          {canManageCalendar && (
+            <button
+              onClick={handleAddHoliday}
+              style={{
+                background: "#FF8C00",
+                border: "none",
+                padding: "10px 22px",
+                borderRadius: "40px",
+                fontWeight: "600",
+                cursor: "pointer",
+                color: "#1A2B4B",
+              }}
+            >
+              + Add Holiday
+            </button>
+          )}
 
           {/* --- NEW: Employee dropdown --- */}
-          <select
-            value={selectedEmployeeId}
-            onChange={(e) => {
-              setSelectedEmployeeId(e.target.value);
-              setCalendarDaysCache({});
-              setMonthlyStatsCache({});
-              setRefreshKey((prev) => prev + 1);
-            }}
-            style={{
-              background: "#FFFFFF",
-              color: "#0D47A1",
-              border: "1px solid #DBE7F3",
-              padding: "10px 16px",
-              borderRadius: "30px",
-              fontWeight: "600",
-            }}
-          >
-            <option value="all">All Employees</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.full_name} - {emp.department}
-              </option>
-            ))}
-          </select>
+          {calendarMode === "branch" && (
+            <>
+              <select
+                value={departmentFilter}
+                onChange={(e) => {
+                  setDepartmentFilter(e.target.value);
+                  setSelectedEmployeeId("all");
+                  setCalendarDaysCache({});
+                  setMonthlyStatsCache({});
+                  setRefreshKey((prev) => prev + 1);
+                }}
+                style={{
+                  background: "#FFFFFF",
+                  color: "#0D47A1",
+                  border: "1px solid #DBE7F3",
+                  padding: "10px 16px",
+                  borderRadius: "30px",
+                  fontWeight: "600",
+                }}
+              >
+                {departmentOptions.map((department) => (
+                  <option key={department} value={department}>
+                    {department === "all" ? "All Departments" : department}
+                  </option>
+                ))}
+              </select>
 
+              <select
+                value={selectedEmployeeId}
+                onChange={(e) => {
+                  setSelectedEmployeeId(e.target.value);
+                  setCalendarDaysCache({});
+                  setMonthlyStatsCache({});
+                  setRefreshKey((prev) => prev + 1);
+                }}
+                style={{
+                  background: "#FFFFFF",
+                  color: "#0D47A1",
+                  border: "1px solid #DBE7F3",
+                  padding: "10px 16px",
+                  borderRadius: "30px",
+                  fontWeight: "600",
+                }}
+              >
+                <option value="all">All Employees</option>
+                {filteredEmployees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.full_name} - {emp.department}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {calendarMode === "branch" && (
           <div className="branch-dropdown" ref={branchDropdownRef}>
             <button
               type="button"
@@ -1009,6 +1107,7 @@ function AdminCalendar() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 
@@ -1196,14 +1295,16 @@ function AdminCalendar() {
             <p><b>Lunch:</b> {selectedDayRecord.breakDetails?.lunch?.in || "--"} → {selectedDayRecord.breakDetails?.lunch?.out || "--"}</p>
             <p><b>Break 2:</b> {selectedDayRecord.breakDetails?.b2?.in || "--"} → {selectedDayRecord.breakDetails?.b2?.out || "--"}</p>
 
-            <button
-              onClick={() => {
-                setEditError("");
-                setEditRecord(selectedDayRecord);
-              }}
-            >
-              Edit Attendance
-            </button>
+            {canManageCalendar && (
+              <button
+                onClick={() => {
+                  setEditError("");
+                  setEditRecord(selectedDayRecord);
+                }}
+              >
+                Edit Attendance
+              </button>
+            )}
 
             <button onClick={() => setSelectedDayRecord(null)}>
               Close

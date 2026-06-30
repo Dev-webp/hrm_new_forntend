@@ -11,7 +11,7 @@ const TYPE_CONFIG = {
   Unpaid: { icon: "💸", cls: "lc-emergency" },
 };
 
-export default function EmployeeLeave() {
+export default function EmployeeLeave({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
   const decoded = parseJwt(token) || {};
@@ -230,8 +230,8 @@ export default function EmployeeLeave() {
   };
 
   return (
-    <div className="layout employee-leave-page">
-      <EmployeeSidebar activePage="leave" />
+    <div className={embedded ? "employee-leave-page" : "layout employee-leave-page"}>
+      {!embedded && <EmployeeSidebar activePage="leave" />}
 
       <div className="main">
         <div className="topbar">

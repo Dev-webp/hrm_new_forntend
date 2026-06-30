@@ -223,3 +223,12 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 }
 @media (max-width: 1000px) { .main-content { padding: 20px; } .sidebar { transform: translateX(-100%); } .manager-my-break-grid { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .manager-break-usage { grid-template-columns: 1fr; } .manager-break3-sessions div { grid-template-columns: 1fr; } .manager-break3-sessions em { text-align: left; } }
+.manager-breaks-page .branch-pill select {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  outline: none;
+  cursor: pointer;
+}

@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import ManagerSidebar from "../components/ManagerSidebar";
+import OperationalManagerSidebar from "../components/OperationalManagerSidebar";
 import Sidebar from "../components/Sidebar";
+import SubAdminSidebar from "../components/SubAdminSidebar";
 import LiveNotificationToast from "../components/LiveNotificationToast";
 import "../styles/admin.css";
 
@@ -16,13 +18,21 @@ function DashboardLayout({ role = "admin", children = null }) {
 
   return (
     <div className="app-layout">
-      {role === "manager" ? <ManagerSidebar /> : <Sidebar role={role} />}
+      {role === "operational-manager" ? (
+        <OperationalManagerSidebar />
+      ) : role === "sub-admin" ? (
+        <SubAdminSidebar />
+      ) : role === "manager" ? (
+        <ManagerSidebar />
+      ) : (
+        <Sidebar role={role} />
+      )}
 
       <div className="main-panel">
         {children ?? <Outlet />}
       </div>
 
-      <LiveNotificationToast />
+      {role !== "sub-admin" && <LiveNotificationToast />}
     </div>
   );
 }

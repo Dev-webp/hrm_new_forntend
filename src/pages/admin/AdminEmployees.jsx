@@ -367,9 +367,13 @@ function AdminEmployees() {
           <div className="admin-card-person">
             <h4>{employee.name}</h4>
             <div className="admin-role-line">
-              {employee.role === "MANAGER"
+              {employee.role === "Admin" || employee.role === "MANAGER"
                 ? "MANAGER"
-                : employee.role === "SUPER_ADMIN"
+                : employee.role === "Sub Admin" || employee.role === "SUB_ADMIN"
+                ? "SUB ADMIN"
+                : employee.role === "Operational Manager" || employee.role === "OPERATIONAL_MANAGER"
+                ? "OPERATIONAL MANAGER"
+                : employee.role === "Super Admin" || employee.role === "SUPER_ADMIN"
                 ? "SUPER ADMIN"
                 : "EMPLOYEE"}
               <span className={`admin-status-dot ${employee.status || "active"}`}>

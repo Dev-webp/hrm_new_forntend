@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 
 import {
@@ -6,8 +6,11 @@ import {
   fetchLeaveStats,
   updateLeaveRequest,
   fetchLeaveApprovalPreview,
+  createLeaveRequest,
 } from "../../services/leaveApi";
+import { fetchMyLeaveBalance, fetchMyLeaves } from "../../services/employeeApi";
 import LeaveApprovalPreviewModal from "../../components/leaves/LeaveApprovalPreviewModal";
+import { getStoredUser } from "../../utils/auth";
 
 import "../../styles/adminLeave.css";
 
@@ -30,13 +33,30 @@ function formatLeaveDuration(request) {
 }
 
 function AdminLeave() {
+  const currentUser = useMemo(() => getStoredUser(), []);
+  const isOperationalManager = currentUser?.role === "OPERATIONAL_MANAGER";
   const [currentBranch, setCurrentBranch] = useState("all");
 const [currentDate, setCurrentDate] = useState("");
 const [statusFilter, setStatusFilter] = useState("all");
 const [durationFilter, setDurationFilter] = useState("all");
+const [departmentFilter, setDepartmentFilter] = useState("all");
+const [employeeFilter, setEmployeeFilter] = useState("all");
 
 
   const [leaveRequests, setLeaveRequests] = useState([]);
+  const [myLeaves, setMyLeaves] = useState([]);
+  const [myLeaveBalance, setMyLeaveBalance] = useState(null);
+  const [myLeaveFilter, setMyLeaveFilter] = useState("all");
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [applySaving, setApplySaving] = useState(false);
+  const [applyForm, setApplyForm] = useState({
+    leave_type: "Unpaid",
+    leave_duration_type: "full_day",
+    half_day_session: "",
+    from_date: "",
+    to_date: "",
+    reason: "",
+  });
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -99,11 +119,34 @@ const [previewLoading, setPreviewLoading] = useState(false);
     loadData();
   }, [loadData]);
 
+  const loadMyLeaveData = useCallback(async () => {
+    if (!isOperationalManager) return;
+
+    try {
+      const [leaves, balance] = await Promise.all([
+        fetchMyLeaves(),
+        fetchMyLeaveBalance(),
+      ]);
+      setMyLeaves(leaves);
+      setMyLeaveBalance(balance);
+      setApplyForm((prev) => ({
+        ...prev,
+        leave_type: Number(balance?.paid_leave_balance || 0) > 0 ? "Paid" : "Unpaid",
+      }));
+    } catch (err) {
+      showToast(err.response?.data?.message || err.message || "Failed to load your leave data");
+    }
+  }, [isOperationalManager]);
+
+  useEffect(() => {
+    loadMyLeaveData();
+  }, [loadMyLeaveData]);
+
   // Show toast
-  const showToast = (message) => {
+  function showToast(message) {
     setToast({ show: true, message });
     setTimeout(() => setToast({ show: false, message: "" }), 2500);
-  };
+  }
 
   // Branch selection
   const handleBranchSelect = (branch) => {
@@ -214,12 +257,120 @@ const message =
       </span>
     );
   };
+
+  const employeeOptions = useMemo(() => {
+    const map = new Map();
+    leaveRequests.forEach((request) => {
+      if (request.user_id && request.full_name) {
+        map.set(String(request.user_id), request.full_name);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [leaveRequests]);
+
+  const departmentOptions = useMemo(
+    () => [
+      "all",
+      ...new Set(leaveRequests.map((request) => request.department).filter(Boolean)),
+    ],
+    [leaveRequests]
+  );
+
+  const calculateApplyDays = useCallback(() => {
+    const { leave_duration_type, from_date, to_date } = applyForm;
+    if (!from_date || !to_date) return 0;
+    if (leave_duration_type === "half_day") return from_date === to_date ? 0.5 : 0;
+    const start = new Date(`${from_date}T00:00:00`);
+    const end = new Date(`${to_date}T00:00:00`);
+    if (end < start) return 0;
+    let days = 0;
+    for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+      if (cursor.getDay() !== 0) days += 1;
+    }
+    return days;
+  }, [applyForm]);
+
+  const requestedApplyDays = calculateApplyDays();
+
+  const submitMyLeave = async () => {
+    if (!currentUser?.id) return;
+    if (!applyForm.from_date || !applyForm.to_date) {
+      showToast("Please select From and To dates");
+      return;
+    }
+    if (new Date(applyForm.to_date) < new Date(applyForm.from_date)) {
+      showToast("To date cannot be before From date");
+      return;
+    }
+    if (applyForm.leave_duration_type === "half_day") {
+      if (applyForm.from_date !== applyForm.to_date) {
+        showToast("Half-day leave must be for one date only");
+        return;
+      }
+      if (!applyForm.half_day_session) {
+        showToast("Please select Morning or Afternoon session");
+        return;
+      }
+    }
+    if (!requestedApplyDays) {
+      showToast("Selected dates do not contain leave days");
+      return;
+    }
+    if (
+      applyForm.leave_type === "Paid" &&
+      requestedApplyDays > Number(myLeaveBalance?.paid_leave_balance || 0)
+    ) {
+      showToast(`Only ${myLeaveBalance?.paid_leave_balance || 0} paid leave available`);
+      return;
+    }
+
+    setApplySaving(true);
+    try {
+      await createLeaveRequest({
+        user_id: currentUser.id,
+        leave_type: applyForm.leave_type,
+        from_date: applyForm.from_date,
+        to_date: applyForm.to_date,
+        reason: applyForm.reason.trim(),
+        leave_duration_type: applyForm.leave_duration_type,
+        half_day_session:
+          applyForm.leave_duration_type === "half_day"
+            ? applyForm.half_day_session
+            : null,
+      });
+      showToast("Leave request submitted");
+      setApplyModalOpen(false);
+      setApplyForm({
+        leave_type: Number(myLeaveBalance?.paid_leave_balance || 0) > 0 ? "Paid" : "Unpaid",
+        leave_duration_type: "full_day",
+        half_day_session: "",
+        from_date: "",
+        to_date: "",
+        reason: "",
+      });
+      await Promise.all([loadMyLeaveData(), loadData()]);
+    } catch (err) {
+      showToast(err.response?.data?.message || err.message || "Failed to submit leave");
+    } finally {
+      setApplySaving(false);
+    }
+  };
+
+  const filteredMyLeaves = myLeaves.filter(
+    (leave) => myLeaveFilter === "all" || leave.status === myLeaveFilter
+  );
+
   const filteredLeaveRequests = leaveRequests.filter((request) => {
     const statusMatches = statusFilter === "all" || request.status?.toLowerCase() === statusFilter;
     const durationKey = request.leave_duration_type === "half_day"
       ? `half_day_${request.half_day_session}`
       : "full_day";
-    return statusMatches && (durationFilter === "all" || durationKey === durationFilter);
+    const departmentMatches = departmentFilter === "all" || request.department === departmentFilter;
+    const employeeMatches = employeeFilter === "all" || String(request.user_id) === employeeFilter;
+    return statusMatches &&
+      departmentMatches &&
+      employeeMatches &&
+      (durationFilter === "all" || durationKey === durationFilter);
   });
 
   return (
@@ -286,6 +437,112 @@ const message =
       </div>
     </div>
 
+    {isOperationalManager && (
+      <section className="operational-my-leave-panel">
+        <div className="operational-section-head">
+          <div>
+            <span>Self service</span>
+            <h2>My Leave</h2>
+            <p>Apply for leave and track your approval status.</p>
+          </div>
+          <button
+            type="button"
+            className="apply-leave-btn"
+            onClick={() => setApplyModalOpen(true)}
+          >
+            <i className="fas fa-plus" /> Apply Leave
+          </button>
+        </div>
+
+        <div className="operational-leave-balance-grid">
+          <div className="operational-balance-card">
+            <span>Paid Balance</span>
+            <strong>{myLeaveBalance?.paid_leave_balance ?? 0}</strong>
+          </div>
+          <div className="operational-balance-card">
+            <span>Current Month Credit</span>
+            <strong>{myLeaveBalance?.current_month_credit ?? 0}</strong>
+          </div>
+          <div className="operational-balance-card">
+            <span>Carry Forward</span>
+            <strong>{myLeaveBalance?.carry_forward ?? 0}</strong>
+          </div>
+          <div className="operational-balance-card">
+            <span>Paid Used</span>
+            <strong>{myLeaveBalance?.paid_used ?? 0}</strong>
+          </div>
+          <div className="operational-balance-card">
+            <span>Unpaid Used</span>
+            <strong>{myLeaveBalance?.unpaid_used ?? 0}</strong>
+          </div>
+        </div>
+
+        <div className="leave-status-tabs compact-tabs">
+          {["all", "pending", "approved", "rejected"].map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`leave-status-tab ${myLeaveFilter === status ? "active" : ""}`}
+              onClick={() => setMyLeaveFilter(status)}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <div className="table-wrapper operational-my-leave-table">
+          <table className="leave-table">
+            <thead>
+              <tr>
+                <th>Leave Type</th>
+                <th>Duration</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Requested</th>
+                <th>Paid</th>
+                <th>Unpaid</th>
+                <th>Reason</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMyLeaves.length === 0 ? (
+                <tr>
+                  <td colSpan="9" style={{ textAlign: "center", padding: "28px" }}>
+                    No leave history found
+                  </td>
+                </tr>
+              ) : (
+                filteredMyLeaves.map((leave) => (
+                  <tr key={leave.id}>
+                    <td>{leave.leave_type}</td>
+                    <td>{formatLeaveDuration(leave)}</td>
+                    <td>{formatDate(leave.from_date)}</td>
+                    <td>{formatDate(leave.to_date)}</td>
+                    <td>{leave.requested_days ?? leave.days}</td>
+                    <td>{leave.paid_days ?? 0}</td>
+                    <td>{leave.unpaid_days ?? 0}</td>
+                    <td>{leave.reason || "-"}</td>
+                    <td>{getStatusBadge(leave.status)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )}
+
+    {isOperationalManager && (
+      <div className="operational-section-head management-head">
+        <div>
+          <span>Operations</span>
+          <h2>Employee Leave Management</h2>
+          <p>Review employee leave requests across Hyderabad and Bangalore.</p>
+        </div>
+      </div>
+    )}
+
     <div className="stats-row">
       <div className="stat-card">
         <div className="stat-label">Total Requests</div>
@@ -332,6 +589,28 @@ const message =
     <option value="full_day">Full Day</option>
     <option value="half_day_morning">Half Day Morning</option>
     <option value="half_day_afternoon">Half Day Afternoon</option>
+  </select>
+
+  <label htmlFor="adminLeaveDepartment">Department</label>
+  <select id="adminLeaveDepartment" value={departmentFilter} onChange={(event) => {
+    setDepartmentFilter(event.target.value);
+    setEmployeeFilter("all");
+  }}>
+    {departmentOptions.map((department) => (
+      <option key={department} value={department}>
+        {department === "all" ? "All Departments" : department}
+      </option>
+    ))}
+  </select>
+
+  <label htmlFor="adminLeaveEmployee">Employee</label>
+  <select id="adminLeaveEmployee" value={employeeFilter} onChange={(event) => setEmployeeFilter(event.target.value)}>
+    <option value="all">All Employees</option>
+    {employeeOptions.map((employee) => (
+      <option key={employee.id} value={employee.id}>
+        {employee.name}
+      </option>
+    ))}
   </select>
 </div>
 
@@ -424,6 +703,110 @@ const message =
         </tbody>
       </table>
     </div>
+
+    {isOperationalManager && applyModalOpen && (
+      <div className="modal show" onClick={() => !applySaving && setApplyModalOpen(false)}>
+        <div className="modal-content operational-apply-modal" onClick={(e) => e.stopPropagation()}>
+          <h3>
+            <i className="fas fa-paper-plane" /> Apply Leave
+          </h3>
+
+          <div className="form-group">
+            <label>Leave Type</label>
+            <select
+              value={applyForm.leave_type}
+              onChange={(event) => setApplyForm((prev) => ({ ...prev, leave_type: event.target.value }))}
+            >
+              {Number(myLeaveBalance?.paid_leave_balance || 0) > 0 && (
+                <option value="Paid">Paid Leave ({myLeaveBalance?.paid_leave_balance || 0} left)</option>
+              )}
+              <option value="Unpaid">Unpaid Leave</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Duration</label>
+            <select
+              value={applyForm.leave_duration_type}
+              onChange={(event) => {
+                const leave_duration_type = event.target.value;
+                setApplyForm((prev) => ({
+                  ...prev,
+                  leave_duration_type,
+                  half_day_session: leave_duration_type === "half_day" ? prev.half_day_session : "",
+                  to_date: leave_duration_type === "half_day" ? prev.from_date : prev.to_date,
+                }));
+              }}
+            >
+              <option value="full_day">Full Day</option>
+              <option value="half_day">Half Day</option>
+            </select>
+          </div>
+
+          {applyForm.leave_duration_type === "half_day" && (
+            <div className="form-group">
+              <label>Half-Day Session</label>
+              <select
+                value={applyForm.half_day_session}
+                onChange={(event) => setApplyForm((prev) => ({ ...prev, half_day_session: event.target.value }))}
+              >
+                <option value="">Select session</option>
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+              </select>
+            </div>
+          )}
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>From Date</label>
+              <input
+                type="date"
+                value={applyForm.from_date}
+                onChange={(event) => setApplyForm((prev) => ({
+                  ...prev,
+                  from_date: event.target.value,
+                  to_date: prev.leave_duration_type === "half_day" ? event.target.value : prev.to_date,
+                }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>To Date</label>
+              <input
+                type="date"
+                value={applyForm.to_date}
+                disabled={applyForm.leave_duration_type === "half_day"}
+                onChange={(event) => setApplyForm((prev) => ({ ...prev, to_date: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="operational-days-preview">
+            Requested Days: <strong>{requestedApplyDays || "-"}</strong>
+            <span>Available Paid Balance: {myLeaveBalance?.paid_leave_balance ?? 0}</span>
+          </div>
+
+          <div className="form-group">
+            <label>Reason</label>
+            <textarea
+              rows={3}
+              value={applyForm.reason}
+              placeholder="Enter leave reason"
+              onChange={(event) => setApplyForm((prev) => ({ ...prev, reason: event.target.value }))}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button className="modal-btn cancel" onClick={() => setApplyModalOpen(false)} disabled={applySaving}>
+              Cancel
+            </button>
+            <button className="modal-btn" onClick={submitMyLeave} disabled={applySaving}>
+              {applySaving ? "Submitting..." : "Submit Leave"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {actionModal.action !== "approved" ? <div
       className={`modal ${actionModal.open ? "show" : ""}`}

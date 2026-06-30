@@ -250,7 +250,8 @@ function StructuredLogDetails({ log }) {
 export default function AdminActivityLogs() {
   const currentUser = getStoredUser() || {};
   const isSuperAdmin = currentUser.role === "SUPER_ADMIN";
-  const canDeleteLogs = ["SUPER_ADMIN", "MANAGER"].includes(currentUser.role);
+  const canManageAllLogs = isSuperAdmin;
+  const canDeleteLogs = isSuperAdmin;
   const managerBranch = currentUser.branch || "";
   const [branch, setBranch] = useState(() => currentUser.role === "MANAGER" ? currentUser.branch || "all" : "all");
   const [searchInput, setSearchInput] = useState("");
@@ -663,14 +664,14 @@ export default function AdminActivityLogs() {
     setCurrentPage(1);
   };
 
-  const deletablePageLogs = logsData.filter((log) => isSuperAdmin || log.branch === managerBranch);
+  const deletablePageLogs = logsData.filter((log) => canManageAllLogs || log.branch === managerBranch);
   const allPageLogsSelected = deletablePageLogs.length > 0 && deletablePageLogs.every((log) => selectedLogIds.has(log.id));
   const toggleAllPageLogs = () => setSelectedLogIds(
     allPageLogsSelected ? new Set() : new Set(deletablePageLogs.map((log) => log.id))
   );
   const toggleLog = (id) => setSelectedLogIds((current) => {
     const log = logsData.find((row) => row.id === id);
-    if (!log || (!isSuperAdmin && log.branch !== managerBranch)) return current;
+      if (!log || (!canManageAllLogs && log.branch !== managerBranch)) return current;
     const next = new Set(current);
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
@@ -739,7 +740,7 @@ export default function AdminActivityLogs() {
             <div className="socket-dot" />
             <span>{connected ? "Live" : "Reconnecting…"}</span>
           </div>
-          {isSuperAdmin ? <div className="branch-dropdown" ref={branchDropdownRef}>
+          {canManageAllLogs ? <div className="branch-dropdown" ref={branchDropdownRef}>
             <div
               className="branch-selector"
               onClick={(e) => {
@@ -1000,7 +1001,7 @@ export default function AdminActivityLogs() {
               ) : (
                 logsData.map((log) => {
                   const fields = normalizeLogFields(log);
-                  const canDeleteThisLog = isSuperAdmin || fields.branch === managerBranch;
+                  const canDeleteThisLog = canManageAllLogs || fields.branch === managerBranch;
                   const rowClass = [
                     newRowIds.has(fields.id) ? "new-row" : "",
                     fields.severity === "critical" ? "severity-critical" : "",

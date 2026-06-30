@@ -9,6 +9,11 @@ import EmployeeInstructions from "./EmployeeInstructions";
 import EmployeeHelpCenter from "./EmployeeHelpCenter";
 
 export default function EmployeeRoutes() {
+  const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
+  if (role === "SUB_ADMIN") {
+    return <Navigate to="/sub-admin" replace />;
+  }
+
   return (
     <Routes>
       <Route path="dashboard" element={<EmployeeDashboard />} />

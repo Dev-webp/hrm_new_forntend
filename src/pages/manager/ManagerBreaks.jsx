@@ -129,6 +129,7 @@ export default function ManagerBreaks() {
   const navigate = useNavigate();
   const [token, setToken] = useState("");
   const [managerBranch, setManagerBranch] = useState("");
+  const [isOperationalManager, setIsOperationalManager] = useState(false);
   const [managerId, setManagerId] = useState(null);
   const [managerName, setManagerName] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().slice(0, 10));
@@ -156,9 +157,14 @@ export default function ManagerBreaks() {
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const employees = await authFetch("/admin/employees", {}, token, navigate);
+      const employees = await authFetch(
+        `/admin/employees?branch=${encodeURIComponent(managerBranch || "all")}`,
+        {},
+        token,
+        navigate
+      );
       const filteredEmployees = employees
-        .filter((emp) => emp.branch === managerBranch)
+        .filter((emp) => managerBranch === "all" || emp.branch === managerBranch)
         .map((emp) => ({ id: emp.id, name: emp.full_name, department: emp.department, branch: emp.branch }));
       setEmployeesList(filteredEmployees);
 
@@ -519,12 +525,14 @@ export default function ManagerBreaks() {
     setToken(storedToken);
 
     const decoded = parseJwt(storedToken);
-    if (!decoded || decoded.role !== "MANAGER") {
+    if (!decoded || !["MANAGER", "OPERATIONAL_MANAGER", "SUB_ADMIN"].includes(decoded.role)) {
       navigate("/login");
       return;
     }
 
-    setManagerBranch(decoded.branch);
+    const operational = decoded.role === "OPERATIONAL_MANAGER";
+    setIsOperationalManager(operational);
+    setManagerBranch(operational ? "all" : decoded.branch);
     setManagerId(decoded.id);
     setManagerName(decoded.full_name || "Manager");
 
@@ -585,9 +593,20 @@ export default function ManagerBreaks() {
               Real-time breaks · {managerBranch} · edit & save
             </p>
           </div>
-          <div className="branch-pill">
-            <i className="fas fa-store"></i> {managerBranch}
-          </div>
+          {isOperationalManager ? (
+            <label className="branch-pill">
+              <i className="fas fa-store"></i>
+              <select value={managerBranch} onChange={(e) => setManagerBranch(e.target.value)}>
+                <option value="all">All Branches</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Bangalore">Bangalore</option>
+              </select>
+            </label>
+          ) : (
+            <div className="branch-pill">
+              <i className="fas fa-store"></i> {managerBranch}
+            </div>
+          )}
         </div>
 
         <div className="controls">

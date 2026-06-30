@@ -510,6 +510,47 @@ export default function ManagerDashboard() {
     [allEmployees, attendanceMap, currentDate, holidaySet, monthNum, year]
   );
 
+  const departmentLeaderboard = useMemo(() => {
+    const grouped = new Map();
+
+    allEmployees.forEach((employee) => {
+      const department = employee.department || "Unassigned";
+      const employeeStats = computeEmpStats(
+        employee.id,
+        year,
+        monthNum,
+        attendanceMap,
+        holidaySet,
+        currentDate
+      );
+      const current = grouped.get(department) || {
+        department,
+        employees: 0,
+        present: 0,
+        late: 0,
+        absent: 0,
+        attendanceTotal: 0,
+      };
+
+      current.employees += 1;
+      current.present += employeeStats.present;
+      current.late += employeeStats.late;
+      current.absent += employeeStats.absent;
+      current.attendanceTotal += employeeStats.attPct;
+      grouped.set(department, current);
+    });
+
+    return [...grouped.values()]
+      .map((item) => ({
+        ...item,
+        averageAttendance: item.employees
+          ? Math.round(item.attendanceTotal / item.employees)
+          : 0,
+      }))
+      .sort((a, b) => b.averageAttendance - a.averageAttendance)
+      .slice(0, 6);
+  }, [allEmployees, attendanceMap, currentDate, holidaySet, monthNum, year]);
+
   const departments = useMemo(
     () => [
       "all",
@@ -613,7 +654,7 @@ export default function ManagerDashboard() {
 
   return (
     <>
-      <div className="topbar">
+      <div className="topbar manager-dashboard-topbar">
         <div className="topbar-left">
           <div className="topbar-title">
             <h1>
@@ -756,39 +797,42 @@ export default function ManagerDashboard() {
         </div>
 
         <div className="triple-row">
-          <div className="panel">
+          <div className="panel manager-department-panel">
             <div className="panel-title">
-              <i className="fas fa-trophy" /> Top Performers (MTD)
+              <i className="fas fa-ranking-star" /> Department Leaderboard
             </div>
 
-            {loading && topPerformers.length === 0 ? (
+            {loading && departmentLeaderboard.length === 0 ? (
               <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
                 Loading…
               </div>
-            ) : topPerformers.length === 0 ? (
+            ) : departmentLeaderboard.length === 0 ? (
               <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
                 No data
               </div>
             ) : (
-              topPerformers.map((employee, index) => (
-                <div key={employee.id} className="leaderboard-item">
+              departmentLeaderboard.map((department, index) => (
+                <div key={department.department} className="leaderboard-item department-leaderboard-item">
                   <div
                     className={`lb-rank ${["gold", "silver", "bronze"][index] || ""}`}
                   >
                     {index + 1}
                   </div>
-                  <div className="lb-name">{employee.full_name}</div>
+                  <div className="lb-name">
+                    {department.department}
+                    <small>{department.employees} employee{department.employees === 1 ? "" : "s"}</small>
+                  </div>
                   <div className="lb-bar-wrap">
                     <div
                       className="lb-bar"
                       style={{
-                        width: `${employee.stats.attPct}%`,
+                        width: `${department.averageAttendance}%`,
                         background:
-                          employee.stats.attPct >= 90 ? "#16A34A" : "#FF8C00",
+                          department.averageAttendance >= 90 ? "#16A34A" : "#FF8C00",
                       }}
                     />
                   </div>
-                  <div className="lb-pct">{employee.stats.attPct}%</div>
+                  <div className="lb-pct">{department.averageAttendance}%</div>
                 </div>
               ))
             )}
@@ -886,7 +930,7 @@ export default function ManagerDashboard() {
         {recentAttendance.length > 0 ? (
           <div className="panel manager-today-panel">
             <div className="panel-title">
-              <i className="fas fa-calendar-check" /> Today&apos;s Attendance
+              <i className="fas fa-clipboard-list" /> Attendance Register
             </div>
             <div className="manager-attendance-list">
               {recentAttendance.map((record) => (

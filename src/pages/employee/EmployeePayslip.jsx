@@ -4,7 +4,7 @@ import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { normalizeArray } from "./employeeUtils";
 import "../../styles/EmployeePayslip.css";
 
-export default function EmployeePayslip() {
+export default function EmployeePayslip({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
 
@@ -201,8 +201,8 @@ export default function EmployeePayslip() {
   };
 
   return (
-    <div className="layout employee-payslip-page">
-      <EmployeeSidebar activePage="payslip" />
+    <div className={embedded ? "employee-payslip-page" : "layout employee-payslip-page"}>
+      {!embedded && <EmployeeSidebar activePage="payslip" />}
 
       <div className="main">
         <div className="topbar">

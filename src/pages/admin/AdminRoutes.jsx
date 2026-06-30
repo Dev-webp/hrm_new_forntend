@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getPlaceholderAdminRoutes } from "../../config/adminNav";
 import AdminAttendance from "./AdminAttendance";
@@ -17,6 +17,14 @@ import AdminPlaceholder from "./AdminPlaceholder";
 import AdminOfferLetters from "./AdminOfferLetters";
 
 function AdminRoutes() {
+  const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
+  if (role === "SUB_ADMIN") {
+    return <Navigate to="/sub-admin" replace />;
+  }
+  if (role && role !== "SUPER_ADMIN") {
+    return <Navigate to="/home" replace />;
+  }
+
   const today = new Date();
   const [currentBranch, setCurrentBranch] = useState("all");
   const [currentMonthStr, setCurrentMonthStr] = useState(() => {

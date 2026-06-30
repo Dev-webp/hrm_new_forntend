@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Toast } from "../../components/Cards";
 import AttendanceAnalysisFilters from "../../components/attendance-analysis/AttendanceAnalysisFilters";
 import { useToast } from "../../hooks/useToast";
@@ -21,6 +21,7 @@ import {
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
+import { getStoredUser } from "../../utils/auth";
 import "../../styles/adminAttendanceAnalysis.css";
 
 
@@ -28,6 +29,11 @@ import "../../styles/adminAttendanceAnalysis.css";
 function AdminAttendanceAnalysis() {
   const today = new Date();
   const defaultMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const user = useMemo(() => getStoredUser(), []);
+  const isOperationalManager = user?.role === "OPERATIONAL_MANAGER";
+  const headerInitials = isOperationalManager ? "OM" : "SA";
+  const headerName = isOperationalManager ? "Operational Manager" : "Super Admin";
+  const headerSubtitle = isOperationalManager ? "Operations · Live" : "Chairman · Live";
 
   const [currentBranch, setCurrentBranch] = useState("all");
   const [currentMonth, setCurrentMonth] = useState(defaultMonth);
@@ -330,13 +336,13 @@ function AdminAttendanceAnalysis() {
       <div className="exec-header">
         <div className="emp-profile">
           <div className="avatar-sm" id="headerAvatar">
-            SA
+            {headerInitials}
           </div>
           <div>
-            <strong>Super Admin</strong>
+            <strong>{headerName}</strong>
             <span className="online-dot" />
             <br />
-            <span style={{ fontSize: 11 }}>Chairman · Live</span>
+            <span style={{ fontSize: 11 }}>{headerSubtitle}</span>
           </div>
         </div>
         <div className="header-actions">

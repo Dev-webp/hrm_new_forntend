@@ -137,3 +137,12 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .manager-attendance-page .late-login-status.warning { background: #ffedd5; color: #c2410c; }
 .manager-attendance-page .late-login-status.danger { background: #fee2e2; color: #991b1b; }
 .manager-attendance-page .late-login-status.muted { background: #e2e8f0; color: #475569; }
+.manager-attendance-page .branch-pill select {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  outline: none;
+  cursor: pointer;
+}

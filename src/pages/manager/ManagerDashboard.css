@@ -101,3 +101,180 @@
   min-width: 72px;
   text-align: right;
 }
+
+/* Zoho/Super-Admin inspired Manager dashboard refresh */
+.manager-dashboard-topbar {
+  min-height: 72px;
+  padding: 14px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #d6e3f3;
+  box-shadow: 0 10px 24px rgba(13, 71, 161, 0.08);
+}
+
+.manager-dashboard-topbar .topbar-title h1 {
+  color: #1a2b4b;
+  font-size: 1.28rem;
+  margin-bottom: 2px;
+}
+
+.manager-dashboard-topbar .topbar-title p {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.manager-dashboard-topbar .month-picker-wrap,
+.manager-dashboard-topbar .branch-pill,
+.manager-dashboard-topbar .live-pill {
+  background: #f8fbff;
+  border: 1px solid #d6e3f3;
+  color: #1a2b4b;
+  box-shadow: 0 6px 16px rgba(13, 71, 161, 0.06);
+}
+
+.manager-dashboard-page {
+  background: #f5f7fa;
+  padding: 18px 22px 30px;
+}
+
+.manager-dashboard-page .welcome-banner,
+.manager-dashboard-page .notif-strip,
+.manager-dashboard-page .panel,
+.manager-dashboard-page .chart-panel,
+.manager-dashboard-page .emp-card,
+.manager-dashboard-page .strip-tile {
+  background: #ffffff;
+  border: 1px solid #d6e3f3;
+  box-shadow: 0 12px 28px rgba(13, 71, 161, 0.08);
+}
+
+.manager-dashboard-page .welcome-banner {
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.manager-dashboard-page .welcome-text h2,
+.manager-dashboard-page .panel-title,
+.manager-dashboard-page .section-hdr h2,
+.manager-dashboard-page .emp-name,
+.manager-dashboard-page .lb-name,
+.manager-dashboard-page .manager-att-name {
+  color: #1a2b4b;
+}
+
+.manager-dashboard-page .welcome-text p,
+.manager-dashboard-page .emp-dept,
+.manager-dashboard-page .alert-time,
+.manager-dashboard-page .manager-att-time,
+.manager-dashboard-page .lb-name small {
+  color: #64748b;
+}
+
+.manager-dashboard-page .datetime-pill,
+.manager-dashboard-page .notif-chip,
+.manager-dashboard-page .dept-chip {
+  background: #eaf4ff;
+  color: #0d47a1;
+  border: 1px solid #d6e3f3;
+}
+
+.manager-dashboard-page .notif-strip {
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.manager-dashboard-page .notif-strip-title,
+.manager-dashboard-page .panel-title {
+  color: #0d47a1;
+  font-weight: 800;
+}
+
+.manager-dashboard-page .chart-row,
+.manager-dashboard-page .triple-row {
+  gap: 16px;
+}
+
+.manager-dashboard-page .chart-panel,
+.manager-dashboard-page .panel {
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.manager-dashboard-page .month-strip {
+  gap: 12px;
+}
+
+.manager-dashboard-page .strip-tile {
+  border-radius: 16px;
+}
+
+.manager-dashboard-page .department-leaderboard-item {
+  grid-template-columns: 34px minmax(120px, 1fr) minmax(90px, 1fr) 52px;
+}
+
+.manager-dashboard-page .department-leaderboard-item .lb-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.manager-dashboard-page .manager-att-row {
+  border-bottom: 1px solid #e5edf7;
+  padding: 10px 0;
+}
+
+.manager-dashboard-page .manager-att-status {
+  background: #eaf4ff;
+  color: #0d47a1;
+  font-weight: 800;
+}
+
+.manager-dashboard-page .manager-att-status.status-full_day,
+.manager-dashboard-page .manager-att-status.status-present {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.manager-dashboard-page .manager-att-status.status-absent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.manager-dashboard-page .manager-att-status.status-half_day {
+  background: #fff7ed;
+  color: #ff8c00;
+}
+
+.manager-dashboard-page .btn-approve {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.manager-dashboard-page .btn-reject {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+@media (max-width: 1180px) {
+  .manager-dashboard-page .chart-row,
+  .manager-dashboard-page .triple-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .manager-dashboard-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manager-dashboard-topbar .topbar-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .manager-dashboard-page {
+    padding: 14px;
+  }
+}

@@ -44,7 +44,7 @@ function isUnpaidLeaveDay(rec = {}) {
   );
 }
 
-export default function EmployeeDashboard() {
+export default function EmployeeDashboard({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
   const [profileData, setProfileData] = useState(null);
@@ -558,8 +558,8 @@ export default function EmployeeDashboard() {
   };
 
   return (
-    <div className="layout employee-dashboard">
-      <EmployeeSidebar activePage="dashboard" />
+    <div className={embedded ? "employee-dashboard" : "layout employee-dashboard"}>
+      {!embedded && <EmployeeSidebar activePage="dashboard" />}
       <div className="main">
         <div className="content">
           <section className="employee-top-card">
@@ -726,6 +726,7 @@ export default function EmployeeDashboard() {
         className="employee-help-floating-btn"
         onClick={() => navigate("/employee/help-center")}
         aria-label="Open employee help center"
+        style={embedded ? { display: "none" } : undefined}
       >
         <span>🎧</span>
         Need Help

@@ -85,7 +85,7 @@ function isUnpaidLeaveDay(rec = {}) {
   );
 }
 
-export default function EmployeeAttendance() {
+export default function EmployeeAttendance({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
   const detailedRef = useRef(null);
@@ -592,8 +592,8 @@ export default function EmployeeAttendance() {
   };
 
   return (
-    <div className="layout employee-attendance-page">
-      <EmployeeSidebar activePage="attendance" />
+    <div className={embedded ? "employee-attendance-page" : "layout employee-attendance-page"}>
+      {!embedded && <EmployeeSidebar activePage="attendance" />}
       <main className="main-content">
         <div className="page-header">
           <div>

@@ -88,7 +88,6 @@ export const CONVERTED_MANAGER_ROUTE_PATHS = new Set([
   "/manager/calendar",
   "/manager/department",
   "/manager/notifications",
-  "/manager/activity-logs",
   "/manager/payslip",
 ]);
 

@@ -24,7 +24,9 @@ export function setAuthSession({ token, user }) {
   if (user?.employee_code) {
     localStorage.setItem("employee_code", user.employee_code);
   }
-  if (user?.branch) {
+  if (user?.role === "OPERATIONAL_MANAGER") {
+    localStorage.setItem("branch", "all");
+  } else if (user?.branch) {
     localStorage.setItem("branch", user.branch);
   }
 }

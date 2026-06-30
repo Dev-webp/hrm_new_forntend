@@ -12,6 +12,10 @@ function Navbar({
   month,
   onMonthChange,
   showAdminActions = false,
+  showActivityLogsAction = true,
+  actionBasePath = "/admin",
+  profileName = "Super Admin",
+  profileSubtitle = "VJC Overseas",
 }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,8 +37,6 @@ function Navbar({
   }, []);
 
   const branchLabel = BRANCH_LABELS[branch] || branch;
-  const profileName = "Super Admin";
-
   return (
     <div className="topbar">
       <div className="topbar-left">
@@ -116,7 +118,7 @@ function Navbar({
               type="button"
               className="topbar-icon-btn"
               aria-label="Notifications"
-              onClick={() => navigate("/admin/notifications")}
+              onClick={() => navigate(`${actionBasePath}/notifications`)}
             >
               <i className="fas fa-bell" />
               <NotificationBadge type="notifications" />
@@ -127,23 +129,25 @@ function Navbar({
               type="button"
               className="topbar-icon-btn topbar-action-btn"
               aria-label="Leave requests"
-              onClick={() => navigate("/admin/leave")}
+              onClick={() => navigate(`${actionBasePath}/leave`)}
             >
               <i className="fas fa-briefcase" />
               <NotificationBadge type="leaves" />
               <span>Leave Requests</span>
             </button>
 
-            <button
-              type="button"
-              className="topbar-icon-btn topbar-action-btn"
-              aria-label="Activity logs"
-              onClick={() => navigate("/admin/activity-logs")}
-            >
-              <i className="fas fa-list-alt" />
-              <NotificationBadge type="activityLogs" />
-              <span>Activity Logs</span>
-            </button>
+            {showActivityLogsAction ? (
+              <button
+                type="button"
+                className="topbar-icon-btn topbar-action-btn"
+                aria-label="Activity logs"
+                onClick={() => navigate(`${actionBasePath}/activity-logs`)}
+              >
+                <i className="fas fa-list-alt" />
+                <NotificationBadge type="activityLogs" />
+                <span>Activity Logs</span>
+              </button>
+            ) : null}
           </>
         ) : null}
 
@@ -153,7 +157,7 @@ function Navbar({
           </div>
           <div className="topbar-profile-copy">
             <strong>{profileName}</strong>
-            <span>VJC Overseas</span>
+            <span>{profileSubtitle}</span>
           </div>
           <i className="fas fa-chevron-down" />
         </div>

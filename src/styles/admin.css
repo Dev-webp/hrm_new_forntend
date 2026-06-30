@@ -1306,6 +1306,19 @@ body.hrms-dashboard #root {
   }
 }
 
+.operations-self-service .employee-sidebar {
+  display: none;
+}
+
+.operations-self-service .layout {
+  min-height: auto;
+}
+
+.operations-self-service .main {
+  width: 100%;
+  margin-left: 0;
+}
+
 /* Enterprise Executive Dashboard refresh */
 .topbar {
   min-height: 64px;

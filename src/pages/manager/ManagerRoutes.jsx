@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getPlaceholderManagerRoutes } from "../../config/managerNav";
 import ManagerAttendance from "./ManagerAttendance";
@@ -10,7 +10,6 @@ import ManagerDepartment from "./ManagerDepartment";
 import ManagerEmployee from "./ManagerEmployee";
 import ManagerLeave from "./ManagerLeave";
 import ManagerNotifications from "./ManagerNotifications";
-import AdminActivityLogs from "../admin/AdminActivityLogs";
 import ManagerPayslip from "./ManagerPayslip";
 import ManagerPlaceholder from "./ManagerPlaceholder";
 
@@ -26,6 +25,14 @@ const PLACEHOLDER_TITLES = {
 };
 
 function ManagerRoutes() {
+  const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
+  if (role === "SUB_ADMIN") {
+    return <Navigate to="/sub-admin" replace />;
+  }
+  if (role && role !== "MANAGER") {
+    return <Navigate to="/home" replace />;
+  }
+
   const placeholderSlugs = getPlaceholderManagerRoutes().map((path) =>
     path.replace(/^\/manager\/?/, "")
   );
@@ -42,7 +49,6 @@ function ManagerRoutes() {
         <Route path="calendar" element={<ManagerCalendar />} />
         <Route path="department" element={<ManagerDepartment />} />
         <Route path="notifications" element={<ManagerNotifications />} />
-        <Route path="activity-logs" element={<AdminActivityLogs />} />
         <Route path="payslip" element={<ManagerPayslip />} />
 
         {placeholderSlugs.map((slug) => (

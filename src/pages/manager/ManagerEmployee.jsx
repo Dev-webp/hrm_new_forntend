@@ -40,7 +40,17 @@ function ManagerEmployee() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
 
   const { toast, showToast } = useToast(3000);
-  const branch = localStorage.getItem("branch") || "Hyderabad";
+  const storedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+  const isOperationalManager = storedUser.role === "OPERATIONAL_MANAGER";
+  const [selectedBranch, setSelectedBranch] = useState(isOperationalManager ? "all" : (localStorage.getItem("branch") || "Hyderabad"));
+  const branch = isOperationalManager ? selectedBranch : (localStorage.getItem("branch") || "Hyderabad");
+  const editableBranch = branch === "all" ? "Hyderabad" : branch;
 
   const loadEmployees = useCallback(async () => {
     setLoading(true);
@@ -116,7 +126,7 @@ function ManagerEmployee() {
     setEditingEmployeeId(null);
     setForm({
       ...EMPTY_EMPLOYEE_FORM,
-      branch,
+      branch: editableBranch,
       role: "Employee",
       department: activeDepartmentOptions[0] || "",
     });
@@ -131,13 +141,13 @@ function ManagerEmployee() {
     setDetailsOpen(false);
     setFormMode("edit");
     setEditingEmployeeId(employeeId);
-    setForm({ ...employeeToForm(employee), branch, role: "Employee" });
+    setForm({ ...employeeToForm(employee), role: "Employee" });
     setFormError("");
     setFormOpen(true);
   };
 
   const handleSaveEmployee = async () => {
-    const managerForm = { ...form, branch, role: "Employee" };
+    const managerForm = { ...form, branch: form.branch || editableBranch, role: "Employee" };
     const validationError = validateEmployeeForm(managerForm);
     if (validationError) {
       setFormError(validationError);
@@ -220,17 +230,28 @@ function ManagerEmployee() {
       <div className="header">
         <div className="title">
           <h1>Employee Management</h1>
-          <p>Manage employee profiles, departments, and status for {branch}.</p>
+          <p>Manage employee profiles, departments, and status for {isOperationalManager ? "all branches" : branch}.</p>
         </div>
 
         <div className="header-actions">
           <button type="button" className="add-employee-btn" onClick={openAddModal}>
             <i className="fas fa-plus" /> Add Employee
           </button>
-          <div className="branch-selector manager-branch-locked">
-            <i className="fas fa-store" />
-            <span>{branch}</span>
-          </div>
+          {isOperationalManager ? (
+            <div className="branch-selector">
+              <i className="fas fa-store" />
+              <select value={selectedBranch} onChange={(event) => setSelectedBranch(event.target.value)}>
+                <option value="all">All Branches</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Bangalore">Bangalore</option>
+              </select>
+            </div>
+          ) : (
+            <div className="branch-selector manager-branch-locked">
+              <i className="fas fa-store" />
+              <span>{branch}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -287,6 +308,10 @@ function ManagerEmployee() {
                   <div className="admin-role-line">
                     {employee.role === "Admin"
                       ? "MANAGER"
+                      : employee.role === "Sub Admin"
+                      ? "SUB ADMIN"
+                      : employee.role === "Operational Manager"
+                      ? "OPERATIONAL MANAGER"
                       : employee.role === "Super Admin"
                       ? "SUPER ADMIN"
                       : "EMPLOYEE"}
@@ -340,7 +365,7 @@ function ManagerEmployee() {
         detailsOpen={detailsOpen}
         selectedEmployee={selectedEmployee}
         onFormClose={() => setFormOpen(false)}
-        onFormChange={(nextForm) => setForm({ ...nextForm, branch, role: "Employee" })}
+        onFormChange={(nextForm) => setForm({ ...nextForm, branch: nextForm.branch || editableBranch, role: "Employee" })}
         onFormSave={handleSaveEmployee}
         onDetailsClose={() => {
           setDetailsOpen(false);

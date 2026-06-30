@@ -12,7 +12,7 @@ const SUPPORT_CARDS = [
       "Daily Work Queries",
     ],
     button: "Message Manager",
-    href: "mailto:manager@vjcoverseas.com?subject=Employee%20Support%20Request",
+    href: "mailto:srikanth@vjcoverseas.com?subject=Employee%20Support%20Request",
   },
   {
     title: "Contact Chairman",

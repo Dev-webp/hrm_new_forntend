@@ -60,7 +60,7 @@ export default function ManagerNotifications() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (jwtPayload.role && jwtPayload.role !== "MANAGER") {
+    if (jwtPayload.role && !["MANAGER", "OPERATIONAL_MANAGER"].includes(jwtPayload.role)) {
       navigate("/admin/notifications", { replace: true });
     }
   }, [jwtPayload.role, navigate]);

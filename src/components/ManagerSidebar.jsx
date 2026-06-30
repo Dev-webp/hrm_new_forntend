@@ -7,7 +7,11 @@ import { fetchManagerPendingLeaveCount } from "../services/managerApi";
 import { loadSocketIoClient, SOCKET_SERVER_URL } from "../utils/socketClient";
 import logo from "../assets/logoimagefinally1.png";
 
-function ManagerSidebar() {
+function ManagerSidebar({
+  navItems = MANAGER_NAV,
+  roleLabel = "Manager",
+  secureCode = "MGR",
+}) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -88,7 +92,7 @@ function ManagerSidebar() {
 </div>
 
       <div className="nav-section">
-        {MANAGER_NAV.map((section) => (
+        {navItems.map((section) => (
           <div key={section.section}>
             <div className="nav-label sb-label">{section.section}</div>
 
@@ -106,7 +110,7 @@ function ManagerSidebar() {
 
 {item.path.includes("notifications") && notificationCount > 0 ? (
   <span className="notif-badge">{notificationCount}</span>
-) : item.path.includes("leave") && pendingLeaveCount > 0 ? (
+) : item.label === "Leave" && pendingLeaveCount > 0 ? (
   <span className="notif-badge">{pendingLeaveCount}</span>
 ) : null}
 </NavLink>
@@ -116,9 +120,9 @@ function ManagerSidebar() {
 
         <div className="nav-item">
           <i className="fas fa-shield-alt" />
-          <span className="sb-label">Manager</span>
+          <span className="sb-label">{roleLabel}</span>
           <span className="secure-badge">
-            <i className="fas fa-lock" /> MGR
+            <i className="fas fa-lock" /> {secureCode}
           </span>
         </div>
       </div>

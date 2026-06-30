@@ -1,6 +1,33 @@
 .admin-calendar-page {
   padding: 28px 32px 48px;
-  background: #F5F7FA;
+  background: #F8FAFC;
+}
+
+.admin-calendar-page .calendar-mode-toggle {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 5px;
+  background: #FFFFFF;
+  border: 1px solid #DDE7F3;
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(13, 71, 161, 0.08);
+}
+
+.admin-calendar-page .calendar-mode-toggle button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: transparent;
+  color: #1A2B4B;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-calendar-page .calendar-mode-toggle button.active {
+  background: #0D47A1;
+  color: #FFFFFF;
+  box-shadow: 0 8px 18px rgba(13, 71, 161, 0.22);
 }
 
 /* Current selected branch text */

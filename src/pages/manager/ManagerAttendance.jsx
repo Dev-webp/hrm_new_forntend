@@ -162,7 +162,16 @@ export default function ManagerAttendance() {
   const [departments, setDepartments] = useState(["all"]);
   const [monthlyLateCount, setMonthlyLateCount] = useState(0);
 
-  const branch = localStorage.getItem("branch") || "Hyderabad";
+  const storedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+  const isOperationalManager = storedUser.role === "OPERATIONAL_MANAGER";
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const branch = isOperationalManager ? selectedBranch : (localStorage.getItem("branch") || "Hyderabad");
   const managerName = localStorage.getItem("full_name") || "Manager";
   const managerId = parseInt(localStorage.getItem("id") || "0");
 
@@ -366,9 +375,26 @@ export default function ManagerAttendance() {
             </p>
           </div>
           <div className="controls-group">
-            <div className="branch-pill">
-              <i className="fas fa-store"></i> {branch === "Hyderabad" ? "🏢" : "💻"} {branch}
-            </div>
+            {isOperationalManager ? (
+              <label className="branch-pill">
+                <i className="fas fa-store"></i>
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => {
+                    setSelectedBranch(e.target.value);
+                    setCurrentDept("all");
+                  }}
+                >
+                  <option value="all">All Branches</option>
+                  <option value="Hyderabad">Hyderabad</option>
+                  <option value="Bangalore">Bangalore</option>
+                </select>
+              </label>
+            ) : (
+              <div className="branch-pill">
+                <i className="fas fa-store"></i> {branch}
+              </div>
+            )}
             <div className="date-picker-wrapper">
               <i className="fas fa-calendar-alt" style={{ color: "#FF8C00" }}></i>
               <input type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)} />
@@ -701,5 +727,6 @@ export default function ManagerAttendance() {
     </>
   );
 }
+
 
 

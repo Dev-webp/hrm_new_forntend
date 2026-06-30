@@ -69,6 +69,7 @@ function AdminDashboard() {
   });
 
   const user = useMemo(() => getStoredUser(), []);
+  const isOperationalManager = user?.role === "OPERATIONAL_MANAGER";
 
   const [year, monthNum] = currentMonthStr.split("-").map(Number);
 
@@ -225,7 +226,9 @@ function AdminDashboard() {
 
   const loadLeavePanel = useCallback(async () => {
     try {
-      const response = await api.get("/leaves?status=all");
+      const response = await api.get("/leaves", {
+        params: { status: "all", branch: currentBranch },
+      });
       const leaves = response.data;
       const pending = leaves.filter((leave) => leave.status === "pending");
 
@@ -238,11 +241,11 @@ function AdminDashboard() {
     } catch {
       setLeaveItems([]);
     }
-  }, []);
+  }, [currentBranch]);
 
   const loadDepartmentCount = useCallback(async () => {
     try {
-      const count = await fetchDepartmentCount();
+      const count = await fetchDepartmentCount({ branch: currentBranch });
       setWelcomeStats((prev) => ({
         ...prev,
         departments: count,
@@ -253,7 +256,7 @@ function AdminDashboard() {
         departments: "--",
       }));
     }
-  }, []);
+  }, [currentBranch]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -558,17 +561,29 @@ function AdminDashboard() {
 
   const branchLabel = BRANCH_LABELS[currentBranch] || currentBranch;
   const displayName = user?.full_name || user?.name || "Admin";
+  const dashboardTitle = isOperationalManager
+    ? "Operational Manager Dashboard"
+    : "Executive Dashboard";
+  const profileName = isOperationalManager ? "Operational Manager" : "Super Admin";
+  const profileSubtitle = isOperationalManager
+    ? "Operations · All Branches"
+    : "VJC Overseas";
+  const actionBasePath = isOperationalManager ? "/operations" : "/admin";
 
   return (
     <>
       <Navbar
-        title="Executive Dashboard"
+        title={dashboardTitle}
         subtitle={`Month-to-date · Employee performance & attendance intelligence · ${branchLabel}`}
         branch={currentBranch}
         onBranchChange={setCurrentBranch}
         month={currentMonthStr}
         onMonthChange={setCurrentMonthStr}
         showAdminActions
+        showActivityLogsAction={!isOperationalManager}
+        actionBasePath={actionBasePath}
+        profileName={profileName}
+        profileSubtitle={profileSubtitle}
       />
 
       <div className="scroll-content admin-portal-page admin-dashboard-page">
@@ -649,7 +664,7 @@ function AdminDashboard() {
           <button
             type="button"
             className="notif-view-all"
-            onClick={() => navigate("/admin/notifications")}
+            onClick={() => navigate(`${actionBasePath}/notifications`)}
           >
             <span>View All</span>
             <i className="fas fa-arrow-right" />

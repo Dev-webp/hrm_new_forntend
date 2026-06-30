@@ -28,8 +28,12 @@ function Login() {
 
       if (role === "SUPER_ADMIN") {
         navigate("/admin");
+      } else if (role === "OPERATIONAL_MANAGER") {
+        navigate("/operations");
       } else if (role === "MANAGER") {
         navigate("/manager");
+      } else if (role === "SUB_ADMIN") {
+        navigate("/sub-admin");
       } else {
         navigate("/employee");
       }

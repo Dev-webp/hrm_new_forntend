@@ -7,7 +7,9 @@ export const BRANCH_OPTIONS = [
 export const ROLE_OPTIONS = [
   { value: "all", label: "All Roles" },
   { value: "Employee", label: "Employee" },
+  { value: "Sub Admin", label: "Sub Admin" },
   { value: "Admin", label: "Admin (Manager)" },
+  { value: "Operational Manager", label: "Operational Manager" },
   { value: "Super Admin", label: "Super Admin" },
 ];
 
@@ -24,18 +26,24 @@ export const FORM_BRANCH_OPTIONS = [
 
 export const FORM_ROLE_OPTIONS = [
   { value: "Employee", label: "Employee" },
+  { value: "Sub Admin", label: "Sub Admin" },
   { value: "Admin", label: "Admin (Manager)" },
+  { value: "Operational Manager", label: "Operational Manager" },
   { value: "Super Admin", label: "Super Admin" },
 ];
 
 export function mapRoleFromBackend(role) {
+  if (role === "SUB_ADMIN") return "Sub Admin";
   if (role === "MANAGER") return "Admin";
+  if (role === "OPERATIONAL_MANAGER") return "Operational Manager";
   if (role === "SUPER_ADMIN") return "Super Admin";
   return "Employee";
 }
 
 export function mapRoleToBackend(role) {
+  if (role === "Sub Admin") return "SUB_ADMIN";
   if (role === "Admin") return "MANAGER";
+  if (role === "Operational Manager") return "OPERATIONAL_MANAGER";
   if (role === "Super Admin") return "SUPER_ADMIN";
   return "EMPLOYEE";
 }
