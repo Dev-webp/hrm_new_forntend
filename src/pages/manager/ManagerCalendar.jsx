@@ -6,6 +6,7 @@ import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
+import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import "../../styles/ManagerCalendar.css";
 
 const MONTH_NAMES = [
@@ -233,7 +234,7 @@ export default function ManagerCalendar() {
             else if (st === "half_day") s.halfDay += 1;
             else if (st === "absent") s.absent += 1;
             else if (st === "leave") s.leave += 1;
-            if ((rec.late_minutes || 0) > 0 && !["absent", "holiday"].includes(st)) {
+            if (isGraceLateAttendanceRecord(rec) && !["absent", "holiday"].includes(st)) {
               s.late += 1;
             }
           });
@@ -394,7 +395,7 @@ export default function ManagerCalendar() {
             else if (st === "absent") pAbsent += 1;
             else if (st === "half_day") pHalfDay += 1;
             else if (st === "leave") pLeave += 1;
-            if (rec.lateMinutes > 0 && st !== "absent") pLate += 1;
+            if (isGraceLateAttendanceRecord(rec) && st !== "absent") pLate += 1;
           } else if (!isSun && !entry && dateStr <= today) {
             pAbsent += 1;
           }
@@ -407,7 +408,7 @@ export default function ManagerCalendar() {
             else if (st === "leave") cssClasses += " p-leave";
             else if (st === "absent") cssClasses += " p-absent calendar-absent";
           }
-          if (!isSun && !entry && rec && rec.lateMinutes > 0 && !["absent", "half_day", "full_day"].includes(st) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
+          if (!isSun && !entry && rec && isGraceLateAttendanceRecord(rec) && !["absent", "half_day", "full_day"].includes(st) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             cssClasses = cssClasses.replace(" p-present", "");
             cssClasses = cssClasses.replace(" calendar-present", "");
             cssClasses += " p-late calendar-late";
@@ -430,7 +431,7 @@ export default function ManagerCalendar() {
                 <div className="mini-row">
                   <span>{statusLabel}</span>
                 </div>
-                {rec.lateMinutes > 0 && !isPaidLeaveDay(rec) ? (
+                {isGraceLateAttendanceRecord(rec) && !isPaidLeaveDay(rec) ? (
                   <div className="mini-row">
                     <span style={{ color: "#FF8C00", fontSize: "0.62rem" }}>
                       ⏰ Late {rec.lateMinutes}m
@@ -468,7 +469,7 @@ export default function ManagerCalendar() {
                       <span className="tv">{fmt12(rec.checkOut)}</span>
                     </div>
                   ) : null}
-                  {rec.lateMinutes > 0 ? (
+                  {isGraceLateAttendanceRecord(rec) ? (
                     <div className="tt-row">
                       <span>Late by</span>
                       <span className="tv" style={{ color: "var(--c-late)" }}>

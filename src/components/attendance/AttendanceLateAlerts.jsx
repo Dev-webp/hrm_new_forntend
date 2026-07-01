@@ -2,6 +2,7 @@ import {
   formatTimeShort,
   getLateEmployeeStatusMeta,
 } from "../../utils/attendanceHelpers";
+import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
 
 function AttendanceLateAlerts({
@@ -11,7 +12,7 @@ function AttendanceLateAlerts({
   loading,
 }) {
   const lateEmployees = (records || []).filter(
-    (emp) => (emp.late_minutes || 0) > 0
+    isGraceLateAttendanceRecord
   );
 
   const countLabel = `${lateEmployees.length} Employee${

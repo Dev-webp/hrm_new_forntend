@@ -24,6 +24,18 @@ export function isSunday(dateStr) {
   return new Date(year, month - 1, day).getDay() === 0;
 }
 
+export function isGraceLateAttendanceRecord(record = {}) {
+  const raw = record.check_in_time || record.office_in || record.checkIn;
+  const out = record.check_out_time || record.office_out || record.checkOut;
+  if (!raw || !out) return false;
+
+  const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return false;
+
+  const minutes = h * 60 + m;
+  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+}
+
 export function computeMonthStats(year, month, holidaySet) {
   const total = monthDays(year, month);
   let sundays = 0;
@@ -93,13 +105,13 @@ export function computeEmpStats(
 
     if (status === "half_day") {
       half += 1;
-      if ((record.late_minutes || 0) > 0) late += 1;
+      if (isGraceLateAttendanceRecord(record)) late += 1;
       continue;
     }
 
     if (["full_day", "present", "leave", "in_progress", "working"].includes(status)) {
       present += 1;
-      if ((record.late_minutes || 0) > 0) late += 1;
+      if (isGraceLateAttendanceRecord(record)) late += 1;
     }
   }
 
@@ -107,7 +119,7 @@ export function computeEmpStats(
   const attPct =
     workingDays > 0 ? Math.round((effectivePresent / workingDays) * 100) : 0;
 
-  return { present, half, absent, late, workingDays, attPct };
+  return { present, half, absent, late: Math.min(late, 6), workingDays, attPct };
 }
 
 export function attPctColor(pct) {

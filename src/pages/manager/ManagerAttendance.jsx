@@ -57,6 +57,16 @@ function parseEditTime(value) {
   return null;
 }
 
+function isGraceLateLogin(record = {}) {
+  const raw = record.check_in_time || record.office_in || record.checkIn;
+  const out = record.check_out_time || record.office_out || record.checkOut;
+  if (!raw || !out) return false;
+  const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return false;
+  const minutes = h * 60 + m;
+  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+}
+
 function getStatusBadge(status) {
   const s = (status || "absent").toLowerCase();
   if (s === "in_progress" || s === "working") {
@@ -87,12 +97,13 @@ function getLatePill(emp) {
   if (status === "in_progress" || status === "working") {
     return (
       <span className="on-time-pill" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>
-        {lateMins > 0 ? `Working - ${lateMins} min late` : "Working"}
+        Working
       </span>
     );
   }
   if (status === "absent") return <span className="absent-pill">Absent</span>;
   if (status === "leave") return <span className="badge badge-leave" style={{ padding: "4px 10px" }}>Leave</span>;
+  if (!isGraceLateLogin(emp) && lateMins > 0) return <span className="on-time-pill">On Time</span>;
   if (lateMins > 0) return <span className="late-pill">🔴 {lateMins} min</span>;
   return <span className="on-time-pill">On Time</span>;
 }
@@ -130,8 +141,8 @@ function LateLoginCountCell({ record }) {
     <div className="late-login-count-cell">
       <strong>{formatLateLoginCount(record)}</strong>
       <span className={getLateLoginStatusClass(status)}>{status}</span>
-      {status !== "Limit Exceeded" && (
-        <small>Remaining Grace: {getRemainingGraceLateLogins(record)}</small>
+      {status === "Late" && (
+        <small>Available Late Allowance: {getRemainingGraceLateLogins(record)}</small>
       )}
     </div>
   );
@@ -197,8 +208,8 @@ export default function ManagerAttendance() {
       const start = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().slice(0, 10);
       const end = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().slice(0, 10);
       const records = await fetchSelfHistory(start, end);
-      const lateCount = records.filter((record) => Number(record.late_minutes || 0) > 0).length;
-      setMonthlyLateCount(lateCount);
+      const lateCount = records.filter(isGraceLateLogin).length;
+      setMonthlyLateCount(Math.min(lateCount, LATE_LOGIN_LIMIT));
     } catch (err) {
       console.warn(err);
       setMonthlyLateCount(0);
@@ -231,7 +242,7 @@ export default function ManagerAttendance() {
         totalLeave,
       });
 
-      const lateEmps = attRecords.filter((e) => Number(e.late_minutes || 0) > 0);
+      const lateEmps = attRecords.filter(isGraceLateLogin);
       setLateEmployees(lateEmps);
 
       const lb = leaderboardResult.status === "fulfilled" ? leaderboardResult.value : [];
@@ -502,7 +513,7 @@ export default function ManagerAttendance() {
           </div>
           <div
             className={`kpi late-usage-kpi ${getLateUsageTone(monthlyLateCount)}`}
-            title="Late Login Policy: Maximum allowed late logins per month is 6. Grace login time is 10:15 AM. After reaching the limit, attendance is calculated according to company policy. The count resets automatically every month."
+            title="Late Login Policy: maximum 6 monthly late logins count only for check-ins from 10:01 AM to 10:15 AM. After 10:15 AM, attendance follows Half Day or Absent policy."
           >
             <div className="kpi-title">
               <i className="fas fa-circle-info"></i> Late Logins

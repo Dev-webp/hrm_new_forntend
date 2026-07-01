@@ -272,9 +272,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       .filter((l) => l.status === "approved")
       .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
     const leaveBalance = Math.max(0, 24 - approvedDays);
-    const lateCount = allAttendance.filter(
-      (r) => (r.late_minutes || 0) > 0 && r.status !== "absent"
-    ).length;
+    const lateCount = Math.min(allAttendance.filter(isGraceLateLogin).length, LATE_MAX);
 
     return {
       workingDays,
@@ -303,10 +301,8 @@ export default function EmployeeDashboard({ embedded = false }) {
   }, [allAttendance, allLeaves, holidayList, monthMeta]);
 
   const lateTracker = useMemo(() => {
-    const lateRecs = allAttendance.filter(
-      (r) => (r.late_minutes || 0) > 0 && r.status !== "absent"
-    );
-    const lateCount = lateRecs.length;
+    const lateRecs = allAttendance.filter(isGraceLateLogin);
+    const lateCount = Math.min(lateRecs.length, LATE_MAX);
     const remaining = Math.max(0, LATE_MAX - lateCount);
     let info;
     if (lateCount === 0) {
@@ -315,7 +311,7 @@ export default function EmployeeDashboard({ embedded = false }) {
           <strong style={{ color: "var(--green)" }}>
             No late logins this month.
           </strong>{" "}
-          All 6 grace logins available.
+          All 6 monthly late allowances are available.
         </>
       );
     } else if (lateCount < LATE_MAX) {
@@ -330,8 +326,8 @@ export default function EmployeeDashboard({ embedded = false }) {
     } else {
       info = (
         <>
-          <strong style={{ color: "var(--red)" }}>Grace limit reached!</strong>{" "}
-          Further late logins count as half days.
+          <strong style={{ color: "var(--red)" }}>Monthly late allowance reached!</strong>{" "}
+          Further check-ins after 10:15 AM follow Half Day or Absent policy.
         </>
       );
     }
@@ -348,7 +344,7 @@ export default function EmployeeDashboard({ embedded = false }) {
     } else if (d?.status === "leave") {
       statusText = "Leave";
       statusCls = "leave";
-    } else if (d?.late_minutes > 0 && d?.status !== "absent") {
+    } else if (isGraceLateLogin(d) && d?.status !== "absent") {
       statusText = "Late";
       statusCls = "late";
     } else if (d?.status === "full_day") {
@@ -367,7 +363,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       message:
         d?.status === "absent" || !d
           ? "Attendance not completed."
-          : Number(d?.late_minutes || 0) > 0
+            : isGraceLateLogin(d)
             ? `You are late by ${Number(d.late_minutes)} minutes.`
             : "Great! You are on time today.",
     };
@@ -420,7 +416,7 @@ export default function EmployeeDashboard({ embedded = false }) {
         } else if (rec.status === "half_day") {
           status = "Half Day";
           className = "halfday calendar-halfday";
-        } else if ((rec.late_minutes || 0) > 0) {
+        } else if (isGraceLateLogin(rec)) {
           status = "Late";
           className = "late calendar-late";
         } else if (rec.status === "full_day" || rec.status === "present") {
@@ -486,7 +482,7 @@ export default function EmployeeDashboard({ embedded = false }) {
         statusNode = (
           <>
             <span className={`status-chip ${cls}`}>{txt}</span>
-            {rec.late_minutes > 0 && rec.status !== "absent" && (
+            {isGraceLateLogin(rec) && rec.status !== "absent" && (
               <span
                 style={{
                   fontSize: ".68rem",
@@ -733,6 +729,16 @@ export default function EmployeeDashboard({ embedded = false }) {
       </button>
     </div>
   );
+}
+
+function isGraceLateLogin(rec = {}) {
+  const raw = rec.check_in_time || rec.office_in || rec.checkIn;
+  const out = rec.check_out_time || rec.office_out || rec.checkOut;
+  if (!raw || !out) return false;
+  const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return false;
+  const minutes = h * 60 + m;
+  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
 }
 
 

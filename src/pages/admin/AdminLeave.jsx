@@ -7,9 +7,11 @@ import {
   updateLeaveRequest,
   fetchLeaveApprovalPreview,
   createLeaveRequest,
+  deleteLeaveRequest,
 } from "../../services/leaveApi";
 import { fetchMyLeaveBalance, fetchMyLeaves } from "../../services/employeeApi";
 import LeaveApprovalPreviewModal from "../../components/leaves/LeaveApprovalPreviewModal";
+import DeleteLeaveConfirmModal from "../../components/leaves/DeleteLeaveConfirmModal";
 import { getStoredUser } from "../../utils/auth";
 
 import "../../styles/adminLeave.css";
@@ -64,6 +66,8 @@ const [employeeFilter, setEmployeeFilter] = useState("all");
   const [toast, setToast] = useState({ show: false, message: "" });
 const [approvalPreview, setApprovalPreview] = useState(null);
 const [previewLoading, setPreviewLoading] = useState(false);
+const [deleteTarget, setDeleteTarget] = useState(null);
+const [deleteSaving, setDeleteSaving] = useState(false);
 
 
   const [actionModal, setActionModal] = useState({
@@ -256,6 +260,21 @@ const message =
         {config.text}
       </span>
     );
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    setDeleteSaving(true);
+    try {
+      await deleteLeaveRequest(deleteTarget.id);
+      showToast("Leave request deleted");
+      setDeleteTarget(null);
+      await Promise.all([loadData(), loadMyLeaveData()]);
+    } catch (err) {
+      showToast(err.response?.data?.message || err.message || "Failed to delete leave request");
+    } finally {
+      setDeleteSaving(false);
+    }
   };
 
   const employeeOptions = useMemo(() => {
@@ -503,12 +522,13 @@ const message =
                 <th>Unpaid</th>
                 <th>Reason</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredMyLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: "center", padding: "28px" }}>
+                  <td colSpan="10" style={{ textAlign: "center", padding: "28px" }}>
                     No leave history found
                   </td>
                 </tr>
@@ -524,6 +544,20 @@ const message =
                     <td>{leave.unpaid_days ?? 0}</td>
                     <td>{leave.reason || "-"}</td>
                     <td>{getStatusBadge(leave.status)}</td>
+                    <td>
+                      {leave.status === "pending" ? (
+                        <button
+                          type="button"
+                          className="leave-delete-btn"
+                          title="Delete Leave Request"
+                          onClick={() => setDeleteTarget(leave)}
+                        >
+                          <i className="fas fa-trash-alt" />
+                        </button>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -671,8 +705,9 @@ const message =
                 <td>{request.reason}</td>
                 <td>{getStatusBadge(request.status)}</td>
                 <td>
-                  {request.status === "pending" && (
-                    <div className="leave-row-actions">
+                  <div className="leave-row-actions">
+                    {request.status === "pending" && (
+                      <>
                       <button
                         className="edit-btn"
                         onClick={() =>
@@ -694,8 +729,19 @@ const message =
                       >
                         <i className="fas fa-times"></i>
                       </button>
-                    </div>
-                  )}
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      className="leave-delete-btn"
+                      title="Delete Leave Request"
+                      onClick={() => setDeleteTarget(request)}
+                      disabled={loading}
+                      aria-label={`Delete leave for ${request.full_name}`}
+                    >
+                      <i className="fas fa-trash-alt" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
@@ -873,6 +919,14 @@ const message =
       saving={saving}
       onClose={handleCloseModal}
       onConfirm={handleSubmitAction}
+    />
+
+    <DeleteLeaveConfirmModal
+      open={Boolean(deleteTarget)}
+      leave={deleteTarget}
+      saving={deleteSaving}
+      onClose={() => !deleteSaving && setDeleteTarget(null)}
+      onConfirm={handleConfirmDelete}
     />
 
     <div className={`toast ${toast.show ? "show" : ""}`}>

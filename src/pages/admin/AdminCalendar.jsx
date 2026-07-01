@@ -18,6 +18,7 @@ import {
   monthRangeBounds,
 } from "../../utils/calendarHelper";
 import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import {
   formatProductionHours,
   formatTime12Hour,
@@ -110,7 +111,7 @@ function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayH
   if (status === "half_day") return "half_day";
 
   if (hasValidAttendance(record)) {
-    if ((status === "late" || lateMinutes > 0) && hours >= 8) return "late";
+    if ((status === "late" || isGraceLateAttendanceRecord(record)) && hours >= 8) return "late";
     if (status === "absent" && hours < 4) return "absent";
     if (hours >= 8) return "present";
     return "absent";
@@ -410,7 +411,7 @@ function AdminCalendar() {
       else if (st === "leave") leave++;
       else if (st === "absent") absent++;
 
-      if ((r.late_minutes || 0) > 0 && st !== "absent") late++;
+      if (isGraceLateAttendanceRecord(r) && st !== "absent") late++;
     }
 
     return {

@@ -16,6 +16,15 @@ function PreviewItem({ label, value, tone = "" }) {
   );
 }
 
+function formatDate(value) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function LeaveApprovalPreviewModal({
   open,
   preview,
@@ -57,8 +66,16 @@ export default function LeaveApprovalPreviewModal({
               <span className="leave-preview-category">{preview.final_category}</span>
             </div>
             <div className="leave-preview-grid">
+              <PreviewItem label="Employee ID" value={preview.employee_code || preview.employee_id} />
+              <PreviewItem label="Department" value={preview.department} />
+              <PreviewItem label="Branch" value={preview.branch} />
+              <PreviewItem label="Current status" value={preview.current_status} />
               <PreviewItem label="Leave type" value={preview.leave_type} />
+              <PreviewItem label="Leave category" value={preview.leave_category || preview.final_category} />
               <PreviewItem label="Duration" value={formatLeaveDuration(preview)} />
+              <PreviewItem label="Start date" value={formatDate(preview.from_date)} />
+              <PreviewItem label="End date" value={formatDate(preview.to_date)} />
+              <PreviewItem label="Applied date" value={formatDate(preview.applied_date)} />
               <PreviewItem label="Requested leaves" value={preview.requested_days} />
               <PreviewItem label="Available paid balance" value={preview.available_paid_balance} />
               <PreviewItem label="Paid leaves used" value={preview.paid_days} tone="success" />
@@ -71,6 +88,13 @@ export default function LeaveApprovalPreviewModal({
             <div className="leave-preview-policy">
               <i className="fas fa-shield-alt" />
               <div><span>Policy reason</span><strong>{preview.policy_reason}</strong></div>
+            </div>
+            <div className="leave-preview-reason">
+              <i className="fas fa-message" />
+              <div>
+                <span>Leave reason submitted by employee</span>
+                <strong>{preview.reason || "No reason provided."}</strong>
+              </div>
             </div>
             {!preview.can_approve ? (
               <div className="leave-preview-warning">Insufficient paid leave balance. This request cannot be approved.</div>

@@ -10,8 +10,7 @@ function AttendanceFilters({
   const lateStatusOptions = [
     { value: "all", label: "All Late Status" },
     { value: "on_time", label: "On Time" },
-    { value: "within_grace", label: "Late Within Grace" },
-    { value: "beyond_grace", label: "Late Beyond Grace" },
+    { value: "late", label: "Late" },
     { value: "limit_exceeded", label: "Limit Exceeded" },
   ];
 

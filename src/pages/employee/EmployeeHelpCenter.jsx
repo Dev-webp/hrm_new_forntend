@@ -24,7 +24,7 @@ const SUPPORT_CARDS = [
       "Company Matters",
     ],
     button: "Email Chairman",
-    href: "mailto:chairman@vjcoverseas.com?subject=Employee%20Escalation",
+    href: "mailto:mani@vjcoverseas.com?subject=Employee%20Escalation",
   },
   {
     title: "HRMS Support / Admin",

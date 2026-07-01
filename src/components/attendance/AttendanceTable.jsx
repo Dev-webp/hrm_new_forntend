@@ -38,8 +38,8 @@ function LateLoginCountCell({ emp }) {
     <div className="late-login-count-cell">
       <strong>{formatLateLoginCount(emp)}</strong>
       <span className={getLateLoginStatusClass(status)}>{status}</span>
-      {status !== "Limit Exceeded" && (
-        <small>Remaining Grace: {getRemainingGraceLateLogins(emp)}</small>
+      {status === "Late" && (
+        <small>Available Late Allowance: {getRemainingGraceLateLogins(emp)}</small>
       )}
     </div>
   );

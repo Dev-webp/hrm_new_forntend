@@ -100,3 +100,440 @@
 .employee-leave-page :where(.balance-card, .leave-card):hover { border-color:#0d47a1 !important; box-shadow:0 12px 28px rgba(13,71,161,.16) !important; }
 .employee-leave-page :where(h1, h2, h3, .lc-type, .days-num) { color:#0f172a !important; font-weight:800 !important; }
 .employee-leave-page :where(.title p, .leave-info-banner, .balance-card p, .lc-dates, .lc-reason, .days-label) { color:#475569 !important; font-weight:600 !important; }
+
+/* Sub Admin Leave - Zoho-style HRMS self-service page */
+.subadmin-leave-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(13, 71, 161, 0.08), transparent 32%),
+    linear-gradient(180deg, #F8FAFC 0%, #EEF5FF 100%);
+}
+
+.subadmin-leave-page .main {
+  background: transparent;
+}
+
+.subadmin-leave-page .subadmin-leave-topbar {
+  border-bottom: 1px solid #DDE7F3;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 28px rgba(26, 43, 75, 0.06);
+}
+
+.subadmin-leave-page .subadmin-page-kicker,
+.subadmin-leave-page .subadmin-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: #0D47A1;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subadmin-leave-page .topbar h1 {
+  color: #1A2B4B !important;
+  background: none;
+  -webkit-text-fill-color: #1A2B4B;
+  font-size: 1.75rem;
+}
+
+.subadmin-leave-page .topbar p {
+  color: #64748B;
+  font-weight: 600;
+}
+
+.subadmin-leave-page .apply-btn {
+  background: linear-gradient(135deg, #0D47A1, #1565C0);
+  color: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 12px 26px rgba(13, 71, 161, 0.24);
+}
+
+.subadmin-leave-page .apply-btn:hover {
+  background: linear-gradient(135deg, #08306F, #0D47A1);
+}
+
+.subadmin-leave-page .subadmin-leave-content {
+  padding: 26px 30px 52px;
+}
+
+.subadmin-leave-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px;
+  margin-bottom: 20px;
+  border: 1px solid #D6E3F3;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(13, 71, 161, 0.96), rgba(26, 43, 75, 0.94)),
+    #0D47A1;
+  color: #FFFFFF;
+  box-shadow: 0 18px 42px rgba(13, 71, 161, 0.24);
+}
+
+.subadmin-leave-hero h2 {
+  margin: 0 0 8px;
+  font-size: 1.65rem;
+  font-weight: 850;
+  color: #FFFFFF;
+}
+
+.subadmin-leave-hero p {
+  max-width: 660px;
+  color: rgba(255, 255, 255, 0.84);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.subadmin-leave-page .subadmin-hero-eyebrow {
+  color: #FFB65C;
+}
+
+.subadmin-hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 12px;
+  min-width: 290px;
+}
+
+.subadmin-hero-metrics div {
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.subadmin-hero-metrics strong {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  color: #FFFFFF;
+}
+
+.subadmin-hero-metrics span {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 700;
+}
+
+.subadmin-leave-page .leave-info-banner {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  color: #1A2B4B !important;
+  background: #FFF7ED;
+  border: 1px solid rgba(255, 140, 0, 0.28) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+.subadmin-leave-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.subadmin-leave-kpi {
+  position: relative;
+  overflow: hidden;
+  min-height: 122px;
+  padding: 18px;
+  border: 1px solid #DDE7F3;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 12px 30px rgba(26, 43, 75, 0.08);
+}
+
+.subadmin-leave-kpi::after {
+  content: "";
+  position: absolute;
+  width: 88px;
+  height: 88px;
+  right: -28px;
+  top: -28px;
+  border-radius: 50%;
+  opacity: 0.12;
+  background: currentColor;
+}
+
+.subadmin-leave-kpi span {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #EAF4FF;
+  color: #0D47A1;
+}
+
+.subadmin-leave-kpi small {
+  display: block;
+  margin-top: 14px;
+  color: #64748B;
+  font-weight: 700;
+}
+
+.subadmin-leave-kpi strong {
+  display: block;
+  margin-top: 4px;
+  color: #1A2B4B !important;
+  font-size: 1.75rem;
+  font-weight: 850 !important;
+}
+
+.subadmin-leave-kpi.orange { color: #FF8C00; }
+.subadmin-leave-kpi.green { color: #16A34A; }
+.subadmin-leave-kpi.red { color: #DC2626; }
+.subadmin-leave-kpi.orange span { background: #FFF7ED; color: #FF8C00; }
+.subadmin-leave-kpi.green span { background: #ECFDF5; color: #16A34A; }
+.subadmin-leave-kpi.red span { background: #FEF2F2; color: #DC2626; }
+
+.subadmin-leave-page .subadmin-balance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.subadmin-leave-page .balance-card {
+  min-height: 142px;
+  padding: 18px;
+  border: 1px solid #DDE7F3 !important;
+  border-radius: 16px !important;
+  background: #FFFFFF;
+  box-shadow: 0 10px 26px rgba(26, 43, 75, 0.07) !important;
+}
+
+.subadmin-leave-page .balance-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: #EAF4FF;
+  margin-bottom: 12px;
+}
+
+.subadmin-leave-page .balance-card h3 {
+  font-size: 0.84rem;
+  color: #64748B !important;
+  font-weight: 800 !important;
+}
+
+.subadmin-leave-page .balance-card span {
+  display: block;
+  margin-top: 8px;
+  color: #0D47A1 !important;
+  font-size: 1.7rem;
+  font-weight: 850;
+}
+
+.subadmin-leave-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 26px 0 14px;
+}
+
+.subadmin-leave-section-head h2 {
+  color: #1A2B4B;
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.subadmin-leave-section-head p {
+  margin-top: 4px;
+  color: #64748B;
+  font-weight: 600;
+  font-size: 0.84rem;
+}
+
+.subadmin-leave-page .subadmin-leave-tabs {
+  width: auto;
+  margin: 0;
+  padding: 5px;
+  border: 1px solid #DDE7F3;
+  border-radius: 12px;
+  background: #FFFFFF;
+  box-shadow: 0 8px 20px rgba(26, 43, 75, 0.06);
+}
+
+.subadmin-leave-page .subadmin-leave-tabs .tab {
+  border-radius: 9px;
+  padding: 8px 14px;
+  color: #64748B;
+}
+
+.subadmin-leave-page .subadmin-leave-tabs .tab.active {
+  background: #0D47A1;
+  color: #FFFFFF;
+}
+
+.subadmin-leave-page .leave-list {
+  display: block;
+}
+
+.subadmin-leave-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #DDE7F3;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 14px 34px rgba(26, 43, 75, 0.08);
+}
+
+.subadmin-leave-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.subadmin-leave-table th {
+  padding: 14px 16px;
+  background: #EAF4FF;
+  color: #1A2B4B;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 1px solid #DDE7F3;
+}
+
+.subadmin-leave-table td {
+  padding: 16px;
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 600;
+  border-bottom: 1px solid #EEF4FB;
+  vertical-align: middle;
+}
+
+.subadmin-leave-table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.subadmin-leave-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.subadmin-leave-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.subadmin-leave-type-cell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.subadmin-leave-type-cell span {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+}
+
+.subadmin-leave-type-cell .paid {
+  color: #16A34A;
+  background: #ECFDF5;
+}
+
+.subadmin-leave-type-cell .unpaid {
+  color: #FF8C00;
+  background: #FFF7ED;
+}
+
+.subadmin-leave-reason {
+  max-width: 280px;
+  color: #64748B !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subadmin-leave-page .status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+}
+
+.subadmin-leave-page .modal {
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.subadmin-leave-page .modal-box {
+  border: 1px solid #DDE7F3;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
+}
+
+.subadmin-leave-page .modal-box h3 {
+  color: #1A2B4B;
+}
+
+.subadmin-leave-page .mbtn-primary {
+  background: #0D47A1;
+  color: #FFFFFF;
+}
+
+.subadmin-leave-page .mbtn-cancel {
+  border-color: #DDE7F3;
+  color: #1A2B4B;
+}
+
+.employee-leave-delete-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: #DC2626;
+  color: #FFFFFF;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.18);
+}
+
+.employee-leave-delete-btn:hover {
+  background: #B91C1C;
+}
+
+@media (max-width: 1100px) {
+  .subadmin-leave-hero,
+  .subadmin-leave-section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .subadmin-leave-kpis,
+  .subadmin-leave-page .subadmin-balance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .subadmin-leave-page .subadmin-leave-content {
+    padding: 18px;
+  }
+
+  .subadmin-leave-kpis,
+  .subadmin-leave-page .subadmin-balance-grid,
+  .subadmin-hero-metrics {
+    grid-template-columns: 1fr;
+  }
+}

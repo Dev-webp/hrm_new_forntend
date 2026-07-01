@@ -1,17 +1,20 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import PageLoading from "../../components/PageLoading";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getPlaceholderManagerRoutes } from "../../config/managerNav";
-import ManagerAttendance from "./ManagerAttendance";
-import ManagerAttendanceAnalysis from "./ManagerAttendanceAnalysis";
-import ManagerBreaks from "./ManagerBreaks";
-import ManagerCalendar from "./ManagerCalendar";
-import ManagerDashboard from "./ManagerDashboard";
-import ManagerDepartment from "./ManagerDepartment";
-import ManagerEmployee from "./ManagerEmployee";
-import ManagerLeave from "./ManagerLeave";
-import ManagerNotifications from "./ManagerNotifications";
-import ManagerPayslip from "./ManagerPayslip";
 import ManagerPlaceholder from "./ManagerPlaceholder";
+
+const ManagerAttendance = lazy(() => import("./ManagerAttendance"));
+const ManagerAttendanceAnalysis = lazy(() => import("./ManagerAttendanceAnalysis"));
+const ManagerBreaks = lazy(() => import("./ManagerBreaks"));
+const ManagerCalendar = lazy(() => import("./ManagerCalendar"));
+const ManagerDashboard = lazy(() => import("./ManagerDashboard"));
+const ManagerDepartment = lazy(() => import("./ManagerDepartment"));
+const ManagerEmployee = lazy(() => import("./ManagerEmployee"));
+const ManagerLeave = lazy(() => import("./ManagerLeave"));
+const ManagerNotifications = lazy(() => import("./ManagerNotifications"));
+const ManagerPayslip = lazy(() => import("./ManagerPayslip"));
 
 const PLACEHOLDER_TITLES = {
   employees: "Employees",
@@ -39,17 +42,18 @@ function ManagerRoutes() {
 
   return (
     <RouteErrorBoundary title="Manager module error">
-      <Routes>
-        <Route index element={<ManagerDashboard />} />
-        <Route path="attendance" element={<ManagerAttendance />} />
-        <Route path="attendance-analysis" element={<ManagerAttendanceAnalysis />} />
-        <Route path="employees" element={<ManagerEmployee />} />
-        <Route path="leave" element={<ManagerLeave />} />
-        <Route path="breaks" element={<ManagerBreaks />} />
-        <Route path="calendar" element={<ManagerCalendar />} />
-        <Route path="department" element={<ManagerDepartment />} />
-        <Route path="notifications" element={<ManagerNotifications />} />
-        <Route path="payslip" element={<ManagerPayslip />} />
+      <Suspense fallback={<PageLoading label="Loading manager module…" />}>
+        <Routes>
+          <Route index element={<ManagerDashboard />} />
+          <Route path="attendance" element={<ManagerAttendance />} />
+          <Route path="attendance-analysis" element={<ManagerAttendanceAnalysis />} />
+          <Route path="employees" element={<ManagerEmployee />} />
+          <Route path="leave" element={<ManagerLeave />} />
+          <Route path="breaks" element={<ManagerBreaks />} />
+          <Route path="calendar" element={<ManagerCalendar />} />
+          <Route path="department" element={<ManagerDepartment />} />
+          <Route path="notifications" element={<ManagerNotifications />} />
+          <Route path="payslip" element={<ManagerPayslip />} />
 
         {placeholderSlugs.map((slug) => (
           <Route
@@ -63,8 +67,9 @@ function ManagerRoutes() {
           />
         ))}
 
-        <Route path="*" element={<ManagerPlaceholder title="Manager module" />} />
-      </Routes>
+          <Route path="*" element={<ManagerPlaceholder title="Manager module" />} />
+        </Routes>
+      </Suspense>
     </RouteErrorBoundary>
   );
 }

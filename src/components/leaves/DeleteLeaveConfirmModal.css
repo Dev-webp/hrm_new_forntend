@@ -1,0 +1,126 @@
+.delete-leave-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(26, 43, 75, 0.58);
+  backdrop-filter: blur(6px);
+}
+
+.delete-leave-modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border: 1px solid #d6e3f3;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(220, 38, 38, 0.22);
+  color: #1a2b4b;
+  overflow: hidden;
+}
+
+.delete-leave-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 24px auto 0;
+  border-radius: 18px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 1.35rem;
+}
+
+.delete-leave-body {
+  padding: 18px 26px 8px;
+  text-align: center;
+}
+
+.delete-leave-eyebrow {
+  color: #dc2626;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.delete-leave-body h2 {
+  margin: 6px 0 8px;
+  color: #1a2b4b;
+  font-size: 1.35rem;
+}
+
+.delete-leave-body p {
+  margin: 0 auto 18px;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.delete-leave-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  text-align: left;
+}
+
+.delete-leave-summary div {
+  padding: 12px;
+  border: 1px solid #d6e3f3;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.delete-leave-summary span {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.delete-leave-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: #1a2b4b;
+  font-size: 0.86rem;
+}
+
+.delete-leave-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px 26px 24px;
+}
+
+.delete-leave-actions button {
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.delete-leave-cancel {
+  border: 1px solid #d6e3f3;
+  background: #fff;
+  color: #1a2b4b;
+}
+
+.delete-leave-confirm {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.delete-leave-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .delete-leave-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .delete-leave-actions {
+    flex-direction: column-reverse;
+  }
+}

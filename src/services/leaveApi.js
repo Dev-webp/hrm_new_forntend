@@ -51,3 +51,8 @@ export async function fetchLeaveApprovalPreview(leaveId) {
   const response = await api.get(`/leave/${leaveId}/approval-preview`);
   return response.data;
 }
+
+export async function deleteLeaveRequest(leaveId) {
+  const response = await api.delete(`/leave/${leaveId}`);
+  return response.data;
+}

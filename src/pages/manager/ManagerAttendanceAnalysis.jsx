@@ -1,3 +1,4 @@
+import { Chart } from "chart.js/auto";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchAttendanceAnalysisIndividual,
@@ -14,21 +15,18 @@ import {
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
 import "./ManagerAttendanceAnalysis.css";
 
-// ─── Chart.js lazy import ───────────────────────────────────────────────────
-let Chart = null;
-async function getChart() {
-  if (Chart) return Chart;
-  const mod = await import("chart.js/auto");
-  Chart = mod.default || mod.Chart;
-  return Chart;
+function getChart() {
+  return Promise.resolve(Chart);
 }
 
+// ─── Chart.js lazy import ───────────────────────────────────────────────────
 // ─── Pure helpers (unchanged) ────────────────────────────────────────────────
 function getInitials(name) {
   return name
@@ -97,7 +95,7 @@ function statusLabel(r) {
   if (safe.status === "half_day") return "Half Day";
   if (safe.status === "sunday") return "Sunday";
   if (safe.status === "holiday") return "Holiday";
-  if (safe.lateMinutes > 0) return "Late";
+  if (isGraceLateAttendanceRecord(safe)) return "Late";
   return "Present";
 }
 function statusBadgeClass(r) {
@@ -106,7 +104,7 @@ function statusBadgeClass(r) {
   if (isUnpaidLeaveRecord(safe)) return "b-unpaid-leave";
   if (safe.status === "absent") return "b-absent";
   if (safe.status === "half_day") return "b-halfday";
-  if (safe.lateMinutes > 0) return "b-late";
+  if (isGraceLateAttendanceRecord(safe)) return "b-late";
   return "b-present";
 }
 function heatmapColor(r) {
@@ -117,7 +115,7 @@ function heatmapColor(r) {
   if (r.status === "sunday" || r.status === "holiday") return CALENDAR_STATUS_COLORS.holiday.background;
   if (r.status === "absent") return CALENDAR_STATUS_COLORS.absent.background;
   if (r.status === "half_day") return CALENDAR_STATUS_COLORS.half_day.background;
-  if (r.lateMinutes > 0) return CALENDAR_STATUS_COLORS.late.background;
+  if (isGraceLateAttendanceRecord(r)) return CALENDAR_STATUS_COLORS.late.background;
 
   return CALENDAR_STATUS_COLORS.present.background;
 }
@@ -370,7 +368,7 @@ export default function ManagerAttendanceAnalysis() {
     if (!records.length) return null;
     const workDays = records.filter((r) => !["absent","sunday","holiday"].includes(r.status));
     const presentDays = records.filter((r) => r.status === "full_day").length;
-    const lateDays = records.filter((r) => r.lateMinutes > 0).length;
+    const lateDays = records.filter(isGraceLateAttendanceRecord).length;
     const halfDays = records.filter((r) => r.status === "half_day").length;
     const absent = records.filter((r) => r.status === "absent").length;
     const totalDays = records.filter((r) => !["sunday","holiday"].includes(r.status)).length;
@@ -934,7 +932,7 @@ if (isSunday || r.status === "sunday") {
 } else if (r.status === "half_day") {
     className += " cal-halfday";
     numClass = "yellow-num";
-} else if (r.lateMinutes > 0) {
+} else if (isGraceLateAttendanceRecord(r)) {
     className += " cal-late";
     numClass = "orange-num";
   } else {
@@ -1022,7 +1020,7 @@ if (isSunday || r.status === "sunday") {
                       return (
                         <div key={r.date} style={{
                           background: "#F5F7FA", borderRadius: "12px", padding: "12px",
-                          border: r.lateMinutes > 0 ? "1px solid #FF8C0044" : isWork ? "1px solid #16A34A22" : "1px solid #EAF4FF",
+                          border: isGraceLateAttendanceRecord(r) ? "1px solid #FF8C0044" : isWork ? "1px solid #16A34A22" : "1px solid #EAF4FF",
                         }}>
                           <div style={{ fontSize: "11px", color: "#7B8199" }}>{dayName(r.date)}</div>
                           <div style={{ fontSize: "13px", color: "#FF8C00", fontWeight: 700 }}>{formatDateReadable(r.date)}</div>

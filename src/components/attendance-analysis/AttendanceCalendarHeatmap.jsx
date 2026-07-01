@@ -5,6 +5,7 @@ import {
   formatDateYMD,
   formatTimeDisplay,
   getAttendanceStyle,
+  isGraceLateAttendanceRecord,
   isPaidLeaveRecord,
   isUnpaidLeaveRecord,
   normalizeAttendanceAnalysisRecord,
@@ -55,7 +56,7 @@ function CalendarDay({ dateStr, dayNum, record }) {
             </strong>
             <hr />
             Status: <strong>{statusLabel}</strong>
-            {safeRecord.lateMinutes ? (
+            {isGraceLateAttendanceRecord(safeRecord) ? (
               <>
                 <br />
                 Late by {safeRecord.lateMinutes} min

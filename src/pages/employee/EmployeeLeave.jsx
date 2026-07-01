@@ -4,6 +4,7 @@ import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
 import { escapeHtml, normalizeArray } from "./employeeUtils";
 import { fetchMyLeaveBalance } from "../../services/employeeApi";
+import DeleteLeaveConfirmModal from "../../components/leaves/DeleteLeaveConfirmModal";
 import "../../styles/EmployeeLeave.css";
 
 const TYPE_CONFIG = {
@@ -16,6 +17,15 @@ export default function EmployeeLeave({ embedded = false }) {
   const token = localStorage.getItem("token");
   const decoded = parseJwt(token) || {};
   const userId = decoded.id || 0;
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+  const storedRole = localStorage.getItem("role") || storedUser.role || decoded.role || "";
+  const isSubAdminLeave = embedded && storedRole === "SUB_ADMIN";
 
   const [allLeaves, setAllLeaves] = useState([]);
   const [leaveBalance, setLeaveBalance] = useState(null);
@@ -33,6 +43,8 @@ export default function EmployeeLeave({ embedded = false }) {
   const [holidayDates, setHolidayDates] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState({ msg: "", visible: false, type: "" });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteSaving, setDeleteSaving] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -108,6 +120,33 @@ export default function EmployeeLeave({ embedded = false }) {
     if (currentFilter === "all") return allLeaves;
     return allLeaves.filter((l) => l.status === currentFilter);
   }, [allLeaves, currentFilter]);
+
+  const leaveStats = useMemo(() => {
+    const total = allLeaves.length;
+    const pending = allLeaves.filter((l) => l.status === "pending").length;
+    const approved = allLeaves.filter((l) => l.status === "approved").length;
+    const rejected = allLeaves.filter((l) => l.status === "rejected").length;
+    const requestedDays = allLeaves.reduce(
+      (sum, leave) => sum + Number(leave.requested_days ?? leave.days ?? 0),
+      0
+    );
+
+    return { total, pending, approved, rejected, requestedDays };
+  }, [allLeaves]);
+
+  const formatLeaveDuration = (leave) => {
+    if ((leave.leave_duration_type || "full_day") !== "half_day") return "Full Day";
+    return `Half Day ${leave.half_day_session === "morning" ? "Morning" : "Afternoon"}`;
+  };
+
+  const formatLeaveDate = (value) =>
+    value
+      ? new Date(value).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "—";
 
   useEffect(() => {
     if (!form.fromDate) {
@@ -229,14 +268,35 @@ export default function EmployeeLeave({ embedded = false }) {
     }
   };
 
+  const confirmDeleteLeave = async () => {
+    if (!deleteTarget?.id) return;
+    setDeleteSaving(true);
+    try {
+      await apiFetch(`/leave/${deleteTarget.id}`, { method: "DELETE" });
+      showToast("Leave request deleted successfully.", "success");
+      setDeleteTarget(null);
+      await load();
+    } catch (e) {
+      showToast(e.message || "Failed to delete leave request", "error");
+    } finally {
+      setDeleteSaving(false);
+    }
+  };
+
   return (
-    <div className={embedded ? "employee-leave-page" : "layout employee-leave-page"}>
+    <div
+      className={[
+        embedded ? "employee-leave-page" : "layout employee-leave-page",
+        isSubAdminLeave ? "subadmin-leave-page" : "",
+      ].filter(Boolean).join(" ")}
+    >
       {!embedded && <EmployeeSidebar activePage="leave" />}
 
       <div className="main">
-        <div className="topbar">
+        <div className="topbar subadmin-leave-topbar">
           <div>
-            <h1>My Leave</h1>
+            {isSubAdminLeave && <span className="subadmin-page-kicker">Self-service leave desk</span>}
+            <h1>{isSubAdminLeave ? "Sub Admin Leave" : "My Leave"}</h1>
             <p>Apply, track, and manage your leave requests</p>
           </div>
 
@@ -249,13 +309,60 @@ export default function EmployeeLeave({ embedded = false }) {
           </button>
         </div>
 
-        <div className="content">
+        <div className="content subadmin-leave-content">
+          {isSubAdminLeave && (
+            <div className="subadmin-leave-hero">
+              <div>
+                <span className="subadmin-hero-eyebrow">HRMS Leave Management</span>
+                <h2>My Leave Workspace</h2>
+                <p>
+                  Submit leave requests, review balances, and track approval status from one
+                  clean self-service panel.
+                </p>
+              </div>
+              <div className="subadmin-hero-metrics">
+                <div>
+                  <strong>{leaveStats.total}</strong>
+                  <span>Total Requests</span>
+                </div>
+                <div>
+                  <strong>{leaveStats.requestedDays}</strong>
+                  <span>Requested Days</span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="leave-info-banner">
             💡 1 paid leave is credited every month after probation. Unused paid
             leaves carry forward. Future month leaves cannot be used.
           </div>
 
-          <div className="leave-balance-grid">
+          {isSubAdminLeave && (
+            <div className="subadmin-leave-kpis">
+              <div className="subadmin-leave-kpi blue">
+                <span><i className="fas fa-wallet" /></span>
+                <small>Paid Balance</small>
+                <strong>{leaveBalance?.paid_leave_balance || 0}</strong>
+              </div>
+              <div className="subadmin-leave-kpi orange">
+                <span><i className="fas fa-hourglass-half" /></span>
+                <small>Pending</small>
+                <strong>{leaveStats.pending}</strong>
+              </div>
+              <div className="subadmin-leave-kpi green">
+                <span><i className="fas fa-circle-check" /></span>
+                <small>Approved</small>
+                <strong>{leaveStats.approved}</strong>
+              </div>
+              <div className="subadmin-leave-kpi red">
+                <span><i className="fas fa-circle-xmark" /></span>
+                <small>Rejected</small>
+                <strong>{leaveStats.rejected}</strong>
+              </div>
+            </div>
+          )}
+
+          <div className="leave-balance-grid subadmin-balance-grid">
             <div className="balance-card paid">
               <div className="balance-icon">✅</div>
               <h3>Paid Leave Balance</h3>
@@ -306,6 +413,73 @@ export default function EmployeeLeave({ embedded = false }) {
                   <span className="spinner" />
                 </div>
               </div>
+            ) : isSubAdminLeave ? (
+              <div className="subadmin-leave-table-wrap">
+                <table className="subadmin-leave-table">
+                  <thead>
+                    <tr>
+                      <th>Leave Type</th>
+                      <th>Duration</th>
+                      <th>From</th>
+                      <th>To</th>
+                      <th>Requested</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLeaves.map((l) => {
+                      const statusCls =
+                        l.status === "approved"
+                          ? "sc-approved"
+                          : l.status === "rejected"
+                          ? "sc-rejected"
+                          : "sc-pending";
+
+                      return (
+                        <tr key={l.id}>
+                          <td>
+                            <div className="subadmin-leave-type-cell">
+                              <span className={l.leave_type === "Paid" ? "paid" : "unpaid"}>
+                                <i className={`fas ${l.leave_type === "Paid" ? "fa-check" : "fa-indian-rupee-sign"}`} />
+                              </span>
+                              <strong>{l.leave_type} Leave</strong>
+                            </div>
+                          </td>
+                          <td>{formatLeaveDuration(l)}</td>
+                          <td>{formatLeaveDate(l.from_date)}</td>
+                          <td>{formatLeaveDate(l.to_date)}</td>
+                          <td>
+                            <strong>{l.requested_days ?? l.days}</strong>
+                            <small> day(s)</small>
+                          </td>
+                          <td className="subadmin-leave-reason">{escapeHtml(l.reason || "—")}</td>
+                          <td>
+                            <span className={`status-chip ${statusCls}`}>
+                              {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            {l.status === "pending" ? (
+                              <button
+                                type="button"
+                                className="employee-leave-delete-btn"
+                                title="Delete Leave Request"
+                                onClick={() => setDeleteTarget(l)}
+                              >
+                                <i className="fas fa-trash-alt" />
+                              </button>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               balanceCards.map((card) => (
                 <div key={card.type} className="bal-card">
@@ -328,17 +502,24 @@ export default function EmployeeLeave({ embedded = false }) {
             )}
           </div>}
 
-          <div className="tabs">
-            {["all", "pending", "approved", "rejected"].map((status) => (
-              <button
-                key={status}
-                type="button"
-                className={`tab${currentFilter === status ? " active" : ""}`}
-                onClick={() => setCurrentFilter(status)}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </button>
-            ))}
+          <div className="subadmin-leave-section-head">
+            <div>
+              <h2>Leave History</h2>
+              <p>All your submitted leave requests and current approval status.</p>
+            </div>
+
+            <div className="tabs subadmin-leave-tabs">
+              {["all", "pending", "approved", "rejected"].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={`tab${currentFilter === status ? " active" : ""}`}
+                  onClick={() => setCurrentFilter(status)}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="leave-list" id="leaveList">
@@ -353,6 +534,73 @@ export default function EmployeeLeave({ embedded = false }) {
                   No {currentFilter === "all" ? "" : currentFilter} leave
                   requests found
                 </p>
+              </div>
+            ) : isSubAdminLeave ? (
+              <div className="subadmin-leave-table-wrap">
+                <table className="subadmin-leave-table">
+                  <thead>
+                    <tr>
+                      <th>Leave Type</th>
+                      <th>Duration</th>
+                      <th>From</th>
+                      <th>To</th>
+                      <th>Requested</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLeaves.map((l) => {
+                      const statusCls =
+                        l.status === "approved"
+                          ? "sc-approved"
+                          : l.status === "rejected"
+                          ? "sc-rejected"
+                          : "sc-pending";
+
+                      return (
+                        <tr key={l.id}>
+                          <td>
+                            <div className="subadmin-leave-type-cell">
+                              <span className={l.leave_type === "Paid" ? "paid" : "unpaid"}>
+                                <i className={`fas ${l.leave_type === "Paid" ? "fa-check" : "fa-indian-rupee-sign"}`} />
+                              </span>
+                              <strong>{l.leave_type} Leave</strong>
+                            </div>
+                          </td>
+                          <td>{formatLeaveDuration(l)}</td>
+                          <td>{formatLeaveDate(l.from_date)}</td>
+                          <td>{formatLeaveDate(l.to_date)}</td>
+                          <td>
+                            <strong>{l.requested_days ?? l.days}</strong>
+                            <small> day(s)</small>
+                          </td>
+                          <td className="subadmin-leave-reason">{escapeHtml(l.reason || "—")}</td>
+                          <td>
+                            <span className={`status-chip ${statusCls}`}>
+                              {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            {l.status === "pending" ? (
+                              <button
+                                type="button"
+                                className="employee-leave-delete-btn"
+                                title="Delete Leave Request"
+                                onClick={() => setDeleteTarget(l)}
+                              >
+                                <i className="fas fa-trash-alt" />
+                              </button>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
               filteredLeaves.map((l) => {
@@ -403,6 +651,16 @@ export default function EmployeeLeave({ embedded = false }) {
                     <div className={`status-chip ${statusCls}`}>
                       {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
                     </div>
+                    {l.status === "pending" && (
+                      <button
+                        type="button"
+                        className="employee-leave-delete-btn"
+                        title="Delete Leave Request"
+                        onClick={() => setDeleteTarget(l)}
+                      >
+                        <i className="fas fa-trash-alt" />
+                      </button>
+                    )}
                   </div>
                 );
               })
@@ -556,6 +814,14 @@ export default function EmployeeLeave({ embedded = false }) {
           </div>
         </div>
       )}
+
+      <DeleteLeaveConfirmModal
+        open={Boolean(deleteTarget)}
+        leave={deleteTarget}
+        saving={deleteSaving}
+        onClose={() => !deleteSaving && setDeleteTarget(null)}
+        onConfirm={confirmDeleteLeave}
+      />
 
       <div
         className={`toast${toast.visible ? " show" : ""}${

@@ -1,5 +1,8 @@
 /** Attendance analysis — date/format/compute helpers (from adminAttendanceAnalysis.html) */
 import { formatTime12Hour } from "./timeFormat";
+import { isGraceLateAttendanceRecord } from "./dashboardHelpers";
+
+export { isGraceLateAttendanceRecord };
 
 export const MONTH_NAMES = [
   "Jan",
@@ -287,7 +290,7 @@ if (safe.status === "sunday") {
   if (safe.status === "absent") return { className: "cal-absent", numClass: "red-num" };
   if (safe.status === "half_day") return { className: "cal-halfday", numClass: "yellow-num" };
   if (safe.status === "full_day") return { className: "cal-present", numClass: "green-num" };
-  if (safe.lateMinutes > 0) return { className: "cal-late", numClass: "orange-num" };
+  if (isGraceLateAttendanceRecord(safe)) return { className: "cal-late", numClass: "orange-num" };
   if (safe.status === "no_record") return { className: "cal-no-record", numClass: "default-num" };
   return { className: "cal-absent", numClass: "red-num" };
 }
@@ -321,7 +324,7 @@ export function computeOverviewStats(records) {
     (r) => !["absent", "sunday", "holiday"].includes(r.status)
   );
   const presentDays = safeRecords.filter((r) => r.status === "full_day").length;
-  const lateDays = safeRecords.filter((r) => r.lateMinutes > 0).length;
+  const lateDays = safeRecords.filter(isGraceLateAttendanceRecord).length;
   const halfDays = safeRecords.filter((r) => r.status === "half_day").length;
   const absent = safeRecords.filter((r) => r.status === "absent").length;
   const totalDays = safeRecords.filter(
@@ -357,7 +360,7 @@ export function getDailyLogStatus(rec) {
   if (safe.status === "sunday") return { label: "Sunday", badge: "b-absent" };
   if (safe.status === "holiday") return { label: "Holiday", badge: "b-absent" };
   if (safe.status === "no_record") return { label: "No Record", badge: "b-neutral" };
-  if (safe.lateMinutes > 0) return { label: "Late", badge: "b-late" };
+  if (isGraceLateAttendanceRecord(safe)) return { label: "Late", badge: "b-late" };
   return { label: "Present", badge: "b-present" };
 }
 

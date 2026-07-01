@@ -33,6 +33,7 @@ import {
   computeMonthStats,
   getGreeting,
   getInitials,
+  isGraceLateAttendanceRecord,
   isSunday,
   monthDays,
 } from "../../utils/dashboardHelpers";
@@ -179,7 +180,7 @@ export default function ManagerDashboard() {
       const alertList = [];
 
       todayRecords
-        .filter((record) => (record.late_minutes || 0) > 30)
+        .filter(isGraceLateAttendanceRecord)
         .slice(0, 3)
         .forEach((record) => {
           alertList.push({
@@ -604,7 +605,7 @@ export default function ManagerDashboard() {
 
         if (["full_day", "half_day"].includes(record.status)) {
           presentCount += 1;
-          if ((record.late_minutes || 0) > 0) lateCount += 1;
+          if (isGraceLateAttendanceRecord(record)) lateCount += 1;
         }
       });
 
@@ -945,7 +946,7 @@ export default function ManagerDashboard() {
                     {record.status?.replace("_", " ") || "—"}
                   </span>
                   <span className="manager-att-time">
-                    {(record.late_minutes || 0) > 0
+                    {isGraceLateAttendanceRecord(record)
                       ? `${record.late_minutes}m late`
                       : record.check_in || "—"}
                   </span>

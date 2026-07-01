@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import LeaveApprovalPreviewModal, { formatLeaveDuration } from "../../components/leaves/LeaveApprovalPreviewModal";
 import {
   createLeaveRequest,
+  deleteManagerLeaveRequest,
   fetchManagerLeaveApprovalPreview,
   fetchManagerLeaves,
   fetchMyLeaveBalance,
@@ -9,6 +10,7 @@ import {
   updateManagerLeaveStatus,
 } from "../../services/managerApi";
 import { getStoredUser } from "../../utils/auth";
+import DeleteLeaveConfirmModal from "../../components/leaves/DeleteLeaveConfirmModal";
 import "./ManagerLeave.css";
 
 const EMPTY_FORM = {
@@ -46,6 +48,8 @@ export default function ManagerLeave() {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [approval, setApproval] = useState({ open: false, leave: null, preview: null, loading: false, error: "" });
   const [approving, setApproving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteSaving, setDeleteSaving] = useState(false);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ show: true, message, type });
@@ -175,6 +179,21 @@ export default function ManagerLeave() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    setDeleteSaving(true);
+    try {
+      await deleteManagerLeaveRequest(deleteTarget.id);
+      showToast("Leave request deleted.");
+      setDeleteTarget(null);
+      await loadData();
+    } catch (error) {
+      showToast(error.response?.data?.message || "Failed to delete leave request", "error");
+    } finally {
+      setDeleteSaving(false);
+    }
+  };
+
   return (
     <div className="manager-leave-page manager-portal-page">
       <header className="manager-leave-header">
@@ -268,11 +287,29 @@ export default function ManagerLeave() {
                   >
                     <i className="fas fa-times" />
                   </button>
+                  <button
+                    type="button"
+                    className="delete-icon"
+                    onClick={() => setDeleteTarget(leave)}
+                    title="Delete Leave Request"
+                  >
+                    <i className="fas fa-trash-alt" />
+                  </button>
                 </div>
               ) : (
+                <>
                 <span className="reviewed-text">
                   {leave.approved_by_name || "—"}
                 </span>
+                <button
+                  type="button"
+                  className="delete-icon"
+                  onClick={() => setDeleteTarget(leave)}
+                  title="Delete Leave Request"
+                >
+                  <i className="fas fa-trash-alt" />
+                </button>
+                </>
               )}
             </td>
           </tr>
@@ -311,6 +348,7 @@ export default function ManagerLeave() {
           <th>Unpaid</th>
           <th>Reason</th>
           <th>Status</th>
+          <th>Action</th>
         </tr>
       </thead>
 
@@ -331,11 +369,25 @@ export default function ManagerLeave() {
                   {statusLabel(leave.status)}
                 </span>
               </td>
+              <td>
+                {leave.status === "pending" ? (
+                  <button
+                    type="button"
+                    className="delete-icon"
+                    onClick={() => setDeleteTarget(leave)}
+                    title="Delete Leave Request"
+                  >
+                    <i className="fas fa-trash-alt" />
+                  </button>
+                ) : (
+                  "—"
+                )}
+              </td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={9} className="manager-leave-empty">
+            <td colSpan={10} className="manager-leave-empty">
               No leave requests yet.
             </td>
           </tr>
@@ -351,6 +403,7 @@ export default function ManagerLeave() {
       {applyOpen ? <div className="manager-leave-modal-overlay" onMouseDown={() => setApplyOpen(false)}><section className="manager-leave-apply-modal" onMouseDown={(event) => event.stopPropagation()}><h2>Apply for Leave</h2><div className="manager-leave-form-grid"><label>Leave Type<select value={form.leaveType} onChange={(event) => setForm({ ...form, leaveType: event.target.value })}><option value="Paid">Paid Leave</option><option value="Unpaid">Unpaid Leave</option></select></label><label>Duration<select value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })}><option value="full_day">Full Day</option><option value="half_day">Half Day</option></select></label>{form.duration === "half_day" ? <label>Session<select value={form.halfDaySession} onChange={(event) => setForm({ ...form, halfDaySession: event.target.value })}><option value="morning">Morning</option><option value="afternoon">Afternoon</option></select></label> : null}<label>From Date<input type="date" value={form.leaveFrom} onChange={(event) => setForm({ ...form, leaveFrom: event.target.value })} /></label>{form.duration === "full_day" ? <label>To Date<input type="date" min={form.leaveFrom} value={form.leaveTo} onChange={(event) => setForm({ ...form, leaveTo: event.target.value })} /></label> : null}<label className="wide">Reason<textarea value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} /></label></div><div className="manager-leave-modal-actions"><button type="button" className="cancel" onClick={() => setApplyOpen(false)}>Cancel</button><button type="button" className="submit" onClick={submitLeave} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</button></div></section></div> : null}
 
       <LeaveApprovalPreviewModal open={approval.open} preview={approval.preview} loading={approval.loading} error={approval.error} saving={approving} onClose={() => !approving && setApproval({ open: false, leave: null, preview: null, loading: false, error: "" })} onConfirm={confirmApproval} />
+      <DeleteLeaveConfirmModal open={Boolean(deleteTarget)} leave={deleteTarget} saving={deleteSaving} onClose={() => !deleteSaving && setDeleteTarget(null)} onConfirm={confirmDelete} />
       {toast.show ? <div className={`manager-leave-toast ${toast.type}`}>{toast.message}</div> : null}
     </div>
   );

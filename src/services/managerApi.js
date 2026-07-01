@@ -88,6 +88,11 @@ export async function fetchManagerLeaveApprovalPreview(id) {
   return response.data;
 }
 
+export async function deleteManagerLeaveRequest(id) {
+  const response = await api.delete(`/leave/${id}`);
+  return response.data;
+}
+
 /** GET /manager/team-payslips — managerRoutes.js */
 export async function fetchManagerTeamPayslips(month) {
   const response = await api.get("/manager/team-payslips", { params: { month } });

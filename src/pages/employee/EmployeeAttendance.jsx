@@ -85,6 +85,16 @@ function isUnpaidLeaveDay(rec = {}) {
   );
 }
 
+function isGraceLateLogin(rec = {}) {
+  const raw = rec.check_in_time || rec.office_in || rec.checkIn;
+  const out = rec.check_out_time || rec.office_out || rec.checkOut;
+  if (!raw || !out) return false;
+  const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return false;
+  const minutes = h * 60 + m;
+  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+}
+
 export default function EmployeeAttendance({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
@@ -257,10 +267,11 @@ export default function EmployeeAttendance({ embedded = false }) {
           const s = rec.status;
           if (s === "full_day" || s === "half_day") presentCount++;
           else absentCount++;
-          if (Number(rec.late_minutes) > 0) lateCount++;
+          if (isGraceLateLogin(rec)) lateCount++;
         } else if (dateStr <= todayStr) absentCount++;
       }
     }
+    lateCount = Math.min(lateCount, LATE_LOGIN_LIMIT);
 
     const totalDays = lastDay;
     const workingDays =
@@ -394,7 +405,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               </div>
             );
           }
-          if (Number(rec.late_minutes) > 0 && !["absent", "half_day", "full_day"].includes(s) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
+          if (isGraceLateLogin(rec) && !["absent", "half_day", "full_day"].includes(s) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             dayClass = dayClass.replace(" p-present", "");
             dayClass = dayClass.replace(" calendar-present", "");
             dayClass += " p-late calendar-late";
@@ -427,7 +438,7 @@ export default function EmployeeAttendance({ embedded = false }) {
                   <span className="tv">{formatTime12(rec.check_out_time)}</span>
                 </div>
               )}
-              {Number(rec.late_minutes) > 0 && (
+              {isGraceLateLogin(rec) && (
                 <div className="tt-row">
                   <span>Late</span>
                   <span className="tv">{rec.late_minutes} min</span>
@@ -675,7 +686,7 @@ export default function EmployeeAttendance({ embedded = false }) {
           </div>
           <div
             className={`stat-pill late-usage-card ${getLateUsageTone(monthStats.lateCount)}`}
-            title="Late Login Policy: Maximum allowed late logins per month is 6. Grace login time is 10:15 AM. After reaching the limit, attendance is calculated according to company policy. The count resets automatically every month."
+            title="Late Login Policy: maximum 6 monthly late logins count only for check-ins from 10:01 AM to 10:15 AM. After 10:15 AM, attendance follows Half Day or Absent policy."
           >
             <div className="late-usage-title">
               <i className="fas fa-circle-info" /> Late Login Count
@@ -687,7 +698,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               </span>
             </div>
             {monthStats.lateCount <= LATE_LOGIN_LIMIT && (
-              <div className="sl">Remaining Grace: {getRemainingGraceLateLogins(monthStats.lateCount)}</div>
+              <div className="sl">Available Late Allowance: {getRemainingGraceLateLogins(monthStats.lateCount)}</div>
             )}
           </div>
           <div className="stat-pill">

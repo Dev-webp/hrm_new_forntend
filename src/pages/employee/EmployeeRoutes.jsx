@@ -1,12 +1,15 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import EmployeeAttendance from "./EmployeeAttendance";
-import EmployeeBreaks from "./EmployeeBreaks";
-import EmployeeDashboard from "./EmployeeDashboard";
-import EmployeeLeave from "./EmployeeLeave";
-import EmployeeMessages from "./EmployeeMessages";
-import EmployeePayslip from "./EmployeePayslip";
-import EmployeeInstructions from "./EmployeeInstructions";
-import EmployeeHelpCenter from "./EmployeeHelpCenter";
+import PageLoading from "../../components/PageLoading";
+
+const EmployeeAttendance = lazy(() => import("./EmployeeAttendance"));
+const EmployeeBreaks = lazy(() => import("./EmployeeBreaks"));
+const EmployeeDashboard = lazy(() => import("./EmployeeDashboard"));
+const EmployeeLeave = lazy(() => import("./EmployeeLeave"));
+const EmployeeMessages = lazy(() => import("./EmployeeMessages"));
+const EmployeePayslip = lazy(() => import("./EmployeePayslip"));
+const EmployeeInstructions = lazy(() => import("./EmployeeInstructions"));
+const EmployeeHelpCenter = lazy(() => import("./EmployeeHelpCenter"));
 
 export default function EmployeeRoutes() {
   const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
@@ -15,16 +18,18 @@ export default function EmployeeRoutes() {
   }
 
   return (
-    <Routes>
-      <Route path="dashboard" element={<EmployeeDashboard />} />
-      <Route path="attendance" element={<EmployeeAttendance />} />
-      <Route path="breaks" element={<EmployeeBreaks />} />
-      <Route path="leave" element={<EmployeeLeave />} />
-      <Route path="messages" element={<EmployeeMessages />} />
-      <Route path="payslip" element={<EmployeePayslip />} />
-      <Route path="instructions" element={<EmployeeInstructions />} />
-      <Route path="help-center" element={<EmployeeHelpCenter />} />
-      <Route index element={<Navigate to="dashboard" replace />} />
-    </Routes>
+    <Suspense fallback={<PageLoading label="Loading employee module…" />}>
+      <Routes>
+        <Route path="dashboard" element={<EmployeeDashboard />} />
+        <Route path="attendance" element={<EmployeeAttendance />} />
+        <Route path="breaks" element={<EmployeeBreaks />} />
+        <Route path="leave" element={<EmployeeLeave />} />
+        <Route path="messages" element={<EmployeeMessages />} />
+        <Route path="payslip" element={<EmployeePayslip />} />
+        <Route path="instructions" element={<EmployeeInstructions />} />
+        <Route path="help-center" element={<EmployeeHelpCenter />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

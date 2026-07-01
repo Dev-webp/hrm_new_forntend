@@ -25,6 +25,7 @@ import {
   computeMonthStats,
   getGreeting,
   getInitials,
+  isGraceLateAttendanceRecord,
   isSunday,
   monthDays,
 } from "../../utils/dashboardHelpers";
@@ -184,7 +185,7 @@ function AdminDashboard() {
       });
 
       todayRecords
-        .filter((record) => (record.late_minutes || 0) > 30)
+        .filter(isGraceLateAttendanceRecord)
         .slice(0, 3)
         .forEach((record) => {
           alertList.push({
@@ -514,7 +515,7 @@ function AdminDashboard() {
 
         if (["full_day", "half_day"].includes(record.status)) {
           presentCount += 1;
-          if ((record.late_minutes || 0) > 0) lateCount += 1;
+          if (isGraceLateAttendanceRecord(record)) lateCount += 1;
         }
       });
 

@@ -358,12 +358,31 @@
   box-shadow: 0 8px 18px rgba(15,23,42,.14);
 }
 
+.manager-leave-table .delete-icon {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(15,23,42,.14);
+}
+
 .approve-icon {
   background: var(--success);
 }
 
 .reject-icon {
   background: var(--danger);
+}
+
+.delete-icon {
+  background: var(--danger);
+}
+
+.delete-icon:hover {
+  background: #b91c1c;
 }
 
 .reviewed-text {

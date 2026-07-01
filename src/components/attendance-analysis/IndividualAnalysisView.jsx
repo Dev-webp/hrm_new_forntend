@@ -24,6 +24,7 @@ import {
   getLeavePaidDays,
   getLeaveUnpaidDays,
   getWeekNumber,
+  isGraceLateAttendanceRecord,
   isPaidLeaveRecord,
   isUnpaidLeaveRecord,
   normalizeAttendanceAnalysisRecords,
@@ -112,7 +113,7 @@ function IndividualAnalysisView({
             ? "b-unpaid-leave"
             : rec.status === "half_day"
               ? "b-halfday"
-            : rec.lateMinutes > 0
+            : isGraceLateAttendanceRecord(rec)
             ? "b-late"
               : "b-present";
         const statusLabel =
@@ -122,7 +123,7 @@ function IndividualAnalysisView({
             ? "Unpaid Leave"
             : rec.status === "half_day"
               ? "Half Day"
-            : rec.lateMinutes > 0
+            : isGraceLateAttendanceRecord(rec)
             ? "Late"
               : "Present";
         dayCards.push({

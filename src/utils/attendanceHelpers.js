@@ -44,6 +44,16 @@ export function isPresentLikeStatus(status) {
   );
 }
 
+function isGraceLateRecord(record = {}) {
+  const raw = record.check_in_time || record.office_in || record.checkIn;
+  const out = record.check_out_time || record.office_out || record.checkOut;
+  if (!raw || !out) return false;
+  const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return false;
+  const minutes = h * 60 + m;
+  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+}
+
 const WORKING_BADGE_STYLE = {
   background: "#DBEAFE",
   border: "1px solid #93C5FD",
@@ -127,9 +137,8 @@ export function getStatusMeta(status) {
 export function getLatePillMeta(emp) {
   const status = normalizeAttendanceStatusValue(emp.status);
   if (isWorkingStatus(status)) {
-    const lateMinutes = Number(emp.late_minutes || 0);
     return {
-      label: lateMinutes > 0 ? `Working - ${lateMinutes} min late` : "Working",
+      label: "Working",
       style: {
         ...WORKING_BADGE_STYLE,
         padding: "6px 12px",
@@ -156,7 +165,7 @@ export function getLatePillMeta(emp) {
       },
     };
   }
-  if ((emp.late_minutes || 0) > 0) {
+  if (isGraceLateRecord(emp)) {
     return {
       label: `${emp.late_minutes} min late`,
       style: {
@@ -188,17 +197,36 @@ export function getLatePillMeta(emp) {
 }
 
 export function getLateLoginStatus(record = {}) {
-  if (record.late_login_status) return record.late_login_status;
+  if (record.late_login_status === "Late" || record.late_login_status === "On Time" || record.late_login_status === "Limit Exceeded") {
+    return record.late_login_status;
+  }
+
   const lateMinutes = Number(record.late_minutes || 0);
   const checkIn = String(record.check_in_time || "");
   if (!checkIn) return "No Login";
   if (Number(record.late_login_count || 0) > LATE_LOGIN_LIMIT) return "Limit Exceeded";
+
+  const [h, m] = checkIn.slice(0, 5).split(":").map(Number);
+  const loginMinutes = Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+  if (loginMinutes !== null && loginMinutes > 10 * 60 && loginMinutes <= 10 * 60 + 15) {
+    return "Late";
+  }
+
+  if (loginMinutes !== null && loginMinutes > 10 * 60 + 15) {
+    const status = normalizeAttendanceStatusValue(record.status);
+    if (isWorkingStatus(status)) return "Working";
+    if (status === "half_day") return "Half Day";
+    if (status === "absent") return "Absent";
+    if (status === "full_day" || status === "present") return "Present";
+    return "On Time";
+  }
+
   if (lateMinutes <= 0) return "On Time";
-  return lateMinutes <= 15 ? "Late Within Grace" : "Late Beyond Grace";
+  return "On Time";
 }
 
 export function formatLateLoginCount(recordOrCount = 0) {
-  const count =
+  const rawCount =
     typeof recordOrCount === "object"
       ? Number(recordOrCount.late_login_count || 0)
       : Number(recordOrCount || 0);
@@ -206,11 +234,12 @@ export function formatLateLoginCount(recordOrCount = 0) {
     typeof recordOrCount === "object"
       ? Number(recordOrCount.late_login_limit || LATE_LOGIN_LIMIT)
       : LATE_LOGIN_LIMIT;
-  return `${count} / ${limit}${count > limit ? " (Limit Exceeded)" : ""}`;
+  const count = Math.min(rawCount, limit);
+  return `${count} / ${limit}`;
 }
 
 export function getRemainingGraceLateLogins(recordOrCount = 0) {
-  const count =
+  const rawCount =
     typeof recordOrCount === "object"
       ? Number(recordOrCount.late_login_count || 0)
       : Number(recordOrCount || 0);
@@ -218,6 +247,7 @@ export function getRemainingGraceLateLogins(recordOrCount = 0) {
     typeof recordOrCount === "object"
       ? Number(recordOrCount.late_login_limit || LATE_LOGIN_LIMIT)
       : LATE_LOGIN_LIMIT;
+  const count = Math.min(rawCount, limit);
   return Math.max(0, limit - count);
 }
 
@@ -227,8 +257,9 @@ export function getLateLoginStatusClass(status) {
   if (normalized === "limit reached" || normalized === "near limit") return "late-login-status warning";
   if (normalized === "monthly warning") return "late-login-status caution";
   if (normalized === "within limit") return "late-login-status good";
-  if (normalized === "late beyond grace") return "late-login-status warning";
-  if (normalized === "late within grace") return "late-login-status caution";
+  if (normalized === "late") return "late-login-status caution";
+  if (normalized === "half day" || normalized === "absent") return "late-login-status warning";
+  if (normalized === "working" || normalized === "present") return "late-login-status good";
   if (normalized === "on time") return "late-login-status good";
   return "late-login-status muted";
 }
@@ -263,8 +294,7 @@ export function filterAttendanceRows(records, deptFilter, search, lateStatusFilt
       lateStatusFilter === "all" ||
       (lateStatusFilter === "limit_exceeded" && lateStatus === "Limit Exceeded") ||
       (lateStatusFilter === "on_time" && lateStatus === "On Time") ||
-      (lateStatusFilter === "within_grace" && lateStatus === "Late Within Grace") ||
-      (lateStatusFilter === "beyond_grace" && lateStatus === "Late Beyond Grace");
+      (lateStatusFilter === "late" && lateStatus === "Late");
     return deptMatch && searchMatch && lateStatusMatch;
   });
 }

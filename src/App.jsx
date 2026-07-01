@@ -1,14 +1,17 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import RequireAuth from "./components/RequireAuth";
-import DashboardLayout from "./layouts/DashboardLayout";
-import AdminRoutes from "./pages/admin/AdminRoutes";
-import EmployeeRoutes from "./pages/employee/EmployeeRoutes";
-import Login from "./pages/Login";
-import ManagerRoutes from "./pages/manager/ManagerRoutes";
-import OperationalManagerRoutes from "./pages/operations/OperationalManagerRoutes";
-import SubAdminRoutes from "./pages/subadmin/SubAdminRoutes";
+import PageLoading from "./components/PageLoading";
 import { isAuthenticated } from "./utils/auth";
+
+const DashboardLayout = lazy(() => import("./layouts/DashboardLayout"));
+const AdminRoutes = lazy(() => import("./pages/admin/AdminRoutes"));
+const EmployeeRoutes = lazy(() => import("./pages/employee/EmployeeRoutes"));
+const Login = lazy(() => import("./pages/Login"));
+const ManagerRoutes = lazy(() => import("./pages/manager/ManagerRoutes"));
+const OperationalManagerRoutes = lazy(() => import("./pages/operations/OperationalManagerRoutes"));
+const SubAdminRoutes = lazy(() => import("./pages/subadmin/SubAdminRoutes"));
 
 function RootRedirect() {
   if (!isAuthenticated()) {
@@ -35,9 +38,10 @@ function App() {
 
       <div className="hrms-desktop-app">
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
+          <Suspense fallback={<PageLoading label="Loading HRMS…" />}>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/login" element={<Login />} />
 
             <Route
               path="/admin/*"
@@ -94,7 +98,8 @@ function App() {
 
             <Route path="/home" element={<RootRedirect />} />
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </div>
     </>

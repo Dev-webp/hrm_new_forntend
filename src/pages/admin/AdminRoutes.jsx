@@ -1,20 +1,22 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import PageLoading from "../../components/PageLoading";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getPlaceholderAdminRoutes } from "../../config/adminNav";
-import AdminAttendance from "./AdminAttendance";
-import AdminAttendanceAnalysis from "./AdminAttendanceAnalysis";
-import AdminBreaks from "./AdminBreaks";
-import AdminCalendar from "./AdminCalendar";
-import AdminDashboard from "./AdminDashboard";
-import AdminEmployees from "./AdminEmployees";
-import AdminLeave from "./AdminLeave";
-import AdminActivityLogs from "./AdminActivityLogs";
-import AdminDepartment from "./AdminDepartment";
-import AdminNotifications from "./AdminNotifications";
-import AdminPayslip from "./AdminPayslip";
 import AdminPlaceholder from "./AdminPlaceholder";
-import AdminOfferLetters from "./AdminOfferLetters";
+
+const AdminAttendance = lazy(() => import("./AdminAttendance"));
+const AdminAttendanceAnalysis = lazy(() => import("./AdminAttendanceAnalysis"));
+const AdminBreaks = lazy(() => import("./AdminBreaks"));
+const AdminCalendar = lazy(() => import("./AdminCalendar"));
+const AdminDashboard = lazy(() => import("./AdminDashboard"));
+const AdminEmployees = lazy(() => import("./AdminEmployees"));
+const AdminLeave = lazy(() => import("./AdminLeave"));
+const AdminActivityLogs = lazy(() => import("./AdminActivityLogs"));
+const AdminDepartment = lazy(() => import("./AdminDepartment"));
+const AdminNotifications = lazy(() => import("./AdminNotifications"));
+const AdminPayslip = lazy(() => import("./AdminPayslip"));
+const AdminOfferLetters = lazy(() => import("./AdminOfferLetters"));
 
 function AdminRoutes() {
   const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
@@ -46,22 +48,23 @@ function AdminRoutes() {
 
   return (
     <RouteErrorBoundary title="Admin module error">
-      <Routes>
-        <Route index element={<AdminDashboard />} />
-        <Route path="employees" element={<AdminEmployees />} />
-        <Route path="attendance" element={<AdminAttendance />} />
-        <Route path="breaks" element={<AdminBreaks />} />
-        <Route path="calendar" element={<AdminCalendar />} />
-        <Route path="leave" element={<AdminLeave />} />
-        <Route path="offer-letters" element={<AdminOfferLetters />} />
-        <Route path="payroll" element={<AdminPayslip />} />
-        <Route path="notifications" element={<AdminNotifications />} />
-        <Route path="activity-logs" element={<AdminActivityLogs />} />
-        <Route path="department" element={<AdminDepartment />} />
-        <Route
-          path="attendance-analysis"
-          element={<AdminAttendanceAnalysis />}
-        />
+      <Suspense fallback={<PageLoading label="Loading admin module…" />}>
+        <Routes>
+          <Route index element={<AdminDashboard />} />
+          <Route path="employees" element={<AdminEmployees />} />
+          <Route path="attendance" element={<AdminAttendance />} />
+          <Route path="breaks" element={<AdminBreaks />} />
+          <Route path="calendar" element={<AdminCalendar />} />
+          <Route path="leave" element={<AdminLeave />} />
+          <Route path="offer-letters" element={<AdminOfferLetters />} />
+          <Route path="payroll" element={<AdminPayslip />} />
+          <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="activity-logs" element={<AdminActivityLogs />} />
+          <Route path="department" element={<AdminDepartment />} />
+          <Route
+            path="attendance-analysis"
+            element={<AdminAttendanceAnalysis />}
+          />
 
         {placeholderSlugs.map((slug) => (
           <Route
@@ -72,8 +75,9 @@ function AdminRoutes() {
         ))}
 
         {/* Catch unknown /admin/* paths — avoids blank outlet */}
-        <Route path="*" element={<AdminPlaceholder {...placeholderProps} />} />
-      </Routes>
+          <Route path="*" element={<AdminPlaceholder {...placeholderProps} />} />
+        </Routes>
+      </Suspense>
     </RouteErrorBoundary>
   );
 }

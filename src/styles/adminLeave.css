@@ -513,6 +513,25 @@
 }
 .admin-leave-page .leave-row-actions .edit-btn:first-child { background: #16a34a !important; }
 .admin-leave-page .leave-row-actions .edit-btn:last-child { background: #dc2626 !important; }
+.admin-leave-page .leave-delete-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.18);
+}
+.admin-leave-page .leave-delete-btn:hover {
+  background: #b91c1c;
+}
+.admin-leave-page .leave-delete-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
 .admin-leave-page .approval-preview-box {
   margin-bottom: 18px;
   padding: 16px;
