@@ -7,11 +7,6 @@ import { fetchMyLeaveBalance } from "../../services/employeeApi";
 import DeleteLeaveConfirmModal from "../../components/leaves/DeleteLeaveConfirmModal";
 import "../../styles/EmployeeLeave.css";
 
-const TYPE_CONFIG = {
-  Paid: { icon: "✅", cls: "lc-annual" },
-  Unpaid: { icon: "💸", cls: "lc-emergency" },
-};
-
 export default function EmployeeLeave({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
@@ -84,37 +79,6 @@ export default function EmployeeLeave({ embedded = false }) {
   useEffect(() => {
     load();
   }, [load]);
-
-  const balanceCards = useMemo(() => {
-    if (!leaveBalance) return [];
-
-    return [
-      {
-        type: "Paid",
-        cfg: TYPE_CONFIG.Paid,
-        used: leaveBalance.paid_used || 0,
-        avail: leaveBalance.paid_leave_balance || 0,
-        max: leaveBalance.total_paid_credited || 0,
-      },
-      {
-        type: "Carry Forward",
-        cfg: { icon: "🔁", cls: "lc-annual" },
-        used: 0,
-        avail: leaveBalance.carry_forward || 0,
-        max: leaveBalance.carry_forward || 0,
-      },
-      {
-        type: "Unpaid Taken",
-        cfg: TYPE_CONFIG.Unpaid,
-        used: leaveBalance.unpaid_used || 0,
-        avail: 0,
-        max: leaveBalance.unpaid_used || 0,
-      },
-    ].map((card) => ({
-      ...card,
-      pct: card.max > 0 ? Math.min(100, (card.used / card.max) * 100) : 0,
-    }));
-  }, [leaveBalance]);
 
   const filteredLeaves = useMemo(() => {
     if (currentFilter === "all") return allLeaves;
@@ -293,11 +257,11 @@ export default function EmployeeLeave({ embedded = false }) {
       {!embedded && <EmployeeSidebar activePage="leave" />}
 
       <div className="main">
-        <div className="topbar subadmin-leave-topbar">
+        <div className="topbar employee-leave-topbar subadmin-leave-topbar">
           <div>
             {isSubAdminLeave && <span className="subadmin-page-kicker">Self-service leave desk</span>}
-            <h1>{isSubAdminLeave ? "Sub Admin Leave" : "My Leave"}</h1>
-            <p>Apply, track, and manage your leave requests</p>
+            <h1>My Leaves</h1>
+            <p>Track leave balance, requests, and approval status</p>
           </div>
 
           <button
@@ -305,62 +269,38 @@ export default function EmployeeLeave({ embedded = false }) {
             className="apply-btn"
             onClick={() => setModalOpen(true)}
           >
-            <i className="fas fa-plus" /> Apply for Leave
+            <i className="fas fa-plus" /> Apply Leave
           </button>
         </div>
 
         <div className="content subadmin-leave-content">
-          {isSubAdminLeave && (
-            <div className="subadmin-leave-hero">
-              <div>
-                <span className="subadmin-hero-eyebrow">HRMS Leave Management</span>
-                <h2>My Leave Workspace</h2>
-                <p>
-                  Submit leave requests, review balances, and track approval status from one
-                  clean self-service panel.
-                </p>
-              </div>
-              <div className="subadmin-hero-metrics">
-                <div>
-                  <strong>{leaveStats.total}</strong>
-                  <span>Total Requests</span>
-                </div>
-                <div>
-                  <strong>{leaveStats.requestedDays}</strong>
-                  <span>Requested Days</span>
-                </div>
-              </div>
-            </div>
-          )}
           <div className="leave-info-banner">
             💡 1 paid leave is credited every month after probation. Unused paid
             leaves carry forward. Future month leaves cannot be used.
           </div>
 
-          {isSubAdminLeave && (
-            <div className="subadmin-leave-kpis">
-              <div className="subadmin-leave-kpi blue">
+          <div className="employee-leave-kpis subadmin-leave-kpis">
+              <div className="employee-leave-kpi subadmin-leave-kpi blue">
                 <span><i className="fas fa-wallet" /></span>
-                <small>Paid Balance</small>
+                <small>Paid Leave Balance</small>
                 <strong>{leaveBalance?.paid_leave_balance || 0}</strong>
               </div>
-              <div className="subadmin-leave-kpi orange">
+              <div className="employee-leave-kpi subadmin-leave-kpi orange">
                 <span><i className="fas fa-hourglass-half" /></span>
-                <small>Pending</small>
+                <small>Pending Requests</small>
                 <strong>{leaveStats.pending}</strong>
               </div>
-              <div className="subadmin-leave-kpi green">
+              <div className="employee-leave-kpi subadmin-leave-kpi green">
                 <span><i className="fas fa-circle-check" /></span>
-                <small>Approved</small>
+                <small>Approved Leaves</small>
                 <strong>{leaveStats.approved}</strong>
               </div>
-              <div className="subadmin-leave-kpi red">
+              <div className="employee-leave-kpi subadmin-leave-kpi red">
                 <span><i className="fas fa-circle-xmark" /></span>
-                <small>Rejected</small>
+                <small>Rejected Leaves</small>
                 <strong>{leaveStats.rejected}</strong>
               </div>
             </div>
-          )}
 
           <div className="leave-balance-grid subadmin-balance-grid">
             <div className="balance-card paid">
@@ -406,101 +346,6 @@ export default function EmployeeLeave({ embedded = false }) {
             </div>
           </div>
 
-          {balanceCards.length < 0 && <div className="balance-grid" id="balanceGrid">
-            {isLoading ? (
-              <div className="bal-card">
-                <div style={{ textAlign: "center", padding: 20 }}>
-                  <span className="spinner" />
-                </div>
-              </div>
-            ) : isSubAdminLeave ? (
-              <div className="subadmin-leave-table-wrap">
-                <table className="subadmin-leave-table">
-                  <thead>
-                    <tr>
-                      <th>Leave Type</th>
-                      <th>Duration</th>
-                      <th>From</th>
-                      <th>To</th>
-                      <th>Requested</th>
-                      <th>Reason</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLeaves.map((l) => {
-                      const statusCls =
-                        l.status === "approved"
-                          ? "sc-approved"
-                          : l.status === "rejected"
-                          ? "sc-rejected"
-                          : "sc-pending";
-
-                      return (
-                        <tr key={l.id}>
-                          <td>
-                            <div className="subadmin-leave-type-cell">
-                              <span className={l.leave_type === "Paid" ? "paid" : "unpaid"}>
-                                <i className={`fas ${l.leave_type === "Paid" ? "fa-check" : "fa-indian-rupee-sign"}`} />
-                              </span>
-                              <strong>{l.leave_type} Leave</strong>
-                            </div>
-                          </td>
-                          <td>{formatLeaveDuration(l)}</td>
-                          <td>{formatLeaveDate(l.from_date)}</td>
-                          <td>{formatLeaveDate(l.to_date)}</td>
-                          <td>
-                            <strong>{l.requested_days ?? l.days}</strong>
-                            <small> day(s)</small>
-                          </td>
-                          <td className="subadmin-leave-reason">{escapeHtml(l.reason || "—")}</td>
-                          <td>
-                            <span className={`status-chip ${statusCls}`}>
-                              {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
-                            </span>
-                          </td>
-                          <td>
-                            {l.status === "pending" ? (
-                              <button
-                                type="button"
-                                className="employee-leave-delete-btn"
-                                title="Delete Leave Request"
-                                onClick={() => setDeleteTarget(l)}
-                              >
-                                <i className="fas fa-trash-alt" />
-                              </button>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              balanceCards.map((card) => (
-                <div key={card.type} className="bal-card">
-                  <div className="bc-type">
-                    {card.cfg.icon} {card.type} Leave
-                  </div>
-
-                  <div className="bc-bar-wrap">
-                    <div className="bc-bar" style={{ width: `${card.pct}%` }} />
-                  </div>
-
-                  <div className="bal-numbers">
-                    <div className="bal-used">{card.used}</div>
-                    <div className="bal-total">/ {card.max} days</div>
-                  </div>
-
-                  <div className="bal-avail">✓ {card.avail} days remaining</div>
-                </div>
-              ))
-            )}
-          </div>}
 
           <div className="subadmin-leave-section-head">
             <div>
@@ -535,7 +380,7 @@ export default function EmployeeLeave({ embedded = false }) {
                   requests found
                 </p>
               </div>
-            ) : isSubAdminLeave ? (
+            ) : (
               <div className="subadmin-leave-table-wrap">
                 <table className="subadmin-leave-table">
                   <thead>
@@ -552,10 +397,11 @@ export default function EmployeeLeave({ embedded = false }) {
                   </thead>
                   <tbody>
                     {filteredLeaves.map((l) => {
+                      const status = String(l.status || "pending");
                       const statusCls =
-                        l.status === "approved"
+                        status === "approved"
                           ? "sc-approved"
-                          : l.status === "rejected"
+                          : status === "rejected"
                           ? "sc-rejected"
                           : "sc-pending";
 
@@ -579,11 +425,11 @@ export default function EmployeeLeave({ embedded = false }) {
                           <td className="subadmin-leave-reason">{escapeHtml(l.reason || "—")}</td>
                           <td>
                             <span className={`status-chip ${statusCls}`}>
-                              {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
                             </span>
                           </td>
                           <td>
-                            {l.status === "pending" ? (
+                            {status === "pending" ? (
                               <button
                                 type="button"
                                 className="employee-leave-delete-btn"
@@ -602,68 +448,6 @@ export default function EmployeeLeave({ embedded = false }) {
                   </tbody>
                 </table>
               </div>
-            ) : (
-              filteredLeaves.map((l) => {
-                const cfg = TYPE_CONFIG[l.leave_type] || TYPE_CONFIG.Unpaid;
-
-                const statusCls =
-                  l.status === "approved"
-                    ? "sc-approved"
-                    : l.status === "rejected"
-                    ? "sc-rejected"
-                    : "sc-pending";
-
-                const fromDate = new Date(l.from_date).toLocaleDateString(
-                  "en-US",
-                  { month: "short", day: "numeric", year: "numeric" }
-                );
-
-                const toDate = new Date(l.to_date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                });
-
-                return (
-                  <div key={l.id} className="leave-card">
-                    <div className={`lc-type-icon ${cfg.cls}`}>{cfg.icon}</div>
-
-                    <div className="lc-body">
-                      <div className="lc-type">{l.leave_type} Leave</div>
-                      <div className="lc-dates">
-                        {(l.leave_duration_type || "full_day") === "half_day"
-                          ? `Half Day · ${l.half_day_session === "morning" ? "Morning" : "Afternoon"}`
-                          : "Full Day"}
-                      </div>
-                      <div className="lc-dates">
-                        {fromDate} → {toDate}
-                      </div>
-                      {l.reason && (
-                        <div className="lc-reason">{escapeHtml(l.reason)}</div>
-                      )}
-                    </div>
-
-                    <div className="lc-days">
-                      <div className="days-num">{l.requested_days ?? l.days}</div>
-                      <div className="days-label">days</div>
-                    </div>
-
-                    <div className={`status-chip ${statusCls}`}>
-                      {l.status.charAt(0).toUpperCase() + l.status.slice(1)}
-                    </div>
-                    {l.status === "pending" && (
-                      <button
-                        type="button"
-                        className="employee-leave-delete-btn"
-                        title="Delete Leave Request"
-                        onClick={() => setDeleteTarget(l)}
-                      >
-                        <i className="fas fa-trash-alt" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })
             )}
           </div>
         </div>

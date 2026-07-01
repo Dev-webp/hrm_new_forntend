@@ -537,3 +537,329 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Polished employee leave UI */
+.employee-leave-page {
+  --hrms-blue: #0D47A1;
+  --hrms-orange: #FF8C00;
+  --hrms-light-blue: #EAF4FF;
+  --hrms-bg: #F5F7FA;
+  --hrms-text: #0F172A;
+  --hrms-border: #CBD5E1;
+  --hrms-success: #16A34A;
+  --hrms-danger: #DC2626;
+  background: var(--hrms-bg);
+}
+
+.employee-leave-page .main {
+  background: var(--hrms-bg);
+}
+
+.employee-leave-page .employee-leave-topbar {
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--hrms-border);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.employee-leave-page .employee-leave-topbar h1 {
+  margin: 0;
+  background: none;
+  color: var(--hrms-text) !important;
+  -webkit-text-fill-color: var(--hrms-text);
+  font-size: 1.65rem;
+  letter-spacing: 0;
+}
+
+.employee-leave-page .employee-leave-topbar p {
+  color: #64748B;
+  font-weight: 600;
+}
+
+.employee-leave-page .apply-btn {
+  background: var(--hrms-blue);
+  color: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(13, 71, 161, 0.22);
+}
+
+.employee-leave-page .apply-btn:hover {
+  background: #08306F;
+}
+
+.employee-leave-page .content {
+  padding: 28px 32px 48px;
+}
+
+.employee-leave-page .leave-info-banner {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: #FFF7ED;
+  border: 1px solid rgba(255, 140, 0, 0.35) !important;
+  border-radius: 14px !important;
+  color: #92400E !important;
+  box-shadow: none !important;
+}
+
+.employee-leave-page .employee-leave-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.employee-leave-page .employee-leave-kpi {
+  min-height: 118px;
+  padding: 18px;
+  border: 1px solid var(--hrms-border);
+  border-radius: 14px;
+  background: #FFFFFF;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.employee-leave-page .employee-leave-kpi span {
+  background: var(--hrms-light-blue);
+  color: var(--hrms-blue);
+}
+
+.employee-leave-page .employee-leave-kpi.orange span {
+  background: #FFF7ED;
+  color: var(--hrms-orange);
+}
+
+.employee-leave-page .employee-leave-kpi.green span {
+  background: #ECFDF5;
+  color: var(--hrms-success);
+}
+
+.employee-leave-page .employee-leave-kpi.red span {
+  background: #FEF2F2;
+  color: var(--hrms-danger);
+}
+
+.employee-leave-page .leave-balance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.employee-leave-page .balance-card {
+  min-height: 136px;
+  padding: 18px;
+  border: 1px solid var(--hrms-border) !important;
+  border-radius: 14px !important;
+  background: #FFFFFF;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05) !important;
+}
+
+.employee-leave-page .balance-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--hrms-light-blue);
+}
+
+.employee-leave-page .balance-card h3 {
+  color: #475569 !important;
+  font-size: 0.84rem;
+}
+
+.employee-leave-page .balance-card span {
+  display: block;
+  margin-top: 8px;
+  color: var(--hrms-blue) !important;
+  font-size: 1.55rem;
+  font-weight: 850;
+}
+
+.employee-leave-page .subadmin-leave-section-head {
+  margin: 26px 0 14px;
+}
+
+.employee-leave-page .subadmin-leave-tabs {
+  margin: 0;
+  border: 1px solid var(--hrms-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.employee-leave-page .subadmin-leave-tabs .tab {
+  border-radius: 9px;
+}
+
+.employee-leave-page .subadmin-leave-tabs .tab.active {
+  background: var(--hrms-blue);
+  color: #FFFFFF;
+}
+
+.employee-leave-page .leave-list {
+  display: block;
+}
+
+.employee-leave-page .subadmin-leave-table-wrap {
+  overflow-x: visible;
+  border: 1px solid var(--hrms-border);
+  border-radius: 14px;
+  background: #FFFFFF;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
+}
+
+.employee-leave-page .subadmin-leave-table {
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.employee-leave-page .subadmin-leave-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--hrms-light-blue);
+  color: var(--hrms-text);
+}
+
+.employee-leave-page .subadmin-leave-table th,
+.employee-leave-page .subadmin-leave-table td {
+  padding: 14px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(1),
+.employee-leave-page .subadmin-leave-table td:nth-child(1) {
+  width: 18%;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(6),
+.employee-leave-page .subadmin-leave-table td:nth-child(6) {
+  width: 24%;
+}
+
+.employee-leave-page .status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+}
+
+.employee-leave-page .sc-pending {
+  background: #FFF7ED;
+  border-color: rgba(255, 140, 0, 0.35);
+  color: #C2410C;
+}
+
+.employee-leave-page .sc-approved {
+  background: #ECFDF5;
+  border-color: rgba(22, 163, 74, 0.28);
+  color: var(--hrms-success);
+}
+
+.employee-leave-page .sc-rejected {
+  background: #FEF2F2;
+  border-color: rgba(220, 38, 38, 0.25);
+  color: var(--hrms-danger);
+}
+
+.employee-leave-page .empty-state {
+  padding: 54px;
+  border: 1px solid var(--hrms-border) !important;
+  background: #FFFFFF;
+}
+
+.employee-leave-page .modal {
+  background: rgba(245, 247, 250, 0.86);
+  backdrop-filter: blur(10px);
+}
+
+.employee-leave-page .modal-box {
+  max-width: 620px;
+  border: 1px solid var(--hrms-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+
+.employee-leave-page .modal-box h3 {
+  color: var(--hrms-text);
+}
+
+.employee-leave-page .form-group label {
+  color: var(--hrms-text);
+  font-weight: 750;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.employee-leave-page .form-group input,
+.employee-leave-page .form-group select,
+.employee-leave-page .form-group textarea {
+  border: 1px solid var(--hrms-border);
+  border-radius: 12px;
+  color: var(--hrms-text);
+}
+
+.employee-leave-page .form-group input:focus,
+.employee-leave-page .form-group select:focus,
+.employee-leave-page .form-group textarea:focus {
+  border-color: var(--hrms-blue);
+  box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.employee-leave-page .days-badge {
+  background: var(--hrms-light-blue);
+  border-color: #BFDBFE;
+  color: var(--hrms-blue);
+}
+
+.employee-leave-page .mbtn-primary {
+  background: var(--hrms-blue);
+  color: #FFFFFF;
+}
+
+.employee-leave-page .mbtn-cancel {
+  background: #FFF7ED;
+  border: 1px solid rgba(255, 140, 0, 0.38);
+  color: #C2410C;
+}
+
+@media (max-width: 1100px) {
+  .employee-leave-page .employee-leave-kpis,
+  .employee-leave-page .leave-balance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .employee-leave-page .content {
+    padding: 18px;
+  }
+
+  .employee-leave-page .employee-leave-topbar,
+  .employee-leave-page .subadmin-leave-section-head,
+  .employee-leave-page .form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .employee-leave-page .employee-leave-kpis,
+  .employee-leave-page .leave-balance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-leave-page .subadmin-leave-table-wrap {
+    overflow-x: auto;
+  }
+
+  .employee-leave-page .subadmin-leave-table {
+    min-width: 860px;
+    table-layout: auto;
+  }
+
+  .employee-leave-page .modal-box {
+    width: calc(100% - 28px);
+    padding: 22px;
+  }
+}

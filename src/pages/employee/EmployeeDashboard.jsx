@@ -85,6 +85,15 @@ export default function EmployeeDashboard({ embedded = false }) {
   const [liveDateLabel, setLiveDateLabel] = useState("—");
   const [liveTimeLabel, setLiveTimeLabel] = useState("—");
 
+  const safeAttendance = useMemo(
+    () => (Array.isArray(allAttendance) ? allAttendance.filter(Boolean) : []),
+    [allAttendance]
+  );
+  const safeLeaves = useMemo(
+    () => (Array.isArray(allLeaves) ? allLeaves.filter(Boolean) : []),
+    [allLeaves]
+  );
+
   useEffect(() => {
     if (!token) navigate("/login");
   }, [token, navigate]);
@@ -210,7 +219,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       const isSun = dow === 0;
       const isHol = holidaySet.has(ds);
       if (!isSun && !isHol) workingDays++;
-      const rec = allAttendance.find((r) => r?.date === ds);
+      const rec = safeAttendance.find((r) => r?.date === ds);
       if (rec) {
         const status = String(rec?.status || "").toLowerCase();
         if (["full_day", "present", "in_progress", "working", "leave"].includes(status)) fullDays++;
@@ -258,8 +267,7 @@ export default function EmployeeDashboard({ embedded = false }) {
 
     const today = new Date().toISOString().slice(0, 10);
     let currentStreak = 0;
-    const sorted = allAttendance
-      .filter(Boolean)
+    const sorted = [...safeAttendance]
       .sort((a, b) => String(b?.date || "").localeCompare(String(a?.date || "")));
     for (const rec of sorted) {
       if (rec?.date > today) continue;
@@ -271,11 +279,11 @@ export default function EmployeeDashboard({ embedded = false }) {
       workingDays > 0
         ? Math.round(((fullDays + halfDays * 0.5) / workingDays) * 100)
         : 0;
-    const approvedDays = allLeaves
+    const approvedDays = safeLeaves
       .filter((l) => l?.status === "approved")
       .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
     const leaveBalance = Math.max(0, 24 - approvedDays);
-    const lateCount = Math.min(allAttendance.filter(isGraceLateLogin).length, LATE_MAX);
+    const lateCount = Math.min(safeAttendance.filter(isGraceLateLogin).length, LATE_MAX);
 
     return {
       workingDays,
@@ -299,12 +307,12 @@ export default function EmployeeDashboard({ embedded = false }) {
       sundays: Array.from({ length: lastDay }, (_, index) => index + 1).filter(
         (day) => new Date(y, m, day).getDay() === 0
       ).length,
-      leaveRequests: allLeaves.length,
+      leaveRequests: safeLeaves.length,
     };
-  }, [allAttendance, allLeaves, holidayList, monthMeta]);
+  }, [safeAttendance, safeLeaves, holidayList, monthMeta]);
 
   const lateTracker = useMemo(() => {
-    const lateRecs = allAttendance.filter(isGraceLateLogin);
+    const lateRecs = safeAttendance.filter(isGraceLateLogin);
     const lateCount = Math.min(lateRecs.length, LATE_MAX);
     const remaining = Math.max(0, LATE_MAX - lateCount);
     let info;
@@ -335,7 +343,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       );
     }
     return { lateRecs, lateCount, remaining, info };
-  }, [allAttendance]);
+  }, [safeAttendance]);
 
   const todayCard = useMemo(() => {
     const d = todayData;
@@ -382,7 +390,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       })
     );
     const attendanceByDate = new Map(
-      allAttendance.filter(Boolean).map((rec) => {
+      safeAttendance.map((rec) => {
         const dateKey =
           typeof rec.date === "string" ? rec.date.slice(0, 10) : rec.date?.toISOString?.()?.slice(0, 10);
         return [dateKey, rec];
@@ -441,7 +449,7 @@ export default function EmployeeDashboard({ embedded = false }) {
     }
 
     return cells;
-  }, [allAttendance, holidayList, monthMeta]);
+  }, [safeAttendance, holidayList, monthMeta]);
 
   const detailRows = useMemo(() => {
     const { y, m, mm, lastDay } = monthMeta;
@@ -457,7 +465,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
       const dow = new Date(ds).getDay();
       if (dow === 0 || holidaySet.has(ds)) continue;
-      const rec = allAttendance.find((r) => r?.date === ds);
+      const rec = safeAttendance.find((r) => r?.date === ds);
       let statusNode = ds <= todayStr ? (
         <span className="status-chip absent">Absent</span>
       ) : (
@@ -465,7 +473,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       );
       let statusText = ds <= todayStr ? "Absent" : "No Record";
       if (rec) {
-        const safeStatus = String(rec.status || "").toLowerCase();
+        const safeStatus = String(rec?.status || "").toLowerCase();
         const cls =
           ["full_day", "present", "in_progress", "working", "leave"].includes(safeStatus)
             ? "present"
@@ -511,7 +519,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       });
     }
     return rows;
-  }, [allAttendance, holidayList, monthMeta]);
+  }, [safeAttendance, holidayList, monthMeta]);
 
   const monthLabel = `${monthMeta.y}-${monthMeta.mm}`;
   const analyticsSubTitle = `${viewDate.toLocaleDateString("en-IN", {
