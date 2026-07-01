@@ -68,6 +68,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       department: source.department || "",
       branch: source.branch || "Hyderabad",
       email: source.email || "",
+      role: source.role || "",
       employee_code: employeeCode,
       firstName: (source.full_name || "Employee").split(" ")[0],
     };
@@ -209,19 +210,19 @@ export default function EmployeeDashboard({ embedded = false }) {
       const isSun = dow === 0;
       const isHol = holidaySet.has(ds);
       if (!isSun && !isHol) workingDays++;
-      const rec = allAttendance.find((r) => r.date === ds);
+      const rec = allAttendance.find((r) => r?.date === ds);
       if (rec) {
-        const status = String(rec.status || "").toLowerCase();
+        const status = String(rec?.status || "").toLowerCase();
         if (["full_day", "present", "in_progress", "working", "leave"].includes(status)) fullDays++;
         else if (status === "half_day") halfDays++;
         else if (!isSun && !isHol) absentDays++;
-        lateMinutes += Number(rec.late_minutes || 0);
-        if (rec.production_hours > 0) {
-          totalProdHours += parseFloat(rec.production_hours);
+        lateMinutes += Number(rec?.late_minutes || 0);
+        if (Number(rec?.production_hours || 0) > 0) {
+          totalProdHours += parseFloat(rec?.production_hours || 0);
           prodCount++;
         }
-        if (Number(rec.total_break_minutes || 0) > 0) {
-          totalBreakMinutes += Number(rec.total_break_minutes || 0);
+        if (Number(rec?.total_break_minutes || 0) > 0) {
+          totalBreakMinutes += Number(rec?.total_break_minutes || 0);
           breakCount++;
         }
       } else if (!isSun && !isHol) absentDays++;
@@ -257,10 +258,12 @@ export default function EmployeeDashboard({ embedded = false }) {
 
     const today = new Date().toISOString().slice(0, 10);
     let currentStreak = 0;
-    const sorted = [...allAttendance].sort((a, b) => b.date.localeCompare(a.date));
+    const sorted = allAttendance
+      .filter(Boolean)
+      .sort((a, b) => String(b?.date || "").localeCompare(String(a?.date || "")));
     for (const rec of sorted) {
-      if (rec.date > today) continue;
-      if (rec.status === "full_day") currentStreak++;
+      if (rec?.date > today) continue;
+      if (rec?.status === "full_day") currentStreak++;
       else break;
     }
 
@@ -269,7 +272,7 @@ export default function EmployeeDashboard({ embedded = false }) {
         ? Math.round(((fullDays + halfDays * 0.5) / workingDays) * 100)
         : 0;
     const approvedDays = allLeaves
-      .filter((l) => l.status === "approved")
+      .filter((l) => l?.status === "approved")
       .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
     const leaveBalance = Math.max(0, 24 - approvedDays);
     const lateCount = Math.min(allAttendance.filter(isGraceLateLogin).length, LATE_MAX);
@@ -336,7 +339,7 @@ export default function EmployeeDashboard({ embedded = false }) {
 
   const todayCard = useMemo(() => {
     const d = todayData;
-    let statusText = "Absent";
+    let statusText = "Not Available";
     let statusCls = "absent";
     if (d?.status === "half_day") {
       statusText = "Half Day";
@@ -355,16 +358,17 @@ export default function EmployeeDashboard({ embedded = false }) {
       statusCls = "present";
     }
     return {
-      checkIn: formatTime12Hour(d?.check_in_time),
-      checkOut: formatTime12Hour(d?.check_out_time),
-      late: d?.late_minutes || 0,
+      checkIn: formatTime12Hour(d?.check_in_time) || "—",
+      checkOut: formatTime12Hour(d?.check_out_time) || "—",
+      late: Number(d?.late_minutes || 0),
+      productionHours: formatProductionHours(Number(d?.production_hours || 0)),
       statusText,
       statusCls,
       message:
         d?.status === "absent" || !d
           ? "Attendance not completed."
             : isGraceLateLogin(d)
-            ? `You are late by ${Number(d.late_minutes)} minutes.`
+            ? `You are late by ${Number(d?.late_minutes || 0)} minutes.`
             : "Great! You are on time today.",
     };
   }, [todayData]);
@@ -378,7 +382,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       })
     );
     const attendanceByDate = new Map(
-      allAttendance.map((rec) => {
+      allAttendance.filter(Boolean).map((rec) => {
         const dateKey =
           typeof rec.date === "string" ? rec.date.slice(0, 10) : rec.date?.toISOString?.()?.slice(0, 10);
         return [dateKey, rec];
@@ -410,16 +414,16 @@ export default function EmployeeDashboard({ embedded = false }) {
         } else if (isUnpaidLeaveDay(rec)) {
           status = "Unpaid Leave";
           className = "unpaid-leave calendar-unpaid-leave";
-        } else if (rec.status === "absent") {
+        } else if (rec?.status === "absent") {
           status = "Absent";
           className = "absent calendar-absent";
-        } else if (rec.status === "half_day") {
+        } else if (rec?.status === "half_day") {
           status = "Half Day";
           className = "halfday calendar-halfday";
         } else if (isGraceLateLogin(rec)) {
           status = "Late";
           className = "late calendar-late";
-        } else if (rec.status === "full_day" || rec.status === "present") {
+        } else if (rec?.status === "full_day" || rec?.status === "present") {
           status = "Present";
           className = "present calendar-present";
         }
@@ -453,7 +457,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
       const dow = new Date(ds).getDay();
       if (dow === 0 || holidaySet.has(ds)) continue;
-      const rec = allAttendance.find((r) => r.date === ds);
+      const rec = allAttendance.find((r) => r?.date === ds);
       let statusNode = ds <= todayStr ? (
         <span className="status-chip absent">Absent</span>
       ) : (
@@ -482,7 +486,7 @@ export default function EmployeeDashboard({ embedded = false }) {
         statusNode = (
           <>
             <span className={`status-chip ${cls}`}>{txt}</span>
-            {isGraceLateLogin(rec) && rec.status !== "absent" && (
+            {isGraceLateLogin(rec) && rec?.status !== "absent" && (
               <span
                 style={{
                   fontSize: ".68rem",
@@ -490,7 +494,7 @@ export default function EmployeeDashboard({ embedded = false }) {
                   marginLeft: 6,
                 }}
               >
-                +{rec.late_minutes}m late
+                +{Number(rec?.late_minutes || 0)}m late
               </span>
             )}
           </>
@@ -529,12 +533,13 @@ export default function EmployeeDashboard({ embedded = false }) {
     { label: "Absences", value: analytics.absentDays, icon: "fa-user-slash", tone: "danger" },
   ];
 
+  const actionBase = userProfile.role === "SUB_ADMIN" ? "/sub-admin" : "/employee";
   const quickActions = [
-    { label: "Apply Leave", subtitle: "Request time off", icon: "fa-paper-plane", path: "/employee/leave" },
-    { label: "My Attendance", subtitle: "View daily logs", icon: "fa-calendar-check", path: "/employee/attendance" },
-    { label: "Breaks", subtitle: "Manage break time", icon: "fa-mug-hot", path: "/employee/breaks" },
-    { label: "Payslip", subtitle: "Salary documents", icon: "fa-file-invoice-dollar", path: "/employee/payslip" },
-    { label: "Messages", subtitle: "Contact HR team", icon: "fa-envelope", path: "/employee/messages" },
+    { label: "Apply Leave", subtitle: "Request time off", icon: "fa-paper-plane", path: `${actionBase}/leave` },
+    { label: "My Attendance", subtitle: "View daily logs", icon: "fa-calendar-check", path: userProfile.role === "SUB_ADMIN" ? "/sub-admin/calendar" : "/employee/attendance" },
+    { label: "Breaks", subtitle: "Manage break time", icon: "fa-mug-hot", path: `${actionBase}/breaks` },
+    { label: "Payslip", subtitle: "Salary documents", icon: "fa-file-invoice-dollar", path: `${actionBase}/payslip` },
+    { label: "Messages", subtitle: "Contact HR team", icon: "fa-envelope", path: userProfile.role === "SUB_ADMIN" ? "/sub-admin/help-center" : "/employee/messages" },
   ];
 
   const monthlySummaryCards = [
@@ -543,6 +548,45 @@ export default function EmployeeDashboard({ embedded = false }) {
     { label: "Late Logins", value: analytics.lateCount, max: LATE_MAX, tone: "warning", icon: "fa-clock" },
     { label: "Leave Requests", value: analytics.leaveRequests, max: Math.max(analytics.leaveRequests, 6), tone: "purple", icon: "fa-umbrella-beach" },
     { label: "Attendance %", value: `${analytics.rate}%`, rawValue: analytics.rate, max: 100, tone: "blue", icon: "fa-chart-simple" },
+  ];
+
+  const detailFields = [
+    ["Email", userProfile.email || "—"],
+    ["Department", userProfile.department || "—"],
+    ["Location", userProfile.branch || "—"],
+    ["Employee ID", userProfile.employee_code],
+  ];
+
+  const performanceMetrics = [
+    {
+      cls: "blue",
+      icon: "fa-percent",
+      label: "Attendance %",
+      value: `${analytics.rate}%`,
+      note: analytics.grade,
+      noteClass: `score-grade ${analytics.gradeClass}`,
+    },
+    {
+      cls: "success",
+      icon: "fa-business-time",
+      label: "Avg Working Hours",
+      value: formatProductionHours(analytics.avgHours),
+      note: analytics.hint,
+    },
+    {
+      cls: "purple",
+      icon: "fa-mug-hot",
+      label: "Avg Break Time",
+      value: `${analytics.avgBreakMinutes}m`,
+      note: "Daily average",
+    },
+    {
+      cls: "warning",
+      icon: "fa-clock",
+      label: "Late Minutes (Monthly)",
+      value: analytics.lateMinutes,
+      note: `${analytics.lateCount} late logins`,
+    },
   ];
 
   const changeMonth = (delta) => {
@@ -568,12 +612,7 @@ export default function EmployeeDashboard({ embedded = false }) {
               </div>
             </div>
             <div className="employee-details-card">
-              {[
-                ["Email", userProfile.email || "—"],
-                ["Department", userProfile.department || "—"],
-                ["Location", userProfile.branch || "—"],
-                ["Employee ID", userProfile.employee_code],
-              ].map(([label, value]) => (
+              {detailFields.map(([label, value]) => (
                 <div key={label}>
                   <span>{label}</span>
                   <strong>{value}</strong>
@@ -692,26 +731,13 @@ export default function EmployeeDashboard({ embedded = false }) {
                 </div>
               </div>
               <div className="perf-stats simple">
-                <div className="performance-metric blue">
-                  <span><i className="fas fa-percent" /> Attendance %</span>
-                  <strong>{analytics.rate}%</strong>
-                  <small className={`score-grade ${analytics.gradeClass}`}>{analytics.grade}</small>
-                </div>
-                <div className="performance-metric success">
-                  <span><i className="fas fa-business-time" /> Avg Working Hours</span>
-                  <strong>{formatProductionHours(analytics.avgHours)}</strong>
-                  <small>{analytics.hint}</small>
-                </div>
-                <div className="performance-metric purple">
-                  <span><i className="fas fa-mug-hot" /> Avg Break Time</span>
-                  <strong>{analytics.avgBreakMinutes}m</strong>
-                  <small>Daily average</small>
-                </div>
-                <div className="performance-metric warning">
-                  <span><i className="fas fa-clock" /> Late Minutes (Monthly)</span>
-                  <strong>{analytics.lateMinutes}</strong>
-                  <small>{analytics.lateCount} late logins</small>
-                </div>
+                {performanceMetrics.map((metric) => (
+                  <div className={`performance-metric ${metric.cls}`} key={metric.label}>
+                    <span><i className={`fas ${metric.icon}`} /> {metric.label}</span>
+                    <strong>{metric.value}</strong>
+                    <small className={metric.noteClass}>{metric.note}</small>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
@@ -720,9 +746,9 @@ export default function EmployeeDashboard({ embedded = false }) {
       <button
         type="button"
         className="employee-help-floating-btn"
-        onClick={() => navigate("/employee/help-center")}
-        aria-label="Open employee help center"
-        style={embedded ? { display: "none" } : undefined}
+        onClick={() => navigate(userProfile.role === "SUB_ADMIN" ? "/sub-admin/help-center" : "/employee/help-center")}
+        aria-label={userProfile.role === "SUB_ADMIN" ? "Open sub admin help center" : "Open employee help center"}
+        style={embedded && userProfile.role !== "SUB_ADMIN" ? { display: "none" } : undefined}
       >
         <span>🎧</span>
         Need Help
@@ -731,9 +757,10 @@ export default function EmployeeDashboard({ embedded = false }) {
   );
 }
 
-function isGraceLateLogin(rec = {}) {
-  const raw = rec.check_in_time || rec.office_in || rec.checkIn;
-  const out = rec.check_out_time || rec.office_out || rec.checkOut;
+function isGraceLateLogin(rec) {
+  if (!rec?.check_in_time && !rec?.office_in && !rec?.checkIn) return false;
+  const raw = rec?.check_in_time || rec?.office_in || rec?.checkIn;
+  const out = rec?.check_out_time || rec?.office_out || rec?.checkOut;
   if (!raw || !out) return false;
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;

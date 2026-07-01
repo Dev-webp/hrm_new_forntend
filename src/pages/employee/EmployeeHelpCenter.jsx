@@ -12,7 +12,7 @@ const SUPPORT_CARDS = [
       "Daily Work Queries",
     ],
     button: "Message Manager",
-    href: "mailto:srikanth@vjcoverseas.com?subject=Employee%20Support%20Request",
+    href: "mailto:admin@vjcoverseas.com?subject=Employee%20Support%20Request",
   },
   {
     title: "Contact Chairman",
@@ -38,14 +38,26 @@ const SUPPORT_CARDS = [
       "HRMS Bugs",
     ],
     button: "Email Admin",
-    href: "mailto:admin@vjcoverseas.com?subject=HRMS%20Support%20Request",
+    href: "mailto:srikanth@vjcoverseas.com?subject=HRMS%20Support%20Request",
+  },
+  {
+    title: "IT Support",
+    icon: "fa-screwdriver-wrench",
+    description: [
+      "Login Issues",
+      "System Access",
+      "Browser Problems",
+      "Technical Errors",
+    ],
+    button: "Email IT Support",
+    href: "mailto:srikanth@vjcoverseas.com?subject=HRMS%20Technical%20Support",
   },
 ];
 
-export default function EmployeeHelpCenter() {
+export default function EmployeeHelpCenter({ embedded = false }) {
   return (
-    <div className="layout employee-help-center-page">
-      <EmployeeSidebar activePage="help-center" />
+    <div className={embedded ? "employee-help-center-page" : "layout employee-help-center-page"}>
+      {!embedded && <EmployeeSidebar activePage="help-center" />}
       <main className="employee-help-main">
         <section className="help-center-hero">
           <div>

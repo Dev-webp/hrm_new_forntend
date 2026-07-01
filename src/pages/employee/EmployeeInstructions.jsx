@@ -283,7 +283,7 @@ function PolicyBlock({ block }) {
   );
 }
 
-export default function EmployeeInstructions() {
+export default function EmployeeInstructions({ embedded = false }) {
   const [search, setSearch] = useState("");
   const [activeSection, setActiveSection] = useState(POLICY_SECTIONS[0].id);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -335,8 +335,8 @@ export default function EmployeeInstructions() {
   };
 
   return (
-    <div className="layout employee-instructions-page">
-      <EmployeeSidebar activePage="instructions" />
+    <div className={embedded ? "employee-instructions-page" : "layout employee-instructions-page"}>
+      {!embedded && <EmployeeSidebar activePage="instructions" />}
       <main className="employee-instructions-main">
         <section className="handbook-header">
           <div>

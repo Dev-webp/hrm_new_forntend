@@ -96,6 +96,17 @@ function App() {
               <Route path="*" element={<SubAdminRoutes />} />
             </Route>
 
+            <Route
+              path="/subadmin/*"
+              element={
+                <RequireAuth>
+                  <DashboardLayout role="sub-admin" />
+                </RequireAuth>
+              }
+            >
+              <Route path="*" element={<SubAdminRoutes />} />
+            </Route>
+
             <Route path="/home" element={<RootRedirect />} />
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
