@@ -258,7 +258,7 @@ export default function EmployeeBreaks() {
 
     setMyBreaks(next);
     try {
-      await apiFetch("/employee/my-breaks", {
+      const result = await apiFetch("/employee/my-breaks", {
         method: "PUT",
         body: { date: today, breaks: next },
       });
@@ -266,6 +266,9 @@ export default function EmployeeBreaks() {
         next[key].end ? "✅ Break ended" : "☕ Break started!",
         "success"
       );
+      if (result?.break_exceeded) {
+        showToast(result.warning || "Break limit exceeded. Attendance marked as Half Day.", "warning");
+      }
     } catch {
       showToast("Failed to save break");
       await loadBreaks();
@@ -309,11 +312,14 @@ export default function EmployeeBreaks() {
     };
     setMyBreaks(next);
     try {
-      await apiFetch("/employee/my-breaks", {
+      const result = await apiFetch("/employee/my-breaks", {
         method: "PUT",
         body: { date: today, breaks: next },
       });
       showToast(activeIndex >= 0 ? "Break 3 ended" : "Break 3 started", "success");
+      if (result?.break_exceeded) {
+        showToast(result.warning || "Break limit exceeded. Attendance marked as Half Day.", "warning");
+      }
     } catch (error) {
       showToast(error?.message || "Failed to save Break 3");
       await loadBreaks();

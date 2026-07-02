@@ -228,12 +228,7 @@ function AdminLeave() {
       window.alert("Please enter a reason of at least 5 characters.");
       return;
     }
-    const totalUsed = getTotalBreakMinutes(editModal.breaks);
     const totalSessions = getTotalBreakSessions(editModal.breaks);
-    if (totalUsed > MAX_BREAK_MINUTES) {
-      window.alert("Total break time cannot exceed 60 minutes.");
-      return;
-    }
     if (totalSessions > MAX_DAILY_BREAK_SESSIONS) {
       window.alert("Maximum 6 total break sessions are allowed per day.");
       return;
@@ -241,7 +236,7 @@ function AdminLeave() {
 
     setSaving(true);
     try {
-      await updateBreaks(
+      const result = await updateBreaks(
         editModal.employeeId,
         currentDate,
         editModal.breaks,
@@ -250,6 +245,9 @@ function AdminLeave() {
       showToast(`✅ Break timings saved for ${currentDate}`);
       setEditModal((prev) => ({ ...prev, open: false }));
       await loadData();
+      if (result?.break_exceeded) {
+        showToast(result.warning || "Break limit exceeded. Attendance marked as Half Day.");
+      }
     } catch (err) {
       const message =
         err.response?.data?.message || err.message || "Update failed";

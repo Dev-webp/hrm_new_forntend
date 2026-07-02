@@ -1,4 +1,9 @@
 
+import {
+  isPresentLikeStatus,
+  normalizeAttendanceStatusValue,
+} from "./attendanceHelpers";
+
 export function getInitials(name) {
   if (!name) return "??";
 
@@ -26,14 +31,58 @@ export function isSunday(dateStr) {
 
 export function isGraceLateAttendanceRecord(record = {}) {
   const raw = record.check_in_time || record.office_in || record.checkIn;
-  const out = record.check_out_time || record.office_out || record.checkOut;
-  if (!raw || !out) return false;
+  if (!raw) return false;
 
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
 
   const minutes = h * 60 + m;
-  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+  return minutes >= 10 * 60 + 15;
+}
+
+export function hasAttendanceCheckIn(record = {}) {
+  return Boolean(record?.check_in_time || record?.office_in || record?.checkIn);
+}
+
+export function hasAttendanceCheckOut(record = {}) {
+  return Boolean(record?.check_out_time || record?.office_out || record?.checkOut);
+}
+
+export function getLiveAttendanceStatus(record) {
+  if (!record) return "absent";
+
+  const status = normalizeAttendanceStatusValue(record.status);
+  const hasCheckIn = hasAttendanceCheckIn(record);
+  const hasCheckOut = hasAttendanceCheckOut(record);
+
+  if (hasCheckIn && !hasCheckOut && status !== "holiday" && status !== "leave") {
+    return status === "absent" ? "working" : status;
+  }
+
+  return status;
+}
+
+export function isLivePresentRecord(record) {
+  return isPresentLikeStatus(getLiveAttendanceStatus(record));
+}
+
+export function isLiveAbsentRecord(record) {
+  if (!record) return true;
+  if (hasAttendanceCheckIn(record) && !hasAttendanceCheckOut(record)) return false;
+  return getLiveAttendanceStatus(record) === "absent";
+}
+
+export function getDashboardAttendanceStatus(record, isToday = false) {
+  return isToday ? getLiveAttendanceStatus(record) : normalizeAttendanceStatusValue(record?.status);
+}
+
+export function isDashboardPresentRecord(record, isToday = false) {
+  return isPresentLikeStatus(getDashboardAttendanceStatus(record, isToday));
+}
+
+export function isDashboardAbsentRecord(record, isToday = false) {
+  if (isToday) return isLiveAbsentRecord(record);
+  return !record || getDashboardAttendanceStatus(record, false) === "absent";
 }
 
 export function computeMonthStats(year, month, holidaySet) {
@@ -96,22 +145,22 @@ export function computeEmpStats(
 
     const record = recordMap.get(dateStr);
 
-    const status = String(record?.status || "absent").toLowerCase();
+    const isToday = dateStr === todayStr;
+    const status = getDashboardAttendanceStatus(record, isToday);
+    if (isGraceLateAttendanceRecord(record)) late += 1;
 
-    if (!record || status === "absent") {
+    if (isDashboardAbsentRecord(record, isToday)) {
       absent += 1;
       continue;
     }
 
     if (status === "half_day") {
       half += 1;
-      if (isGraceLateAttendanceRecord(record)) late += 1;
       continue;
     }
 
-    if (["full_day", "present", "leave", "in_progress", "working"].includes(status)) {
+    if (isPresentLikeStatus(status)) {
       present += 1;
-      if (isGraceLateAttendanceRecord(record)) late += 1;
     }
   }
 
@@ -119,7 +168,7 @@ export function computeEmpStats(
   const attPct =
     workingDays > 0 ? Math.round((effectivePresent / workingDays) * 100) : 0;
 
-  return { present, half, absent, late: Math.min(late, 6), workingDays, attPct };
+  return { present, half, absent, late, workingDays, attPct };
 }
 
 export function attPctColor(pct) {

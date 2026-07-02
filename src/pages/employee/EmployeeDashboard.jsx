@@ -9,8 +9,6 @@ import {
 import { MONTH_NAMES, normalizeArray, WEEK_DAYS } from "./employeeUtils";
 import "../../styles/EmployeeDashboard.css";
 
-const LATE_MAX = 6;
-
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good Morning";
@@ -283,7 +281,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       .filter((l) => l?.status === "approved")
       .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
     const leaveBalance = Math.max(0, 24 - approvedDays);
-    const lateCount = Math.min(safeAttendance.filter(isGraceLateLogin).length, LATE_MAX);
+    const lateCount = safeAttendance.filter(isGraceLateLogin).length;
 
     return {
       workingDays,
@@ -310,40 +308,6 @@ export default function EmployeeDashboard({ embedded = false }) {
       leaveRequests: safeLeaves.length,
     };
   }, [safeAttendance, safeLeaves, holidayList, monthMeta]);
-
-  const lateTracker = useMemo(() => {
-    const lateRecs = safeAttendance.filter(isGraceLateLogin);
-    const lateCount = Math.min(lateRecs.length, LATE_MAX);
-    const remaining = Math.max(0, LATE_MAX - lateCount);
-    let info;
-    if (lateCount === 0) {
-      info = (
-        <>
-          <strong style={{ color: "var(--green)" }}>
-            No late logins this month.
-          </strong>{" "}
-          All 6 monthly late allowances are available.
-        </>
-      );
-    } else if (lateCount < LATE_MAX) {
-      info = (
-        <>
-          <strong>
-            {lateCount} late login{lateCount > 1 ? "s" : ""} used
-          </strong>{" "}
-          Â· {remaining} remaining before half-day deduction.
-        </>
-      );
-    } else {
-      info = (
-        <>
-          <strong style={{ color: "var(--red)" }}>Monthly late allowance reached!</strong>{" "}
-          Further check-ins after 10:15 AM follow Half Day or Absent policy.
-        </>
-      );
-    }
-    return { lateRecs, lateCount, remaining, info };
-  }, [safeAttendance]);
 
   const todayCard = useMemo(() => {
     const d = todayData;
@@ -553,7 +517,7 @@ export default function EmployeeDashboard({ embedded = false }) {
   const monthlySummaryCards = [
     { label: "Present Days", value: analytics.fullDays, max: analytics.workingDays, tone: "success", icon: "fa-user-check" },
     { label: "Absent Days", value: analytics.absentDays, max: analytics.workingDays, tone: "danger", icon: "fa-user-xmark" },
-    { label: "Late Logins", value: analytics.lateCount, max: LATE_MAX, tone: "warning", icon: "fa-clock" },
+    { label: "Late Logins", value: analytics.lateCount, max: Math.max(analytics.lateCount, 1), tone: "warning", icon: "fa-clock" },
     { label: "Leave Requests", value: analytics.leaveRequests, max: Math.max(analytics.leaveRequests, 6), tone: "purple", icon: "fa-umbrella-beach" },
     { label: "Attendance %", value: `${analytics.rate}%`, rawValue: analytics.rate, max: 100, tone: "blue", icon: "fa-chart-simple" },
   ];
@@ -768,12 +732,11 @@ export default function EmployeeDashboard({ embedded = false }) {
 function isGraceLateLogin(rec) {
   if (!rec?.check_in_time && !rec?.office_in && !rec?.checkIn) return false;
   const raw = rec?.check_in_time || rec?.office_in || rec?.checkIn;
-  const out = rec?.check_out_time || rec?.office_out || rec?.checkOut;
-  if (!raw || !out) return false;
+  if (!raw) return false;
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
   const minutes = h * 60 + m;
-  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+  return minutes >= 10 * 60 + 15;
 }
 
 

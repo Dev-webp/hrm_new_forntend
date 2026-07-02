@@ -31,6 +31,8 @@ import {
   buildDateStr,
   computeEmpStats,
   computeMonthStats,
+  isDashboardAbsentRecord,
+  isDashboardPresentRecord,
   getGreeting,
   getInitials,
   isGraceLateAttendanceRecord,
@@ -598,12 +600,14 @@ export default function ManagerDashboard() {
           (row) => row.date && row.date.slice(0, 10) === dateStr
         );
 
-        if (!record || record.status === "absent") {
+        const isTodayRow = dateStr === currentDate;
+
+        if (isDashboardAbsentRecord(record, isTodayRow)) {
           absentCount += 1;
           return;
         }
 
-        if (["full_day", "half_day"].includes(record.status)) {
+        if (isDashboardPresentRecord(record, isTodayRow)) {
           presentCount += 1;
           if (isGraceLateAttendanceRecord(record)) lateCount += 1;
         }

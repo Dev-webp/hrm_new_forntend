@@ -338,12 +338,7 @@ export default function ManagerBreaks() {
       showToast("Enter a reason of at least 5 characters");
       return;
     }
-    const totalUsed = getTotalBreakMinutes(editModal.breaks);
     const totalSessions = getTotalBreakSessions(editModal.breaks);
-    if (totalUsed > MAX_BREAK_MINUTES) {
-      showToast("Total break time cannot exceed 60 minutes");
-      return;
-    }
     if (totalSessions > MAX_DAILY_BREAK_SESSIONS) {
       showToast("Maximum 6 total break sessions are allowed per day");
       return;
@@ -356,8 +351,11 @@ export default function ManagerBreaks() {
       break3Sessions: editModal.breaks.break3Sessions || [],
     };
     try {
-      await authFetch(`/breaks/${currentEditEmployeeId}`, { method: "PUT", body: JSON.stringify({ date: currentDate, breaks: newBreaks, reason: editReason.trim() }) }, token, navigate);
+      const result = await authFetch(`/breaks/${currentEditEmployeeId}`, { method: "PUT", body: JSON.stringify({ date: currentDate, breaks: newBreaks, reason: editReason.trim() }) }, token, navigate);
       showToast(`✅ Breaks saved for ${currentDate}`);
+      if (result?.break_exceeded) {
+        showToast(result.warning || "Break limit exceeded. Attendance marked as Half Day.");
+      }
       closeModal();
       refreshData();
     } catch (err) {

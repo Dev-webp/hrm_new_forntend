@@ -4,7 +4,6 @@ import {
   formatLateLoginCount,
   getLateLoginStatus,
   getLateLoginStatusClass,
-  getRemainingGraceLateLogins,
   getLatePillMeta,
   getStatusMeta,
   isSundayDate,
@@ -38,9 +37,6 @@ function LateLoginCountCell({ emp }) {
     <div className="late-login-count-cell">
       <strong>{formatLateLoginCount(emp)}</strong>
       <span className={getLateLoginStatusClass(status)}>{status}</span>
-      {status === "Late" && (
-        <small>Available Late Allowance: {getRemainingGraceLateLogins(emp)}</small>
-      )}
     </div>
   );
 }

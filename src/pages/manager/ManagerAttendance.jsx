@@ -18,7 +18,6 @@ import {
   formatLateLoginCount,
   getLateLoginStatus,
   getLateLoginStatusClass,
-  getRemainingGraceLateLogins,
 } from "../../utils/attendanceHelpers";
 import "./ManagerAttendance.css";
 
@@ -59,12 +58,11 @@ function parseEditTime(value) {
 
 function isGraceLateLogin(record = {}) {
   const raw = record.check_in_time || record.office_in || record.checkIn;
-  const out = record.check_out_time || record.office_out || record.checkOut;
-  if (!raw || !out) return false;
+  if (!raw) return false;
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
   const minutes = h * 60 + m;
-  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+  return minutes >= 10 * 60 + 15;
 }
 
 function getStatusBadge(status) {
@@ -117,20 +115,12 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-const LATE_LOGIN_LIMIT = 6;
-
 function getLateUsageTone(count) {
-  if (count > 6) return "danger";
-  if (count === 5) return "near";
-  if (count === 6) return "near";
   if (count >= 3) return "warning";
   return "good";
 }
 
 function getLateUsageText(count) {
-  if (count > 6) return "Limit Exceeded";
-  if (count === 6) return "Limit Reached";
-  if (count === 5) return "Near Limit";
   if (count >= 3) return "Monthly Warning";
   return "Within Limit";
 }
@@ -141,9 +131,6 @@ function LateLoginCountCell({ record }) {
     <div className="late-login-count-cell">
       <strong>{formatLateLoginCount(record)}</strong>
       <span className={getLateLoginStatusClass(status)}>{status}</span>
-      {status === "Late" && (
-        <small>Available Late Allowance: {getRemainingGraceLateLogins(record)}</small>
-      )}
     </div>
   );
 }
@@ -209,7 +196,7 @@ export default function ManagerAttendance() {
       const end = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().slice(0, 10);
       const records = await fetchSelfHistory(start, end);
       const lateCount = records.filter(isGraceLateLogin).length;
-      setMonthlyLateCount(Math.min(lateCount, LATE_LOGIN_LIMIT));
+      setMonthlyLateCount(lateCount);
     } catch (err) {
       console.warn(err);
       setMonthlyLateCount(0);
@@ -513,12 +500,12 @@ export default function ManagerAttendance() {
           </div>
           <div
             className={`kpi late-usage-kpi ${getLateUsageTone(monthlyLateCount)}`}
-            title="Late Login Policy: maximum 6 monthly late logins count only for check-ins from 10:01 AM to 10:15 AM. After 10:15 AM, attendance follows Half Day or Absent policy."
+            title="Late Login Policy: check-ins at or after 10:15 AM count as late. Check-ins from 10:00 AM to 10:14 AM are on time, but require 9 hours from actual login."
           >
             <div className="kpi-title">
               <i className="fas fa-circle-info"></i> Late Logins
             </div>
-            <div className="kpi-value">{monthlyLateCount} / {LATE_LOGIN_LIMIT}</div>
+            <div className="kpi-value">{monthlyLateCount}</div>
             <div className="kpi-sub">{getLateUsageText(monthlyLateCount)}</div>
           </div>
         </div>

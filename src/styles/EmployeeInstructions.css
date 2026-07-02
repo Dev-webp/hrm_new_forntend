@@ -1,46 +1,80 @@
+.employee-instructions-page,
+.employee-instructions-page *,
+.employee-instructions-page *::before,
+.employee-instructions-page *::after {
+  box-sizing: border-box;
+}
+
 .employee-instructions-page {
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
-  background: #f8fafc;
-  color: #0f172a;
+  display: flex;
+  align-items: stretch;
+  overflow-x: hidden;
+  background: #f5f7fa;
+  color: #1a2b4b;
+}
+
+.layout.employee-instructions-page {
+  width: 100%;
+  min-height: 100vh;
 }
 
 .employee-instructions-main {
   flex: 1;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
+  padding: 28px;
   scroll-behavior: smooth;
 }
 
 .handbook-header {
-  width: min(1200px, 100%);
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
   margin: 0 auto 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 24px;
-  align-items: end;
-  padding: 24px;
-  border: 2px solid #e2e8f0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 28px;
+  align-items: center;
+  padding: 30px;
+  border: 1px solid #dbe7f3;
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(234, 244, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 54%),
+    #ffffff;
+  box-shadow: 0 18px 45px rgba(26, 43, 75, 0.09);
 }
 
 .branch-label {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   color: #ff8c00;
   font-size: 12px;
   font-weight: 950;
   letter-spacing: 1.4px;
 }
 
+.branch-label::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 5px rgba(22, 163, 74, 0.12);
+}
+
 .handbook-header h1 {
   margin: 10px 0 8px;
   color: #0d47a1;
-  font-size: 36px;
+  font-size: 38px;
   line-height: 1.05;
   font-weight: 950;
   letter-spacing: 0;
@@ -49,7 +83,7 @@
 .handbook-header p {
   max-width: 700px;
   margin: 0;
-  color: #475569;
+  color: #42526d;
   font-size: 15px;
   line-height: 1.6;
   font-weight: 700;
@@ -71,9 +105,10 @@
   border: 1px solid #cfe4fb;
   border-radius: 999px;
   background: #ffffff;
-  color: #0f172a;
+  color: #1a2b4b;
   font-size: 12px;
   font-weight: 900;
+  box-shadow: 0 8px 18px rgba(13, 71, 161, 0.06);
 }
 
 .handbook-badges i {
@@ -83,10 +118,17 @@
 .handbook-tools {
   display: grid;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 16px;
+  border: 1px solid #dbe7f3;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .handbook-search {
   min-width: 0;
+  max-width: 100%;
   min-height: 46px;
   display: flex;
   align-items: center;
@@ -95,6 +137,7 @@
   border: 2px solid #dbe7f3;
   border-radius: 12px;
   background: #ffffff;
+  transition: border 180ms ease, box-shadow 180ms ease;
 }
 
 .handbook-search i {
@@ -106,10 +149,15 @@
   min-width: 0;
   border: 0;
   outline: 0;
-  color: #0f172a;
+  color: #1a2b4b;
   background: transparent;
   font: inherit;
   font-weight: 750;
+}
+
+.handbook-search:focus-within {
+  border-color: #0d47a1;
+  box-shadow: 0 0 0 4px rgba(13, 71, 161, 0.08);
 }
 
 .handbook-search input::placeholder {
@@ -118,6 +166,7 @@
 
 .handbook-tools button,
 .acknowledgement-panel button {
+  max-width: 100%;
   min-height: 44px;
   border: 0;
   border-radius: 12px;
@@ -129,6 +178,8 @@
   gap: 9px;
   padding: 10px 16px;
   font-weight: 950;
+  text-align: center;
+  white-space: normal;
   cursor: pointer;
   box-shadow: 0 12px 22px rgba(255, 140, 0, 0.18);
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
@@ -142,32 +193,36 @@
 }
 
 .handbook-container {
-  width: min(1200px, 100%);
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 0;
+  grid-template-columns: 282px minmax(0, 1fr);
+  gap: 22px;
   align-items: start;
-  border: 2px solid #e2e8f0;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+  overflow: visible;
 }
 
 .handbook-nav {
   position: sticky;
-  top: 18px;
+  top: 22px;
+  align-self: start;
+  min-width: 0;
   max-height: calc(100vh - 48px);
   overflow-y: auto;
-  padding: 18px 14px;
-  border-right: 2px solid #edf2f7;
-  background: #fbfdff;
-  border-radius: 18px 0 0 18px;
+  overflow-x: hidden;
+  padding: 18px;
+  border: 1px solid #dbe7f3;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 16px 34px rgba(26, 43, 75, 0.08);
+  z-index: 1;
 }
 
 .nav-title {
-  margin: 0 4px 12px;
-  color: #64748b;
+  margin: 0 4px 14px;
+  color: #0d47a1;
   font-size: 11px;
   font-weight: 950;
   letter-spacing: 1px;
@@ -176,6 +231,7 @@
 
 .handbook-nav button {
   width: 100%;
+  max-width: 100%;
   min-height: 42px;
   display: flex;
   align-items: center;
@@ -183,11 +239,12 @@
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #334155;
-  padding: 9px 10px;
+  color: #42526d;
+  padding: 10px;
   text-align: left;
   font-size: 13px;
   font-weight: 850;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease, transform 160ms ease;
 }
@@ -204,7 +261,7 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: 8px;
-  background: #edf4ff;
+  background: #eaf4ff;
   color: #0d47a1;
   font-size: 11px;
   font-weight: 950;
@@ -223,24 +280,29 @@
 }
 
 .handbook-document {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
-  padding: 34px 42px 38px;
+  display: grid;
+  gap: 18px;
 }
 
 .doc-section {
+  min-width: 0;
+  max-width: 100%;
   scroll-margin-top: 24px;
-  padding: 0 0 34px;
-}
-
-.doc-section + .doc-section {
-  padding-top: 34px;
-  border-top: 1px solid #e2e8f0;
+  padding: 28px;
+  border: 1px solid #dbe7f3;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(26, 43, 75, 0.08);
 }
 
 .doc-section-head {
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  min-width: 0;
 }
 
 .doc-section-icon {
@@ -250,7 +312,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #eaf4ff;
   color: #0d47a1;
   font-size: 21px;
@@ -258,7 +320,7 @@
 
 .doc-section h2 {
   margin: 0;
-  color: #0f172a;
+  color: #1a2b4b;
   font-size: 28px;
   line-height: 1.15;
   font-weight: 950;
@@ -268,7 +330,7 @@
 .doc-section-head p {
   max-width: 760px;
   margin: 8px 0 0;
-  color: #64748b;
+  color: #42526d;
   font-size: 15px;
   line-height: 1.65;
   font-weight: 700;
@@ -284,25 +346,30 @@
 .doc-blocks {
   display: grid;
   gap: 16px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .doc-stat-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .doc-stat {
+  max-width: 100%;
   min-width: 0;
   padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #f8fafc;
+  border: 1px solid #dbe7f3;
+  border-radius: 16px;
+  background: #f8fbff;
+  box-shadow: inset 4px 0 0 #eaf4ff;
 }
 
 .doc-stat span {
   display: block;
-  color: #64748b;
+  color: #5b6b84;
   font-size: 12px;
   font-weight: 950;
   text-transform: uppercase;
@@ -315,28 +382,33 @@
   font-size: 20px;
   line-height: 1.2;
   font-weight: 950;
+  overflow-wrap: anywhere;
 }
 
 .doc-stat small {
   display: block;
   margin-top: 6px;
-  color: #475569;
+  color: #42526d;
   font-size: 13px;
   line-height: 1.5;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .doc-list-block {
+  min-width: 0;
+  max-width: 100%;
   padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border: 1px solid #dbe7f3;
+  border-radius: 16px;
   background: #ffffff;
+  box-shadow: 0 10px 24px rgba(26, 43, 75, 0.05);
 }
 
 .doc-list-block h3,
 .doc-callout h3 {
   margin: 0 0 10px;
-  color: #0f172a;
+  color: #1a2b4b;
   font-size: 16px;
   font-weight: 950;
 }
@@ -352,13 +424,15 @@
 
 .doc-list-block li,
 .important-notes li {
+  min-width: 0;
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  color: #334155;
+  color: #42526d;
   font-size: 14px;
   line-height: 1.55;
   font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
 .doc-list-block li i {
@@ -372,12 +446,35 @@
   font-size: 13px;
 }
 
+.doc-list-block.examples {
+  background: #f8fbff;
+  border-color: #cfe4fb;
+}
+
+.doc-list-block.examples h3 {
+  color: #0d47a1;
+}
+
+.doc-list-block.examples li {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #dbe7f3;
+}
+
+.doc-list-block.examples li i {
+  color: #0d47a1;
+  font-size: 12px;
+}
+
 .doc-callout {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: flex-start;
   gap: 14px;
   padding: 17px;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid #bfdbfe;
   background: #eff6ff;
 }
@@ -389,11 +486,13 @@
 }
 
 .doc-callout p {
+  min-width: 0;
   margin: 0;
-  color: #334155;
+  color: #42526d;
   font-size: 14px;
   line-height: 1.65;
   font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
 .doc-callout.warning {
@@ -424,11 +523,14 @@
 }
 
 .important-notes {
-  margin-top: 4px;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 2px;
   padding: 20px;
   border: 2px solid #bfdbfe;
   border-radius: 16px;
   background: #eff6ff;
+  box-shadow: 0 14px 28px rgba(13, 71, 161, 0.08);
 }
 
 .important-notes h2 {
@@ -452,31 +554,36 @@
 }
 
 .acknowledgement-panel {
+  min-width: 0;
+  max-width: 100%;
   margin-top: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   padding: 20px;
-  border: 2px solid #e2e8f0;
+  border: 1px solid #dbe7f3;
   border-radius: 16px;
   background: #ffffff;
+  box-shadow: 0 16px 34px rgba(26, 43, 75, 0.08);
 }
 
 .acknowledgement-panel h2 {
   margin: 0 0 12px;
-  color: #0f172a;
+  color: #1a2b4b;
   font-size: 20px;
   font-weight: 950;
 }
 
 .acknowledgement-panel label {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #334155;
+  color: #42526d;
   font-size: 14px;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .acknowledgement-panel input {
@@ -496,7 +603,11 @@
   place-items: center;
   gap: 10px;
   min-height: 260px;
-  color: #64748b;
+  padding: 34px;
+  border: 1px dashed #cfe4fb;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #5b6b84;
   font-weight: 850;
 }
 
@@ -514,22 +625,30 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
+
+  .doc-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 980px) {
   .handbook-container {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .handbook-nav {
-    position: static;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
     max-height: none;
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    border-right: 0;
-    border-bottom: 2px solid #edf2f7;
-    border-radius: 18px 18px 0 0;
+    overflow-y: hidden;
+    border-right: 1px solid #dbe7f3;
+    border-bottom: 1px solid #dbe7f3;
+    border-radius: 18px;
   }
 
   .nav-title {
@@ -538,12 +657,13 @@
 
   .handbook-nav button {
     width: auto;
+    max-width: min(220px, 80vw);
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   .handbook-document {
-    padding: 26px;
+    gap: 14px;
   }
 }
 
@@ -554,6 +674,7 @@
 
   .handbook-header {
     padding: 18px;
+    border-radius: 18px;
   }
 
   .handbook-header h1 {
@@ -575,12 +696,66 @@
     flex-direction: column;
   }
 
+  .acknowledgement-panel button {
+    width: 100%;
+  }
+
   .doc-section-head,
   .doc-callout {
     flex-direction: column;
   }
 
   .handbook-document {
+    gap: 12px;
+  }
+
+  .doc-section {
     padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .employee-instructions-main {
+    padding: 10px;
+  }
+
+  .handbook-header {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .handbook-header h1 {
+    font-size: 24px;
+  }
+
+  .handbook-container {
+    border-radius: 14px;
+  }
+
+  .handbook-nav {
+    border-radius: 14px 14px 0 0;
+    padding: 12px;
+  }
+
+  .handbook-document {
+    padding: 16px;
+  }
+
+  .doc-section h2 {
+    font-size: 22px;
+  }
+
+  .doc-section-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .doc-list-block,
+  .doc-callout,
+  .important-notes,
+  .acknowledgement-panel,
+  .doc-stat {
+    padding: 14px;
   }
 }

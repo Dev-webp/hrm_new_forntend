@@ -8,69 +8,121 @@ const POLICY_SECTIONS = [
     nav: "Office Timings",
     icon: "fa-clock",
     title: "Office Timings",
-    description: "Standard work hours, approved breaks, and minimum production expectations.",
+    description: "Standard office hours and gross login-to-logout duration expectations.",
     content: [
       {
         type: "statGrid",
         items: [
-          { label: "Standard Working Hours", value: "10:00 AM - 7:00 PM", note: "No shift system like manufacturing companies" },
-          { label: "Present", value: "8 Hours or More", note: "Minimum production for a full day" },
-          { label: "Half Day", value: "Less than 8 Hours", note: "Production below full-day requirement" },
-          { label: "Full Day Absent", value: "Less than 4 Hours", note: "Insufficient daily production" },
+          { label: "Office Time", value: "10:00 AM - 7:00 PM", note: "Standard office timing for every regular working day" },
+          { label: "Grace Time", value: "10:00 AM - 10:14 AM", note: "On-time login window with no late count" },
+          { label: "Late Login Starts", value: "10:15 AM", note: "Any login from this time counts as late" },
+          { label: "Half Day Starts", value: "10:30 AM", note: "Login from this time cannot become Full Day" },
+          { label: "Full Day", value: "9 Gross Hours", note: "Calculated from actual login time to logout time" },
+          { label: "Half Day", value: "4+ Gross Hours", note: "Only if login is at or after 10:30 AM" },
         ],
       },
       {
-        type: "checkList",
-        title: "Included Breaks",
-        items: ["Tea Break 1 - 15 Minutes", "Lunch - 30 Minutes", "Tea Break 2 - 15 Minutes"],
+        type: "info",
+        title: "Gross Duration Rule",
+        text: "Full Day and Half Day are based on total login-to-logout duration. Break time is shown in reports and alerts, but it is not deducted from the attendance duration calculation.",
+      },
+      {
+        type: "exampleList",
+        title: "Examples",
+        items: [
+          "10:12 AM login requires logout at 7:12 PM for Full Day.",
+          "10:20 AM to 7:20 PM is Full Day, and late login count increases by 1.",
+          "10:30 AM to 7:30 PM is Half Day only, not Full Day.",
+          "Less than 4 gross hours is Absent.",
+        ],
       },
       {
         type: "warning",
-        title: "Working Hours Warning",
-        text: "No reasons will be accepted for working less than required hours.",
+        title: "Actual Login Time Matters",
+        text: "Employees must complete the required gross duration from the actual login time, even when the login is within grace time.",
+      },
+    ],
+  },
+  {
+    id: "grace-time-policy",
+    nav: "Grace Time",
+    icon: "fa-stopwatch",
+    title: "Grace Time",
+    description: "Grace login is on time, but the 9-hour requirement still starts from actual login.",
+    content: [
+      {
+        type: "statGrid",
+        items: [
+          { label: "Grace Window", value: "10:00-10:14 AM", note: "Login in this window is on time" },
+          { label: "Late Count", value: "No Increase", note: "Grace login does not increase late login count" },
+          { label: "Full Day Need", value: "9 Gross Hours", note: "Must be completed from actual login time" },
+          { label: "Example", value: "10:12 AM - 7:12 PM", note: "Required timing for Full Day" },
+        ],
+      },
+      {
+        type: "success",
+        title: "Grace Login Example",
+        text: "If an employee logs in at 10:12 AM, logout must be at or after 7:12 PM to be eligible for Full Day.",
       },
     ],
   },
   {
     id: "late-login-policy",
-    nav: "Late Login Policy",
+    nav: "Late Login",
     icon: "fa-business-time",
-    title: "Late Login Policy",
-    description: "Grace time and monthly late login limits for every employee.",
+    title: "Late Login",
+    description: "Late login count starts after grace time and is shown as a total count only.",
     content: [
-      {
-        type: "warning",
-        title: "No Exceptions",
-        text: "Maximum late logins: 6 per month. Grace time is 10:15 AM. After 10:15 AM, attendance may be treated as half-day absent as per company policy.",
-      },
       {
         type: "statGrid",
         items: [
-          { label: "Maximum Late Logins", value: "6 Per Month", note: "Monthly limit" },
-          { label: "Grace Time", value: "10:15 AM", note: "Login before or at this time" },
-          { label: "After 10:15", value: "Half-Day Absent", note: "No exceptions" },
+          { label: "Late Starts", value: "10:15 AM+", note: "Any login at or after 10:15 AM counts as late" },
+          { label: "Monthly Limit", value: "No 6-Limit", note: "Only total late login count is shown" },
+          { label: "Late Display", value: "Total Only", note: "Employees see only total late login count" },
+          { label: "Status Logic", value: "Separate", note: "Late count and attendance status are calculated separately" },
+        ],
+      },
+      {
+        type: "exampleList",
+        title: "Late Login Examples",
+        items: [
+          "10:10 AM login: late count 0.",
+          "10:15 AM login: late count +1.",
+          "10:29 AM login: late count +1 and Full Day is possible if 9 gross hours are completed.",
+          "10:30 AM login: late count +1 and only Half Day or Absent is possible.",
         ],
       },
     ],
   },
   {
     id: "half-day-attendance",
-    nav: "Half Day Attendance",
+    nav: "Half Day Rules",
     icon: "fa-calendar-half-stroke",
-    title: "Half-Day Attendance",
-    description: "Approved half-day windows and examples that are not allowed.",
+    title: "Half Day Rules",
+    description: "Half Day applies to late-half-day logins that meet the minimum gross duration.",
     content: [
       {
         type: "statGrid",
         items: [
-          { label: "Morning Session", value: "10:00 AM - 2:30 PM", note: "Approved first-half window" },
-          { label: "Afternoon Session", value: "2:30 PM - 7:00 PM", note: "Approved second-half window" },
+          { label: "Half-Day Start", value: "10:30 AM+", note: "Login at or after this time cannot become Full Day" },
+          { label: "Minimum Duration", value: "4 Gross Hours", note: "Needed to mark Half Day" },
+          { label: "Below Minimum", value: "Absent", note: "Less than 4 gross hours is Absent" },
+          { label: "Full Day", value: "Not Allowed", note: "10:30 AM or later can never become Full Day" },
         ],
       },
       {
-        type: "danger",
-        title: "Examples Not Allowed",
-        text: "10:30 AM - 3:00 PM and 2:00 PM - 6:00 PM are not valid half-day sessions.",
+        type: "exampleList",
+        title: "Half-Day Examples",
+        items: [
+          "10:30 AM to 2:30 PM is Half Day if 4 gross hours are completed.",
+          "10:30 AM to 7:30 PM is still Half Day, not Full Day.",
+          "10:31 AM with less than 4 gross hours is Absent.",
+        ],
+      },
+      {
+        type: "warning",
+        title: "Full Day Cutoff",
+        text: "Full Day is possible only when login is before 10:30 AM and the employee completes 9 gross hours.",
       },
     ],
   },
@@ -97,26 +149,34 @@ const POLICY_SECTIONS = [
     id: "break-policy",
     nav: "Break Policy",
     icon: "fa-mug-hot",
-    title: "Break Timings & Department Presence",
-    description: "Breaks must be planned so departments remain available for clients and support.",
+    title: "Break Policy",
+    description: "Breaks are tracked for reporting and over-limit attendance action.",
     content: [
-      {
-        type: "checkList",
-        title: "At least one employee must remain available for",
-        items: ["Phone Calls", "Walk-in Clients", "Customer Support"],
-      },
       {
         type: "statGrid",
         items: [
-          { label: "Tea Break", value: "15 mins", note: "First tea break" },
-          { label: "Lunch", value: "30 mins", note: "Midday break" },
-          { label: "Tea Break", value: "15 mins", note: "Second tea break" },
+          { label: "Daily Limit", value: "60 Minutes", note: "Total break time allowed per day" },
+          { label: "Tea Break 1", value: "15 Minutes", note: "Part of the daily break limit" },
+          { label: "Lunch", value: "30 Minutes", note: "Part of the daily break limit" },
+          { label: "Tea Break 2", value: "15 Minutes", note: "Part of the daily break limit" },
+          { label: "Attendance Duration", value: "Not Deducted", note: "Breaks do not reduce gross hours for status calculation" },
+          { label: "Over Limit", value: "Half Day", note: "More than 60 minutes marks attendance as Half Day" },
+          { label: "End Break", value: "Always Allowed", note: "End Break must still be saved after 60 minutes" },
         ],
       },
       {
-        type: "success",
-        title: "Remaining Break Rule",
-        text: "If an employee has remaining break time, it can be used in multiple small breaks. Example: remaining 10 mins can be used as 5 + 5, 2 + 3 + 5, or 1 + 2 + 7, provided the total daily limit is not exceeded.",
+        type: "exampleList",
+        title: "Break Examples",
+        items: [
+          "11:00 AM to 12:00 PM is 60 minutes: Break time is accepted.",
+          "11:00 AM to 12:01 PM is 61 minutes: Break exceeded and attendance marked Half Day.",
+          "10:22 AM to 11:30 AM is 68 minutes: End Break is allowed and attendance marked Half Day.",
+        ],
+      },
+      {
+        type: "warning",
+        title: "Break Exceeded Status",
+        text: "After 60 minutes, remaining break time may show 0 minutes, but total used break time continues increasing and the status is shown as Exceeded.",
       },
     ],
   },
@@ -155,7 +215,7 @@ const POLICY_SECTIONS = [
         title: "Deposit & Collection",
         items: [
           "Deposit phones at Reception.",
-          "Collection is handled by Sireesha.",
+          "Collection is handled by Receptionist.",
           "If unavailable, follow the instructions of the assigned person.",
           "Phones may be collected during break timings only for emergencies.",
         ],
@@ -226,8 +286,8 @@ function buildHandbookText() {
 
 function downloadHandbook() {
   const content = [
-    "VJC Overseas - Office Policies & Ethics",
-    "Last Updated: June 2026",
+    "VJC Overseas - Office Policies & Instructions",
+    "Last Updated: July 2026",
     "Applies to All Employees",
     "",
     buildHandbookText(),
@@ -256,14 +316,14 @@ function PolicyBlock({ block }) {
     );
   }
 
-  if (block.type === "checkList" || block.type === "bulletList") {
+  if (block.type === "checkList" || block.type === "bulletList" || block.type === "exampleList") {
     return (
-      <div className={`doc-list-block ${block.type === "checkList" ? "checks" : ""}`}>
+      <div className={`doc-list-block ${block.type === "checkList" ? "checks" : ""} ${block.type === "exampleList" ? "examples" : ""}`}>
         <h3>{block.title}</h3>
         <ul>
           {block.items.map((item) => (
             <li key={item}>
-              <i className={`fas ${block.type === "checkList" ? "fa-check" : "fa-circle"}`} />
+              <i className={`fas ${block.type === "checkList" ? "fa-check" : block.type === "exampleList" ? "fa-arrow-right" : "fa-circle"}`} />
               {item}
             </li>
           ))}
@@ -309,6 +369,17 @@ export default function EmployeeInstructions({ embedded = false }) {
   }, [search]);
 
   useEffect(() => {
+    if (!filteredSections.some((section) => section.id === activeSection)) {
+      setActiveSection(filteredSections[0]?.id || POLICY_SECTIONS[0].id);
+    }
+  }, [activeSection, filteredSections]);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return undefined;
+
+    const observedNodes = [];
+    let animationFrameId;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -319,19 +390,31 @@ export default function EmployeeInstructions({ embedded = false }) {
       { root: null, rootMargin: "-120px 0px -55% 0px", threshold: [0.1, 0.35, 0.65] }
     );
 
-    POLICY_SECTIONS.forEach((section) => {
-      const node = document.getElementById(section.id);
-      if (node) observer.observe(node);
+    animationFrameId = window.requestAnimationFrame(() => {
+      filteredSections.forEach((section) => {
+        const node = document.getElementById(section.id);
+        if (node) {
+          observer.observe(node);
+          observedNodes.push(node);
+        }
+      });
     });
 
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+      observedNodes.forEach((node) => observer.unobserve(node));
+      observer.disconnect();
+    };
+  }, [filteredSections]);
 
   const scrollToSection = (sectionId) => {
-    document.getElementById(sectionId)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    const sectionNode = document.getElementById(sectionId);
+    if (sectionNode) {
+      sectionNode.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
   return (
@@ -339,12 +422,12 @@ export default function EmployeeInstructions({ embedded = false }) {
       {!embedded && <EmployeeSidebar activePage="instructions" />}
       <main className="employee-instructions-main">
         <section className="handbook-header">
-          <div>
-            <span className="branch-label">HYDERABAD - BENGALURU</span>
-            <h1>Office Policies &amp; Ethics</h1>
-            <p>Please read all company policies carefully. These rules apply to every employee.</p>
+          <div className="handbook-title-block">
+            <span className="branch-label">HRMS EMPLOYEE HANDBOOK</span>
+            <h1>Office Policies &amp; Instructions</h1>
+            <p>Attendance, breaks, leave, workplace rules, and employee responsibilities.</p>
             <div className="handbook-badges">
-              <span><i className="fas fa-calendar-check" /> Last Updated : June 2026</span>
+              <span><i className="fas fa-calendar-check" /> Last Updated : July 2026</span>
               <span><i className="fas fa-users" /> Applies to All Employees</span>
             </div>
           </div>
@@ -359,7 +442,7 @@ export default function EmployeeInstructions({ embedded = false }) {
             </label>
             <button type="button" onClick={downloadHandbook}>
               <i className="fas fa-download" />
-              Download PDF
+              Download Handbook
             </button>
           </div>
         </section>
@@ -367,7 +450,7 @@ export default function EmployeeInstructions({ embedded = false }) {
         <section className="handbook-container">
           <aside className="handbook-nav" aria-label="Policy sections">
             <div className="nav-title">Policy Guide</div>
-            {POLICY_SECTIONS.map((section, index) => (
+            {filteredSections.map((section, index) => (
               <button
                 key={section.id}
                 type="button"

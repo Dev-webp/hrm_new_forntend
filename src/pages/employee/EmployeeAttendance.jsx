@@ -11,8 +11,6 @@ import {
 import {
   formatLateLoginCount,
   getLateLoginStatusClass,
-  getRemainingGraceLateLogins,
-  LATE_LOGIN_LIMIT,
 } from "../../utils/attendanceHelpers";
 import "../../styles/EmployeeAttendance.css";
 
@@ -40,23 +38,17 @@ function getStatusText(status, lateMins) {
 }
 
 function getLateUsageTone(count) {
-  if (count > LATE_LOGIN_LIMIT) return "danger";
-  if (count === LATE_LOGIN_LIMIT) return "near";
-  if (count === 5) return "near";
   if (count >= 3) return "warning";
   return "good";
 }
 
 function getLateUsageText(count) {
-  if (count > LATE_LOGIN_LIMIT) return "Limit Exceeded";
-  if (count === LATE_LOGIN_LIMIT) return "Limit Reached";
-  if (count === 5) return "Near Limit";
   if (count >= 3) return "Monthly Warning";
   return "Within Limit";
 }
 
 function getMonthlyLateStatus(count) {
-  return count > LATE_LOGIN_LIMIT ? "Limit Exceeded" : getLateUsageText(count);
+  return getLateUsageText(count);
 }
 
 function isPaidLeaveDay(rec = {}) {
@@ -87,12 +79,11 @@ function isUnpaidLeaveDay(rec = {}) {
 
 function isGraceLateLogin(rec = {}) {
   const raw = rec.check_in_time || rec.office_in || rec.checkIn;
-  const out = rec.check_out_time || rec.office_out || rec.checkOut;
-  if (!raw || !out) return false;
+  if (!raw) return false;
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
   const minutes = h * 60 + m;
-  return minutes > 10 * 60 && minutes <= 10 * 60 + 15;
+  return minutes >= 10 * 60 + 15;
 }
 
 export default function EmployeeAttendance({ embedded = false }) {
@@ -271,8 +262,6 @@ export default function EmployeeAttendance({ embedded = false }) {
         } else if (dateStr <= todayStr) absentCount++;
       }
     }
-    lateCount = Math.min(lateCount, LATE_LOGIN_LIMIT);
-
     const totalDays = lastDay;
     const workingDays =
       totalDays - sundayCount - holidayCount - halfDayHolidayCount;
@@ -686,10 +675,10 @@ export default function EmployeeAttendance({ embedded = false }) {
           </div>
           <div
             className={`stat-pill late-usage-card ${getLateUsageTone(monthStats.lateCount)}`}
-            title="Late Login Policy: maximum 6 monthly late logins count only for check-ins from 10:01 AM to 10:15 AM. After 10:15 AM, attendance follows Half Day or Absent policy."
+            title="Late Login Policy: check-ins at or after 10:15 AM count as late. Check-ins from 10:00 AM to 10:14 AM are on time, but require 9 hours from actual login."
           >
             <div className="late-usage-title">
-              <i className="fas fa-circle-info" /> Late Login Count
+              <i className="fas fa-circle-info" /> Late Logins
             </div>
             <div className="sv">{formatLateLoginCount(monthStats.lateCount)}</div>
             <div className="sl">
@@ -697,9 +686,6 @@ export default function EmployeeAttendance({ embedded = false }) {
                 {getMonthlyLateStatus(monthStats.lateCount)}
               </span>
             </div>
-            {monthStats.lateCount <= LATE_LOGIN_LIMIT && (
-              <div className="sl">Available Late Allowance: {getRemainingGraceLateLogins(monthStats.lateCount)}</div>
-            )}
           </div>
           <div className="stat-pill">
             <div className="sv">{monthStats.holidayCount}</div>

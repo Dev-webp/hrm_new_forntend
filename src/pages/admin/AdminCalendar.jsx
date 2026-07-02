@@ -104,18 +104,12 @@ function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayH
   if (!record) return dateStr && todayStr && dateStr <= todayStr ? "absent" : "no_record";
 
   const status = normalizeAttendanceStatus(record.status || record.day_status);
-  const hours = getRecordHours(record);
-  const lateMinutes = Number(record.lateMinutes ?? record.late_minutes ?? 0);
 
-  if (status === "full_day") return "present";
+  if (status === "present") return "present";
+  if (status === "late") return "late";
   if (status === "half_day") return "half_day";
-
-  if (hasValidAttendance(record)) {
-    if ((status === "late" || isGraceLateAttendanceRecord(record)) && hours >= 8) return "late";
-    if (status === "absent" && hours < 4) return "absent";
-    if (hours >= 8) return "present";
-    return "absent";
-  }
+  if (status === "absent") return "absent";
+  if (status === "holiday") return "holiday";
 
   if (hasApprovedLeave(record)) {
     if (
@@ -130,8 +124,7 @@ function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayH
     return "unpaid_leave";
   }
 
-  if (status === "absent") return "absent";
-  if (status === "holiday") return "holiday";
+  if (hasValidAttendance(record)) return "no_record";
 
   return "no_record";
 }
@@ -411,7 +404,7 @@ function AdminCalendar() {
       else if (st === "leave") leave++;
       else if (st === "absent") absent++;
 
-      if (isGraceLateAttendanceRecord(r) && st !== "absent") late++;
+      if (isGraceLateAttendanceRecord(r)) late++;
     }
 
     return {

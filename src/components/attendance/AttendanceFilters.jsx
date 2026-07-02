@@ -11,7 +11,6 @@ function AttendanceFilters({
     { value: "all", label: "All Late Status" },
     { value: "on_time", label: "On Time" },
     { value: "late", label: "Late" },
-    { value: "limit_exceeded", label: "Limit Exceeded" },
   ];
 
   return (

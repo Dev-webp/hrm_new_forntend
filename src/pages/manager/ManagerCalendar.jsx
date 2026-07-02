@@ -234,7 +234,7 @@ export default function ManagerCalendar() {
             else if (st === "half_day") s.halfDay += 1;
             else if (st === "absent") s.absent += 1;
             else if (st === "leave") s.leave += 1;
-            if (isGraceLateAttendanceRecord(rec) && !["absent", "holiday"].includes(st)) {
+            if (isGraceLateAttendanceRecord(rec)) {
               s.late += 1;
             }
           });
@@ -395,7 +395,7 @@ export default function ManagerCalendar() {
             else if (st === "absent") pAbsent += 1;
             else if (st === "half_day") pHalfDay += 1;
             else if (st === "leave") pLeave += 1;
-            if (isGraceLateAttendanceRecord(rec) && st !== "absent") pLate += 1;
+            if (isGraceLateAttendanceRecord(rec)) pLate += 1;
           } else if (!isSun && !entry && dateStr <= today) {
             pAbsent += 1;
           }
