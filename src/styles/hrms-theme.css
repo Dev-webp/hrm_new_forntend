@@ -2428,3 +2428,52 @@ textarea::placeholder {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Refresh-safe shell guardrails */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden !important;
+}
+
+.app-layout,
+.employee-layout {
+  display: flex !important;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.sidebar,
+.employee-sidebar,
+.manager-sidebar {
+  flex: 0 0 248px;
+  min-width: 248px;
+  max-width: 280px;
+}
+
+.sidebar.collapsed,
+.employee-sidebar.collapsed,
+.manager-sidebar.collapsed {
+  flex-basis: 76px;
+  min-width: 76px;
+}
+
+.main-panel,
+.main-content,
+.employee-layout .main,
+.main,
+.content,
+.page-content,
+.dashboard-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import PageLoading from "../../components/PageLoading";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getPlaceholderAdminRoutes } from "../../config/adminNav";
+import { getStoredRole } from "../../utils/auth";
 import AdminPlaceholder from "./AdminPlaceholder";
 
 const AdminAttendance = lazy(() => import("./AdminAttendance"));
@@ -19,14 +20,6 @@ const AdminPayslip = lazy(() => import("./AdminPayslip"));
 const AdminOfferLetters = lazy(() => import("./AdminOfferLetters"));
 
 function AdminRoutes() {
-  const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
-  if (role === "SUB_ADMIN") {
-    return <Navigate to="/sub-admin" replace />;
-  }
-  if (role && role !== "SUPER_ADMIN") {
-    return <Navigate to="/home" replace />;
-  }
-
   const today = new Date();
   const [currentBranch, setCurrentBranch] = useState("all");
   const [currentMonthStr, setCurrentMonthStr] = useState(() => {
@@ -34,6 +27,14 @@ function AdminRoutes() {
     const month = String(today.getMonth() + 1).padStart(2, "0");
     return `${year}-${month}`;
   });
+  const role = getStoredRole();
+
+  if (role === "SUB_ADMIN") {
+    return <Navigate to="/sub-admin" replace />;
+  }
+  if (role && role !== "SUPER_ADMIN") {
+    return <Navigate to="/home" replace />;
+  }
 
   const placeholderSlugs = getPlaceholderAdminRoutes().map((path) =>
     path.replace("/admin/", "")

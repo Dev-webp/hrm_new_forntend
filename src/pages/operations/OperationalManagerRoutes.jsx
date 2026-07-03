@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import PageLoading from "../../components/PageLoading";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
+import { getStoredRole } from "../../utils/auth";
 import ManagerPlaceholder from "../manager/ManagerPlaceholder";
 
 const AdminAttendanceAnalysis = lazy(() => import("../admin/AdminAttendanceAnalysis"));
@@ -20,7 +21,7 @@ function OperationalSelfServicePage({ children }) {
 }
 
 function OperationalManagerRoutes() {
-  const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
+  const role = getStoredRole();
   if (role === "SUB_ADMIN") {
     return <Navigate to="/sub-admin" replace />;
   }

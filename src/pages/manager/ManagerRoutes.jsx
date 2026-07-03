@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import PageLoading from "../../components/PageLoading";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getPlaceholderManagerRoutes } from "../../config/managerNav";
+import { getStoredRole } from "../../utils/auth";
 import ManagerPlaceholder from "./ManagerPlaceholder";
 
 const ManagerAttendance = lazy(() => import("./ManagerAttendance"));
@@ -28,7 +29,7 @@ const PLACEHOLDER_TITLES = {
 };
 
 function ManagerRoutes() {
-  const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
+  const role = getStoredRole();
   if (role === "SUB_ADMIN") {
     return <Navigate to="/sub-admin" replace />;
   }

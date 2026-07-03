@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import RequireAuth from "./components/RequireAuth";
 import PageLoading from "./components/PageLoading";
-import { isAuthenticated } from "./utils/auth";
+import { getStoredRole, isAuthenticated } from "./utils/auth";
 
 const DashboardLayout = lazy(() => import("./layouts/DashboardLayout"));
 const AdminRoutes = lazy(() => import("./pages/admin/AdminRoutes"));
@@ -17,15 +17,12 @@ function RootRedirect() {
   if (!isAuthenticated()) {
     return <Navigate to="/" replace />;
   }
-  try {
-    const role = JSON.parse(localStorage.getItem("user") || "{}")?.role;
-    if (role === "OPERATIONAL_MANAGER") return <Navigate to="/operations" replace />;
-    if (role === "MANAGER") return <Navigate to="/manager" replace />;
-    if (role === "SUB_ADMIN") return <Navigate to="/sub-admin" replace />;
-    if (role === "EMPLOYEE") return <Navigate to="/employee" replace />;
-  } catch {
-    // fall back to admin
-  }
+
+  const role = getStoredRole();
+  if (role === "OPERATIONAL_MANAGER") return <Navigate to="/operations" replace />;
+  if (role === "MANAGER") return <Navigate to="/manager" replace />;
+  if (role === "SUB_ADMIN") return <Navigate to="/sub-admin" replace />;
+  if (role === "EMPLOYEE") return <Navigate to="/employee" replace />;
   return <Navigate to="/admin" replace />;
 }
 

@@ -8,8 +8,13 @@ export function getStoredUser() {
   try {
     return JSON.parse(localStorage.getItem("user") || "null");
   } catch {
+    clearAuthSession();
     return null;
   }
+}
+
+export function getStoredRole() {
+  return getStoredUser()?.role || "";
 }
 
 export function getStoredBranch() {
@@ -41,7 +46,19 @@ export function clearAuthSession() {
 }
 
 export function isAuthenticated() {
-  return Boolean(getAuthToken());
+  const token = getAuthToken();
+  if (!token) return false;
+
+  try {
+    if (localStorage.getItem("user")) {
+      JSON.parse(localStorage.getItem("user"));
+    }
+  } catch {
+    clearAuthSession();
+    return false;
+  }
+
+  return true;
 }
 
 /** Decode JWT payload without external library */
