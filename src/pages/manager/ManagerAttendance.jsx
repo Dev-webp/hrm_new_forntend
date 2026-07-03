@@ -10,15 +10,12 @@ import {
   fetchSelfToday,
 } from "../../services/managerApi";
 import { fetchActiveDepartments } from "../../services/departmentApi";
+import AttendanceKpis from "../../components/attendance/AttendanceKpis";
+import AttendanceTable, { AttendanceStatusLegend } from "../../components/attendance/AttendanceTable";
 import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
-import {
-  formatLateLoginCount,
-  getLateLoginStatus,
-  getLateLoginStatusClass,
-} from "../../utils/attendanceHelpers";
 import "./ManagerAttendance.css";
 
 function formatTimeForInput(time) {
@@ -62,7 +59,7 @@ function isGraceLateLogin(record = {}) {
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
   const minutes = h * 60 + m;
-  return minutes >= 10 * 60 + 15;
+  return minutes >= 10 * 60 + 15 && minutes < 10 * 60 + 30;
 }
 
 function getStatusBadge(status) {
@@ -89,31 +86,7 @@ function getStatusLabel(status) {
   return "Not Checked In";
 }
 
-function getLatePill(emp) {
-  const status = (emp.status || "absent").toLowerCase();
-  const lateMins = Number(emp.late_minutes || 0);
-  if (status === "in_progress" || status === "working") {
-    return (
-      <span className="on-time-pill" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>
-        Working
-      </span>
-    );
-  }
-  if (status === "absent") return <span className="absent-pill">Absent</span>;
-  if (status === "leave") return <span className="badge badge-leave" style={{ padding: "4px 10px" }}>Leave</span>;
-  if (!isGraceLateLogin(emp) && lateMins > 0) return <span className="on-time-pill">On Time</span>;
-  if (lateMins > 0) return <span className="late-pill">🔴 {lateMins} min</span>;
-  return <span className="on-time-pill">On Time</span>;
-}
 
-function getInitials(name) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 function getLateUsageTone(count) {
   if (count >= 3) return "warning";
@@ -123,16 +96,6 @@ function getLateUsageTone(count) {
 function getLateUsageText(count) {
   if (count >= 3) return "Monthly Warning";
   return "Within Limit";
-}
-
-function LateLoginCountCell({ record }) {
-  const status = getLateLoginStatus(record);
-  return (
-    <div className="late-login-count-cell">
-      <strong>{formatLateLoginCount(record)}</strong>
-      <span className={getLateLoginStatusClass(status)}>{status}</span>
-    </div>
-  );
 }
 
 export default function ManagerAttendance() {
@@ -170,9 +133,6 @@ export default function ManagerAttendance() {
   const isOperationalManager = storedUser.role === "OPERATIONAL_MANAGER";
   const [selectedBranch, setSelectedBranch] = useState("all");
   const branch = isOperationalManager ? selectedBranch : (localStorage.getItem("branch") || "Hyderabad");
-  const managerName = localStorage.getItem("full_name") || "Manager";
-  const managerId = parseInt(localStorage.getItem("id") || "0");
-
   const searchTimeoutRef = useRef(null);
 
   const showToast = useCallback((msg) => {
@@ -319,16 +279,6 @@ export default function ManagerAttendance() {
     }, 300);
   };
 
-  const filteredRecords = useMemo(
-    () =>
-      records.filter((r) => {
-        const deptOk = currentDept === "all" || r.department === currentDept;
-        const searchOk = !currentSearch || r.full_name.toLowerCase().includes(currentSearch.toLowerCase());
-        return deptOk && searchOk;
-      }),
-    [records, currentDept, currentSearch]
-  );
-
   useEffect(() => {
     loadSelfAttendance();
     loadMonthlyLateUsage();
@@ -469,45 +419,16 @@ export default function ManagerAttendance() {
           </div>
         ) : null}
 
-        <div className="kpi-grid">
-          <div className="kpi">
-            <div className="kpi-title">
-              <i className="fas fa-percent"></i> Attendance Rate
-            </div>
-            <div className="kpi-value">{loading ? <span className="spinner"></span> : stats.attendanceRate + "%"}</div>
-            <div className="kpi-sub">Selected date</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-title">
-              <i className="fas fa-users"></i> Present
-            </div>
-            <div className="kpi-value">{loading ? <span className="spinner"></span> : stats.dailyPresent}</div>
-            <div className="kpi-sub">of {stats.totalActive} active</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-title">
-              <i className="fas fa-clock"></i> Late Arrivals
-            </div>
-            <div className="kpi-value">{loading ? <span className="spinner"></span> : stats.lateToday}</div>
-            <div className="kpi-sub">Real-time</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-title">
-              <i className="fas fa-umbrella-beach"></i> Total Leave
-            </div>
-            <div className="kpi-value">{loading ? <span className="spinner"></span> : stats.totalLeave}</div>
-            <div className="kpi-sub">On this day</div>
-          </div>
-          <div
-            className={`kpi late-usage-kpi ${getLateUsageTone(monthlyLateCount)}`}
-            title="Late Login Policy: check-ins at or after 10:15 AM count as late. Check-ins from 10:00 AM to 10:14 AM are on time, but require 9 hours from actual login."
-          >
-            <div className="kpi-title">
-              <i className="fas fa-circle-info"></i> Late Logins
-            </div>
-            <div className="kpi-value">{monthlyLateCount}</div>
-            <div className="kpi-sub">{getLateUsageText(monthlyLateCount)}</div>
-          </div>
+        <AttendanceKpis stats={stats} records={records} loading={loading} />
+
+        <div
+          className={`late-usage-strip ${getLateUsageTone(monthlyLateCount)}`}
+          title="Late Login Policy: check-ins from 10:15 AM to 10:29 AM count as late."
+        >
+          <i className="fas fa-circle-info" />
+          <strong>{monthlyLateCount}</strong>
+          <span>Late Logins This Month</span>
+          <em>{getLateUsageText(monthlyLateCount)}</em>
         </div>
 
         <div className="two-cols">
@@ -560,10 +481,12 @@ export default function ManagerAttendance() {
               onChange={handleSearchChange}
             />
           </div>
+          <AttendanceStatusLegend />
           <div style={{ overflowX: "auto" }}>
             <table className="att-table">
               <thead>
                 <tr>
+                  <th>Avatar</th>
                   <th>Employee</th>
                   <th>Department</th>
                   <th>Check-In</th>
@@ -573,58 +496,23 @@ export default function ManagerAttendance() {
                   <th>Late Login Count</th>
                   <th>Production</th>
                   <th>Break (min)</th>
-                  <th>Edit</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {loading && filteredRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan="10" style={{ textAlign: "center", padding: "40px" }}>
-                      <span className="spinner"></span>
-                    </td>
-                  </tr>
-                ) : filteredRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan="10" style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
-                      No records found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRecords.map((r) => (
-                    <tr key={r.user_id || r.id}>
-                      <td>
-                        <i className="fas fa-user-circle" style={{ color: "#FF8C00", marginRight: "6px" }}></i>
-                        {r.full_name}
-                      </td>
-                      <td>{r.department || "—"}</td>
-                      <td>{formatTime12Hour(r.check_in_time)}</td>
-                      <td>{formatTime12Hour(r.check_out_time)}</td>
-                      <td>{getStatusBadge(r.status)}</td>
-                      <td>{getLatePill(r)}</td>
-                      <td><LateLoginCountCell record={r} /></td>
-                      <td style={{ color: "#FF8C00", fontWeight: "600" }}>
-                        {formatProductionHours(r.production_hours)}
-                      </td>
-                      <td style={{ color: "#64748B" }}>{Number(r.total_break_minutes || 0)} min</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="edit-btn"
-                          onClick={() => {
-                            setEditTarget(r.user_id);
-                            setEditCI(formatTimeForEdit(r.check_in_time));
-                            setEditCO(formatTimeForEdit(r.check_out_time));
-                            setEditReason("");
-                            setEditModal(true);
-                          }}
-                        >
-                          <i className="fas fa-edit"></i> Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+              <AttendanceTable
+                records={records}
+                dateStr={currentDate}
+                deptFilter={currentDept}
+                search={currentSearch}
+                loading={loading}
+                onEdit={({ userId, initialValues }) => {
+                  setEditTarget(userId);
+                  setEditCI(formatTimeForEdit(initialValues.check_in_time));
+                  setEditCO(formatTimeForEdit(initialValues.check_out_time));
+                  setEditReason("");
+                  setEditModal(true);
+                }}
+              />
             </table>
           </div>
         </div>

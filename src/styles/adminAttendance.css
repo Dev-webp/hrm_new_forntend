@@ -763,3 +763,362 @@
 .admin-attendance-page .late-login-status.warning { background: #ffedd5; color: #c2410c; }
 .admin-attendance-page .late-login-status.danger { background: #fee2e2; color: #991b1b; }
 .admin-attendance-page .late-login-status.muted { background: #e2e8f0; color: #475569; }
+
+/* Enterprise Attendance Register overrides */
+.admin-attendance-page .attendance-summary-grid {
+  grid-template-columns: repeat(6, minmax(150px, 1fr));
+}
+
+.admin-attendance-page .attendance-summary-card {
+  border: 1px solid #e5edf5;
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.admin-attendance-page .attendance-summary-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
+}
+
+.admin-attendance-page .attendance-summary-card.success { background: #f0fdf4; }
+.admin-attendance-page .attendance-summary-card.warning { background: #fffbeb; }
+.admin-attendance-page .attendance-summary-card.info { background: #eff6ff; }
+.admin-attendance-page .attendance-summary-card.danger { background: #fef2f2; }
+.admin-attendance-page .attendance-summary-card.late { background: #fff7ed; }
+.admin-attendance-page .attendance-summary-card.primary { background: #f8fafc; }
+
+.admin-attendance-page .filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e5edf5;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.admin-attendance-page .att-table-container {
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.admin-attendance-page .att-table {
+  min-width: 1180px;
+}
+
+.admin-attendance-page .att-table th {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+}
+
+.admin-attendance-page .att-table td {
+  height: 74px;
+}
+
+.admin-attendance-page .attendance-avatar {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #eaf4ff, #fff4e5);
+  border: 1px solid #cfe4fb;
+  color: #0d47a1;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.admin-attendance-page .attendance-status-badge {
+  min-width: 102px;
+  padding: 7px 10px;
+}
+
+.admin-attendance-page .attendance-production-cell.empty,
+.admin-attendance-page .attendance-production-cell.empty strong,
+.admin-attendance-page .attendance-break-cell.empty strong {
+  color: #94a3b8;
+}
+
+.admin-attendance-page .attendance-break-cell.empty span {
+  color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.admin-attendance-page .attendance-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-attendance-page .attendance-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbe7f3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0d47a1;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.admin-attendance-page .attendance-icon-btn:hover {
+  transform: translateY(-1px);
+  border-color: #ff8c00;
+  box-shadow: 0 8px 18px rgba(13, 71, 161, 0.12);
+}
+
+@media (max-width: 1500px) {
+  .admin-attendance-page .attendance-summary-grid {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+  }
+}
+
+.admin-attendance-page .attendance-status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 14px;
+}
+
+.admin-attendance-page .attendance-status-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #e5edf5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-attendance-page .attendance-status-legend .present { color: #16a34a; }
+.admin-attendance-page .attendance-status-legend .half-day { color: #f59e0b; }
+.admin-attendance-page .attendance-status-legend .working { color: #2563eb; }
+.admin-attendance-page .attendance-status-legend .absent { color: #dc2626; }
+
+.admin-attendance-page .att-table {
+  min-width: 1120px;
+}
+
+.admin-attendance-page .att-table td {
+  height: 74px;
+}
+
+.admin-attendance-page .att-table tbody tr.attendance-row td {
+  background: #ffffff !important;
+}
+
+.admin-attendance-page .att-table tbody tr.row-present td {
+  background: #f7fef9 !important;
+}
+
+.admin-attendance-page .att-table tbody tr.row-half-day td {
+  background: #fffbeb !important;
+}
+
+.admin-attendance-page .att-table tbody tr.row-absent td {
+  background: #fff7f7 !important;
+}
+
+.admin-attendance-page .att-table tbody tr.row-working td {
+  background: #f8fbff !important;
+}
+
+.admin-attendance-page .att-table tbody tr.attendance-row:hover td {
+  filter: saturate(1.05);
+  box-shadow: inset 0 0 0 999px rgba(15, 23, 42, 0.025);
+}
+
+.admin-attendance-page .attendance-employee-cell {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.admin-attendance-page .attendance-employee-cell i {
+  color: #0d47a1;
+  margin-right: 8px;
+}
+
+.admin-attendance-page .attendance-status-cell,
+.admin-attendance-page .attendance-production-cell,
+.admin-attendance-page .attendance-break-cell,
+.admin-attendance-page .attendance-late-cell,
+.admin-attendance-page .late-login-count-cell {
+  display: grid;
+  gap: 6px;
+  align-content: center;
+}
+
+.admin-attendance-page .attendance-status-badge {
+  width: fit-content;
+  min-width: 118px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-attendance-page .status-present {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.admin-attendance-page .status-half-day {
+  background: #fef3c7;
+  color: #c2410c;
+}
+
+.admin-attendance-page .status-absent {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.admin-attendance-page .status-working {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.admin-attendance-page .status-leave,
+.admin-attendance-page .status-holiday {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.admin-attendance-page .status-working i {
+  animation: att-live-pulse 1.2s ease-in-out infinite;
+}
+
+.admin-attendance-page .attendance-status-reason {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-attendance-page .attendance-late-cell {
+  width: fit-content;
+  min-width: 86px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-attendance-page .attendance-late-cell span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-attendance-page .attendance-late-cell.late {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fdba74;
+}
+
+.admin-attendance-page .attendance-late-cell.on-time {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.admin-attendance-page .attendance-late-cell.muted {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-attendance-page .late-login-count-cell strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-attendance-page .late-login-count-cell strong i {
+  color: #f59e0b;
+  font-size: 10px;
+}
+
+.admin-attendance-page .late-login-count-cell .no-late-logins {
+  color: #64748b;
+}
+
+.admin-attendance-page .attendance-production-cell strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.admin-attendance-page .production-meter {
+  width: 102px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg, #e2e8f0 0 8px, #f8fafc 8px 11px);
+}
+
+.admin-attendance-page .production-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: repeating-linear-gradient(90deg, #16a34a 0 8px, #22c55e 8px 11px);
+}
+
+.admin-attendance-page .attendance-production-cell small {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-attendance-page .attendance-break-cell strong,
+.admin-attendance-page .attendance-break-cell span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+}
+
+.admin-attendance-page .attendance-break-cell strong {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-attendance-page .attendance-break-cell span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.admin-attendance-page .break-exceeded {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.admin-attendance-page .break-ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+@keyframes att-live-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1); }
+}

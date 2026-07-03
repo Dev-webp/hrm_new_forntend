@@ -83,7 +83,7 @@ function isGraceLateLogin(rec = {}) {
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
   const minutes = h * 60 + m;
-  return minutes >= 10 * 60 + 15;
+  return minutes >= 10 * 60 + 15 && minutes < 10 * 60 + 30;
 }
 
 export default function EmployeeAttendance({ embedded = false }) {

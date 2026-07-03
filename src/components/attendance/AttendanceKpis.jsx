@@ -25,13 +25,24 @@ function AttendanceKpis({ stats, records = [], loading, error }) {
 
   if (!stats) return null;
 
-  const absentCount = records.filter((record) =>
-    String(record.status || "").toLowerCase().includes("absent")
+  const normalizedStatus = (record) =>
+    String(record.status || "absent").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const presentCount = records.filter((record) =>
+    ["full_day", "present"].includes(normalizedStatus(record))
   ).length;
-  const productionHours = records.reduce(
+  const halfDayCount = records.filter((record) => normalizedStatus(record) === "half_day").length;
+  const workingCount = records.filter((record) =>
+    ["working", "in_progress"].includes(normalizedStatus(record))
+  ).length;
+  const absentCount = records.filter((record) => normalizedStatus(record) === "absent").length;
+  const productiveRecords = records.filter((record) => Number(record.production_hours || 0) > 0);
+  const productionHours = productiveRecords.reduce(
     (sum, record) => sum + Number(record.production_hours || 0),
     0
   );
+  const averageProductionHours = productiveRecords.length
+    ? productionHours / productiveRecords.length
+    : 0;
 
   if (stats.isSunday) {
     return (
@@ -64,44 +75,47 @@ function AttendanceKpis({ stats, records = [], loading, error }) {
   }
 
   return (
-    <div className="kpi-grid">
-      <div className="kpi info">
+    <div className="kpi-grid attendance-summary-grid">
+      <div className="kpi attendance-summary-card success">
         <div className="kpi-title">
-          <i className="fas fa-users" /> Total Employees
+          <i className="fas fa-circle-check" /> Present
         </div>
-        <div className="kpi-value">{stats.totalActive ?? records.length}</div>
-        <div className="trend-up">
-          <i className="fas fa-calendar-day" /> selected workforce
-        </div>
+        <div className="kpi-value">{stats.dailyPresent ?? presentCount}</div>
+        <div className="trend-up">Employees</div>
       </div>
-      <div className="kpi success">
+      <div className="kpi attendance-summary-card warning">
         <div className="kpi-title">
-          <i className="fas fa-users" /> Present
+          <i className="fas fa-clock" /> Half Day
         </div>
-        <div className="kpi-value">{stats.dailyPresent ?? 0}</div>
-        <div className="trend-up">of {stats.totalActive ?? 0} active</div>
+        <div className="kpi-value">{halfDayCount}</div>
+        <div className="trend-up">Employees</div>
       </div>
-      <div className="kpi danger">
+      <div className="kpi attendance-summary-card info">
+        <div className="kpi-title">
+          <i className="fas fa-signal" /> Working
+        </div>
+        <div className="kpi-value">{workingCount}</div>
+        <div className="trend-up">Employees</div>
+      </div>
+      <div className="kpi attendance-summary-card danger">
         <div className="kpi-title">
           <i className="fas fa-user-xmark" /> Absent
         </div>
         <div className="kpi-value">{absentCount}</div>
-        <div className="trend-up">selected date</div>
+        <div className="trend-up">Employees</div>
       </div>
-      <div className="kpi warning">
+      <div className="kpi attendance-summary-card late">
         <div className="kpi-title">
           <i className="fas fa-hourglass-start" /> Late Arrivals
         </div>
         <div className="kpi-value">{stats.lateToday ?? 0}</div>
-        <div className="trend-up">
-          <i className="fas fa-chart-line" /> real-time
-        </div>
+        <div className="trend-up">Employees</div>
       </div>
-      <div className="kpi primary">
+      <div className="kpi attendance-summary-card primary">
         <div className="kpi-title">
-          <i className="fas fa-business-time" /> Production Hours
+          <i className="fas fa-business-time" /> Average Production
         </div>
-        <div className="kpi-value">{formatProductionHours(productionHours)}</div>
+        <div className="kpi-value">{formatProductionHours(averageProductionHours)}</div>
         <div className="trend-up">{stats.attendanceRate ?? 0}% attendance rate</div>
       </div>
     </div>

@@ -4,7 +4,7 @@ import AttendanceFilters from "../../components/attendance/AttendanceFilters";
 import AttendanceKpis from "../../components/attendance/AttendanceKpis";
 import AttendanceLateAlerts from "../../components/attendance/AttendanceLateAlerts";
 import AttendanceLeaderboard from "../../components/attendance/AttendanceLeaderboard";
-import AttendanceTable from "../../components/attendance/AttendanceTable";
+import AttendanceTable, { AttendanceStatusLegend } from "../../components/attendance/AttendanceTable";
 import {
   fetchAttendance,
   fetchAttendanceStats,
@@ -292,11 +292,13 @@ const handleBranchSelect = (branch) => {
           lateStatusFilter={lateStatusFilter}
           onLateStatusFilterChange={setLateStatusFilter}
         />
+        <AttendanceStatusLegend />
 
         <div className="att-table-container">
           <table className="att-table">
             <thead>
               <tr>
+                <th>Avatar</th>
                 <th>Employee</th>
                 <th>Department</th>
                 <th>Check-In</th>
@@ -306,7 +308,7 @@ const handleBranchSelect = (branch) => {
                 <th>Late Login Count</th>
                 <th>Production</th>
                 <th>Break (min)</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <AttendanceTable

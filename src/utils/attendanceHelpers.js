@@ -3,6 +3,7 @@ import { CALENDAR_STATUS_COLORS } from "./calendarStatusColors";
 import { formatTime12Hour } from "./timeFormat";
 
 const LATE_LOGIN_START_MINUTES = 10 * 60 + 15;
+const HALF_DAY_LOGIN_START_MINUTES = 10 * 60 + 30;
 
 export const ATTENDANCE_BRANCH_MENU = [
   { value: "all", label: "🌍 All Branches (Consolidated)" },
@@ -65,7 +66,7 @@ function isGraceLateRecord(record = {}) {
   const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return false;
   const minutes = h * 60 + m;
-  return minutes >= LATE_LOGIN_START_MINUTES;
+  return minutes >= LATE_LOGIN_START_MINUTES && minutes < HALF_DAY_LOGIN_START_MINUTES;
 }
 
 const WORKING_BADGE_STYLE = {
@@ -220,8 +221,16 @@ export function getLateLoginStatus(record = {}) {
 
   const [h, m] = checkIn.slice(0, 5).split(":").map(Number);
   const loginMinutes = Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
-  if (loginMinutes !== null && loginMinutes >= LATE_LOGIN_START_MINUTES) {
+  if (
+    loginMinutes !== null &&
+    loginMinutes >= LATE_LOGIN_START_MINUTES &&
+    loginMinutes < HALF_DAY_LOGIN_START_MINUTES
+  ) {
     return "Late";
+  }
+
+  if (loginMinutes !== null && loginMinutes >= HALF_DAY_LOGIN_START_MINUTES) {
+    return "Half Day";
   }
 
   return "On Time";
