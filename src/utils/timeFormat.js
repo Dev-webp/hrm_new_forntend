@@ -1,21 +1,33 @@
+export const EMPTY_TIME_DISPLAY = "--";
+
 export const formatTime12Hour = (time) => {
-  if (!time || time === "--" || time === "—" || time === "-") return "-";
+  if (time === null || time === undefined || time === "") {
+    return EMPTY_TIME_DISPLAY;
+  }
 
-  const match = String(time).match(/(\d{1,2}):(\d{2})/);
-  if (!match) return String(time);
+  const raw = String(time).trim();
+  if (!raw || raw === "--" || raw === "—" || raw === "â€”" || raw === "-") {
+    return EMPTY_TIME_DISPLAY;
+  }
 
-  const [, hours, minutes] = match;
-  const date = new Date();
-  date.setHours(Number(hours));
-  date.setMinutes(Number(minutes));
-  date.setSeconds(0);
-  date.setMilliseconds(0);
+  const match = raw.match(
+    /(?:T|\b)([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d(?:\.\d+)?)?\s*(AM|PM)?\b/i
+  );
+  if (!match) return raw;
 
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const existingSuffix = match[3]?.toUpperCase();
+
+  if (existingSuffix) {
+    if (existingSuffix === "PM" && hours !== 12) hours += 12;
+    if (existingSuffix === "AM" && hours === 12) hours = 0;
+  }
+
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const displayHour = hours % 12 || 12;
+
+  return `${displayHour}:${minutes} ${suffix}`;
 };
 
 export const formatProductionMinutes = (productionMinutes) => {

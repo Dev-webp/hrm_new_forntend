@@ -19,6 +19,7 @@ import {
   mapEmployeeOption,
   normalizeAttendanceAnalysisRecord,
   normalizeAttendanceAnalysisRecords,
+  formatTimeDisplay,
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
 import { getStoredUser } from "../../utils/auth";
@@ -312,8 +313,8 @@ function AdminAttendanceAnalysis() {
         rec.date,
         dayName(rec.date),
         rec.status,
-        rec.checkIn,
-        rec.checkOut,
+        formatTimeDisplay(rec.checkIn),
+        formatTimeDisplay(rec.checkOut),
         formatProductionHours(rec.workHours),
         rec.lateMinutes,
         rec.breaks,

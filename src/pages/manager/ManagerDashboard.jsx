@@ -39,6 +39,7 @@ import {
   isSunday,
   monthDays,
 } from "../../utils/dashboardHelpers";
+import { formatTime12Hour } from "../../utils/timeFormat";
 import "./ManagerDashboard.css";
 
 function buildNotificationChips(todaySummary, pendingLeaves, todayStr) {
@@ -493,26 +494,6 @@ export default function ManagerDashboard() {
     year,
   ]);
 
-  const topPerformers = useMemo(
-    () =>
-      allEmployees
-        .map((employee) => ({
-          ...employee,
-          stats: computeEmpStats(
-            employee.id,
-            year,
-            monthNum,
-            attendanceMap,
-            holidaySet,
-            currentDate
-          ),
-        }))
-        .filter((employee) => employee.stats.attPct > 0)
-        .sort((a, b) => b.stats.attPct - a.stats.attPct)
-        .slice(0, 5),
-    [allEmployees, attendanceMap, currentDate, holidaySet, monthNum, year]
-  );
-
   const departmentLeaderboard = useMemo(() => {
     const grouped = new Map();
 
@@ -952,7 +933,11 @@ export default function ManagerDashboard() {
                   <span className="manager-att-time">
                     {isGraceLateAttendanceRecord(record)
                       ? `${record.late_minutes}m late`
-                      : record.check_in || "—"}
+                      : formatTime12Hour(
+                          record.check_in_time ||
+                            record.check_in ||
+                            record.office_in
+                        )}
                   </span>
                 </div>
               ))}

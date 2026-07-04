@@ -201,6 +201,7 @@ function AttendanceTable({
   lateStatusFilter = "all",
   loading,
   onEdit,
+  onViewHistory,
 }) {
   if (loading) {
     return (
@@ -315,7 +316,18 @@ function AttendanceTable({
               >
                 <i className="fas fa-pen" />
               </button>
-              <button type="button" className="attendance-icon-btn" title="View details" aria-label="View details">
+              <button
+                type="button"
+                className="attendance-icon-btn"
+                title="View details"
+                aria-label={`View attendance history for ${emp.full_name}`}
+                onClick={() =>
+                  onViewHistory?.({
+                    userId: emp.user_id,
+                    name: emp.full_name,
+                  })
+                }
+              >
                 <i className="fas fa-eye" />
               </button>
               <button type="button" className="attendance-icon-btn" title="More actions" aria-label="More actions">

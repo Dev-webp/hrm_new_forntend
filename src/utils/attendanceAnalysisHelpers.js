@@ -66,7 +66,6 @@ export function dayName(s) {
 
 export function formatTimeDisplay(t) {
   if (!t || t === "--" || t === "—") return "--";
-  const [h, mi] = String(t).split(":").map(Number);
   return formatTime12Hour(t);
 }
 

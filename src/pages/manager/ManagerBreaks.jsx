@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatTime12Hour } from "../../utils/timeFormat";
 import "../../styles/ManagerBreaks.css";
 
 const MAX_BREAK_MINUTES = 60;
@@ -13,7 +14,7 @@ const BREAK_LABELS = { break1: "☕ Break 1", lunch: "🍽️ Lunch", break2: "�
 function parseJwt(t) {
   try {
     return JSON.parse(atob(t.split(".")[1]));
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -94,12 +95,7 @@ function getTotalBreakMinutes(breaks) {
 }
 
 function formatTimeDisplay(time24) {
-  if (!time24) return "";
-  const [hour, minute] = time24.split(":");
-  let h = parseInt(hour);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${minute} ${ampm}`;
+  return time24 ? formatTime12Hour(time24) : "";
 }
 
 function getCurrentTimeAMPM() {
@@ -473,7 +469,7 @@ export default function ManagerBreaks() {
       setHistoryRows(rows);
       const avgVal = dailyTotals.length ? Math.round(totalMinutesAll / dailyTotals.length) : 0;
       setSummaryStat({ days: dailyTotals.length, avg: avgVal, highest: maxDaily, exceeded: exceededCount });
-    } catch (err) {
+    } catch {
       showToast("Failed to load history");
     } finally {
       setHistoryLoading(false);
@@ -777,8 +773,6 @@ export default function ManagerBreaks() {
                   const eb = breaksData.find((b) => b.id === emp.id) || { break1: {}, lunch: {}, break2: {}, break3: {} };
                   const break3Used = getBreak3Minutes(eb);
                   const break3Count = getVisibleBreak3Sessions(eb).length;
-                  const break3History = getVisibleBreak3Sessions(eb)
-                    .join(", ") || "—";
                   const totalUsed = getTotalBreakMinutes(eb);
                   const remaining = Math.max(0, MAX_BREAK_MINUTES - totalUsed);
                   const remClass = remaining <= 0 ? "remaining-badge danger" : remaining <= 15 ? "remaining-badge warning" : "remaining-badge";

@@ -9,6 +9,7 @@ import {
   fetchAttendance,
   fetchAttendanceStats,
   fetchDepartmentLeaderboard,
+  fetchEmployeeAttendanceHistory,
   updateAttendance,
 } from "../../services/attendanceApi";
 import { fetchActiveDepartments } from "../../services/departmentApi";
@@ -17,10 +18,32 @@ import {
   branchDisplayLabel,
   branchSelectorLabel,
 } from "../../utils/attendanceHelpers";
+import {
+  formatProductionHours,
+  formatTime12Hour,
+} from "../../utils/timeFormat";
 import "../../styles/adminAttendance.css";
 
 const SEARCH_DEBOUNCE_MS = 400;
 const AUTO_REFRESH_MS = 30_000;
+
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDefaultHistoryStart(dateStr) {
+  const baseDate = dateStr ? new Date(`${dateStr}T00:00:00`) : new Date();
+  baseDate.setDate(baseDate.getDate() - 90);
+  return formatLocalDate(baseDate);
+}
+
+function getHistoryStatusLabel(status) {
+  const value = String(status || "absent").replace(/_/g, " ");
+  return value ? value.toUpperCase() : "ABSENT";
+}
 
 function AdminAttendance() {
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -48,6 +71,17 @@ function AdminAttendance() {
     initialValues: {},
   });
   const [saving, setSaving] = useState(false);
+  const [historyModal, setHistoryModal] = useState({
+    open: false,
+    userId: null,
+    name: "",
+    fromDate: "",
+    toDate: "",
+    records: [],
+    loading: false,
+    loaded: false,
+    error: "",
+  });
 
   const branchDropdownRef = useRef(null);
 
@@ -168,6 +202,89 @@ const handleBranchSelect = (branch) => {
     if (!saving) {
       setEditModal((prev) => ({ ...prev, open: false }));
     }
+  };
+
+  const loadEmployeeHistory = useCallback(async (userId, fromDate, toDate) => {
+    if (!userId || !fromDate || !toDate) {
+      setHistoryModal((prev) => ({
+        ...prev,
+        records: [],
+        loading: false,
+        loaded: true,
+        error: "Select an employee and date range.",
+      }));
+      return;
+    }
+
+    setHistoryModal((prev) => ({
+      ...prev,
+      loading: true,
+      loaded: false,
+      error: "",
+    }));
+
+    try {
+      const historyRows = await fetchEmployeeAttendanceHistory(
+        userId,
+        fromDate,
+        toDate
+      );
+      setHistoryModal((prev) => ({
+        ...prev,
+        records: historyRows,
+        loading: false,
+        loaded: true,
+        error: "",
+      }));
+    } catch (err) {
+      const message =
+        err.response?.data?.message || err.message || "Failed to load history";
+      setHistoryModal((prev) => ({
+        ...prev,
+        records: [],
+        loading: false,
+        loaded: true,
+        error: message,
+      }));
+    }
+  }, []);
+
+  const handleViewHistory = ({ userId, name }) => {
+    const fromDate = getDefaultHistoryStart(currentDateStr);
+    const toDate = currentDateStr;
+
+    setHistoryModal({
+      open: true,
+      userId,
+      name,
+      fromDate,
+      toDate,
+      records: [],
+      loading: false,
+      loaded: false,
+      error: "",
+    });
+
+    loadEmployeeHistory(userId, fromDate, toDate);
+  };
+
+  const handleHistoryDateChange = (field, value) => {
+    setHistoryModal((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleHistoryFilter = () => {
+    loadEmployeeHistory(
+      historyModal.userId,
+      historyModal.fromDate,
+      historyModal.toDate
+    );
+  };
+
+  const handleCloseHistory = () => {
+    setHistoryModal((prev) => ({ ...prev, open: false }));
   };
 
   const handleSaveAttendance = async (updates) => {
@@ -319,10 +436,115 @@ const handleBranchSelect = (branch) => {
               lateStatusFilter={lateStatusFilter}
               loading={loading}
               onEdit={handleEdit}
+              onViewHistory={handleViewHistory}
             />
           </table>
         </div>
       </div>
+
+      {historyModal.open && (
+        <div className="att-modal-overlay">
+          <div className="att-modal-card att-modal-card-wide">
+            <h3>
+              <i className="fas fa-calendar-alt" /> Attendance History
+            </h3>
+            <div className="att-history-employee">
+              <strong>{historyModal.name || "Selected employee"}</strong>
+              <span>User ID: {historyModal.userId}</span>
+            </div>
+            <div className="att-history-filters">
+              <label>
+                <span>From</span>
+                <input
+                  type="date"
+                  value={historyModal.fromDate}
+                  onChange={(e) =>
+                    handleHistoryDateChange("fromDate", e.target.value)
+                  }
+                />
+              </label>
+              <label>
+                <span>To</span>
+                <input
+                  type="date"
+                  value={historyModal.toDate}
+                  onChange={(e) =>
+                    handleHistoryDateChange("toDate", e.target.value)
+                  }
+                />
+              </label>
+              <button
+                type="button"
+                className="save-btn"
+                onClick={handleHistoryFilter}
+                disabled={historyModal.loading}
+              >
+                {historyModal.loading ? "Loading..." : "Filter"}
+              </button>
+            </div>
+            <div className="att-history-table-wrap">
+              <table className="att-history-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Status</th>
+                    <th>Late (min)</th>
+                    <th>Production</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyModal.loading ? (
+                    <tr>
+                      <td colSpan="6" className="att-history-empty">
+                        Loading history...
+                      </td>
+                    </tr>
+                  ) : historyModal.error ? (
+                    <tr>
+                      <td colSpan="6" className="att-history-empty error">
+                        {historyModal.error}
+                      </td>
+                    </tr>
+                  ) : historyModal.loaded && historyModal.records.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="att-history-empty">
+                        No attendance records found for this employee in the
+                        selected date range.
+                      </td>
+                    </tr>
+                  ) : (
+                    historyModal.records.map((record, index) => (
+                      <tr key={`${record.date || "date"}-${index}`}>
+                        <td>{record.date || "-"}</td>
+                        <td>{formatTime12Hour(record.check_in_time)}</td>
+                        <td>{formatTime12Hour(record.check_out_time)}</td>
+                        <td>{getHistoryStatusLabel(record.status)}</td>
+                        <td>{Number(record.late_minutes || 0)}</td>
+                        <td>
+                          {formatProductionHours(
+                            Number(record.production_hours || 0)
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="att-modal-actions">
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={handleCloseHistory}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AttendanceEditModal
         open={editModal.open}

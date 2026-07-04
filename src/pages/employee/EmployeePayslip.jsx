@@ -4,6 +4,61 @@ import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { normalizeArray } from "./employeeUtils";
 import "../../styles/EmployeePayslip.css";
 
+function getCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getStoredUserId() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("user") || "{}");
+    return stored.id || stored.user_id || "";
+  } catch {
+    return "";
+  }
+}
+
+function formatMonthLabel(value) {
+  if (!value) return "selected month";
+  const date = new Date(`${String(value).slice(0, 7)}-01T00:00:00`);
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatCurrency(value) {
+  return `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function formatDate(value) {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function normalizePayslip(payslip) {
+  if (!payslip) return null;
+  return {
+    ...payslip,
+    employee_id: payslip.employee_id || payslip.user_id,
+    employee_code: payslip.employee_code || "",
+    month: payslip.month,
+    year: payslip.year || Number(String(payslip.month || "").slice(0, 4)),
+    status: payslip.status || payslip.payment_status || "unpaid",
+    generated_at: payslip.generated_at || payslip.created_at,
+    pdf_url: payslip.pdf_url || `/api/payroll/payslip/${payslip.id}/download`,
+  };
+}
+
 export default function EmployeePayslip({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
   const token = localStorage.getItem("token");
@@ -13,7 +68,7 @@ export default function EmployeePayslip({ embedded = false }) {
   const [pdfUrl, setPdfUrl] = useState("");
   const pdfUrlRef = useRef("");
 
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [isLoading, setIsLoading] = useState(true);
   const [loadingPayslip, setLoadingPayslip] = useState(false);
   const [toast, setToast] = useState({ msg: "", visible: false, type: "" });
@@ -39,15 +94,10 @@ export default function EmployeePayslip({ embedded = false }) {
 
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-  const monthOptions = useMemo(() => {
-    const monthsSet = new Set();
-
-    allPayslips.forEach((p) => {
-      if (p?.month) monthsSet.add(String(p.month).slice(0, 7));
-    });
-
-    return Array.from(monthsSet).sort().reverse();
-  }, [allPayslips]);
+  const latestAvailableMonth = useMemo(
+    () => (allPayslips[0]?.month ? String(allPayslips[0].month).slice(0, 7) : ""),
+    [allPayslips]
+  );
 
   const loadPayslipPdfPreview = useCallback(
     async (payslipId) => {
@@ -60,6 +110,8 @@ export default function EmployeePayslip({ embedded = false }) {
         }
 
         setPdfUrl("");
+
+        console.log("[EmployeePayslip] PDF Path", `/api/payroll/payslip/${payslipId}/download`);
 
         const res = await fetch(
           `${API_BASE}/payroll/payslip/${payslipId}/download?preview=true`,
@@ -99,22 +151,30 @@ export default function EmployeePayslip({ embedded = false }) {
 
       setLoadingPayslip(true);
       setPdfUrl("");
+      const requestedMonth = String(monthYMD).slice(0, 7);
+      const requestedYear = requestedMonth.slice(0, 4);
 
       try {
         const payslip = await apiFetch(
-          `/employee/my-payslip?month=${monthYMD}-01`
+          `/employee/my-payslip?month=${requestedMonth}-01`
         );
+        const normalizedPayslip = normalizePayslip(payslip);
 
-        console.log("Employee payslip:", payslip);
+        console.log("[EmployeePayslip] Requested Month", requestedMonth);
+        console.log("[EmployeePayslip] Requested Year", requestedYear);
+        console.log("[EmployeePayslip] Logged-in User ID", getStoredUserId());
+        console.log("[EmployeePayslip] Returned Payslip Count", normalizedPayslip?.id ? 1 : 0);
+        console.log("[EmployeePayslip] PDF Path", normalizedPayslip?.pdf_url || null);
+        console.log("Employee payslip:", normalizedPayslip);
 
-        if (!payslip?.id) {
+        if (!normalizedPayslip?.id) {
           setCurrentPayslip(null);
           setPdfUrl("");
           return;
         }
 
-        setCurrentPayslip(payslip);
-        await loadPayslipPdfPreview(payslip.id);
+        setCurrentPayslip(normalizedPayslip);
+        await loadPayslipPdfPreview(normalizedPayslip.id);
       } catch (e) {
         console.error("Error loading payslip:", e);
         showToast(`Error loading payslip: ${e.message}`, "error");
@@ -132,14 +192,19 @@ export default function EmployeePayslip({ embedded = false }) {
 
     try {
       const data = normalizeArray(await apiFetch("/employee/my-payslips"));
-      setAllPayslips(data);
+      const normalizedRows = data.map(normalizePayslip).filter(Boolean);
+      setAllPayslips(normalizedRows);
 
-      if (data.length > 0) {
-        const latest = String(data[0].month).slice(0, 7);
+      console.log("[EmployeePayslip] Logged-in User ID", getStoredUserId());
+      console.log("[EmployeePayslip] Returned Payslip Count", normalizedRows.length);
+      console.log("[EmployeePayslip] PDF Path", normalizedRows[0]?.pdf_url || null);
+
+      if (normalizedRows.length > 0) {
+        const latest = String(normalizedRows[0].month).slice(0, 7);
         setSelectedMonth(latest);
         await loadPayslipForMonth(latest);
       } else {
-        setSelectedMonth("");
+        setSelectedMonth(getCurrentMonth());
         setCurrentPayslip(null);
         setPdfUrl("");
       }
@@ -200,6 +265,9 @@ export default function EmployeePayslip({ embedded = false }) {
     }
   };
 
+  const selectedMonthLabel = formatMonthLabel(selectedMonth);
+  const hasPayslips = allPayslips.length > 0;
+
   return (
     <div className={embedded ? "employee-payslip-page" : "layout employee-payslip-page"}>
       {!embedded && <EmployeeSidebar activePage="payslip" />}
@@ -226,37 +294,18 @@ export default function EmployeePayslip({ embedded = false }) {
             </div>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <select
+              <input
                 id="monthSelect"
+                type="month"
                 className="month-select"
                 value={selectedMonth}
-                disabled={isLoading || !monthOptions.length}
+                disabled={isLoading}
                 onChange={(e) => {
                   const month = e.target.value;
                   setSelectedMonth(month);
                   loadPayslipForMonth(month);
                 }}
-              >
-                {isLoading ? (
-                  <option value="">Loading months...</option>
-                ) : !monthOptions.length ? (
-                  <option value="">No payslips available</option>
-                ) : (
-                  monthOptions.map((m) => {
-                    const date = new Date(`${m}-01`);
-                    const display = date.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                    });
-
-                    return (
-                      <option key={m} value={m}>
-                        {display}
-                      </option>
-                    );
-                  })
-                )}
-              </select>
+              />
 
               <button
                 type="button"
@@ -267,7 +316,20 @@ export default function EmployeePayslip({ embedded = false }) {
               >
                 <i className="fas fa-download" /> Download PDF
               </button>
+              <button
+                type="button"
+                className="print-btn view-btn"
+                onClick={() => currentPayslip?.id && loadPayslipPdfPreview(currentPayslip.id)}
+                disabled={!currentPayslip?.id || loadingPayslip}
+              >
+                <i className="fas fa-eye" /> View Payslip
+              </button>
             </div>
+            {latestAvailableMonth && selectedMonth !== latestAvailableMonth ? (
+              <small className="payslip-hint">
+                Latest available payslip: {formatMonthLabel(latestAvailableMonth)}
+              </small>
+            ) : null}
           </div>
 
           <div id="payslipContainer">
@@ -278,27 +340,65 @@ export default function EmployeePayslip({ embedded = false }) {
             ) : !currentPayslip ? (
               <div className="empty-state">
                 <i className="fas fa-receipt" />
-                <p>No payslips found</p>
+                <p>No payslip has been generated for the selected month.</p>
                 <p style={{ fontSize: "0.75rem", marginTop: 6 }}>
-                  Payslips will appear once generated by HR.
+                  {hasPayslips
+                    ? `No payslip available for ${selectedMonthLabel}.`
+                    : "Payslips will appear once generated by HR."}
                 </p>
-              </div>
-            ) : pdfUrl ? (
-              <div className="pdf-preview-card">
-                <iframe
-                  src={pdfUrl}
-                  title="Generated Payslip PDF"
-                  className="pdf-preview-frame"
-                />
               </div>
             ) : (
-              <div className="empty-state">
-                <i className="fas fa-file-pdf" />
-                <p>PDF preview not available</p>
-                <p style={{ fontSize: "0.75rem", marginTop: 6 }}>
-                  Please click Download PDF or check backend permission.
-                </p>
-              </div>
+              <>
+                <div className="payslip-card">
+                  <div className="payslip-header">
+                    <div>
+                      <h2>{formatMonthLabel(currentPayslip.month)}</h2>
+                      <span className="payslip-month">
+                        {String(currentPayslip.status).toLowerCase() === "paid" ? "Paid" : "Unpaid"}
+                      </span>
+                    </div>
+                    <div className="payslip-generated">
+                      Generated: {formatDate(currentPayslip.generated_at)}
+                    </div>
+                  </div>
+                  <div className="emp-details-grid">
+                    <div className="emp-detail-item">
+                      <div className="label">Employee</div>
+                      <div className="value">{currentPayslip.full_name || "--"}</div>
+                    </div>
+                    <div className="emp-detail-item">
+                      <div className="label">Employee Code</div>
+                      <div className="value">{currentPayslip.employee_code || "--"}</div>
+                    </div>
+                    <div className="emp-detail-item">
+                      <div className="label">Basic Salary</div>
+                      <div className="value">{formatCurrency(currentPayslip.basic_salary)}</div>
+                    </div>
+                    <div className="emp-detail-item">
+                      <div className="label">Net Salary</div>
+                      <div className="value">{formatCurrency(currentPayslip.net_pay)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {pdfUrl ? (
+                  <div className="pdf-preview-card">
+                    <iframe
+                      src={pdfUrl}
+                      title="Generated Payslip PDF"
+                      className="pdf-preview-frame"
+                    />
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <i className="fas fa-file-pdf" />
+                    <p>PDF preview not available</p>
+                    <p style={{ fontSize: "0.75rem", marginTop: 6 }}>
+                      Please click Download PDF or check backend permission.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

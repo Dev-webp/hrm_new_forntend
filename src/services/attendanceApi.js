@@ -31,6 +31,36 @@ export async function fetchDepartmentLeaderboard(date, branch) {
   return data;
 }
 
+function normalizeHistoryRows(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.records)) return data.records;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.data?.records)) return data.data.records;
+  if (Array.isArray(data?.attendance)) return data.attendance;
+  if (Array.isArray(data?.history)) return data.history;
+  return [];
+}
+
+/** GET /api/attendance/employee/:userId?start=&end= */
+export async function fetchEmployeeAttendanceHistory(userId, fromDate, toDate) {
+  const endpoint = `/attendance/employee/${userId}`;
+  const params = {
+    start: normalizeDate(fromDate),
+    end: normalizeDate(toDate),
+  };
+  const finalUrl = api.getUri({ url: endpoint, params });
+
+  console.log("selectedUserId", userId);
+  console.log("fromDate", params.start);
+  console.log("toDate", params.end);
+  console.log("final API URL", finalUrl);
+
+  const { data } = await api.get(endpoint, { params });
+  console.log("API response", data);
+
+  return normalizeHistoryRows(data);
+}
+
 function normalizeDate(value) {
   if (!value) return null;
   return String(value).slice(0, 10); // converts ISO date to YYYY-MM-DD
