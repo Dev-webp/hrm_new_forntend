@@ -4,6 +4,20 @@
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #FFFFFF; } ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
         .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .employee-attendance-page.layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .employee-attendance-page.layout > .employee-sidebar {
+            flex: 0 0 270px;
+            min-width: 270px;
+        }
+        .employee-attendance-page.layout > .main-content {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
 
         /* Sidebar */
         .sidebar { width: 280px; background: var(--bg-page); border-right: 1px solid var(--gold-dim); display: flex; flex-direction: column; transition: width 0.3s; overflow-y: auto; flex-shrink: 0; }

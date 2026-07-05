@@ -11,30 +11,131 @@ import {
 import {
   formatLateLoginCount,
   getLateLoginStatusClass,
+  normalizeAttendanceStatusValue,
 } from "../../utils/attendanceHelpers";
 import "../../styles/EmployeeAttendance.css";
 
 function getStatusBadgeClass(status, lateMins) {
+  status = normalizeAttendanceStatusValue(status);
   if (status === "in_progress" || status === "working") return "badge-working";
   if (status === "full_day") return "badge-present";
   if (status === "present") return "badge-present";
   if (status === "half_day") return "badge-halfday";
   if (status === "leave") return "badge-leave";
   if (status === "holiday") return "badge-leave";
-  if (lateMins > 0 && status !== "absent") return "badge-late";
+  if (status === "late" || (lateMins > 0 && status !== "absent")) return "badge-late";
   return "badge-absent";
 }
 
 function getStatusText(status, lateMins) {
+  status = normalizeAttendanceStatusValue(status);
   if (status === "in_progress" || status === "working") return "Working";
   if (status === "full_day") return "Present";
   if (status === "present") return "Present";
   if (status === "half_day") return "Half Day";
   if (status === "leave") return "On Leave";
   if (status === "holiday") return "Holiday";
-  if (lateMins > 0 && status !== "absent") return `Late (${lateMins}m)`;
+  if (status === "late" || (lateMins > 0 && status !== "absent")) {
+    return `Late${lateMins ? ` (${lateMins}m)` : ""}`;
+  }
   if (status === "absent") return "Absent";
   return status || "—";
+}
+
+function normalizeAttendanceRecord(record) {
+  if (!record) return null;
+  return {
+    ...record,
+    status: normalizeAttendanceStatusValue(record.status),
+  };
+}
+
+function isPresentCalendarStatus(status) {
+  return ["full_day", "present", "half_day", "late"].includes(
+    normalizeAttendanceStatusValue(status)
+  );
+}
+
+function getDateKey(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  return String(value).slice(0, 10);
+}
+
+function isObjectMap(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function getStoredToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage?.getItem("token") || "";
+}
+
+function getSafeMonthDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return new Date(value.getFullYear(), value.getMonth(), 1);
+  }
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+function getSafeLastDay(year, month) {
+  const fallback = getSafeMonthDate();
+  const safeYear = Number.isFinite(year) ? year : fallback.getFullYear();
+  const safeMonth = Number.isFinite(month) ? month : fallback.getMonth();
+  return new Date(safeYear, safeMonth + 1, 0).getDate();
+}
+
+function safeText(value, fallback = "") {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return String(value);
+  }
+  return fallback;
+}
+
+function safeFormatTime(value) {
+  try {
+    return formatTime12(safeText(value, ""));
+  } catch {
+    return "--";
+  }
+}
+
+function safeStatusText(status, lateMins = 0) {
+  try {
+    return safeText(getStatusText(status, lateMins), "No Record");
+  } catch {
+    return "No Record";
+  }
+}
+
+function AttendanceStateCard({ title, message, actionLabel, onAction, loading = false }) {
+  return (
+    <div className="detailed-section" role={loading ? "status" : "alert"} aria-live="polite">
+      <div style={{ textAlign: "center", padding: "34px 20px" }}>
+        {loading && <span className="loading-spinner" aria-hidden="true" />}
+        <h3 style={{ color: "var(--gold)", marginTop: loading ? 14 : 0, marginBottom: 8 }}>
+          {title}
+        </h3>
+        <p style={{ color: "var(--text-muted)", marginBottom: actionLabel ? 18 : 0 }}>
+          {message}
+        </p>
+        {actionLabel && (
+          <button type="button" className="history-btn" onClick={onAction}>
+            {actionLabel}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function getLateUsageTone(count) {
@@ -88,22 +189,30 @@ function isGraceLateLogin(rec = {}) {
 
 export default function EmployeeAttendance({ embedded = false }) {
   const { apiFetch, navigate } = useEmployeeApi();
-  const token = localStorage.getItem("token");
+  const [token, setToken] = useState(getStoredToken);
   const detailedRef = useRef(null);
 
   const [currentDate, setCurrentDate] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    () => getSafeMonthDate()
   );
   const [holidayMap, setHolidayMap] = useState({});
   const [personalData, setPersonalData] = useState({});
   const [currentWeek, setCurrentWeek] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedMonth, setHasLoadedMonth] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [isAttendanceActionLoading, setIsAttendanceActionLoading] = useState(false);
   const [todayStatus, setTodayStatus] = useState(null);
   const [toast, setToast] = useState({ msg: "", visible: false });
 
   useEffect(() => {
-    if (!token) navigate("/login");
-  }, [token, navigate]);
+    const storedToken = getStoredToken();
+    setToken(storedToken);
+    if (!storedToken) {
+      setIsLoading(false);
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const showToast = useCallback((msg) => {
     setToast({ msg, visible: true });
@@ -119,17 +228,19 @@ export default function EmployeeAttendance({ embedded = false }) {
         );
         const map = {};
         data.forEach((h) => {
-          const d =
-            typeof h.date === "string"
-              ? h.date.slice(0, 10)
-              : h.date?.toISOString?.().slice(0, 10) || "";
-          if (d) map[d.slice(5, 10)] = { name: h.name, type: h.type };
+          const d = getDateKey(h?.date);
+          if (d) {
+            map[d.slice(5, 10)] = {
+              name: safeText(h?.name, "Holiday"),
+              type: safeText(h?.type, "holiday"),
+            };
+          }
         });
         setHolidayMap(map);
         return map;
-      } catch {
+      } catch (err) {
         setHolidayMap({});
-        return {};
+        throw new Error(err?.message || "Unable to load holidays", { cause: err });
       }
     },
     [apiFetch]
@@ -139,7 +250,7 @@ export default function EmployeeAttendance({ embedded = false }) {
     async (year, month) => {
       const mm = String(month + 1).padStart(2, "0");
       const start = `${year}-${mm}-01`;
-      const lastDay = new Date(year, month + 1, 0).getDate();
+      const lastDay = getSafeLastDay(year, month);
       const end = `${year}-${mm}-${String(lastDay).padStart(2, "0")}`;
       try {
         const records = normalizeArray(
@@ -147,13 +258,15 @@ export default function EmployeeAttendance({ embedded = false }) {
         );
         const map = {};
         records.forEach((r) => {
-          map[r.date] = r;
+          const record = normalizeAttendanceRecord(r);
+          const dateKey = getDateKey(record?.date);
+          if (dateKey) map[dateKey] = { ...record, date: dateKey };
         });
         setPersonalData(map);
         return map;
-      } catch {
+      } catch (err) {
         setPersonalData({});
-        return {};
+        throw new Error(err?.message || "Unable to load attendance history", { cause: err });
       }
     },
     [apiFetch]
@@ -162,60 +275,96 @@ export default function EmployeeAttendance({ embedded = false }) {
   const fetchTodayStatus = useCallback(async () => {
     try {
       const data = await apiFetch("/attendance/self/today");
-      setTodayStatus(data?.id ? data : null);
+      setTodayStatus(data?.id ? normalizeAttendanceRecord(data) : null);
     } catch {
       setTodayStatus(null);
     }
   }, [apiFetch]);
 
   const loadMonth = useCallback(async () => {
+    if (!token) {
+      setHolidayMap({});
+      setPersonalData({});
+      setHasLoadedMonth(false);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    await fetchHolidays(year, month);
-    await fetchPersonalMonth(year, month);
-    setIsLoading(false);
-  }, [currentDate, fetchHolidays, fetchPersonalMonth]);
+    setLoadError("");
+    const safeDate = getSafeMonthDate(currentDate);
+    const year = safeDate.getFullYear();
+    const month = safeDate.getMonth();
+    try {
+      await Promise.all([
+        fetchHolidays(year, month),
+        fetchPersonalMonth(year, month),
+      ]);
+      setHasLoadedMonth(true);
+    } catch (err) {
+      setHolidayMap({});
+      setPersonalData({});
+      setHasLoadedMonth(false);
+      setLoadError(err?.message || "Unable to load attendance data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentDate, fetchHolidays, fetchPersonalMonth, token]);
 
   useEffect(() => {
     loadMonth();
   }, [loadMonth]);
 
   useEffect(() => {
+    if (!token) return undefined;
     fetchTodayStatus();
     const id = setInterval(() => {
       fetchTodayStatus();
       loadMonth();
     }, 60000);
     return () => clearInterval(id);
-  }, [fetchTodayStatus, loadMonth]);
+  }, [fetchTodayStatus, loadMonth, token]);
 
   const checkIn = async () => {
+    setIsAttendanceActionLoading(true);
     try {
-      await apiFetch("/employee/check-in", { method: "POST" });
+      const data = await apiFetch("/employee/check-in", { method: "POST" });
+      const record = normalizeAttendanceRecord(data?.record || data);
+      if (record?.id) setTodayStatus(record);
       showToast("✅ Checked in successfully");
-      fetchTodayStatus();
-      loadMonth();
+      await Promise.all([fetchTodayStatus(), loadMonth()]);
     } catch (e) {
       showToast(`Check-in failed: ${e.message}`);
+    } finally {
+      setIsAttendanceActionLoading(false);
     }
   };
 
   const checkOut = async () => {
+    setIsAttendanceActionLoading(true);
     try {
-      await apiFetch("/employee/check-out", { method: "POST" });
+      const data = await apiFetch("/employee/check-out", { method: "POST" });
+      const record = normalizeAttendanceRecord(data?.record || data);
+      if (record?.id) {
+        setTodayStatus(record);
+        setPersonalData((prev) => ({
+          ...prev,
+          [String(record.date || todayStr).slice(0, 10)]: record,
+        }));
+      }
       showToast("✅ Checked out successfully");
-      fetchTodayStatus();
-      loadMonth();
+      await Promise.all([fetchTodayStatus(), loadMonth()]);
     } catch (e) {
       showToast(`Check-out failed: ${e.message}`);
+    } finally {
+      setIsAttendanceActionLoading(false);
     }
   };
 
   const changeMonth = (delta) => {
     setCurrentDate((prev) => {
-      let y = prev.getFullYear();
-      let m = prev.getMonth() + delta;
+      const safePrev = getSafeMonthDate(prev);
+      let y = safePrev.getFullYear();
+      let m = safePrev.getMonth() + delta;
       if (m < 0) {
         m = 11;
         y--;
@@ -229,13 +378,29 @@ export default function EmployeeAttendance({ embedded = false }) {
     setCurrentWeek("all");
   };
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  const safeCurrentDate = getSafeMonthDate(currentDate);
+  const year = safeCurrentDate.getFullYear();
+  const month = safeCurrentDate.getMonth();
   const mm = String(month + 1).padStart(2, "0");
   const todayStr = new Date().toISOString().slice(0, 10);
+  const safeHolidayMap = useMemo(
+    () => (isObjectMap(holidayMap) ? holidayMap : {}),
+    [holidayMap]
+  );
+  const safePersonalData = useMemo(
+    () => (isObjectMap(personalData) ? personalData : {}),
+    [personalData]
+  );
+  const safeWeekDays = useMemo(
+    () => (Array.isArray(WEEK_DAYS) ? WEEK_DAYS : []),
+    []
+  );
+  const safeMonthName = MONTH_NAMES?.[month] || "";
+  const isInitialPageLoading = isLoading && !hasLoadedMonth;
+  const canRenderAttendance = hasLoadedMonth && !loadError && !isInitialPageLoading;
 
   const monthStats = useMemo(() => {
-    const lastDay = new Date(year, month + 1, 0).getDate();
+    const lastDay = getSafeLastDay(year, month);
     let holidayCount = 0;
     let halfDayHolidayCount = 0;
     let sundayCount = 0;
@@ -246,20 +411,20 @@ export default function EmployeeAttendance({ embedded = false }) {
     for (let d = 1; d <= lastDay; d++) {
       const dateKey = `${mm}-${String(d).padStart(2, "0")}`;
       const dateStr = `${year}-${dateKey}`;
-      const entry = holidayMap[dateKey];
+      const entry = safeHolidayMap[dateKey];
       const isSunday = new Date(year, month, d).getDay() === 0;
       if (isSunday && !entry) sundayCount++;
       if (entry?.type === "holiday") holidayCount++;
       if (entry?.type === "halfday") halfDayHolidayCount++;
 
-      const rec = personalData[dateStr];
+      const rec = safePersonalData[dateStr];
       if (!isSunday && !entry) {
         if (rec) {
-          const s = rec.status;
-          if (s === "full_day" || s === "half_day") presentCount++;
-          else absentCount++;
+          const s = normalizeAttendanceStatusValue(rec.status);
+          if (isPresentCalendarStatus(s)) presentCount++;
+          else if (s === "absent") absentCount++;
           if (isGraceLateLogin(rec)) lateCount++;
-        } else if (dateStr <= todayStr) absentCount++;
+        }
       }
     }
     const totalDays = lastDay;
@@ -273,10 +438,10 @@ export default function EmployeeAttendance({ embedded = false }) {
       lateCount,
       holidayCount,
     };
-  }, [year, month, mm, holidayMap, personalData]);
+  }, [year, month, mm, safeHolidayMap, safePersonalData]);
 
   const calDays = useMemo(() => {
-    const lastDay = new Date(year, month + 1, 0).getDate();
+    const lastDay = getSafeLastDay(year, month);
     const firstWday = new Date(year, month, 1).getDay();
     const cells = [];
 
@@ -287,7 +452,7 @@ export default function EmployeeAttendance({ embedded = false }) {
     for (let d = 1; d <= lastDay; d++) {
       const dateKey = `${mm}-${String(d).padStart(2, "0")}`;
       const dateStr = `${year}-${dateKey}`;
-      const entry = holidayMap[dateKey];
+      const entry = safeHolidayMap[dateKey];
       const isSunday = new Date(year, month, d).getDay() === 0;
       const isToday = dateStr === todayStr;
       let dayClass = "cal-day";
@@ -318,12 +483,12 @@ export default function EmployeeAttendance({ embedded = false }) {
             className="day-badge"
             style={{ background: "rgba(255, 140, 0,0.25)", color: "#e8c84a" }}
           >
-            🎉 {entry.name}
+            🎉 {safeText(entry.name, "Holiday")}
           </div>
         );
         tooltip = (
           <div className="tooltip-card">
-            <div className="tt-title">🎉 {entry.name}</div>
+            <div className="tt-title">🎉 {safeText(entry.name, "Holiday")}</div>
             <div>Office Closed</div>
           </div>
         );
@@ -334,12 +499,12 @@ export default function EmployeeAttendance({ embedded = false }) {
             className="day-badge"
             style={{ background: "rgba(139,92,246,0.25)", color: "#b89fef" }}
           >
-            🌓 {entry.name || "Half Day"}
+            🌓 {safeText(entry.name, "Half Day")}
           </div>
         );
         tooltip = (
           <div className="tooltip-card">
-            <div className="tt-title">🌓 {entry.name}</div>
+            <div className="tt-title">🌓 {safeText(entry.name, "Half Day")}</div>
             <div>Company Half Day</div>
           </div>
         );
@@ -347,10 +512,10 @@ export default function EmployeeAttendance({ embedded = false }) {
 
       if (isToday) dayClass += " is-today";
 
-      const rec = personalData[dateStr];
+      const rec = safePersonalData[dateStr];
       if (!isSunday && !entry) {
         if (rec) {
-          const s = rec.status;
+          const s = normalizeAttendanceStatusValue(rec.status);
           if (isPaidLeaveDay(rec)) {
             dayClass += " p-leave calendar-paid-leave paid-leave";
             miniHtml = (
@@ -365,11 +530,18 @@ export default function EmployeeAttendance({ embedded = false }) {
                 <div className="mini-row">Unpaid Leave</div>
               </div>
             );
-          } else if (s === "full_day") {
+          } else if (s === "full_day" || s === "present") {
             dayClass += " p-present calendar-present";
             miniHtml = (
               <div className="day-mini-stats">
                 <div className="mini-row">✅ Present</div>
+              </div>
+            );
+          } else if (s === "late") {
+            dayClass += " p-late calendar-late";
+            miniHtml = (
+              <div className="day-mini-stats">
+                <div className="mini-row">Late {rec.late_minutes || 0}m</div>
               </div>
             );
           } else if (s === "half_day") {
@@ -386,7 +558,7 @@ export default function EmployeeAttendance({ embedded = false }) {
                 <div className="mini-row">🏖️ Leave</div>
               </div>
             );
-          } else {
+          } else if (s === "absent") {
             dayClass += " p-absent calendar-absent";
             miniHtml = (
               <div className="day-mini-stats">
@@ -407,24 +579,24 @@ export default function EmployeeAttendance({ embedded = false }) {
           tooltip = (
             <div className="tooltip-card">
               <div className="tt-title">
-                {MONTH_NAMES[month]} {d}
+                {safeMonthName} {d}
               </div>
               <div className="tt-row">
                 <span>Status</span>
                 <span className="tv">
-                  {getStatusText(s, rec.late_minutes)}
+                  {safeStatusText(s, rec.late_minutes)}
                 </span>
               </div>
               {rec.check_in_time && (
                 <div className="tt-row">
                   <span>In</span>
-                  <span className="tv">{formatTime12(rec.check_in_time)}</span>
+                  <span className="tv">{safeFormatTime(rec.check_in_time)}</span>
                 </div>
               )}
               {rec.check_out_time && (
                 <div className="tt-row">
                   <span>Out</span>
-                  <span className="tv">{formatTime12(rec.check_out_time)}</span>
+                  <span className="tv">{safeFormatTime(rec.check_out_time)}</span>
                 </div>
               )}
               {isGraceLateLogin(rec) && (
@@ -435,19 +607,19 @@ export default function EmployeeAttendance({ embedded = false }) {
               )}
             </div>
           );
-        } else if (dateStr <= todayStr) {
-          dayClass += " p-absent calendar-absent";
+        } else if (dateStr === todayStr && isAttendanceActionLoading) {
+          dayClass += " calendar-empty";
           miniHtml = (
             <div className="day-mini-stats">
-              <div className="mini-row">Absent</div>
+              <div className="mini-row">Updating</div>
             </div>
           );
           tooltip = (
             <div className="tooltip-card">
               <div className="tt-title">
-                {MONTH_NAMES[month]} {d}
+                {safeMonthName} {d}
               </div>
-              <div>Absent</div>
+              <div>Updating attendance</div>
             </div>
           );
         } else {
@@ -460,7 +632,7 @@ export default function EmployeeAttendance({ embedded = false }) {
           tooltip = (
             <div className="tooltip-card">
               <div className="tt-title">
-                {MONTH_NAMES[month]} {d}
+                {safeMonthName} {d}
               </div>
               <div>No attendance data</div>
             </div>
@@ -479,27 +651,27 @@ export default function EmployeeAttendance({ embedded = false }) {
     }
 
     return cells;
-  }, [year, month, mm, holidayMap, personalData, todayStr]);
+  }, [year, month, mm, safeHolidayMap, safePersonalData, todayStr, isAttendanceActionLoading, safeMonthName]);
 
   const detailRows = useMemo(() => {
-    const lastDay = new Date(year, month + 1, 0).getDate();
+    const lastDay = getSafeLastDay(year, month);
     const rows = [];
     for (let d = 1; d <= lastDay; d++) {
       const dateKey = `${mm}-${String(d).padStart(2, "0")}`;
       const dateStr = `${year}-${dateKey}`;
-      const entry = holidayMap[dateKey];
+      const entry = safeHolidayMap[dateKey];
       const isSunday = new Date(year, month, d).getDay() === 0;
       let weekNum = Math.ceil(d / 7);
       if (weekNum > 5) weekNum = 5;
       if (currentWeek !== "all" && weekNum !== parseInt(currentWeek, 10))
         continue;
 
-      const dayName = WEEK_DAYS[new Date(year, month, d).getDay()];
+      const dayName = safeWeekDays[new Date(year, month, d).getDay()] || "";
       let checkIn = "—";
       let checkOut = "—";
       let lateMin = 0;
-      let statusLabel = "—";
-      let statusClass = "badge-absent";
+      let statusLabel;
+      let statusClass;
 
       if (isSunday) {
         statusLabel = "Sunday";
@@ -509,16 +681,16 @@ export default function EmployeeAttendance({ embedded = false }) {
           entry.type === "holiday" ? "Holiday" : "Half Day (Company)";
         statusClass = "badge-holiday";
       } else {
-        const rec = personalData[dateStr];
+        const rec = safePersonalData[dateStr];
         if (rec) {
-          checkIn = formatTime12(rec.check_in_time);
-          checkOut = formatTime12(rec.check_out_time);
+          checkIn = safeFormatTime(rec.check_in_time);
+          checkOut = safeFormatTime(rec.check_out_time);
           lateMin = Number(rec.late_minutes) || 0;
-          statusLabel = getStatusText(rec.status, lateMin);
+          statusLabel = safeStatusText(rec.status, lateMin);
           statusClass = getStatusBadgeClass(rec.status, lateMin);
-        } else if (dateStr <= todayStr) {
-          statusLabel = "Absent";
-          statusClass = "badge-absent";
+        } else if (dateStr === todayStr && isAttendanceActionLoading) {
+          statusLabel = "Updating";
+          statusClass = "badge-no-record";
         } else {
           statusLabel = "No Record";
           statusClass = "badge-no-record";
@@ -531,61 +703,71 @@ export default function EmployeeAttendance({ embedded = false }) {
         dayName,
         checkIn,
         checkOut,
-        statusLabel,
-        statusClass,
+        statusLabel: statusLabel || "No Record",
+        statusClass: statusClass || "badge-no-record",
         lateMin,
       });
     }
     return rows;
-  }, [year, month, mm, holidayMap, personalData, currentWeek]);
+  }, [year, month, mm, safeHolidayMap, safePersonalData, currentWeek, isAttendanceActionLoading, safeWeekDays, todayStr]);
 
   const bottomTables = useMemo(() => {
     const holidays = [];
     const halfDays = [];
     const sundays = [];
-    const lastDay = new Date(year, month + 1, 0).getDate();
+    const lastDay = getSafeLastDay(year, month);
     for (let d = 1; d <= lastDay; d++) {
       const dk = `${mm}-${String(d).padStart(2, "0")}`;
-      const entry = holidayMap[dk];
+      const entry = safeHolidayMap[dk];
       const disp = `${month + 1}/${d}`;
       if (entry?.type === "holiday")
-        holidays.push({ date: disp, name: entry.name });
+        holidays.push({ date: disp, name: safeText(entry.name, "Holiday") });
       if (entry?.type === "halfday")
-        halfDays.push({ date: disp, name: entry.name });
+        halfDays.push({ date: disp, name: safeText(entry.name, "Half Day") });
       if (new Date(year, month, d).getDay() === 0)
         sundays.push({ date: disp });
     }
     return { holidays, halfDays, sundays };
-  }, [year, month, mm, holidayMap]);
+  }, [year, month, mm, safeHolidayMap]);
+
+  const safeBottomTables = {
+    holidays: Array.isArray(bottomTables?.holidays) ? bottomTables.holidays : [],
+    halfDays: Array.isArray(bottomTables?.halfDays) ? bottomTables.halfDays : [],
+    sundays: Array.isArray(bottomTables?.sundays) ? bottomTables.sundays : [],
+  };
 
   const todayUi = useMemo(() => {
     const data = todayStatus;
     if (data?.id) {
-      let statusText = data.status?.toUpperCase() || "ABSENT";
-      if (data.status === "full_day") statusText = "FULL DAY";
-      else if (data.status === "half_day") statusText = "HALF DAY";
+      const status = normalizeAttendanceStatusValue(data?.status || "absent");
+      let statusText = status.toUpperCase();
+      if (status === "full_day" || status === "present") statusText = "FULL DAY";
+      else if (status === "half_day") statusText = "HALF DAY";
+      else if (status === "late") statusText = "LATE";
       const color =
-        data.status === "full_day"
+        status === "full_day" || status === "present"
           ? "#16A34A"
-          : data.status === "half_day"
+          : status === "half_day"
             ? "#FBB824"
-            : "#64748B";
+            : status === "late"
+              ? "#EA580C"
+              : "#64748B";
       return {
         statusHtml: statusText,
         color,
-        timings: `In: ${formatTime12(data.check_in_time)} | Out: ${formatTime12(data.check_out_time)}`,
-        checkInDisabled: !!data.check_in_time,
-        checkOutDisabled: !data.check_in_time || !!data.check_out_time,
+        timings: `In: ${safeFormatTime(data.check_in_time)} | Out: ${safeFormatTime(data.check_out_time)}`,
+        checkInDisabled: isAttendanceActionLoading || !!data.check_in_time,
+        checkOutDisabled: isAttendanceActionLoading || !data.check_in_time || !!data.check_out_time,
       };
     }
     return {
-      statusHtml: "NOT CHECKED IN",
+      statusHtml: isAttendanceActionLoading ? "UPDATING" : "NOT CHECKED IN",
       color: "#64748B",
-      timings: "No active session",
-      checkInDisabled: false,
+      timings: isAttendanceActionLoading ? "Finalizing attendance" : "No active session",
+      checkInDisabled: isAttendanceActionLoading,
       checkOutDisabled: true,
     };
-  }, [todayStatus]);
+  }, [todayStatus, isAttendanceActionLoading]);
 
   const scrollToHistory = () => {
     detailedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -640,12 +822,32 @@ export default function EmployeeAttendance({ embedded = false }) {
           </button>
         </div>
 
+        {isInitialPageLoading ? (
+          <AttendanceStateCard
+            title="Loading attendance"
+            message="Preparing your attendance calendar."
+            loading
+          />
+        ) : loadError ? (
+          <AttendanceStateCard
+            title="Unable to load attendance"
+            message={loadError}
+            actionLabel="Retry"
+            onAction={loadMonth}
+          />
+        ) : !canRenderAttendance ? (
+          <AttendanceStateCard
+            title="No attendance data"
+            message="No Record"
+          />
+        ) : (
+          <>
         <div className="month-nav">
           <button type="button" onClick={() => changeMonth(-1)}>
             <i className="fas fa-chevron-left" /> Prev
           </button>
           <span className="month-label">
-            {MONTH_NAMES[month]} {year}
+            {safeMonthName} {year}
           </span>
           <button type="button" onClick={() => changeMonth(1)}>
             Next <i className="fas fa-chevron-right" />
@@ -711,7 +913,7 @@ export default function EmployeeAttendance({ embedded = false }) {
         </div>
 
         <div className="calendar-grid" id="calGrid">
-          {WEEK_DAYS.map((d) => (
+          {safeWeekDays.map((d) => (
             <div key={d} className="cal-weekday">
               {d}
             </div>
@@ -721,7 +923,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               <span className="loading-spinner" />
             </div>
           ) : (
-            calDays.map((cell) =>
+            (Array.isArray(calDays) ? calDays : []).map((cell) =>
               cell.empty ? (
                 <div
                   key={cell.key}
@@ -776,7 +978,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               </thead>
               <tbody>
                 {detailRows.length ? (
-                  detailRows.map((row) => (
+                  (Array.isArray(detailRows) ? detailRows : []).map((row) => (
                     <tr key={row.key}>
                       <td style={{ fontFamily: "monospace" }}>{row.dateStr}</td>
                       <td>{row.dayName}</td>
@@ -815,8 +1017,8 @@ export default function EmployeeAttendance({ embedded = false }) {
                 </tr>
               </thead>
               <tbody>
-                {bottomTables.holidays.length ? (
-                  bottomTables.holidays.map((h) => (
+                {safeBottomTables.holidays.length ? (
+                  safeBottomTables.holidays.map((h) => (
                     <tr key={`${h.date}-${h.name}`}>
                       <td>{h.date}</td>
                       <td>{escapeHtml(h.name)}</td>
@@ -842,8 +1044,8 @@ export default function EmployeeAttendance({ embedded = false }) {
                 </tr>
               </thead>
               <tbody>
-                {bottomTables.halfDays.length ? (
-                  bottomTables.halfDays.map((h) => (
+                {safeBottomTables.halfDays.length ? (
+                  safeBottomTables.halfDays.map((h) => (
                     <tr key={`${h.date}-${h.name}`}>
                       <td>{h.date}</td>
                       <td>{escapeHtml(h.name)}</td>
@@ -868,8 +1070,8 @@ export default function EmployeeAttendance({ embedded = false }) {
                 </tr>
               </thead>
               <tbody>
-                {bottomTables.sundays.length ? (
-                  bottomTables.sundays.map((s) => (
+                {safeBottomTables.sundays.length ? (
+                  safeBottomTables.sundays.map((s) => (
                     <tr key={s.date}>
                       <td>{s.date}</td>
                     </tr>
@@ -883,10 +1085,13 @@ export default function EmployeeAttendance({ embedded = false }) {
             </table>
           </div>
         </div>
+          </>
+        )}
       </main>
 
       <div className={`toast${toast.visible ? " show" : ""}`}>{toast.msg}</div>
     </div>
   );
 }
+
 
