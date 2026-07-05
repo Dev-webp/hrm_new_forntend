@@ -87,30 +87,67 @@
   overflow: hidden;
 }
 
-.message-row {
-  display: block;
+.message-row-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
   width: 100%;
   min-height: 118px;
-  padding: 16px;
-  border: 0;
   border-bottom: 1px solid #edf2f7;
   background: #ffffff;
+}
+
+.message-row {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 16px 52px 16px 16px;
+  border: 0;
+  background: transparent;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.message-row:hover,
-.message-row.selected {
+.message-row-wrap:hover,
+.message-row-wrap.selected {
   background: #f5f7fa;
 }
 
-.message-row.selected {
+.message-row-wrap.selected {
   box-shadow: inset 4px 0 0 #ff8c00;
 }
 
-.message-row.unread .message-title {
+.message-row-wrap.unread .message-title {
   color: #0d47a1;
+}
+
+.message-delete-btn {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.message-delete-btn:hover,
+.detail-delete-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.message-delete-btn:disabled,
+.detail-delete-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .message-row-top {
@@ -163,6 +200,28 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.detail-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detail-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .read-status {

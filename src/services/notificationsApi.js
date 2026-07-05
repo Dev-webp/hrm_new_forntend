@@ -68,3 +68,8 @@ export async function markEmployeeMessageRead(id) {
   const response = await api.put(`/employee/messages/${id}/read`);
   return response.data;
 }
+
+export async function deleteEmployeeMessage(id) {
+  const response = await api.delete(`/employee/messages/${id}`);
+  return response.data;
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import {
+  deleteEmployeeMessage,
   fetchEmployeeMessages,
   markEmployeeMessageRead,
 } from "../../services/notificationsApi";
@@ -35,6 +36,7 @@ export default function EmployeeMessages() {
   const [messages, setMessages] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
 
   const selectedMessage = useMemo(
@@ -82,6 +84,27 @@ export default function EmployeeMessages() {
     }
   };
 
+  const deleteMessage = async (messageId) => {
+    if (!window.confirm("Delete this message?")) return;
+
+    setDeletingId(messageId);
+    setError("");
+    try {
+      await deleteEmployeeMessage(messageId);
+      setMessages((current) => {
+        const next = current.filter((message) => message.id !== messageId);
+        setSelectedId((selected) =>
+          selected === messageId ? next[0]?.id || null : selected
+        );
+        return next;
+      });
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to delete message.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="employee-layout employee-messages-page">
       <EmployeeSidebar activePage="messages" />
@@ -108,25 +131,39 @@ export default function EmployeeMessages() {
               <div className="messages-empty">No messages yet.</div>
             ) : (
               messages.map((message) => (
-                <button
+                <div
                   key={message.id}
-                  type="button"
-                  className={`message-row${
+                  className={`message-row-wrap${
                     selectedId === message.id ? " selected" : ""
                   }${message.is_read ? "" : " unread"}`}
-                  onClick={() => openMessage(message)}
                 >
-                  <div className="message-row-top">
-                    <span className="message-title">
-                      {message.action_type === "attendance_update"
-                        ? "Attendance updated"
-                        : "Notification"}
-                    </span>
-                    {!message.is_read && <span className="unread-dot" />}
-                  </div>
-                  <p>{message.description}</p>
-                  <time>{formatDateTime(message.created_at)}</time>
-                </button>
+                  <button
+                    type="button"
+                    className="message-row"
+                    onClick={() => openMessage(message)}
+                  >
+                    <div className="message-row-top">
+                      <span className="message-title">
+                        {message.action_type === "attendance_update"
+                          ? "Attendance updated"
+                          : "Notification"}
+                      </span>
+                      {!message.is_read && <span className="unread-dot" />}
+                    </div>
+                    <p>{message.description}</p>
+                    <time>{formatDateTime(message.created_at)}</time>
+                  </button>
+                  <button
+                    type="button"
+                    className="message-delete-btn"
+                    onClick={() => deleteMessage(message.id)}
+                    disabled={deletingId === message.id}
+                    aria-label="Delete message"
+                    title="Delete message"
+                  >
+                    <i className="fas fa-trash" />
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -142,7 +179,18 @@ export default function EmployeeMessages() {
                   >
                     {selectedMessage.is_read ? "Read" : "Unread"}
                   </span>
-                  <time>{formatDateTime(selectedMessage.created_at)}</time>
+                  <div className="detail-actions">
+                    <time>{formatDateTime(selectedMessage.created_at)}</time>
+                    <button
+                      type="button"
+                      className="detail-delete-btn"
+                      onClick={() => deleteMessage(selectedMessage.id)}
+                      disabled={deletingId === selectedMessage.id}
+                    >
+                      <i className="fas fa-trash" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
                 <h2>
                   {selectedMessage.action_type === "attendance_update"
