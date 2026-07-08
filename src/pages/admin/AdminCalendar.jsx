@@ -55,6 +55,8 @@ function getRecordHours(record = {}) {
 function normalizeAttendanceStatus(status = "") {
   const value = String(status).trim().toLowerCase().replace(/\s+/g, "_");
   if (value === "present" || value === "full_day") return "present";
+  if (value === "in_progress" || value === "working") return "working";
+  if (value === "missing_checkout") return "missing_checkout";
   if (value === "half_day") return "half_day";
   if (value === "late") return "late";
   if (value === "absent") return "absent";
@@ -106,6 +108,8 @@ function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayH
   const status = normalizeAttendanceStatus(record.status || record.day_status);
 
   if (status === "present") return "present";
+  if (status === "working") return "working";
+  if (status === "missing_checkout") return "missing_checkout";
   if (status === "late") return "late";
   if (status === "half_day") return "half_day";
   if (status === "absent") return "absent";
@@ -616,6 +620,10 @@ function AdminCalendar() {
             dayClass += " calendar-halfday";
           } else if (statusKey === "late") {
             dayClass += " calendar-late";
+          } else if (statusKey === "working") {
+            dayClass += " working";
+          } else if (statusKey === "missing_checkout") {
+            dayClass += " calendar-late missing-checkout";
           } else if (statusKey === "present") {
             dayClass += " calendar-present";
           } else {
@@ -638,6 +646,8 @@ function AdminCalendar() {
             if (statusKey === "absent") return "Absent";
             if (statusKey === "half_day") return "Half Day";
             if (statusKey === "late") return `Late ${lateMinutes}m`;
+            if (statusKey === "working") return "Working";
+            if (statusKey === "missing_checkout") return "Missing Checkout";
             if (statusKey === "present") return "Present";
             return "No Record";
           })();

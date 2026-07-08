@@ -14,6 +14,7 @@ export const CONVERTED_ADMIN_ROUTE_PATHS = new Set([
   "/admin/notifications",
   "/admin/activity-logs",
   "/admin/department",
+  "/admin/profile",
 
 ]);
 
@@ -110,6 +111,11 @@ export const ADMIN_NAV = [
         path: "/admin/notifications",
         icon: "fa-bell",
         label: "Notifications",
+      },
+      {
+        path: "/admin/profile",
+        icon: "fa-user-shield",
+        label: "Profile",
       },
       {
         path: "/admin/settings",

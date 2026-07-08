@@ -392,6 +392,7 @@ export default function ManagerCalendar() {
 
           if (st) {
             if (st === "full_day") pPresent += 1;
+            else if (st === "in_progress" || st === "working") pPresent += 1;
             else if (st === "absent") pAbsent += 1;
             else if (st === "half_day") pHalfDay += 1;
             else if (st === "leave") pLeave += 1;
@@ -404,6 +405,8 @@ export default function ManagerCalendar() {
             if (isPaidLeaveDay(rec)) cssClasses += " p-leave calendar-paid-leave paid-leave";
             else if (isUnpaidLeaveDay(rec)) cssClasses += " p-leave calendar-unpaid-leave unpaid-leave";
             else if (st === "full_day") cssClasses += " p-present calendar-present";
+            else if (st === "in_progress" || st === "working") cssClasses += " p-present calendar-present working";
+            else if (st === "missing_checkout") cssClasses += " p-late calendar-late";
             else if (st === "half_day") cssClasses += " p-halfday calendar-halfday";
             else if (st === "leave") cssClasses += " p-leave";
             else if (st === "absent") cssClasses += " p-absent calendar-absent";
@@ -423,6 +426,8 @@ export default function ManagerCalendar() {
               holiday: "🎉 Holiday",
             }[st] || "—";
 
+            if (st === "in_progress" || st === "working") statusLabel = "Working";
+            if (st === "missing_checkout") statusLabel = "Missing Checkout";
             if (isPaidLeaveDay(rec)) statusLabel = "Paid Leave";
             if (isUnpaidLeaveDay(rec)) statusLabel = "Unpaid Leave";
 

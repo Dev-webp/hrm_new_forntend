@@ -67,6 +67,9 @@ function getStatusBadge(status) {
   if (s === "in_progress" || s === "working") {
     return <span className="badge" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>WORKING</span>;
   }
+  if (s === "missing_checkout") {
+    return <span className="badge badge-half-day">MISSING CHECKOUT</span>;
+  }
   if (s === "full_day") return <span className="badge badge-full-day">FULL DAY</span>;
   if (s === "present") return <span className="badge badge-full-day">PRESENT</span>;
   if (s === "half_day") return <span className="badge badge-half-day">HALF DAY</span>;
@@ -78,6 +81,7 @@ function getStatusBadge(status) {
 function getStatusLabel(status) {
   const s = String(status || "absent").toLowerCase();
   if (s === "in_progress" || s === "working") return "WORKING";
+  if (s === "missing_checkout") return "MISSING CHECKOUT";
   if (s === "full_day") return "FULL DAY";
   if (s === "present") return "PRESENT";
   if (s === "half_day") return "HALF DAY";

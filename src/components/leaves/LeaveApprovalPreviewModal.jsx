@@ -78,8 +78,10 @@ export default function LeaveApprovalPreviewModal({
               <PreviewItem label="Applied date" value={formatDate(preview.applied_date)} />
               <PreviewItem label="Requested leaves" value={preview.requested_days} />
               <PreviewItem label="Available paid balance" value={preview.available_paid_balance} />
+              <PreviewItem label="Used paid leave choice" value={preview.use_paid_leave ? "Yes" : "No"} />
               <PreviewItem label="Paid leaves used" value={preview.paid_days} tone="success" />
               <PreviewItem label="Unpaid leaves" value={preview.unpaid_days} tone={preview.unpaid_days > 0 ? "danger" : ""} />
+              <PreviewItem label="Remaining paid balance" value={preview.remaining_paid_balance} />
               <PreviewItem label="Salary deduction days" value={preview.salary_deduction_days} tone={preview.salary_deduction_days > 0 ? "danger" : ""} />
               <PreviewItem label="Penalty days" value={preview.penalty_days} />
               <PreviewItem label="Sunday penalty" value={preview.include_sunday_penalty ? "Applied" : "Not applied"} />

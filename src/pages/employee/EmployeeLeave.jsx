@@ -28,6 +28,7 @@ export default function EmployeeLeave({ embedded = false }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({
     leaveType: "Unpaid",
+    usePaidLeave: false,
     leaveDurationType: "full_day",
     halfDaySession: "",
     fromDate: "",
@@ -64,11 +65,7 @@ export default function EmployeeLeave({ embedded = false }) {
       const balance = await fetchMyLeaveBalance();
       setLeaveBalance(balance);
 
-      if (Number(balance?.paid_leave_balance || 0) > 0) {
-        setForm((f) => ({ ...f, leaveType: "Paid" }));
-      } else {
-        setForm((f) => ({ ...f, leaveType: "Unpaid" }));
-      }
+      setForm((f) => ({ ...f, leaveType: "Unpaid", usePaidLeave: false }));
     } catch (e) {
       showToast(`Error: ${e.message}`, "error");
     } finally {
@@ -166,7 +163,7 @@ export default function EmployeeLeave({ embedded = false }) {
   }, [form.fromDate, form.toDate, form.leaveDurationType, calcDays]);
 
   const submitLeave = async () => {
-    const { leaveType, leaveDurationType, halfDaySession, fromDate, toDate, reason } = form;
+    const { leaveType, usePaidLeave, leaveDurationType, halfDaySession, fromDate, toDate, reason } = form;
 
     if (!fromDate || !toDate) {
       showToast("Please select dates", "error");
@@ -188,25 +185,13 @@ export default function EmployeeLeave({ embedded = false }) {
       return;
     }
 
-    const days = leaveDurationType === "half_day" ? 0.5 : Number(calculatedDays || 0);
-
-    if (
-      leaveType === "Paid" &&
-      days > Number(leaveBalance?.paid_leave_balance || 0)
-    ) {
-      showToast(
-        `Only ${leaveBalance?.paid_leave_balance || 0} paid leave available`,
-        "error"
-      );
-      return;
-    }
-
     try {
       await apiFetch("/leaves", {
         method: "POST",
         body: {
           user_id: userId,
-          leave_type: leaveType,
+          leave_type: usePaidLeave ? "Paid" : leaveType,
+          use_paid_leave: usePaidLeave,
           from_date: fromDate,
           to_date: toDate,
           reason: reason.trim(),
@@ -219,6 +204,7 @@ export default function EmployeeLeave({ embedded = false }) {
       setModalOpen(false);
       setForm({
         leaveType: "Unpaid",
+        usePaidLeave: false,
         leaveDurationType: "full_day",
         halfDaySession: "",
         fromDate: "",
@@ -390,6 +376,10 @@ export default function EmployeeLeave({ embedded = false }) {
                       <th>From</th>
                       <th>To</th>
                       <th>Requested</th>
+                      <th>Paid</th>
+                      <th>Unpaid</th>
+                      <th>Used Paid</th>
+                      <th>Paid Balance</th>
                       <th>Reason</th>
                       <th>Status</th>
                       <th>Action</th>
@@ -422,6 +412,10 @@ export default function EmployeeLeave({ embedded = false }) {
                             <strong>{l.requested_days ?? l.days}</strong>
                             <small> day(s)</small>
                           </td>
+                          <td>{l.paid_days ?? "0.0"}</td>
+                          <td>{l.unpaid_days ?? "0.0"}</td>
+                          <td>{l.use_paid_leave ? "Yes" : "No"}</td>
+                          <td>{l.remaining_paid_balance ?? "0.0"}</td>
                           <td className="subadmin-leave-reason">{escapeHtml(l.reason || "—")}</td>
                           <td>
                             <span className={`status-chip ${statusCls}`}>
@@ -477,13 +471,24 @@ export default function EmployeeLeave({ embedded = false }) {
                   setForm((f) => ({ ...f, leaveType: e.target.value }))
                 }
               >
-                {Number(leaveBalance?.paid_leave_balance || 0) > 0 && (
-                  <option value="Paid">
-                    Paid Leave ({leaveBalance.paid_leave_balance} left)
-                  </option>
-                )}
-
                 <option value="Unpaid">Unpaid Leave</option>
+                <option value="Sick">Sick Leave</option>
+                <option value="Casual">Casual Leave</option>
+                <option value="Emergency">Emergency Leave</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="usePaidLeave">Use my available paid leave?</label>
+              <select
+                id="usePaidLeave"
+                value={form.usePaidLeave ? "yes" : "no"}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, usePaidLeave: e.target.value === "yes" }))
+                }
+              >
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
               </select>
             </div>
 

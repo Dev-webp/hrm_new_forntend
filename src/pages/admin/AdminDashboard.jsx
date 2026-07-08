@@ -23,8 +23,9 @@ import {
   buildDateStr,
   computeEmpStats,
   computeMonthStats,
+  isDashboardAttendancePresentRecord,
   isDashboardAbsentRecord,
-  isDashboardPresentRecord,
+  isDashboardLeaveRecord,
   getGreeting,
   getInitials,
   isGraceLateAttendanceRecord,
@@ -141,9 +142,9 @@ function AdminDashboard() {
         });
       }
 
-      const total = Number(todaySummary.total);
-      const pct = total
-        ? Math.round((Number(todaySummary.present) / total) * 100)
+      const attendanceDenominator = Number(todaySummary.present) + Number(todaySummary.absent);
+      const pct = attendanceDenominator
+        ? Math.round((Number(todaySummary.present) / attendanceDenominator) * 100)
         : 0;
 
       if (pct >= 90) {
@@ -512,12 +513,16 @@ function AdminDashboard() {
 
         const isTodayRow = dateStr === todayStr;
 
+        if (isDashboardLeaveRecord(record, isTodayRow)) {
+          return;
+        }
+
         if (isDashboardAbsentRecord(record, isTodayRow)) {
           absentCount += 1;
           return;
         }
 
-        if (isDashboardPresentRecord(record, isTodayRow)) {
+        if (isDashboardAttendancePresentRecord(record, isTodayRow)) {
           presentCount += 1;
           if (isGraceLateAttendanceRecord(record)) lateCount += 1;
         }
@@ -544,6 +549,7 @@ function AdminDashboard() {
     let half = 0;
     let late = 0;
     let absent = 0;
+    let leave = 0;
 
     allEmployees.forEach((employee) => {
       const stats = computeEmpStats(
@@ -559,9 +565,10 @@ function AdminDashboard() {
       half += stats.half;
       late += stats.late;
       absent += stats.absent;
+      leave += stats.leave;
     });
 
-    return { full, half, late, absent };
+    return { full, half, late, absent, leave };
   }, [allEmployees, attendanceMap, holidaySet, monthNum, todayStr, year]);
 
   const branchLabel = BRANCH_LABELS[currentBranch] || currentBranch;
@@ -928,6 +935,12 @@ function AdminDashboard() {
                         {stats.absent}
                       </div>
                       <div className="msl">Absent</div>
+                    </div>
+                    <div className="mini-stat">
+                      <div className="msv" style={{ color: "#7C3AED" }}>
+                        {stats.leave}
+                      </div>
+                      <div className="msl">Leave</div>
                     </div>
                   </div>
                   </div>;

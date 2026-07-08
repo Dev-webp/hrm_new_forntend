@@ -80,6 +80,21 @@ export function isDashboardPresentRecord(record, isToday = false) {
   return isPresentLikeStatus(getDashboardAttendanceStatus(record, isToday));
 }
 
+export function isDashboardAttendancePresentRecord(record, isToday = false) {
+  const status = getDashboardAttendanceStatus(record, isToday);
+  return ["full_day", "present", "in_progress", "working"].includes(status);
+}
+
+export function isDashboardHalfDayRecord(record, isToday = false) {
+  return getDashboardAttendanceStatus(record, isToday) === "half_day";
+}
+
+export function isDashboardLeaveRecord(record, isToday = false) {
+  const status = getDashboardAttendanceStatus(record, isToday);
+  const leaveStatus = String(record?.leave_status || record?.leaveStatus || "").toLowerCase();
+  return status === "leave" && (!leaveStatus || leaveStatus === "approved");
+}
+
 export function isDashboardAbsentRecord(record, isToday = false) {
   if (isToday) return isLiveAbsentRecord(record);
   return !record || getDashboardAttendanceStatus(record, false) === "absent";
@@ -129,6 +144,7 @@ export function computeEmpStats(
   let late = 0;
   let absent = 0;
   let half = 0;
+  let leave = 0;
 
   const today = new Date();
   const isCurrentMonth =
@@ -149,6 +165,11 @@ export function computeEmpStats(
     const status = getDashboardAttendanceStatus(record, isToday);
     if (isGraceLateAttendanceRecord(record)) late += 1;
 
+    if (isDashboardLeaveRecord(record, isToday)) {
+      leave += 1;
+      continue;
+    }
+
     if (isDashboardAbsentRecord(record, isToday)) {
       absent += 1;
       continue;
@@ -165,10 +186,13 @@ export function computeEmpStats(
   }
 
   const effectivePresent = present + half * 0.5;
+  const attendanceDenominator = effectivePresent + absent;
   const attPct =
-    workingDays > 0 ? Math.round((effectivePresent / workingDays) * 100) : 0;
+    attendanceDenominator > 0
+      ? Math.round((effectivePresent / attendanceDenominator) * 100)
+      : 0;
 
-  return { present, half, absent, late, workingDays, attPct };
+  return { present: effectivePresent, fullDays: present, half, absent, leave, late, workingDays, attPct };
 }
 
 export function attPctColor(pct) {

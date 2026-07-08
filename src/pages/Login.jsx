@@ -15,12 +15,18 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
+    if (submitting) return;
+
     setMessage("");
     setSubmitting(true);
 
     try {
-      const { data } = await api.post("/login", { email, password });
+      const { data } = await api.post(
+        "/login",
+        { email: email.trim(), password },
+        { skipAuthRedirect: true }
+      );
 
       setAuthSession({ token: data.token, user: data.user });
 
@@ -38,7 +44,13 @@ function Login() {
         navigate("/employee");
       }
     } catch (err) {
-      setMessage(err.response?.data?.message || "Server error");
+      if (err.response?.status === 401) {
+        setMessage("Invalid email or password");
+      } else if (err.response?.data?.message) {
+        setMessage(err.response.data.message);
+      } else {
+        setMessage(err.message || "Unable to reach HRMS API. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }

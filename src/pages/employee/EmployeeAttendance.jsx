@@ -18,6 +18,7 @@ import "../../styles/EmployeeAttendance.css";
 function getStatusBadgeClass(status, lateMins) {
   status = normalizeAttendanceStatusValue(status);
   if (status === "in_progress" || status === "working") return "badge-working";
+  if (status === "missing_checkout") return "badge-late";
   if (status === "full_day") return "badge-present";
   if (status === "present") return "badge-present";
   if (status === "half_day") return "badge-halfday";
@@ -30,6 +31,7 @@ function getStatusBadgeClass(status, lateMins) {
 function getStatusText(status, lateMins) {
   status = normalizeAttendanceStatusValue(status);
   if (status === "in_progress" || status === "working") return "Working";
+  if (status === "missing_checkout") return "Missing Checkout";
   if (status === "full_day") return "Present";
   if (status === "present") return "Present";
   if (status === "half_day") return "Half Day";
@@ -743,13 +745,14 @@ export default function EmployeeAttendance({ embedded = false }) {
       let statusText = status.toUpperCase();
       if (status === "full_day" || status === "present") statusText = "FULL DAY";
       else if (status === "half_day") statusText = "HALF DAY";
+      else if (status === "missing_checkout") statusText = "MISSING CHECKOUT";
       else if (status === "late") statusText = "LATE";
       const color =
         status === "full_day" || status === "present"
           ? "#16A34A"
           : status === "half_day"
             ? "#FBB824"
-            : status === "late"
+            : status === "late" || status === "missing_checkout"
               ? "#EA580C"
               : "#64748B";
       return {

@@ -320,17 +320,19 @@ export function buildWeeksCache(monthStr) {
 export function computeOverviewStats(records) {
   const safeRecords = normalizeAttendanceAnalysisRecords(records);
   const workDays = safeRecords.filter(
-    (r) => !["absent", "sunday", "holiday"].includes(r.status)
+    (r) => !["absent", "leave", "sunday", "holiday"].includes(r.status)
   );
   const presentDays = safeRecords.filter((r) => r.status === "full_day").length;
   const lateDays = safeRecords.filter(isGraceLateAttendanceRecord).length;
   const halfDays = safeRecords.filter((r) => r.status === "half_day").length;
   const absent = safeRecords.filter((r) => r.status === "absent").length;
+  const leaveDays = safeRecords.filter((r) => r.status === "leave").length;
   const totalDays = safeRecords.filter(
     (r) => !["sunday", "holiday"].includes(r.status)
   ).length;
-  const attRate = totalDays
-    ? Math.round(((presentDays + halfDays) / totalDays) * 100)
+  const effectivePresent = presentDays + halfDays * 0.5;
+  const attRate = effectivePresent + absent
+    ? Math.round((effectivePresent / (effectivePresent + absent)) * 100)
     : 0;
   const avgBreak = workDays.length
     ? Math.round(workDays.reduce((s, r) => s + r.breaks, 0) / workDays.length)
@@ -343,6 +345,7 @@ export function computeOverviewStats(records) {
     lateDays,
     halfDays,
     absent,
+    leaveDays,
     totalDays,
     attRate,
     avgBreak,

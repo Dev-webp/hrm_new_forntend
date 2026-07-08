@@ -53,6 +53,7 @@ const [employeeFilter, setEmployeeFilter] = useState("all");
   const [applySaving, setApplySaving] = useState(false);
   const [applyForm, setApplyForm] = useState({
     leave_type: "Unpaid",
+    use_paid_leave: false,
     leave_duration_type: "full_day",
     half_day_session: "",
     from_date: "",
@@ -135,7 +136,8 @@ const [deleteSaving, setDeleteSaving] = useState(false);
       setMyLeaveBalance(balance);
       setApplyForm((prev) => ({
         ...prev,
-        leave_type: Number(balance?.paid_leave_balance || 0) > 0 ? "Paid" : "Unpaid",
+        leave_type: "Unpaid",
+        use_paid_leave: false,
       }));
     } catch (err) {
       showToast(err.response?.data?.message || err.message || "Failed to load your leave data");
@@ -335,19 +337,12 @@ const message =
       showToast("Selected dates do not contain leave days");
       return;
     }
-    if (
-      applyForm.leave_type === "Paid" &&
-      requestedApplyDays > Number(myLeaveBalance?.paid_leave_balance || 0)
-    ) {
-      showToast(`Only ${myLeaveBalance?.paid_leave_balance || 0} paid leave available`);
-      return;
-    }
-
     setApplySaving(true);
     try {
       await createLeaveRequest({
         user_id: currentUser.id,
-        leave_type: applyForm.leave_type,
+        leave_type: applyForm.use_paid_leave ? "Paid" : applyForm.leave_type,
+        use_paid_leave: applyForm.use_paid_leave,
         from_date: applyForm.from_date,
         to_date: applyForm.to_date,
         reason: applyForm.reason.trim(),
@@ -360,7 +355,8 @@ const message =
       showToast("Leave request submitted");
       setApplyModalOpen(false);
       setApplyForm({
-        leave_type: Number(myLeaveBalance?.paid_leave_balance || 0) > 0 ? "Paid" : "Unpaid",
+        leave_type: "Unpaid",
+        use_paid_leave: false,
         leave_duration_type: "full_day",
         half_day_session: "",
         from_date: "",
@@ -520,6 +516,8 @@ const message =
                 <th>Requested</th>
                 <th>Paid</th>
                 <th>Unpaid</th>
+                <th>Used Paid</th>
+                <th>Paid Balance</th>
                 <th>Reason</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -528,7 +526,7 @@ const message =
             <tbody>
               {filteredMyLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan="10" style={{ textAlign: "center", padding: "28px" }}>
+                  <td colSpan="12" style={{ textAlign: "center", padding: "28px" }}>
                     No leave history found
                   </td>
                 </tr>
@@ -542,6 +540,8 @@ const message =
                     <td>{leave.requested_days ?? leave.days}</td>
                     <td>{leave.paid_days ?? 0}</td>
                     <td>{leave.unpaid_days ?? 0}</td>
+                    <td>{leave.use_paid_leave ? "Yes" : "No"}</td>
+                    <td>{leave.remaining_paid_balance ?? 0}</td>
                     <td>{leave.reason || "-"}</td>
                     <td>{getStatusBadge(leave.status)}</td>
                     <td>
@@ -663,6 +663,8 @@ const message =
             <th>Requested</th>
             <th>Paid</th>
             <th>Unpaid</th>
+            <th>Used Paid</th>
+            <th>Paid Balance</th>
             <th>Reason</th>
             <th>Status</th>
             <th>Action</th>
@@ -672,19 +674,19 @@ const message =
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="12" style={{ textAlign: "center", padding: "40px" }}>
+              <td colSpan="14" style={{ textAlign: "center", padding: "40px" }}>
                 Loading leave requests...
               </td>
             </tr>
           ) : error ? (
             <tr>
-              <td colSpan="12" style={{ textAlign: "center", padding: "40px" }}>
+              <td colSpan="14" style={{ textAlign: "center", padding: "40px" }}>
                 Failed to load leave requests: {error}
               </td>
             </tr>
           ) : filteredLeaveRequests.length === 0 ? (
             <tr>
-              <td colSpan="12" style={{ textAlign: "center", padding: "40px" }}>
+              <td colSpan="14" style={{ textAlign: "center", padding: "40px" }}>
                 No leave requests found
               </td>
             </tr>
@@ -702,6 +704,8 @@ const message =
                 <td>{request.requested_days ?? request.days}</td>
                 <td>{request.paid_days ?? 0}</td>
                 <td>{request.unpaid_days ?? 0}</td>
+                <td>{request.use_paid_leave ? "Yes" : "No"}</td>
+                <td>{request.remaining_paid_balance ?? 0}</td>
                 <td>{request.reason}</td>
                 <td>{getStatusBadge(request.status)}</td>
                 <td>
@@ -763,10 +767,23 @@ const message =
               value={applyForm.leave_type}
               onChange={(event) => setApplyForm((prev) => ({ ...prev, leave_type: event.target.value }))}
             >
-              {Number(myLeaveBalance?.paid_leave_balance || 0) > 0 && (
-                <option value="Paid">Paid Leave ({myLeaveBalance?.paid_leave_balance || 0} left)</option>
-              )}
               <option value="Unpaid">Unpaid Leave</option>
+              <option value="Sick">Sick Leave</option>
+              <option value="Casual">Casual Leave</option>
+              <option value="Emergency">Emergency Leave</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Use my available paid leave?</label>
+            <select
+              value={applyForm.use_paid_leave ? "yes" : "no"}
+              onChange={(event) =>
+                setApplyForm((prev) => ({ ...prev, use_paid_leave: event.target.value === "yes" }))
+              }
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
             </select>
           </div>
 

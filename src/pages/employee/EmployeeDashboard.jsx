@@ -205,6 +205,7 @@ export default function EmployeeDashboard({ embedded = false }) {
     let fullDays = 0;
     let halfDays = 0;
     let absentDays = 0;
+    let leaveDays = 0;
     let totalProdHours = 0;
     let prodCount = 0;
     let totalBreakMinutes = 0;
@@ -220,8 +221,9 @@ export default function EmployeeDashboard({ embedded = false }) {
       const rec = safeAttendance.find((r) => r?.date === ds);
       if (rec) {
         const status = String(rec?.status || "").toLowerCase();
-        if (["full_day", "present", "in_progress", "working", "leave"].includes(status)) fullDays++;
+        if (["full_day", "present", "in_progress", "working"].includes(status)) fullDays++;
         else if (status === "half_day") halfDays++;
+        else if (status === "leave") leaveDays++;
         else if (!isSun && !isHol) absentDays++;
         lateMinutes += Number(rec?.late_minutes || 0);
         if (Number(rec?.production_hours || 0) > 0) {
@@ -235,9 +237,11 @@ export default function EmployeeDashboard({ embedded = false }) {
       } else if (!isSun && !isHol) absentDays++;
     }
 
+    const effectivePresent = fullDays + halfDays * 0.5;
+    const attendanceDenominator = effectivePresent + absentDays;
     const score =
-      workingDays > 0
-        ? Math.round(((fullDays + halfDays * 0.5) / workingDays) * 100)
+      attendanceDenominator > 0
+        ? Math.round((effectivePresent / attendanceDenominator) * 100)
         : 0;
     const avgHours = prodCount > 0 ? totalProdHours / prodCount : 0;
     const grade =
@@ -273,10 +277,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       else break;
     }
 
-    const rate =
-      workingDays > 0
-        ? Math.round(((fullDays + halfDays * 0.5) / workingDays) * 100)
-        : 0;
+    const rate = score;
     const approvedDays = safeLeaves
       .filter((l) => l?.status === "approved")
       .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
@@ -288,6 +289,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       fullDays,
       halfDays,
       absentDays,
+      leaveDays,
       score,
       avgHours,
       avgBreakMinutes: breakCount > 0 ? Math.round(totalBreakMinutes / breakCount) : 0,
@@ -319,6 +321,9 @@ export default function EmployeeDashboard({ embedded = false }) {
     } else if (d?.status === "leave") {
       statusText = "Leave";
       statusCls = "leave";
+    } else if (d?.status === "missing_checkout") {
+      statusText = "Missing Checkout";
+      statusCls = "late";
     } else if (isGraceLateLogin(d) && d?.status !== "absent") {
       statusText = "Late";
       statusCls = "late";
@@ -395,6 +400,9 @@ export default function EmployeeDashboard({ embedded = false }) {
         } else if (isGraceLateLogin(rec)) {
           status = "Late";
           className = "late calendar-late";
+        } else if (rec?.status === "missing_checkout") {
+          status = "Missing Checkout";
+          className = "late calendar-late";
         } else if (rec?.status === "full_day" || rec?.status === "present") {
           status = "Present";
           className = "present calendar-present";
@@ -439,14 +447,20 @@ export default function EmployeeDashboard({ embedded = false }) {
       if (rec) {
         const safeStatus = String(rec?.status || "").toLowerCase();
         const cls =
-          ["full_day", "present", "in_progress", "working", "leave"].includes(safeStatus)
+          ["full_day", "present", "in_progress", "working"].includes(safeStatus)
             ? "present"
+            : safeStatus === "leave"
+              ? "leave"
+            : safeStatus === "missing_checkout"
+              ? "late"
             : safeStatus === "half_day"
               ? "halfday"
               : "absent";
         const txt =
           safeStatus === "in_progress" || safeStatus === "working"
             ? "Working"
+            : safeStatus === "missing_checkout"
+              ? "Missing Checkout"
             : safeStatus === "leave"
               ? "Leave"
             : ["full_day", "present", "leave"].includes(safeStatus)

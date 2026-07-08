@@ -7,6 +7,7 @@ import { loadSocketIoClient, SOCKET_SERVER_URL } from "../utils/socketClient";
 
 export default function NotificationBadge({ type = "notifications" }) {
   const [count, setCount] = useState(0);
+  const [authToken, setAuthToken] = useState(getAuthToken());
   const socketRef = useRef(null);
 
   async function loadCount() {
@@ -20,7 +21,19 @@ export default function NotificationBadge({ type = "notifications" }) {
   }
 
   useEffect(() => {
-    const token = getAuthToken();
+    const syncToken = () => setAuthToken(getAuthToken());
+    window.addEventListener("storage", syncToken);
+    window.addEventListener("focus", syncToken);
+    const interval = setInterval(syncToken, 5000);
+    return () => {
+      window.removeEventListener("storage", syncToken);
+      window.removeEventListener("focus", syncToken);
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    const token = authToken;
 
     loadCount();
     const countEvent = type === "notifications" ? "notification-count-changed" : `${type}-count-changed`;
@@ -77,7 +90,7 @@ export default function NotificationBadge({ type = "notifications" }) {
       window.removeEventListener(countEvent, loadCount);
       socketRef.current?.disconnect();
     };
-  }, [type]);
+  }, [type, authToken]);
 
   if (count <= 0) return null;
 

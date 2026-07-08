@@ -42,6 +42,9 @@ function getStatusConfig(status) {
   if (["in_progress", "working"].includes(normalized)) {
     return { key: "working", label: "Working", icon: "fa-signal" };
   }
+  if (normalized === "missing_checkout") {
+    return { key: "late", label: "Missing Checkout", icon: "fa-triangle-exclamation" };
+  }
   if (normalized === "leave") {
     return { key: "leave", label: "Leave", icon: "fa-umbrella-beach" };
   }
@@ -58,6 +61,7 @@ function getStatusReason(emp) {
   const productionMinutes = getProductionMinutes(emp.production_hours);
 
   if (["in_progress", "working"].includes(status)) return "Checked In • In Progress";
+  if (status === "missing_checkout") return "Checked In - Missing Checkout";
   if (status === "absent") return emp.check_in_time ? "Missing Checkout" : "No Login";
   if (status === "leave") return "Approved Leave";
   if (status === "holiday") return "Company Holiday";

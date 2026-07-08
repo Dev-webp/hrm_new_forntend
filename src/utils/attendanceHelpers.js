@@ -43,6 +43,7 @@ export function normalizeAttendanceStatusValue(status) {
   if (normalized === "half_day") return "half_day";
   if (normalized === "in_progress") return "in_progress";
   if (normalized === "working") return "working";
+  if (normalized === "missing_checkout") return "missing_checkout";
   if (normalized === "leave" || normalized === "paid_leave") return "leave";
   if (normalized === "holiday") return "holiday";
   if (normalized === "late") return "late";
@@ -81,6 +82,16 @@ export function getStatusMeta(status) {
     return {
       label: "WORKING",
       style: WORKING_BADGE_STYLE,
+    };
+  }
+  if (s === "missing_checkout") {
+    return {
+      label: "MISSING CHECKOUT",
+      style: {
+        background: CALENDAR_STATUS_COLORS.late.background,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.late.border}`,
+        color: CALENDAR_STATUS_COLORS.late.text,
+      },
     };
   }
   if (s === "full_day") {
@@ -166,6 +177,20 @@ export function getLatePillMeta(emp) {
       },
     };
   }
+  if (status === "missing_checkout") {
+    return {
+      label: "Missing Checkout",
+      style: {
+        background: CALENDAR_STATUS_COLORS.late.background,
+        color: CALENDAR_STATUS_COLORS.late.text,
+        border: `1px solid ${CALENDAR_STATUS_COLORS.late.border}`,
+        padding: "6px 12px",
+        borderRadius: "30px",
+        fontWeight: 700,
+        fontSize: "12px",
+      },
+    };
+  }
   if (status === "absent") {
     return {
       label: "Absent",
@@ -212,7 +237,7 @@ export function getLatePillMeta(emp) {
 }
 
 export function getLateLoginStatus(record = {}) {
-  if (["Late", "On Time", "Half Day", "Absent", "Working", "Present"].includes(record.late_login_status)) {
+  if (["Late", "On Time", "Half Day", "Absent", "Working", "Present", "Missing Checkout"].includes(record.late_login_status)) {
     return record.late_login_status;
   }
 
@@ -254,6 +279,7 @@ export function getLateLoginStatusClass(status) {
   if (normalized === "within limit") return "late-login-status good";
   if (normalized === "late") return "late-login-status caution";
   if (normalized === "half day" || normalized === "absent") return "late-login-status warning";
+  if (normalized === "missing checkout") return "late-login-status warning";
   if (normalized === "working" || normalized === "present") return "late-login-status good";
   if (normalized === "on time") return "late-login-status good";
   return "late-login-status muted";
@@ -263,6 +289,9 @@ export function getLateEmployeeStatusMeta(status) {
   const finalStatus = normalizeAttendanceStatusValue(status);
   if (isWorkingStatus(finalStatus)) {
     return { label: "WORKING", color: "#1D4ED8", bg: "#DBEAFE" };
+  }
+  if (finalStatus === "missing_checkout") {
+    return { label: "MISSING CHECKOUT", color: CALENDAR_STATUS_COLORS.late.text, bg: CALENDAR_STATUS_COLORS.late.background };
   }
   if (finalStatus === "full_day") {
     return { label: "FULL DAY", color: CALENDAR_STATUS_COLORS.present.text, bg: CALENDAR_STATUS_COLORS.present.background };

@@ -5,15 +5,30 @@ import "../styles/LiveNotificationToast.css";
 
 export default function LiveNotificationToast() {
   const [toast, setToast] = useState(null);
+  const [authToken, setAuthToken] = useState(getAuthToken());
   const socketRef = useRef(null);
+  const toastTimerRef = useRef(null);
 
   useEffect(() => {
-    const token = getAuthToken();
+    const syncToken = () => setAuthToken(getAuthToken());
+    window.addEventListener("storage", syncToken);
+    window.addEventListener("focus", syncToken);
+    const interval = setInterval(syncToken, 5000);
+    return () => {
+      window.removeEventListener("storage", syncToken);
+      window.removeEventListener("focus", syncToken);
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    const token = authToken;
     if (!token) return;
 
     let cancelled = false;
 
     async function connect() {
+      try {
       const io = await loadSocketIoClient();
 
       const socket = io(SOCKET_SERVER_URL, {
@@ -28,19 +43,24 @@ export default function LiveNotificationToast() {
 
         setToast(n);
 
-        setTimeout(() => {
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = setTimeout(() => {
           setToast(null);
         }, 5000);
       });
+      } catch (err) {
+        console.error("Live notification socket error:", err);
+      }
     }
 
     connect();
 
     return () => {
       cancelled = true;
+      clearTimeout(toastTimerRef.current);
       socketRef.current?.disconnect();
     };
-  }, []);
+  }, [authToken]);
 
   if (!toast) return null;
 
