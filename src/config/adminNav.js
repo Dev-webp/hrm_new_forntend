@@ -10,6 +10,7 @@ export const CONVERTED_ADMIN_ROUTE_PATHS = new Set([
   "/admin/calendar",
   "/admin/leave",
   "/admin/offer-letters",
+  "/admin/letters",
   "/admin/payroll",
   "/admin/notifications",
   "/admin/activity-logs",
@@ -92,11 +93,7 @@ export const ADMIN_NAV = [
         icon: "fa-coins",
         label: "Payroll",
       },
-      {
-  path: "/admin/offer-letters",
-  icon: "fa-file-contract",
-  label: "Offer Letters",
-},
+      { path: "/admin/letters", icon: "fa-file-contract", label: "Letters" },
     ],
   },
   {

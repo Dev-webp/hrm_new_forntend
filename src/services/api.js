@@ -42,6 +42,8 @@ api.interceptors.response.use(
       error.message = "API request timed out. Please try again.";
     } else if (!error.response) {
       error.message = "Unable to reach HRMS API. Please check the server status.";
+    } else if (error.response?.data?.error) {
+      error.message = error.response.data.error;
     } else if (error.response?.data?.message) {
       error.message = error.response.data.message;
     }

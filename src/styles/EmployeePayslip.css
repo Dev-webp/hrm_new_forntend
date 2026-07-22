@@ -102,3 +102,61 @@
   border-radius: 12px;
   background: #ffffff;
 }
+
+
+/* Employee payslip month selector */
+
+.employee-month-picker {
+  width: 216px;
+  height: 50px;
+  flex-shrink: 0;
+}
+
+.employee-month-picker input[type="month"] {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+
+  padding: 0 18px;
+
+  border: 2px solid #d5e2f3;
+  border-radius: 17px;
+
+  background: #ffffff;
+  color: #111827;
+
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+
+  outline: none;
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.employee-month-picker input[type="month"]:hover {
+  border-color: #b9cde8;
+}
+
+.employee-month-picker input[type="month"]:focus {
+  border-color: #9bb9df;
+  box-shadow: 0 0 0 3px rgba(155, 185, 223, 0.18);
+}
+
+.employee-month-picker input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.employee-month-picker input[type="month"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 600px) {
+  .employee-month-picker {
+    width: 100%;
+  }
+}

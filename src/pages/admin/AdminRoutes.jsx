@@ -18,6 +18,9 @@ const AdminDepartment = lazy(() => import("./AdminDepartment"));
 const AdminNotifications = lazy(() => import("./AdminNotifications"));
 const AdminPayslip = lazy(() => import("./AdminPayslip"));
 const AdminOfferLetters = lazy(() => import("./AdminOfferLetters"));
+const OfferLetter = lazy(() => import("./OfferLetter"));
+const ExperienceLetter = lazy(() => import("./ExperienceLetter"));
+const LettersHome = lazy(() => import("./LettersHome"));
 const AdminProfile = lazy(() => import("./AdminProfile"));
 
 function AdminRoutes() {
@@ -59,6 +62,9 @@ function AdminRoutes() {
           <Route path="calendar" element={<AdminCalendar />} />
           <Route path="leave" element={<AdminLeave />} />
           <Route path="offer-letters" element={<AdminOfferLetters />} />
+          <Route path="letters" element={<LettersHome />} />
+          <Route path="letters/offer" element={<OfferLetter />} />
+          <Route path="letters/experience" element={<ExperienceLetter />} />
           <Route path="payroll" element={<AdminPayslip />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="profile" element={<AdminProfile />} />

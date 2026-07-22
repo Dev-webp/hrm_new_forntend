@@ -454,12 +454,19 @@
   background: #FFF7ED;
 }
 
-.subadmin-leave-reason {
-  max-width: 280px;
-  color: #64748B !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.employee-leave-reason {
+    width:220px;
+    max-width:220px;
+    color:#64748B !important;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    cursor:pointer;
+}
+.employee-leave-page .subadmin-leave-table-wrap {
+ overflow-x:visible;
 }
 
 .subadmin-leave-page .status-chip {
@@ -708,9 +715,10 @@
 }
 
 .employee-leave-page .subadmin-leave-table {
-  min-width: 0;
-  width: 100%;
-  table-layout: fixed;
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    min-width:1200px;
 }
 
 .employee-leave-page .subadmin-leave-table th {

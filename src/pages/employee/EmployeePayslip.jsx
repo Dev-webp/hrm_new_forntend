@@ -9,6 +9,29 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+
+
+
+function normalizeMonth(value) {
+  if (!value) return "";
+
+  const clean = String(value).trim();
+
+  const match = clean.match(/^(\d{4})-(\d{2})(?:-\d{2})?$/);
+
+  if (!match) return "";
+
+  const year = match[1];
+  const month = Number(match[2]);
+
+  if (month < 1 || month > 12) return "";
+
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+
+
+
 function getStoredUserId() {
   try {
     const stored = JSON.parse(localStorage.getItem("user") || "{}");
@@ -145,47 +168,87 @@ export default function EmployeePayslip({ embedded = false }) {
     [API_BASE, token, showToast]
   );
 
+
+
+
+
+
   const loadPayslipForMonth = useCallback(
-    async (monthYMD) => {
-      if (!monthYMD) return;
+  async (monthValue) => {
+    const requestedMonth = normalizeMonth(monthValue);
 
-      setLoadingPayslip(true);
+    if (!requestedMonth) {
+      console.error(
+        "[EmployeePayslip] Invalid month received:",
+        monthValue
+      );
+
+      setCurrentPayslip(null);
       setPdfUrl("");
-      const requestedMonth = String(monthYMD).slice(0, 7);
-      const requestedYear = requestedMonth.slice(0, 4);
 
-      try {
-        const payslip = await apiFetch(
-          `/employee/my-payslip?month=${requestedMonth}-01`
-        );
-        const normalizedPayslip = normalizePayslip(payslip);
+      showToast("Invalid month selected", "error");
+      return;
+    }
 
-        console.log("[EmployeePayslip] Requested Month", requestedMonth);
-        console.log("[EmployeePayslip] Requested Year", requestedYear);
-        console.log("[EmployeePayslip] Logged-in User ID", getStoredUserId());
-        console.log("[EmployeePayslip] Returned Payslip Count", normalizedPayslip?.id ? 1 : 0);
-        console.log("[EmployeePayslip] PDF Path", normalizedPayslip?.pdf_url || null);
-        console.log("Employee payslip:", normalizedPayslip);
+    setLoadingPayslip(true);
+    setPdfUrl("");
 
-        if (!normalizedPayslip?.id) {
-          setCurrentPayslip(null);
-          setPdfUrl("");
-          return;
-        }
+    try {
+      const payslip = await apiFetch(
+        `/employee/my-payslip?month=${encodeURIComponent(requestedMonth)}`
+      );
 
-        setCurrentPayslip(normalizedPayslip);
-        await loadPayslipPdfPreview(normalizedPayslip.id);
-      } catch (e) {
-        console.error("Error loading payslip:", e);
-        showToast(`Error loading payslip: ${e.message}`, "error");
+      const normalizedPayslip = normalizePayslip(payslip);
+
+      console.log(
+        "[EmployeePayslip] Requested Month",
+        requestedMonth
+      );
+
+      console.log(
+        "[EmployeePayslip] Logged-in User ID",
+        getStoredUserId()
+      );
+
+      console.log(
+        "[EmployeePayslip] Returned Payslip Count",
+        normalizedPayslip?.id ? 1 : 0
+      );
+
+      console.log(
+        "[EmployeePayslip] PDF Path",
+        normalizedPayslip?.pdf_url || null
+      );
+
+      if (!normalizedPayslip?.id) {
         setCurrentPayslip(null);
         setPdfUrl("");
-      } finally {
-        setLoadingPayslip(false);
+        return;
       }
-    },
-    [apiFetch, loadPayslipPdfPreview, showToast]
-  );
+
+      setCurrentPayslip(normalizedPayslip);
+
+      await loadPayslipPdfPreview(normalizedPayslip.id);
+    } catch (e) {
+      console.error("Error loading payslip:", e);
+
+      showToast(
+        `Error loading payslip: ${e.message}`,
+        "error"
+      );
+
+      setCurrentPayslip(null);
+      setPdfUrl("");
+    } finally {
+      setLoadingPayslip(false);
+    }
+  },
+  [apiFetch, loadPayslipPdfPreview, showToast]
+);
+
+
+
+
 
   const loadPayslips = useCallback(async () => {
     setIsLoading(true);
@@ -294,18 +357,27 @@ export default function EmployeePayslip({ embedded = false }) {
             </div>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <input
-                id="monthSelect"
-                type="month"
-                className="month-select"
-                value={selectedMonth}
-                disabled={isLoading}
-                onChange={(e) => {
-                  const month = e.target.value;
-                  setSelectedMonth(month);
-                  loadPayslipForMonth(month);
-                }}
-              />
+        <div className="employee-month-picker">
+  <input
+    id="monthSelect"
+    type="month"
+    value={selectedMonth}
+    disabled={isLoading || loadingPayslip}
+    aria-label="Select payslip month"
+    onChange={(e) => {
+      const month = normalizeMonth(e.target.value);
+
+      if (!month) {
+        showToast("Invalid month selected", "error");
+        return;
+      }
+
+      setSelectedMonth(month);
+      loadPayslipForMonth(month);
+    }}
+  />
+</div>
+
 
               <button
                 type="button"
