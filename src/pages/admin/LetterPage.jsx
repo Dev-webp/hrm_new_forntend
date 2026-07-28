@@ -12,7 +12,8 @@ import LetterForm from "../../components/letters/LetterForm";
 import LetterPreview from "../../components/letters/LetterPreview";
 import EmailDialog from "../../components/letters/EmailDialog";
 import "../../styles/letters.css";
-
+import SendingOverlay from "../../components/letters/SendingOverlay";
+import SuccessDialog from "../../components/letters/SuccessDialog";
 const errorMessage = (error) =>
   error.response?.data?.message ||
   error.message ||
@@ -30,6 +31,18 @@ export default function LetterPage({ type, title }) {
   const [email, setEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
+
+const [sending, setSending] = useState(false);
+
+const [sendingStep, setSendingStep] = useState("");
+
+
+const [successOpen,setSuccessOpen]=useState(false);
+
+const [successData,setSuccessData]=useState({});
+
+const sleep = (ms) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
   const createEmptyOffer = () => ({
     candidate_name: "",
@@ -109,18 +122,20 @@ export default function LetterPage({ type, title }) {
     }));
   };
 
-  const run = async (action) => {
-    setLoading(true);
-    setNotice("");
+const run = async (action) => {
+  setLoading(true);
+  setNotice("");
 
-    try {
-      await action();
-    } catch (error) {
-      setNotice(errorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    await action();
+  } catch (error) {
+    setNotice(errorMessage(error));
+    setSending(false);
+    setSuccessOpen(false);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const download = () =>
     run(async () => {
@@ -192,15 +207,96 @@ export default function LetterPage({ type, title }) {
           defaultEmail={form.recipient_email}
           loading={loading}
           onClose={() => setEmail(false)}
-          onSend={(data) =>
-            run(async () => {
-              await sendLetterEmail(type, data);
-              setEmail(false);
-              setNotice("Email sent");
-            })
-          }
+         onSend={(data) =>
+  run(async () => {
+
+    setPreview("");
+setEmail(false);      // Close Send Letter dialog first
+await sleep(100);
+
+setSending(true);     // Then show loading overlay
+    setSendingStep("📄 Preparing Letter...");
+    await sleep(500);
+
+    setSendingStep("📄 Generating PDF...");
+    await sleep(700);
+
+    setSendingStep("📧 Connecting Mail Server...");
+    await sleep(600);
+
+   
+ 
+setSendingStep("📨 Sending Email...");
+
+// Send email first
+const response = await sendLetterEmail(type, {
+  ...form,
+  ...data,
+});
+
+const result = response.data;
+
+// Show success only after the API succeeds
+setSendingStep("✅ Email Sent Successfully!");
+await sleep(1000);
+
+setSending(false);
+setEmail(false);
+
+await sleep(150);
+
+setSuccessData({
+  recipient:
+    result.name ||
+    (type === "offer"
+      ? form.candidate_name
+      : form.employee_name),
+
+  email:
+    result.recipient ||
+    data.recipient_email,
+
+  referenceNumber:
+    result.referenceNumber ||
+    form.reference_number ||
+    "-",
+
+  sentAt:
+    result.sentAt
+      ? new Date(result.sentAt).toLocaleString()
+      : new Date().toLocaleString(),
+
+  title:
+    result.type === "OFFER"
+      ? "Offer Letter"
+      : "Experience Letter",
+});
+
+setSuccessOpen(true);
+
+  })
+}
+
+
         />
       )}
+{sending && (
+  <SendingOverlay step={sendingStep} />
+)}
+
+<SuccessDialog
+  open={successOpen}
+  title={successData.title}
+  recipient={successData.recipient}
+  email={successData.email}
+  referenceNumber={successData.referenceNumber}
+  sentAt={successData.sentAt}
+onClose={() => {
+  setSuccessOpen(false);
+  setSuccessData({});
+  navigate("/admin/letters");
+}}
+/>
     </section>
   );
 }
