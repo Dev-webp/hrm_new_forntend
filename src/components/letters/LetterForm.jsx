@@ -63,14 +63,9 @@ const experienceFields = [
   "recipient_email",
 ];
 
-/*
-  Only keep fields that should NEVER be edited.
-  Branch, Designation and Department are editable now.
-*/
 const readOnlyFields = new Set([
   "employee_name",
 ]);
-
 
 const inputTypes = {
   candidate_name: "text",
@@ -97,6 +92,7 @@ export default function LetterForm({
   onGenerate,
   onDownload,
   onEmail,
+  onClose, // ✅ Added
   loading,
 }) {
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -146,10 +142,7 @@ export default function LetterForm({
             </option>
 
             {visibleEmployees.map((employee) => (
-              <option
-                key={employee.id}
-                value={employee.id}
-              >
+              <option key={employee.id} value={employee.id}>
                 {employee.full_name} (
                 {employee.employee_code || employee.id})
               </option>
@@ -168,12 +161,8 @@ export default function LetterForm({
           }
         >
           <option value="">Select Branch</option>
-          <option value="Hyderabad">
-            Hyderabad
-          </option>
-          <option value="Bangalore">
-            Bangalore
-          </option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Bangalore">Bangalore</option>
         </select>
       );
     }
@@ -257,6 +246,16 @@ export default function LetterForm({
           onClick={onEmail}
         >
           Send Email
+        </button>
+
+        {/* ✅ New Close Button */}
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onClose}
+          className="letter-close-btn"
+        >
+          Close
         </button>
       </div>
     </form>
