@@ -63,7 +63,7 @@ useEffect(() => {
   const download = () => run(async () => { const response = await downloadLetter(type,form);
     
     
-    
+       console.log(form);
     const url = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" })); const link = document.createElement("a"); link.href = url; link.download = `${type}-letter.pdf`; link.click(); URL.revokeObjectURL(url); });
  
   return <section className="letters-page"><h1>{title}</h1><p>Create, preview, generate, download, or email the current letter.</p>{notice && <p className="letter-notice">{notice}</p>}<LetterForm type={type} value={form} employees={employees} employeesLoading={employeesLoading} loading={loading} onChange={updateForm} onEmployeeSelect={selectEmployee} 
