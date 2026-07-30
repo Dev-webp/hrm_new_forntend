@@ -91,6 +91,8 @@ function getBreak3Minutes(breaks = {}) {
 }
 
 function getTotalBreakMinutes(breaks) {
+  const apiTotal = Number(breaks?.total_break_minutes);
+  if (Number.isFinite(apiTotal) && apiTotal >= 0) return apiTotal;
   return getStandardBreakMinutes(breaks) + getBreak3Minutes(breaks);
 }
 

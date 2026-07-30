@@ -17,6 +17,7 @@ const EMPTY_BREAKS = {
   break2: { start: "", end: "" },
   break3: { start: "", end: "" },
   break3Sessions: [],
+  total_break_minutes: 0,
 };
 
 const SLOT_META = {
@@ -136,6 +137,7 @@ export default function EmployeeBreaks() {
           break2: data.break2 || { start: "", end: "" },
           break3: data.break3 || { start: "", end: "" },
           break3Sessions: normalizeBreak3Sessions(data.break3Sessions),
+          total_break_minutes: Number(data.total_break_minutes || 0),
         });
       }
     } catch {
@@ -162,6 +164,8 @@ export default function EmployeeBreaks() {
 
   const getTotal = useCallback(
     () => {
+      const apiTotal = Number(myBreaks.total_break_minutes);
+      if (Number.isFinite(apiTotal) && apiTotal >= 0) return apiTotal;
       const standardTotal = SLOT_CONFIG.filter((cfg) => cfg.key !== "break3").reduce(
         (s, c) => s + slotDuration(myBreaks[c.key]),
         0
@@ -237,7 +241,7 @@ export default function EmployeeBreaks() {
   const handleBreak = async (key) => {
     const b = myBreaks[key];
     const now = getNow12h();
-    const next = { ...myBreaks, [key]: { ...b } };
+    const next = { ...myBreaks, [key]: { ...b }, total_break_minutes: undefined };
     if (!b.start) {
       if (hasActiveBreak) {
         showToast("End the current break before starting another");
@@ -303,6 +307,7 @@ export default function EmployeeBreaks() {
     const completed = nextBreak3Sessions.filter((item) => item.start && item.end);
     const next = {
       ...myBreaks,
+      total_break_minutes: undefined,
       break3Sessions: nextBreak3Sessions,
       break3: {
         start: nextBreak3Sessions[0]?.start || "",

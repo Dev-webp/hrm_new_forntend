@@ -41,6 +41,7 @@ export default function EmployeeLeave({ embedded = false }) {
   const [toast, setToast] = useState({ msg: "", visible: false, type: "" });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteSaving, setDeleteSaving] = useState(false);
+  const [reasonModal, setReasonModal] = useState(null);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -108,6 +109,64 @@ export default function EmployeeLeave({ embedded = false }) {
           year: "numeric",
         })
       : "—";
+
+  const formatLeaveDateTime = (value) =>
+    value
+      ? new Date(value).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })
+      : "â€”";
+
+  const formatRole = (role) =>
+    role
+      ? String(role)
+          .toLowerCase()
+          .split("_")
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" ")
+      : "";
+
+  const getApproverName = (leave) =>
+    leave.approvedBy || leave.approved_by_name || leave.approver_name || "";
+
+  const getApproverRole = (leave) =>
+    leave.approvedRole || leave.approved_by_role || leave.approver_role || "";
+
+  const getApprovedAt = (leave) => leave.approvedAt || leave.approved_at || "";
+
+  const renderApprover = (leave) => {
+    if (leave.status === "pending") return "â€”";
+    const name = getApproverName(leave);
+    const role = formatRole(getApproverRole(leave));
+    if (!name && !role) return "â€”";
+    return (
+      <div className="leave-approver-cell">
+        {name && <strong>{name}</strong>}
+        {role && <small>({role})</small>}
+      </div>
+    );
+  };
+
+  const renderReason = (reason) => {
+    const text = String(reason || "â€”").trim() || "â€”";
+    const isLong = text.length > 100;
+    const preview = isLong ? `${text.slice(0, 100)}...` : text;
+    return (
+      <div className="leave-reason-preview" title={text}>
+        <span>{escapeHtml(preview)}</span>
+        {isLong && (
+          <button type="button" onClick={() => setReasonModal(text)}>
+            View More
+          </button>
+        )}
+      </div>
+    );
+  };
 
   useEffect(() => {
     if (!form.fromDate) {
@@ -382,6 +441,8 @@ export default function EmployeeLeave({ embedded = false }) {
                       <th>Paid Balance</th>
                       <th>Reason</th>
                       <th>Status</th>
+                      <th>Approved By</th>
+                      <th>Approved On</th>
                       <th>Action</th>
                     </tr>
                   </thead>
