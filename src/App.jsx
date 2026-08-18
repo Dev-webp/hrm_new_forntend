@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import RequireAuth from "./components/RequireAuth";
@@ -27,18 +27,50 @@ function RootRedirect() {
 }
 
 function App() {
-  return (
-    <>
-      <div className="desktop-only-message">
-        
-      </div>
+  const [isPhone, setIsPhone] = useState(false);
 
-      <div className="hrms-desktop-app">
-        <BrowserRouter>
-          <Suspense fallback={<PageLoading label="Loading HRMS…" />}>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/login" element={<Login />} />
+  useEffect(() => {
+    const checkPhone = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+      const phone =
+        /Android.*Mobile|iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(
+          userAgent
+        );
+
+      setIsPhone(phone);
+    };
+
+    checkPhone();
+  }, []);
+
+  if (isPhone) {
+    return (
+      <div className="phone-blocked-message">
+        <div className="phone-blocked-card">
+          <div className="phone-blocked-icon">🖥️</div>
+
+          <h1>Desktop Access Required</h1>
+
+          <p>
+            VJC HRMS is available only on desktop and laptop computers.
+          </p>
+
+          <p>
+            Please open HRMS on a desktop or laptop to continue.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hrms-desktop-app">
+      <BrowserRouter>
+        <Suspense fallback={<PageLoading label="Loading HRMS…" />}>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
 
             <Route
               path="/admin/*"
@@ -105,12 +137,15 @@ function App() {
             </Route>
 
             <Route path="/home" element={<RootRedirect />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </div>
-    </>
+
+            <Route
+              path="*"
+              element={<Navigate to="/" replace />}
+            />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </div>
   );
 }
 

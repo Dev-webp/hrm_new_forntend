@@ -65,3 +65,61 @@ a {
   color: var(--white);
   background: var(--primary);
 }
+
+
+/* =========================================
+   PHONE BLOCK SCREEN
+   ========================================= */
+
+.phone-blocked-message {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--surface-soft);
+}
+
+.phone-blocked-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 40px 28px;
+  text-align: center;
+
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.phone-blocked-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  background: var(--primary-light);
+
+  font-size: 36px;
+}
+
+.phone-blocked-card h1 {
+  margin: 0 0 14px;
+
+  color: var(--text);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.phone-blocked-card p {
+  margin: 8px 0;
+
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
