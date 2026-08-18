@@ -33,56 +33,39 @@ useEffect(() => {
   const checkPhone = () => {
     const ua = navigator.userAgent || "";
 
-    const hasTouch =
+    const touch =
       navigator.maxTouchPoints > 0 ||
       "ontouchstart" in window;
 
     const coarsePointer =
       window.matchMedia("(pointer: coarse)").matches;
 
-    const noHover =
-      window.matchMedia("(hover: none)").matches;
-
-    const iphone =
-      /iPhone|iPod/i.test(ua);
-
-    const androidMobile =
-      /Android/i.test(ua) &&
-      /Mobile/i.test(ua);
-
-    const androidDevice =
-      /Android/i.test(ua);
-
-    const androidDesktopMode =
-      androidDevice &&
-      hasTouch &&
-      (coarsePointer || noHover);
-
-    const otherMobile =
-      /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(ua);
-
-    const iPad =
-      /iPad/i.test(ua) ||
-      (
-        /Macintosh/i.test(ua) &&
-        hasTouch &&
-        navigator.maxTouchPoints > 1
-      );
-
-    const smallScreen =
+    const smallViewport =
       Math.min(window.innerWidth, window.innerHeight) <= 600;
 
-    const mobileViewport =
-      smallScreen &&
-      (hasTouch || coarsePointer);
+    const android = /Android/i.test(ua);
+    const iphone = /iPhone|iPod/i.test(ua);
+    const ipad = /iPad/i.test(ua);
+
+    const androidPhone =
+      android &&
+      (
+        /Mobile/i.test(ua) ||
+        (touch && (coarsePointer || smallViewport))
+      );
+
+    const applePhone =
+      iphone ||
+      ipad && touch;
+
+    const otherPhone =
+      /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(ua);
 
     const phone =
-      iphone ||
-      androidMobile ||
-      androidDesktopMode ||
-      otherMobile ||
-      iPad ||
-      mobileViewport;
+      androidPhone ||
+      applePhone ||
+      otherPhone ||
+      (touch && coarsePointer && smallViewport);
 
     setIsPhone(phone);
   };
