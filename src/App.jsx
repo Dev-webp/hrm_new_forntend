@@ -31,69 +31,44 @@ function App() {
 
 useEffect(() => {
   const checkPhone = () => {
-    const userAgent = navigator.userAgent || "";
-    const maxTouchPoints = navigator.maxTouchPoints || 0;
+    const ua = navigator.userAgent || "";
 
-    const isAndroid = /Android/i.test(userAgent);
-    const isIPhone = /iPhone/i.test(userAgent);
-    const isIPod = /iPod/i.test(userAgent);
+    // iPhone / iPod are straightforward
+    const iphone =
+      /iPhone|iPod/i.test(ua);
 
-    const isWindowsPhone =
-      /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(userAgent);
-
-    const hasTouch = maxTouchPoints > 0;
-
-    /*
-     * Android normally exposes "Mobile".
-     * Desktop Site removes "Mobile", so don't depend
-     * only on the User-Agent.
-     */
+    // Normal Android phone
     const androidMobile =
-      isAndroid &&
-      /Mobile/i.test(userAgent);
+      /Android/i.test(ua) &&
+      /Mobile/i.test(ua);
 
-    /*
-     * Android Desktop Site:
-     *
-     * We try to identify a touch-based Android device
-     * whose physical screen characteristics look like
-     * a phone.
-     */
-    const androidDesktopMode =
-      isAndroid &&
-      hasTouch &&
-      (
-        window.matchMedia("(pointer: coarse)").matches ||
-        window.matchMedia("(hover: none)").matches
-      );
+    // Other known mobile phones
+    const otherMobile =
+      /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(ua);
 
-    /*
-     * iPhone / iPod
-     */
-    const applePhone = isIPhone || isIPod;
-
-    /*
-     * Other known phones
-     */
-    const otherPhone = isWindowsPhone;
-
-    const phone =
-      applePhone ||
+    setIsPhone(
+      iphone ||
       androidMobile ||
-      androidDesktopMode ||
-      otherPhone;
-
-    setIsPhone(phone);
+      otherMobile
+    );
   };
 
   checkPhone();
-
-  window.addEventListener("resize", checkPhone);
-
-  return () => {
-    window.removeEventListener("resize", checkPhone);
-  };
 }, []);
+
+
+console.log("DEVICE INFO:", {
+  userAgent: navigator.userAgent,
+  platform: navigator.platform,
+  screenWidth: window.screen.width,
+  screenHeight: window.screen.height,
+  innerWidth: window.innerWidth,
+  innerHeight: window.innerHeight,
+  maxTouchPoints: navigator.maxTouchPoints,
+  pointerCoarse: window.matchMedia("(pointer: coarse)").matches,
+  hoverNone: window.matchMedia("(hover: none)").matches,
+});
+
   if (isPhone) {
     return (
       <div className="phone-blocked-message">
