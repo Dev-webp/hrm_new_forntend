@@ -57,17 +57,7 @@ useEffect(() => {
 }, []);
 
 
-console.log("DEVICE INFO:", {
-  userAgent: navigator.userAgent,
-  platform: navigator.platform,
-  screenWidth: window.screen.width,
-  screenHeight: window.screen.height,
-  innerWidth: window.innerWidth,
-  innerHeight: window.innerHeight,
-  maxTouchPoints: navigator.maxTouchPoints,
-  pointerCoarse: window.matchMedia("(pointer: coarse)").matches,
-  hoverNone: window.matchMedia("(hover: none)").matches,
-});
+
 
   if (isPhone) {
     return (
