@@ -32,46 +32,67 @@ function App() {
 useEffect(() => {
   const checkPhone = () => {
     const userAgent = navigator.userAgent || "";
-    const platform = navigator.platform || "";
+    const maxTouchPoints = navigator.maxTouchPoints || 0;
 
-    // Normal phone detection
-    const phoneUserAgent =
-      /Android.*Mobile|iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(
-        userAgent
+    const isAndroid = /Android/i.test(userAgent);
+    const isIPhone = /iPhone/i.test(userAgent);
+    const isIPod = /iPod/i.test(userAgent);
+
+    const isWindowsPhone =
+      /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(userAgent);
+
+    const hasTouch = maxTouchPoints > 0;
+
+    /*
+     * Android normally exposes "Mobile".
+     * Desktop Site removes "Mobile", so don't depend
+     * only on the User-Agent.
+     */
+    const androidMobile =
+      isAndroid &&
+      /Mobile/i.test(userAgent);
+
+    /*
+     * Android Desktop Site:
+     *
+     * We try to identify a touch-based Android device
+     * whose physical screen characteristics look like
+     * a phone.
+     */
+    const androidDesktopMode =
+      isAndroid &&
+      hasTouch &&
+      (
+        window.matchMedia("(pointer: coarse)").matches ||
+        window.matchMedia("(hover: none)").matches
       );
 
-    // Android phone detection even when "Desktop site" is enabled
-    const androidDevice = /Android/i.test(userAgent);
+    /*
+     * iPhone / iPod
+     */
+    const applePhone = isIPhone || isIPod;
 
-    const isSmallScreen = window.screen.width <= 600;
+    /*
+     * Other known phones
+     */
+    const otherPhone = isWindowsPhone;
 
-    const hasTouch =
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0;
-
-    // iPhone/iPod
-    const applePhone =
-      /iPhone|iPod/i.test(userAgent);
-
-    // Android phone:
-    // Android + touch + small physical screen
-    const androidPhone =
-      androidDevice &&
-      hasTouch &&
-      isSmallScreen;
-
-    // Windows Phone / BlackBerry / etc.
-    const otherPhone =
-      phoneUserAgent;
-
-    setIsPhone(
+    const phone =
       applePhone ||
-      androidPhone ||
-      otherPhone
-    );
+      androidMobile ||
+      androidDesktopMode ||
+      otherPhone;
+
+    setIsPhone(phone);
   };
 
   checkPhone();
+
+  window.addEventListener("resize", checkPhone);
+
+  return () => {
+    window.removeEventListener("resize", checkPhone);
+  };
 }, []);
   if (isPhone) {
     return (
