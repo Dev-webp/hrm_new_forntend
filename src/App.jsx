@@ -29,21 +29,50 @@ function RootRedirect() {
 function App() {
   const [isPhone, setIsPhone] = useState(false);
 
-  useEffect(() => {
-    const checkPhone = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+useEffect(() => {
+  const checkPhone = () => {
+    const userAgent = navigator.userAgent || "";
+    const platform = navigator.platform || "";
 
-      const phone =
-        /Android.*Mobile|iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(
-          userAgent
-        );
+    // Normal phone detection
+    const phoneUserAgent =
+      /Android.*Mobile|iPhone|iPod|Windows Phone|BlackBerry|IEMobile|Opera Mini/i.test(
+        userAgent
+      );
 
-      setIsPhone(phone);
-    };
+    // Android phone detection even when "Desktop site" is enabled
+    const androidDevice = /Android/i.test(userAgent);
 
-    checkPhone();
-  }, []);
+    const isSmallScreen = window.screen.width <= 600;
 
+    const hasTouch =
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0;
+
+    // iPhone/iPod
+    const applePhone =
+      /iPhone|iPod/i.test(userAgent);
+
+    // Android phone:
+    // Android + touch + small physical screen
+    const androidPhone =
+      androidDevice &&
+      hasTouch &&
+      isSmallScreen;
+
+    // Windows Phone / BlackBerry / etc.
+    const otherPhone =
+      phoneUserAgent;
+
+    setIsPhone(
+      applePhone ||
+      androidPhone ||
+      otherPhone
+    );
+  };
+
+  checkPhone();
+}, []);
   if (isPhone) {
     return (
       <div className="phone-blocked-message">
