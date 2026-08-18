@@ -33,31 +33,68 @@ useEffect(() => {
   const checkPhone = () => {
     const ua = navigator.userAgent || "";
 
-    // iPhone / iPod are straightforward
+    const hasTouch =
+      navigator.maxTouchPoints > 0 ||
+      "ontouchstart" in window;
+
+    const coarsePointer =
+      window.matchMedia("(pointer: coarse)").matches;
+
+    const noHover =
+      window.matchMedia("(hover: none)").matches;
+
     const iphone =
       /iPhone|iPod/i.test(ua);
 
-    // Normal Android phone
     const androidMobile =
       /Android/i.test(ua) &&
       /Mobile/i.test(ua);
 
-    // Other known mobile phones
+    const androidDevice =
+      /Android/i.test(ua);
+
+    const androidDesktopMode =
+      androidDevice &&
+      hasTouch &&
+      (coarsePointer || noHover);
+
     const otherMobile =
       /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(ua);
 
-    setIsPhone(
+    const iPad =
+      /iPad/i.test(ua) ||
+      (
+        /Macintosh/i.test(ua) &&
+        hasTouch &&
+        navigator.maxTouchPoints > 1
+      );
+
+    const smallScreen =
+      Math.min(window.innerWidth, window.innerHeight) <= 600;
+
+    const mobileViewport =
+      smallScreen &&
+      (hasTouch || coarsePointer);
+
+    const phone =
       iphone ||
       androidMobile ||
-      otherMobile
-    );
+      androidDesktopMode ||
+      otherMobile ||
+      iPad ||
+      mobileViewport;
+
+    setIsPhone(phone);
   };
 
   checkPhone();
+
+  window.addEventListener("resize", checkPhone);
+
+  return () => {
+    window.removeEventListener("resize", checkPhone);
+  };
 }, []);
-
-
-
 
   if (isPhone) {
     return (
