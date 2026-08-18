@@ -33,39 +33,40 @@ useEffect(() => {
   const checkPhone = () => {
     const ua = navigator.userAgent || "";
 
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
     const touch =
       navigator.maxTouchPoints > 0 ||
       "ontouchstart" in window;
 
-    const coarsePointer =
+    const coarse =
       window.matchMedia("(pointer: coarse)").matches;
 
-    const smallViewport =
-      Math.min(window.innerWidth, window.innerHeight) <= 600;
-
-    const android = /Android/i.test(ua);
-    const iphone = /iPhone|iPod/i.test(ua);
-    const ipad = /iPad/i.test(ua);
-
-    const androidPhone =
-      android &&
-      (
-        /Mobile/i.test(ua) ||
-        (touch && (coarsePointer || smallViewport))
+    const knownMobile =
+      /Android.*Mobile|iPhone|iPod|Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(
+        ua
       );
 
-    const applePhone =
-      iphone ||
-      ipad && touch;
+    const android =
+      /Android/i.test(ua);
 
-    const otherPhone =
-      /Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(ua);
+    const androidDesktopSite =
+      android &&
+      touch &&
+      (
+        coarse ||
+        Math.min(width, height) <= 900
+      );
+
+    const smallTouchDevice =
+      touch &&
+      Math.min(width, height) <= 900;
 
     const phone =
-      androidPhone ||
-      applePhone ||
-      otherPhone ||
-      (touch && coarsePointer && smallViewport);
+      knownMobile ||
+      androidDesktopSite ||
+      smallTouchDevice;
 
     setIsPhone(phone);
   };
@@ -78,7 +79,6 @@ useEffect(() => {
     window.removeEventListener("resize", checkPhone);
   };
 }, []);
-
   if (isPhone) {
     return (
       <div className="phone-blocked-message">
