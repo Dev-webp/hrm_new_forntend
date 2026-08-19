@@ -1,144 +1,219 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import RequireAuth from "./components/RequireAuth";
 import PageLoading from "./components/PageLoading";
-import { getStoredRole, isAuthenticated } from "./utils/auth";
+import {
+  getStoredRole,
+  isAuthenticated,
+} from "./utils/auth";
 
-const DashboardLayout = lazy(() => import("./layouts/DashboardLayout"));
-const AdminRoutes = lazy(() => import("./pages/admin/AdminRoutes"));
-const EmployeeRoutes = lazy(() => import("./pages/employee/EmployeeRoutes"));
-const Login = lazy(() => import("./pages/Login"));
-const ManagerRoutes = lazy(() => import("./pages/manager/ManagerRoutes"));
-const OperationalManagerRoutes = lazy(() => import("./pages/operations/OperationalManagerRoutes"));
-const SubAdminRoutes = lazy(() => import("./pages/subadmin/SubAdminRoutes"));
+const DashboardLayout = lazy(
+  () => import("./layouts/DashboardLayout")
+);
+
+const AdminRoutes = lazy(
+  () => import("./pages/admin/AdminRoutes")
+);
+
+const EmployeeRoutes = lazy(
+  () => import("./pages/employee/EmployeeRoutes")
+);
+
+const Login = lazy(
+  () => import("./pages/Login")
+);
+
+const ManagerRoutes = lazy(
+  () => import("./pages/manager/ManagerRoutes")
+);
+
+const OperationalManagerRoutes = lazy(
+  () =>
+    import(
+      "./pages/operations/OperationalManagerRoutes"
+    )
+);
+
+const SubAdminRoutes = lazy(
+  () =>
+    import(
+      "./pages/subadmin/SubAdminRoutes"
+    )
+);
+
+
+// =====================================================
+// ROOT REDIRECT
+// =====================================================
 
 function RootRedirect() {
+
   if (!isAuthenticated()) {
-    return <Navigate to="/" replace />;
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
   }
 
   const role = getStoredRole();
-  if (role === "OPERATIONAL_MANAGER") return <Navigate to="/operations" replace />;
-  if (role === "MANAGER") return <Navigate to="/manager" replace />;
-  if (role === "SUB_ADMIN") return <Navigate to="/sub-admin" replace />;
-  if (role === "EMPLOYEE") return <Navigate to="/employee" replace />;
-  return <Navigate to="/admin" replace />;
-}
 
-function App() {
-  const [isPhone, setIsPhone] = useState(false);
-
-useEffect(() => {
-  const checkPhone = () => {
-    const ua = navigator.userAgent || "";
-
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    const touch =
-      navigator.maxTouchPoints > 0 ||
-      "ontouchstart" in window;
-
-    const coarse =
-      window.matchMedia("(pointer: coarse)").matches;
-
-    const knownMobile =
-      /Android.*Mobile|iPhone|iPod|Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(
-        ua
-      );
-
-    const android =
-      /Android/i.test(ua);
-
-    const androidDesktopSite =
-      android &&
-      touch &&
-      (
-        coarse ||
-        Math.min(width, height) <= 900
-      );
-
-    const smallTouchDevice =
-      touch &&
-      Math.min(width, height) <= 900;
-
-    const phone =
-      knownMobile ||
-      androidDesktopSite ||
-      smallTouchDevice;
-
-    setIsPhone(phone);
-  };
-
-  checkPhone();
-
-  window.addEventListener("resize", checkPhone);
-
-  return () => {
-    window.removeEventListener("resize", checkPhone);
-  };
-}, []);
-  if (isPhone) {
+  if (role === "OPERATIONAL_MANAGER") {
     return (
-      <div className="phone-blocked-message">
-        <div className="phone-blocked-card">
-          <div className="phone-blocked-icon">🖥️</div>
+      <Navigate
+        to="/operations"
+        replace
+      />
+    );
+  }
 
-          <h1>Desktop Access Required</h1>
+  if (role === "MANAGER") {
+    return (
+      <Navigate
+        to="/manager"
+        replace
+      />
+    );
+  }
 
-          <p>
-            VJC HRMS is available only on desktop and laptop computers.
-          </p>
+  if (role === "SUB_ADMIN") {
+    return (
+      <Navigate
+        to="/sub-admin"
+        replace
+      />
+    );
+  }
 
-          <p>
-            Please open HRMS on a desktop or laptop to continue.
-          </p>
-        </div>
-      </div>
+  if (role === "EMPLOYEE") {
+    return (
+      <Navigate
+        to="/employee"
+        replace
+      />
     );
   }
 
   return (
+    <Navigate
+      to="/admin"
+      replace
+    />
+  );
+}
+
+
+// =====================================================
+// APP
+// =====================================================
+
+function App() {
+
+  return (
     <div className="hrms-desktop-app">
+
       <BrowserRouter>
-        <Suspense fallback={<PageLoading label="Loading HRMS…" />}>
+
+        <Suspense
+          fallback={
+            <PageLoading
+              label="Loading HRMS…"
+            />
+          }
+        >
+
           <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
+
+            {/* =================================================
+                LOGIN
+            ================================================= */}
+
+            <Route
+              path="/"
+              element={<Login />}
+            />
+
+            <Route
+              path="/login"
+              element={<Login />}
+            />
+
+
+            {/* =================================================
+                ADMIN
+            ================================================= */}
 
             <Route
               path="/admin/*"
               element={
                 <RequireAuth>
-                  <DashboardLayout role="admin" />
+                  <DashboardLayout
+                    role="admin"
+                  />
                 </RequireAuth>
               }
             >
-              <Route path="*" element={<AdminRoutes />} />
+              <Route
+                path="*"
+                element={<AdminRoutes />}
+              />
             </Route>
+
+
+            {/* =================================================
+                MANAGER
+            ================================================= */}
 
             <Route
               path="/manager/*"
               element={
                 <RequireAuth>
-                  <DashboardLayout role="manager" />
+                  <DashboardLayout
+                    role="manager"
+                  />
                 </RequireAuth>
               }
             >
-              <Route path="*" element={<ManagerRoutes />} />
+              <Route
+                path="*"
+                element={<ManagerRoutes />}
+              />
             </Route>
+
+
+            {/* =================================================
+                OPERATIONAL MANAGER
+            ================================================= */}
 
             <Route
               path="/operations/*"
               element={
                 <RequireAuth>
-                  <DashboardLayout role="operational-manager" />
+                  <DashboardLayout
+                    role="operational-manager"
+                  />
                 </RequireAuth>
               }
             >
-              <Route path="*" element={<OperationalManagerRoutes />} />
+              <Route
+                path="*"
+                element={
+                  <OperationalManagerRoutes />
+                }
+              />
             </Route>
+
+
+            {/* =================================================
+                EMPLOYEE
+            ================================================= */}
 
             <Route
               path="/employee/*"
@@ -149,37 +224,83 @@ useEffect(() => {
               }
             />
 
+
+            {/* =================================================
+                SUB ADMIN
+            ================================================= */}
+
             <Route
               path="/sub-admin/*"
               element={
                 <RequireAuth>
-                  <DashboardLayout role="sub-admin" />
+                  <DashboardLayout
+                    role="sub-admin"
+                  />
                 </RequireAuth>
               }
             >
-              <Route path="*" element={<SubAdminRoutes />} />
+              <Route
+                path="*"
+                element={
+                  <SubAdminRoutes />
+                }
+              />
             </Route>
+
+
+            {/* =================================================
+                SUBADMIN
+            ================================================= */}
 
             <Route
               path="/subadmin/*"
               element={
                 <RequireAuth>
-                  <DashboardLayout role="sub-admin" />
+                  <DashboardLayout
+                    role="sub-admin"
+                  />
                 </RequireAuth>
               }
             >
-              <Route path="*" element={<SubAdminRoutes />} />
+              <Route
+                path="*"
+                element={
+                  <SubAdminRoutes />
+                }
+              />
             </Route>
 
-            <Route path="/home" element={<RootRedirect />} />
+
+            {/* =================================================
+                HOME
+            ================================================= */}
+
+            <Route
+              path="/home"
+              element={<RootRedirect />}
+            />
+
+
+            {/* =================================================
+                UNKNOWN ROUTES
+            ================================================= */}
 
             <Route
               path="*"
-              element={<Navigate to="/" replace />}
+              element={
+                <Navigate
+                  to="/"
+                  replace
+                />
+              }
             />
+
           </Routes>
+
         </Suspense>
+
       </BrowserRouter>
+
     </div>
   );
 }
