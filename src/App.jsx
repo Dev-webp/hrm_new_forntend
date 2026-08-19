@@ -59,11 +59,38 @@ function isMobileDevice() {
     window.opera ||
     "";
 
-  return /Android|iPhone|iPad|iPod|Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(
-    userAgent
-  );
-}
+  // 1. Normal mobile User-Agent
+  const mobileUserAgent =
+    /Android|iPhone|iPad|iPod|Windows Phone|IEMobile|Opera Mini|BlackBerry/i.test(
+      userAgent
+    );
 
+  // 2. Touch device detection
+  const touchDevice =
+    navigator.maxTouchPoints > 0 ||
+    "ontouchstart" in window;
+
+  // 3. Small screen detection
+  const smallScreen =
+    Math.min(window.screen.width, window.screen.height) <= 900;
+
+  // 4. Coarse pointer = usually touchscreen
+  const coarsePointer =
+    window.matchMedia &&
+    window.matchMedia("(pointer: coarse)").matches;
+
+  // Strong mobile indicators
+  if (mobileUserAgent) {
+    return true;
+  }
+
+  // Desktop-site mode on phones/tablets
+  if (touchDevice && smallScreen && coarsePointer) {
+    return true;
+  }
+
+  return false;
+}
 
 // =====================================================
 // MOBILE ACCESS BLOCK SCREEN
