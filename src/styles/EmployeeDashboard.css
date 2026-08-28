@@ -190,7 +190,7 @@
         .legend-dot.halfday { background: var(--calendar-halfday-bg, #FFE066); border: 1px solid var(--calendar-halfday-border, #D4A300); }
         .legend-dot.holiday { background: var(--calendar-holiday-bg, #B3CEFB); border: 1px solid var(--calendar-holiday-border, #2563EB); }
         .legend-dot.absent { background: var(--calendar-absent-bg, #FFCBCB); border: 1px solid var(--calendar-absent-border, #DC2626); }
-        .legend-dot.paid-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); border: 1px solid var(--calendar-paid-leave-border, #7C3AED); }
+        .legend-dot.paid-leave { background: var(--calendar-paid-leave-bg, #F5F3FF); border: 1px solid var(--calendar-paid-leave-border, #7C3AED); }
         .legend-dot.unpaid-leave { background: var(--calendar-unpaid-leave-bg, #FDA4CF); border: 1px solid var(--calendar-unpaid-leave-border, #DB2777); }
         .legend-dot.no-record { background: var(--calendar-empty-bg, #E2E8F0); border: 1px solid var(--calendar-empty-border, #94A3B8); }
         .calendar-weekdays, .attendance-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
@@ -212,7 +212,7 @@
         .calendar-cell.calendar-late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); border-color: var(--calendar-late-border, #EA580C); }
         .calendar-cell.calendar-halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); border-color: var(--calendar-halfday-border, #D4A300); }
         .calendar-cell.calendar-empty { background: var(--calendar-empty-bg, #E2E8F0); color: var(--calendar-empty-text, #334155); border-color: var(--calendar-empty-border, #94A3B8); }
-        .calendar-cell.calendar-paid-leave, .calendar-cell.paid-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); border-color: var(--calendar-paid-leave-border, #7C3AED); color: var(--calendar-paid-leave-text, #4C1D95); }
+        .calendar-cell.calendar-paid-leave, .calendar-cell.paid-leave { background: var(--calendar-paid-leave-bg, #F5F3FF); border-color: var(--calendar-paid-leave-border, #7C3AED); color: var(--calendar-paid-leave-text, #6D28D9); }
         .calendar-cell.calendar-unpaid-leave, .calendar-cell.unpaid-leave { background: var(--calendar-unpaid-leave-bg, #FDA4CF); border-color: var(--calendar-unpaid-leave-border, #DB2777); color: var(--calendar-unpaid-leave-text, #831843); }
 
         /* ── DETAIL TABLE ── */

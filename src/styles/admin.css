@@ -1622,7 +1622,7 @@ body.hrms-dashboard #root {
 .heatmap-cell.absent { background: #FEE2E2; color: #991B1B; }
 .heatmap-cell.late { background: #FFEDD5; color: #9A3412; }
 .heatmap-cell.half-day { background: #FEF3C7; color: #92400E; }
-.heatmap-cell.paid-leave { background: #DBEAFE; color: #1D4ED8; }
+.heatmap-cell.paid-leave { background: #F5F3FF; color: #6D28D9; }
 .heatmap-cell.holiday { background: #EDE9FE; color: #6D28D9; }
 
 .heatmap-legend {
@@ -1650,7 +1650,7 @@ body.hrms-dashboard #root {
 .heatmap-legend .absent { background: #DC2626; }
 .heatmap-legend .late { background: #FF8C00; }
 .heatmap-legend .half-day { background: #F59E0B; }
-.heatmap-legend .paid-leave { background: #2563EB; }
+.heatmap-legend .paid-leave { background: #7C3AED; }
 .heatmap-legend .holiday { background: #8B5CF6; }
 
 .leave-analytics {

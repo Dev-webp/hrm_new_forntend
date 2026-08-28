@@ -228,7 +228,7 @@
 }
 
 .manager-calendar-page .ldot.leave {
-  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  background: var(--calendar-paid-leave-bg, #F5F3FF);
   border: 1px solid var(--calendar-paid-leave-border, #7C3AED);
 }
 
@@ -385,9 +385,9 @@
 .manager-calendar-page .cal-day.calendar-paid-leave,
 .manager-calendar-page .cal-day.paid-leave,
 .manager-calendar-page .calendar-day.paid-leave {
-  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  background: var(--calendar-paid-leave-bg, #F5F3FF);
   border-color: var(--calendar-paid-leave-border, #7C3AED);
-  color: var(--calendar-paid-leave-text, #4C1D95);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 .manager-calendar-page .cal-day.calendar-unpaid-leave,
 .manager-calendar-page .cal-day.unpaid-leave,
@@ -399,7 +399,7 @@
 
 .manager-calendar-page .cal-day.calendar-paid-leave :where(.day-num, .day-badge, .mini-row),
 .manager-calendar-page .cal-day.paid-leave :where(.day-num, .day-badge, .mini-row) {
-  color: var(--calendar-paid-leave-text, #4C1D95);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 .manager-calendar-page .cal-day.calendar-unpaid-leave :where(.day-num, .day-badge, .mini-row),
 .manager-calendar-page .cal-day.unpaid-leave :where(.day-num, .day-badge, .mini-row) {

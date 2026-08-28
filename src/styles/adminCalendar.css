@@ -578,9 +578,9 @@
 
 .admin-calendar-page .calendar-day.calendar-paid-leave,
 .admin-calendar-page .calendar-day.paid-leave {
-  background: #CBB9FF;
+  background: #F5F3FF;
   border-color: #7C3AED;
-  color: #4C1D95;
+  color: #6D28D9;
 }
 
 .admin-calendar-page .calendar-day.calendar-unpaid-leave,
@@ -603,12 +603,12 @@
 
 .admin-calendar-page .calendar-day.calendar-paid-leave :where(.day-number, .status-label),
 .admin-calendar-page .calendar-day.paid-leave :where(.day-number, .status-label) {
-  color: #FFFFFF;
+  color: #6D28D9;
 }
 
 .admin-calendar-page .calendar-day.calendar-paid-leave .status-label,
 .admin-calendar-page .calendar-day.paid-leave .status-label {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(124, 58, 237, 0.10);
 }
 
 .admin-calendar-page .calendar-day.calendar-present :where(.day-number, .status-label),

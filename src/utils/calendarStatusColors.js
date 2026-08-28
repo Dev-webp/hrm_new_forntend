@@ -25,9 +25,9 @@ export const CALENDAR_STATUS_COLORS = {
     text: "#0F2E8C",
   },
   paid_leave: {
-    background: "#CBB9FF",
+    background: "#F5F3FF",
     border: "#7C3AED",
-    text: "#4C1D95",
+    text: "#6D28D9",
   },
   unpaid_leave: {
     background: "#FDA4CF",

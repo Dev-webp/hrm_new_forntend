@@ -458,8 +458,8 @@
 }
 
 .admin-analysis-page .b-paid-leave {
-  background: var(--calendar-paid-leave-bg, #CBB9FF);
-  color: var(--calendar-paid-leave-text, #4C1D95);
+  background: var(--calendar-paid-leave-bg, #F5F3FF);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 
 .admin-analysis-page .b-unpaid-leave {
@@ -555,9 +555,9 @@
 .admin-analysis-page .cal-paid-leave,
 .admin-analysis-page .paid-leave,
 .admin-analysis-page .calendar-day.paid-leave {
-  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  background: var(--calendar-paid-leave-bg, #F5F3FF);
   border-color: var(--calendar-paid-leave-border, #7C3AED);
-  color: var(--calendar-paid-leave-text, #4C1D95);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 
 .admin-analysis-page .cal-unpaid-leave,
@@ -601,7 +601,7 @@
 }
 
 .admin-analysis-page .day-num.white-num {
-  color: var(--calendar-paid-leave-text, #4C1D95);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 
 .admin-analysis-page .cal-present .day-num,

@@ -1325,11 +1325,12 @@ function AdminCalendar() {
 
             <label>Status</label>
             <select id="editStatus" defaultValue={editRecord.status || "auto"}>
-              <option value="auto">Auto Calculate</option>
-              <option value="full_day">Full Day</option>
-              <option value="half_day">Half Day</option>
-              <option value="absent">Absent</option>
-              <option value="leave">Leave</option>
+            <option value="auto">Auto Calculate</option>
+<option value="full_day">Full Day</option>
+<option value="half_day">Half Day</option>
+<option value="absent">Absent</option>
+<option value="paid_leave">Paid Leave</option>
+<option value="unpaid_leave">Unpaid Leave</option>
             </select>
 
             <label>Login Time</label>

@@ -85,7 +85,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .b-late { background: var(--calendar-late-bg, #FFD29B); color: var(--calendar-late-text, #9A2E00); }
 .b-absent { background: var(--calendar-absent-bg, #FFCBCB); color: var(--calendar-absent-text, #8B0000); }
 .b-halfday { background: var(--calendar-halfday-bg, #FFE066); color: var(--calendar-halfday-text, #7A5800); }
-.b-paid-leave { background: var(--calendar-paid-leave-bg, #CBB9FF); color: var(--calendar-paid-leave-text, #4C1D95); }
+.b-paid-leave { background: var(--calendar-paid-leave-bg, #F5F3FF); color: var(--calendar-paid-leave-text, #6D28D9); }
 .b-unpaid-leave { background: var(--calendar-unpaid-leave-bg, #FDA4CF); color: var(--calendar-unpaid-leave-text, #831843); }
 .b-manager { background: rgba(255, 140, 0,0.2); color: #FF8C00; }
 .break-pill { background: #F5F7FA; border-radius: 20px; padding: 3px 8px; font-family: monospace; font-size: 10px; display: inline-block; margin: 1px; white-space: nowrap; }
@@ -102,9 +102,9 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .cal-paid-leave,
 .paid-leave,
 .calendar-day.paid-leave {
-  background: var(--calendar-paid-leave-bg, #CBB9FF);
+  background: var(--calendar-paid-leave-bg, #F5F3FF);
   border-color: var(--calendar-paid-leave-border, #7C3AED);
-  color: var(--calendar-paid-leave-text, #4C1D95);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 .cal-unpaid-leave,
 .unpaid-leave,
@@ -127,7 +127,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .cal-day .day-num.orange-num { color: var(--calendar-late-text, #9A2E00); }
 .cal-day .day-num.red-num { color: var(--calendar-absent-text, #8B0000); }
 .cal-day .day-num.default-num { color: var(--calendar-empty-text, #334155); }
-.cal-day .day-num.white-num { color: var(--calendar-paid-leave-text, #4C1D95); }
+.cal-day .day-num.white-num { color: var(--calendar-paid-leave-text, #6D28D9); }
 .cal-present .day-num,
 .cal-late .day-num,
 .cal-absent .day-num,

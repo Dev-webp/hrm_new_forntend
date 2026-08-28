@@ -643,6 +643,28 @@
   color: var(--hrms-danger);
 }
 
+.employee-leave-page .employee-leave-kpi.blue span,
+.employee-leave-page .balance-card.paid .balance-icon,
+.employee-leave-page .balance-card.used .balance-icon {
+  background: #F5F3FF;
+  color: #6D28D9;
+}
+
+.employee-leave-page .balance-card.paid {
+  border-color: #DDD6FE !important;
+  background: #FDFCFF;
+}
+
+.employee-leave-page .balance-card.paid span,
+.employee-leave-page .balance-card.used span {
+  color: #7C3AED !important;
+}
+
+.employee-leave-page .subadmin-leave-type-cell .paid {
+  color: #6D28D9;
+  background: #F5F3FF;
+}
+
 .employee-leave-page .leave-balance-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
