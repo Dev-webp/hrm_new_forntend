@@ -454,16 +454,475 @@
   background: #FFF7ED;
 }
 
-.employee-leave-reason {
-    width:220px;
-    max-width:220px;
-    color:#64748B !important;
 
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
 
-    cursor:pointer;
+
+.employee-leave-page .subadmin-leave-reason {
+  width: 245px;
+  max-width: 245px;
+  color: #475569 !important;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+
+  /* Show maximum 3 lines in table */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+
+  cursor: pointer;
+}
+
+.employee-leave-page .subadmin-leave-reason:hover {
+  color: #0D47A1 !important;
+  background: #F8FAFC;
+}
+
+/* =========================================================
+   EMPLOYEE LEAVE HISTORY — COMPACT TABLE
+   ========================================================= */
+
+.employee-leave-page .subadmin-leave-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  -webkit-overflow-scrolling: touch;
+}
+
+.employee-leave-page .subadmin-leave-table {
+  width: 100%;
+  min-width: 1180px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Header */
+
+.employee-leave-page .subadmin-leave-table th {
+  padding: 13px 12px;
+  background: #F1F7FF;
+  color: #1E3A5F;
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid #DCE7F3;
+  vertical-align: middle;
+}
+
+/* Cells */
+
+.employee-leave-page .subadmin-leave-table td {
+  padding: 14px 12px;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-bottom: 1px solid #EEF2F7;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.employee-leave-page .subadmin-leave-table tbody tr {
+  height: 68px;
+  transition: background 0.18s ease;
+}
+
+.employee-leave-page .subadmin-leave-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.employee-leave-page .subadmin-leave-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* =========================================================
+   COLUMN WIDTHS
+   ========================================================= */
+
+.employee-leave-page .subadmin-leave-table th:nth-child(1),
+.employee-leave-page .subadmin-leave-table td:nth-child(1) {
+  width: 155px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(2),
+.employee-leave-page .subadmin-leave-table td:nth-child(2) {
+  width: 85px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(3),
+.employee-leave-page .subadmin-leave-table td:nth-child(3),
+.employee-leave-page .subadmin-leave-table th:nth-child(4),
+.employee-leave-page .subadmin-leave-table td:nth-child(4) {
+  width: 88px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(5),
+.employee-leave-page .subadmin-leave-table td:nth-child(5) {
+  width: 82px;
+  text-align: center;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(6),
+.employee-leave-page .subadmin-leave-table td:nth-child(6),
+.employee-leave-page .subadmin-leave-table th:nth-child(7),
+.employee-leave-page .subadmin-leave-table td:nth-child(7),
+.employee-leave-page .subadmin-leave-table th:nth-child(8),
+.employee-leave-page .subadmin-leave-table td:nth-child(8),
+.employee-leave-page .subadmin-leave-table th:nth-child(9),
+.employee-leave-page .subadmin-leave-table td:nth-child(9) {
+  width: 82px;
+  text-align: center;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(10),
+.employee-leave-page .subadmin-leave-table td:nth-child(10) {
+  width: 245px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(11),
+.employee-leave-page .subadmin-leave-table td:nth-child(11) {
+  width: 100px;
+  text-align: center;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(12),
+.employee-leave-page .subadmin-leave-table td:nth-child(12) {
+  width: 120px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(13),
+.employee-leave-page .subadmin-leave-table td:nth-child(13) {
+  width: 110px;
+}
+
+.employee-leave-page .subadmin-leave-table th:nth-child(14),
+.employee-leave-page .subadmin-leave-table td:nth-child(14) {
+  width: 70px;
+  text-align: center;
+}
+
+/* =========================================================
+   LEAVE TYPE
+   ========================================================= */
+
+.employee-leave-page .subadmin-leave-type-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.employee-leave-page .subadmin-leave-type-cell span {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.employee-leave-page .subadmin-leave-type-cell strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   REASON — IMPORTANT
+   ========================================================= */
+
+/* =========================================================
+   LEAVE REASON CELL
+   ========================================================= */
+
+.employee-leave-page .subadmin-leave-reason-cell {
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
+  vertical-align: middle;
+}
+
+.employee-leave-page .leave-reason-preview {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.employee-leave-page .leave-reason-text {
+  display: -webkit-box;
+  width: 100%;
+
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+
+  overflow: hidden;
+
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.45;
+
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.employee-leave-page .leave-reason-preview:hover .leave-reason-text {
+  color: #0D47A1;
+}
+
+.employee-leave-page .leave-reason-view-btn {
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: #0D47A1;
+
+  font-size: 0.70rem;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.employee-leave-page .leave-reason-view-btn:hover {
+  text-decoration: underline;
+}
+
+.employee-leave-page .leave-reason-empty {
+  color: #94A3B8;
+  cursor: default;
+}
+
+
+/* =========================================================
+   COMPLETE REASON MODAL
+   ========================================================= */
+
+.employee-leave-page .leave-reason-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(5px);
+}
+
+.employee-leave-page .leave-reason-modal {
+  width: min(680px, 100%);
+  max-height: 82vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #FFFFFF;
+
+  border: 1px solid #DDE7F3;
+  border-radius: 18px;
+
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.25);
+
+  overflow: hidden;
+}
+
+.employee-leave-page .leave-reason-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  padding: 20px 22px;
+
+  border-bottom: 1px solid #E5EAF1;
+}
+
+.employee-leave-page .leave-reason-modal-header span {
+  display: block;
+  margin-bottom: 5px;
+
+  color: #64748B;
+
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.employee-leave-page .leave-reason-modal-header h3 {
+  margin: 0;
+
+  color: #1A2B4B;
+
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.employee-leave-page .leave-reason-modal-close {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #F1F5F9;
+  color: #475569;
+
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.employee-leave-page .leave-reason-modal-close:hover {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+.employee-leave-page .leave-reason-modal-content {
+  flex: 1;
+
+  padding: 24px;
+
+  overflow-y: auto;
+}
+
+.employee-leave-page .leave-reason-full-text {
+  color: #334155;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  line-height: 1.75;
+
+  /*
+   * IMPORTANT:
+   * Never truncate the complete reason.
+   */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.employee-leave-page .leave-reason-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  padding: 15px 22px;
+
+  border-top: 1px solid #E5EAF1;
+}
+
+.employee-leave-page .leave-reason-modal-footer button {
+  padding: 9px 18px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #0D47A1;
+  color: #FFFFFF;
+
+  font-size: 0.82rem;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.employee-leave-page .leave-reason-modal-footer button:hover {
+  background: #0A3A85;
+}
+
+.employee-leave-page .subadmin-leave-reason,
+.employee-leave-page .employee-leave-reason {
+  width: auto;
+  max-width: none;
+  color: #64748B !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+/* Make sure long words never destroy the table */
+
+.employee-leave-page .subadmin-leave-reason * {
+  max-width: 100%;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.employee-leave-page .status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   ACTION
+   ========================================================= */
+
+.employee-leave-page .employee-leave-delete-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: #DC2626;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.employee-leave-page .employee-leave-delete-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 7px 16px rgba(220, 38, 38, 0.20);
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .employee-leave-page .subadmin-leave-table-wrap {
+    overflow-x: auto;
+  }
+
+  .employee-leave-page .subadmin-leave-table {
+    min-width: 1180px;
+  }
 }
 .employee-leave-page .subadmin-leave-table-wrap {
  overflow-x:visible;
@@ -892,4 +1351,55 @@
     width: calc(100% - 28px);
     padding: 22px;
   }
+}
+
+/* =========================================================
+   APPROVAL INFORMATION
+   ========================================================= */
+
+.employee-leave-page .leave-approved-by-cell {
+  min-width: 150px;
+  max-width: 150px;
+  vertical-align: middle;
+}
+
+.employee-leave-page .leave-approver-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.employee-leave-page .leave-approver-cell strong {
+  display: block;
+
+  color: #1E293B;
+  font-size: 0.80rem;
+  font-weight: 800;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.employee-leave-page .leave-approver-cell small {
+  display: block;
+
+  color: #64748B;
+  font-size: 0.68rem;
+  font-weight: 600;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.employee-leave-page .leave-approved-on-cell {
+  min-width: 135px;
+  max-width: 135px;
+
+  color: #475569;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }

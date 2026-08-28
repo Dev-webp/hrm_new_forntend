@@ -99,21 +99,78 @@ function hasApprovedLeave(record = {}) {
   );
 }
 
-function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayHoliday, dateStr, todayStr } = {}) {
+function resolveEmployeeCalendarStatus(
+  record,
+  {
+    isSunday,
+    isHoliday,
+    isHalfDayHoliday,
+    dateStr,
+    todayStr,
+  } = {}
+) {
+  // =====================================================
+  // 1. WEEKEND / HOLIDAY
+  // =====================================================
   if (isSunday) return "sunday";
+
   if (isHoliday) return "holiday";
-  if (isHalfDayHoliday && !record) return "half_day";
-  if (!record) return dateStr && todayStr && dateStr <= todayStr ? "absent" : "no_record";
 
-  const status = normalizeAttendanceStatus(record.status || record.day_status);
+  if (isHalfDayHoliday && !record) {
+    return "half_day";
+  }
 
-  if (status === "present") return "present";
-  if (status === "working") return "working";
-  if (status === "missing_checkout") return "missing_checkout";
-  if (status === "late") return "late";
-  if (status === "half_day") return "half_day";
-  if (status === "absent") return "absent";
-  if (status === "holiday") return "holiday";
+  // =====================================================
+  // 2. NO ATTENDANCE RECORD
+  // =====================================================
+  if (!record) {
+    return dateStr && todayStr && dateStr <= todayStr
+      ? "absent"
+      : "no_record";
+  }
+
+  // =====================================================
+  // 3. NORMALIZE STATUS
+  // =====================================================
+  const status = normalizeAttendanceStatus(
+    record.status || record.day_status
+  );
+
+  // =====================================================
+  // 4. MANUAL LEAVE STATUS MUST HAVE PRIORITY
+  // =====================================================
+  // IMPORTANT:
+  // Paid Leave / Unpaid Leave must be checked BEFORE
+  // absent/present/other automatic attendance statuses.
+  //
+  // This prevents a manually selected Paid Leave from
+  // being displayed as Absent.
+  // =====================================================
+
+  if (
+    status === "paid_leave" ||
+    record.is_paid_leave === true ||
+    record.isPaidLeave === true ||
+    Number(record.paid_days || record.paidDays || 0) > 0
+  ) {
+    return "paid_leave";
+  }
+
+  if (
+    status === "unpaid_leave" ||
+    record.is_unpaid_leave === true ||
+    record.isUnpaidLeave === true ||
+    Number(record.unpaid_days || record.unpaidDays || 0) > 0
+  ) {
+    return "unpaid_leave";
+  }
+
+  // =====================================================
+  // 5. APPROVED LEAVE FALLBACK
+  // =====================================================
+  // If the record does not explicitly contain paid/unpaid
+  // status, use the approved leave information.
+  // =====================================================
 
   if (hasApprovedLeave(record)) {
     if (
@@ -128,11 +185,52 @@ function resolveEmployeeCalendarStatus(record, { isSunday, isHoliday, isHalfDayH
     return "unpaid_leave";
   }
 
-  if (hasValidAttendance(record)) return "no_record";
+  // =====================================================
+  // 6. NORMAL ATTENDANCE STATUSES
+  // =====================================================
+
+  if (status === "present") {
+    return "present";
+  }
+
+  if (status === "working") {
+    return "working";
+  }
+
+  if (status === "missing_checkout") {
+    return "missing_checkout";
+  }
+
+  if (status === "late") {
+    return "late";
+  }
+
+  if (status === "half_day") {
+    return "half_day";
+  }
+
+  if (status === "absent") {
+    return "absent";
+  }
+
+  if (status === "holiday") {
+    return "holiday";
+  }
+
+  // =====================================================
+  // 7. VALID ATTENDANCE RECORD BUT NO KNOWN STATUS
+  // =====================================================
+
+  if (hasValidAttendance(record)) {
+    return "no_record";
+  }
+
+  // =====================================================
+  // 8. DEFAULT
+  // =====================================================
 
   return "no_record";
 }
-
 function isPaidLeaveDay(rec = {}) {
   const safe = rec || {};
   const status = String(safe.status || safe.day_status || "").toLowerCase();

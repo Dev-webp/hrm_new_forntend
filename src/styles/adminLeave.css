@@ -729,3 +729,94 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================
+   LEAVE APPROVAL / REJECTION INFORMATION
+   ========================================================= */
+
+.admin-leave-actioned-by-cell {
+  min-width: 155px;
+  width: 155px;
+  max-width: 155px;
+}
+
+.admin-leave-actioned-person {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-leave-actioned-person strong {
+  display: block;
+
+  color: #1E293B;
+
+  font-size: 0.80rem;
+  font-weight: 800;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-leave-actioned-person small {
+  display: block;
+
+  color: #64748B;
+
+  font-size: 0.68rem;
+  font-weight: 600;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-leave-not-actioned {
+  color: #94A3B8;
+}
+
+.admin-leave-actioned-on-cell {
+  min-width: 145px;
+  width: 145px;
+  max-width: 145px;
+
+  color: #475569;
+
+  font-size: 0.76rem;
+  font-weight: 600;
+
+  line-height: 1.4;
+}
+
+.admin-leave-employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-leave-employee-cell i {
+  flex: 0 0 auto;
+  color: #64748B;
+}
+
+.admin-leave-employee-cell span {
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-leave-reason-cell {
+  max-width: 240px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  color: #475569;
+}

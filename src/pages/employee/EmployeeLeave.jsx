@@ -152,21 +152,48 @@ export default function EmployeeLeave({ embedded = false }) {
     );
   };
 
-  const renderReason = (reason) => {
-    const text = String(reason || "â€”").trim() || "â€”";
-    const isLong = text.length > 100;
-    const preview = isLong ? `${text.slice(0, 100)}...` : text;
+const renderReason = (reason) => {
+  const text = String(reason || "").trim();
+
+  if (!text) {
     return (
-      <div className="leave-reason-preview" title={text}>
-        <span>{escapeHtml(preview)}</span>
-        {isLong && (
-          <button type="button" onClick={() => setReasonModal(text)}>
-            View More
-          </button>
-        )}
+      <div className="leave-reason-preview leave-reason-empty">
+        —
       </div>
     );
-  };
+  }
+
+  return (
+    <div
+      className="leave-reason-preview"
+      title="Click to view full reason"
+      onClick={() => setReasonModal(text)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setReasonModal(text);
+        }
+      }}
+    >
+      <span className="leave-reason-text">
+        {text}
+      </span>
+
+      <button
+        type="button"
+        className="leave-reason-view-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          setReasonModal(text);
+        }}
+      >
+        View full reason
+      </button>
+    </div>
+  );
+};
 
   useEffect(() => {
     if (!form.fromDate) {
@@ -446,61 +473,128 @@ export default function EmployeeLeave({ embedded = false }) {
                       <th>Action</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {filteredLeaves.map((l) => {
-                      const status = String(l.status || "pending");
-                      const statusCls =
-                        status === "approved"
-                          ? "sc-approved"
-                          : status === "rejected"
-                          ? "sc-rejected"
-                          : "sc-pending";
+                 <tbody>
+  {filteredLeaves.map((l) => {
+    const status = String(l.status || "pending").toLowerCase();
 
-                      return (
-                        <tr key={l.id}>
-                          <td>
-                            <div className="subadmin-leave-type-cell">
-                              <span className={l.leave_type === "Paid" ? "paid" : "unpaid"}>
-                                <i className={`fas ${l.leave_type === "Paid" ? "fa-check" : "fa-indian-rupee-sign"}`} />
-                              </span>
-                              <strong>{l.leave_type} Leave</strong>
-                            </div>
-                          </td>
-                          <td>{formatLeaveDuration(l)}</td>
-                          <td>{formatLeaveDate(l.from_date)}</td>
-                          <td>{formatLeaveDate(l.to_date)}</td>
-                          <td>
-                            <strong>{l.requested_days ?? l.days}</strong>
-                            <small> day(s)</small>
-                          </td>
-                          <td>{l.paid_days ?? "0.0"}</td>
-                          <td>{l.unpaid_days ?? "0.0"}</td>
-                          <td>{l.use_paid_leave ? "Yes" : "No"}</td>
-                          <td>{l.remaining_paid_balance ?? "0.0"}</td>
-                          <td className="subadmin-leave-reason">{escapeHtml(l.reason || "—")}</td>
-                          <td>
-                            <span className={`status-chip ${statusCls}`}>
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </span>
-                          </td>
-                          <td>
-                            {status === "pending" ? (
-                              <button
-                                type="button"
-                                className="employee-leave-delete-btn"
-                                title="Delete Leave Request"
-                                onClick={() => setDeleteTarget(l)}
-                              >
-                                <i className="fas fa-trash-alt" />
-                              </button>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
+    const statusCls =
+      status === "approved"
+        ? "sc-approved"
+        : status === "rejected"
+        ? "sc-rejected"
+        : "sc-pending";
+
+    return (
+      <tr key={l.id}>
+        {/* LEAVE TYPE */}
+        <td>
+          <div className="subadmin-leave-type-cell">
+            <span
+              className={
+                l.leave_type === "Paid"
+                  ? "paid"
+                  : "unpaid"
+              }
+            >
+              <i
+                className={`fas ${
+                  l.leave_type === "Paid"
+                    ? "fa-check"
+                    : "fa-indian-rupee-sign"
+                }`}
+              />
+            </span>
+
+            <strong>{l.leave_type} Leave</strong>
+          </div>
+        </td>
+
+        {/* DURATION */}
+        <td>
+          {formatLeaveDuration(l)}
+        </td>
+
+        {/* FROM */}
+        <td>
+          {formatLeaveDate(l.from_date)}
+        </td>
+
+        {/* TO */}
+        <td>
+          {formatLeaveDate(l.to_date)}
+        </td>
+
+        {/* REQUESTED */}
+        <td>
+          <strong>
+            {l.requested_days ?? l.days ?? "0"}
+          </strong>
+          <small> day(s)</small>
+        </td>
+
+        {/* PAID */}
+        <td>
+          {l.paid_days ?? "0.0"}
+        </td>
+
+        {/* UNPAID */}
+        <td>
+          {l.unpaid_days ?? "0.0"}
+        </td>
+
+        {/* USED PAID */}
+        <td>
+          {l.use_paid_leave ? "Yes" : "No"}
+        </td>
+
+        {/* PAID BALANCE */}
+        <td>
+          {l.remaining_paid_balance ?? "0.0"}
+        </td>
+
+        {/* REASON */}
+        <td className="subadmin-leave-reason">
+          {renderReason(l.reason)}
+        </td>
+
+        {/* STATUS */}
+        <td>
+          <span className={`status-chip ${statusCls}`}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+        </td>
+
+        {/* APPROVED BY */}
+        <td className="leave-approved-by-cell">
+          {renderApprover(l)}
+        </td>
+
+        {/* APPROVED ON */}
+        <td className="leave-approved-on-cell">
+          {status === "pending"
+            ? "—"
+            : formatLeaveDateTime(getApprovedAt(l))}
+        </td>
+
+        {/* ACTION */}
+        <td>
+          {status === "pending" ? (
+            <button
+              type="button"
+              className="employee-leave-delete-btn"
+              title="Delete Leave Request"
+              onClick={() => setDeleteTarget(l)}
+            >
+              <i className="fas fa-trash-alt" />
+            </button>
+          ) : (
+            "—"
+          )}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
                 </table>
               </div>
             )}
@@ -664,6 +758,49 @@ export default function EmployeeLeave({ embedded = false }) {
           </div>
         </div>
       )}
+
+      {reasonModal && (
+  <div
+    className="leave-reason-modal-overlay"
+    onClick={() => setReasonModal(null)}
+  >
+    <div
+      className="leave-reason-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="leave-reason-modal-header">
+        <div>
+          <span>LEAVE REQUEST</span>
+          <h3>Complete Reason</h3>
+        </div>
+
+        <button
+          type="button"
+          className="leave-reason-modal-close"
+          onClick={() => setReasonModal(null)}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="leave-reason-modal-content">
+        <div className="leave-reason-full-text">
+          {reasonModal}
+        </div>
+      </div>
+
+      <div className="leave-reason-modal-footer">
+        <button
+          type="button"
+          onClick={() => setReasonModal(null)}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       <DeleteLeaveConfirmModal
         open={Boolean(deleteTarget)}

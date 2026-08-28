@@ -264,6 +264,50 @@ const message =
     );
   };
 
+  const getApproverName = (leave) =>
+  leave.approvedBy ||
+  leave.approved_by_name ||
+  leave.approver_name ||
+  "";
+
+const getApproverRole = (leave) =>
+  leave.approvedRole ||
+  leave.approved_by_role ||
+  leave.approver_role ||
+  "";
+
+const getApprovedAt = (leave) =>
+  leave.approvedAt ||
+  leave.approved_at ||
+  "";
+
+const renderApprover = (leave) => {
+  const status = String(leave.status || "pending").toLowerCase();
+
+  if (status === "pending") {
+    return <span className="admin-leave-not-actioned">—</span>;
+  }
+
+  const name = getApproverName(leave);
+  const role = formatRole(getApproverRole(leave));
+
+  if (!name && !role) {
+    return (
+      <span className="admin-leave-not-actioned">
+        —
+      </span>
+    );
+  }
+
+  return (
+    <div className="leave-approver-cell">
+      {name && <strong>{name}</strong>}
+      {role && <small>({role})</small>}
+    </div>
+  );
+};
+
+
   const handleConfirmDelete = async () => {
     if (!deleteTarget?.id) return;
     setDeleteSaving(true);
@@ -388,6 +432,30 @@ const message =
       (durationFilter === "all" || durationKey === durationFilter);
   });
 
+
+
+
+
+const formatActionedDateTime = (value) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+
   return (
     <div className="admin-leave-page admin-portal-page">
     <div className="header">
@@ -507,61 +575,222 @@ const message =
 
         <div className="table-wrapper operational-my-leave-table">
           <table className="leave-table">
-            <thead>
-              <tr>
-                <th>Leave Type</th>
-                <th>Duration</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Requested</th>
-                <th>Paid</th>
-                <th>Unpaid</th>
-                <th>Used Paid</th>
-                <th>Paid Balance</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMyLeaves.length === 0 ? (
-                <tr>
-                  <td colSpan="12" style={{ textAlign: "center", padding: "28px" }}>
-                    No leave history found
-                  </td>
-                </tr>
-              ) : (
-                filteredMyLeaves.map((leave) => (
-                  <tr key={leave.id}>
-                    <td>{leave.leave_type}</td>
-                    <td>{formatLeaveDuration(leave)}</td>
-                    <td>{formatDate(leave.from_date)}</td>
-                    <td>{formatDate(leave.to_date)}</td>
-                    <td>{leave.requested_days ?? leave.days}</td>
-                    <td>{leave.paid_days ?? 0}</td>
-                    <td>{leave.unpaid_days ?? 0}</td>
-                    <td>{leave.use_paid_leave ? "Yes" : "No"}</td>
-                    <td>{leave.remaining_paid_balance ?? 0}</td>
-                    <td>{leave.reason || "-"}</td>
-                    <td>{getStatusBadge(leave.status)}</td>
-                    <td>
-                      {leave.status === "pending" ? (
-                        <button
-                          type="button"
-                          className="leave-delete-btn"
-                          title="Delete Leave Request"
-                          onClick={() => setDeleteTarget(leave)}
-                        >
-                          <i className="fas fa-trash-alt" />
-                        </button>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                  </tr>
-                ))
+          <thead>
+  <tr>
+    <th>Employee</th>
+    <th>Branch</th>
+    <th>Leave Type</th>
+    <th>Duration</th>
+    <th>From</th>
+    <th>To</th>
+    <th>Requested</th>
+    <th>Paid</th>
+    <th>Unpaid</th>
+    <th>Used Paid</th>
+    <th>Paid Balance</th>
+    <th>Reason</th>
+    <th>Status</th>
+    <th>Approved / Rejected By</th>
+    <th>Actioned On</th>
+    <th>Action</th>
+  </tr>
+</thead>
+
+         <tbody>
+  {loading ? (
+    <tr>
+      <td colSpan="16" style={{ textAlign: "center", padding: "40px" }}>
+        Loading leave requests...
+      </td>
+    </tr>
+  ) : error ? (
+    <tr>
+      <td colSpan="16" style={{ textAlign: "center", padding: "40px" }}>
+        Failed to load leave requests: {error}
+      </td>
+    </tr>
+  ) : filteredLeaveRequests.length === 0 ? (
+    <tr>
+      <td colSpan="16" style={{ textAlign: "center", padding: "40px" }}>
+        No leave requests found
+      </td>
+    </tr>
+  ) : (
+    filteredLeaveRequests.map((request) => {
+      const status = String(request.status || "pending").toLowerCase();
+
+      const actionedBy = getActionedByName(request);
+      const actionedRole = getActionedByRole(request);
+      const actionedAt = getActionedAt(request);
+
+      return (
+        <tr key={request.id}>
+
+          {/* EMPLOYEE */}
+          <td>
+            <div className="admin-leave-employee-cell">
+              <i className="fas fa-user-circle" />
+              <span>{request.full_name}</span>
+            </div>
+          </td>
+
+          {/* BRANCH */}
+          <td>
+            {request.branch || "—"}
+          </td>
+
+          {/* LEAVE TYPE */}
+          <td>
+            {request.leave_type || "—"}
+          </td>
+
+          {/* DURATION */}
+          <td>
+            {formatLeaveDuration(request)}
+          </td>
+
+          {/* FROM */}
+          <td>
+            {formatDate(request.from_date)}
+          </td>
+
+          {/* TO */}
+          <td>
+            {formatDate(request.to_date)}
+          </td>
+
+          {/* REQUESTED */}
+          <td>
+            {request.requested_days ?? request.days ?? 0}
+          </td>
+
+          {/* PAID */}
+          <td>
+            {request.paid_days ?? 0}
+          </td>
+
+          {/* UNPAID */}
+          <td>
+            {request.unpaid_days ?? 0}
+          </td>
+
+          {/* USED PAID */}
+          <td>
+            {request.use_paid_leave ? "Yes" : "No"}
+          </td>
+
+          {/* PAID BALANCE */}
+          <td>
+            {request.remaining_paid_balance ?? 0}
+          </td>
+
+          {/* REASON */}
+          <td className="admin-leave-reason-cell">
+            {request.reason || "—"}
+          </td>
+
+          {/* STATUS */}
+          <td>
+            {getStatusBadge(status)}
+          </td>
+
+          {/* APPROVED / REJECTED BY */}
+          <td className="admin-leave-actioned-by-cell">
+            {status === "pending" ? (
+              <span className="admin-leave-not-actioned">
+                —
+              </span>
+            ) : (
+              <div className="admin-leave-actioned-person">
+                <strong>
+                  {actionedBy}
+                </strong>
+
+                {actionedRole && (
+                  <small>
+                    {String(actionedRole)
+                      .toLowerCase()
+                      .split("_")
+                      .map(
+                        (part) =>
+                          part.charAt(0).toUpperCase() +
+                          part.slice(1)
+                      )
+                      .join(" ")}
+                  </small>
+                )}
+              </div>
+            )}
+          </td>
+
+          {/* ACTIONED ON */}
+          <td className="admin-leave-actioned-on-cell">
+            {status === "pending"
+              ? "—"
+              : formatActionedDateTime(actionedAt)}
+          </td>
+
+          {/* ACTION */}
+          <td>
+            <div className="leave-row-actions">
+
+              {status === "pending" && (
+                <>
+                  <button
+                    type="button"
+                    className="edit-btn"
+                    onClick={() =>
+                      handleOpenAction(
+                        request.id,
+                        request.full_name,
+                        "approved"
+                      )
+                    }
+                    disabled={loading}
+                    aria-label={`Approve leave for ${request.full_name}`}
+                    title="Approve Leave"
+                  >
+                    <i className="fas fa-check" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="edit-btn"
+                    onClick={() =>
+                      handleOpenAction(
+                        request.id,
+                        request.full_name,
+                        "rejected"
+                      )
+                    }
+                    disabled={loading}
+                    aria-label={`Reject leave for ${request.full_name}`}
+                    title="Reject Leave"
+                  >
+                    <i className="fas fa-times" />
+                  </button>
+                </>
               )}
-            </tbody>
+
+              <button
+                type="button"
+                className="leave-delete-btn"
+                title="Delete Leave Request"
+                onClick={() => setDeleteTarget(request)}
+                disabled={loading}
+                aria-label={`Delete leave for ${request.full_name}`}
+              >
+                <i className="fas fa-trash-alt" />
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+      );
+    })
+  )}
+</tbody>
           </table>
         </div>
       </section>
