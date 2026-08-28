@@ -17,6 +17,13 @@ import {
 import "../../styles/AdminActivityLogs.css";
 
 const PAGE_LIMIT = 20;
+const BREAK_TYPES = ["break1", "break2", "lunch", "break3"];
+const BREAK_LABELS = {
+  break1: "Break 1",
+  break2: "Break 2",
+  lunch: "Lunch",
+  break3: "Break 3",
+};
 
 const BRANCH_OPTIONS = [
   { value: "all", label: "🌍 All Branches", headerLabel: "All Branches" },
@@ -172,6 +179,73 @@ function formatLogDetails(value) {
     );
 }
 
+function formatBreakTime(value) {
+  if (value === null || value === undefined) return "—";
+  const raw = String(value).trim();
+  if (!raw || raw === "--" || raw === "00:00") return "—";
+  return formatTime12Hour(raw);
+}
+
+function buildLegacyBreakChanges(oldValues = {}, newValues = {}) {
+  return BREAK_TYPES.map((breakType) => {
+    const oldValue = oldValues[breakType] || {};
+    const newValue = newValues[breakType] || {};
+    const oldStart = oldValue.start_time || null;
+    const oldEnd = oldValue.end_time || null;
+    const newStart = newValue.start_time || null;
+    const newEnd = newValue.end_time || null;
+    const oldMissing = !oldStart && !oldEnd;
+    const newMissing = !newStart && !newEnd;
+    let change = "No change";
+    if (oldMissing && !newMissing) change = "Added";
+    else if (!oldMissing && newMissing) change = "Removed";
+    else if (oldStart !== newStart && oldEnd !== newEnd) change = "Start and end changed";
+    else if (oldStart !== newStart) change = "Start time changed";
+    else if (oldEnd !== newEnd) change = "End time changed";
+    else if (Number(oldValue.duration_minutes || 0) !== Number(newValue.duration_minutes || 0)) change = "Duration changed";
+    return {
+      break_type: breakType,
+      label: BREAK_LABELS[breakType],
+      old_start_time: oldStart,
+      old_end_time: oldEnd,
+      new_start_time: newStart,
+      new_end_time: newEnd,
+      change,
+    };
+  });
+}
+
+function BreakChangeDetails({ metadata }) {
+  const changes = Array.isArray(metadata.breakChanges)
+    ? metadata.breakChanges
+    : buildLegacyBreakChanges(metadata.oldValues, metadata.newValues);
+
+  return (
+    <div className="break-change-section">
+      <div className="diff-title">Break Changes</div>
+      <div className="break-change-table-wrap">
+        <table className="break-change-table">
+          <thead>
+            <tr><th>Break</th><th>Old Start</th><th>Old End</th><th>New Start</th><th>New End</th><th>Change</th></tr>
+          </thead>
+          <tbody>
+            {changes.map((change) => (
+              <tr key={change.break_type || change.label}>
+                <th scope="row">{change.label || BREAK_LABELS[change.break_type] || "Break"}</th>
+                <td>{formatBreakTime(change.old_start_time)}</td>
+                <td>{formatBreakTime(change.old_end_time)}</td>
+                <td>{formatBreakTime(change.new_start_time)}</td>
+                <td>{formatBreakTime(change.new_end_time)}</td>
+                <td><span className={`break-change-status${change.change === "No change" ? " unchanged" : ""}`}>{change.change || "No change"}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function StructuredDetailsPreview({ fields }) {
   const metadata = fields.metadata && typeof fields.metadata === "object" ? fields.metadata : {};
   const details = formatLogDetails(fields.details);
@@ -184,6 +258,18 @@ function StructuredDetailsPreview({ fields }) {
     "";
   const dateValue = metadata.date || metadata.attendance_date || metadata.changed_date || "";
   const reasonValue = metadata.reason || metadata.edit_reason || metadata.remarks || "";
+  const isBreakActivity = fields.metadata?.breakChanges || fields.action === "BREAK_EDITED" || fields.action === "BREAK_SELF_UPDATED";
+
+  if (isBreakActivity) {
+    const selfAction = fields.action === "BREAK_SELF_UPDATED" || metadata.isSelfAction;
+    return (
+      <div className="structured-details">
+        <strong>{selfAction ? "Self break updated" : `Breaks updated for ${employeeName || "employee"}`}</strong>
+        {dateValue ? <em>Date: {new Date(dateValue).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</em> : null}
+        {reasonValue ? <em>Reason: {reasonValue}</em> : null}
+      </div>
+    );
+  }
 
   if (!employeeName && !dateValue && !reasonValue) {
     return <>{details}</>;
@@ -220,10 +306,20 @@ function StructuredLogDetails({ log }) {
     ["Employee", m.employeeName], ["Old status", m.oldStatus], ["New status", m.newStatus],
     ["Approved / rejected by", m.changedBy], ["Reason", m.reason],
   ];
-  if (type === "break_changed") fields = [
-    ["Employee", m.editedFor?.name], ["Changed by", m.editedBy?.name], ["Date", m.date],
-    ["Old break times", old], ["New break times", next], ["Reason", m.reason],
-  ];
+  if (type === "break_changed") {
+    return (
+      <div className="structured-log-details">
+        <div className="diff-title">Activity Details</div>
+        <div className="structured-log-grid">
+          <div className="meta-item"><div className="meta-label">Employee</div><div className="meta-value">{displayValue(m.editedFor?.name)}</div></div>
+          <div className="meta-item"><div className="meta-label">Changed by</div><div className="meta-value">{displayValue(m.editedBy?.name)}</div></div>
+          <div className="meta-item"><div className="meta-label">Date</div><div className="meta-value">{m.date ? new Date(m.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</div></div>
+          <div className="meta-item"><div className="meta-label">Reason</div><div className="meta-value">{displayValue(m.reason)}</div></div>
+        </div>
+        <BreakChangeDetails metadata={{ ...m, oldValues: old, newValues: next }} />
+      </div>
+    );
+  }
   if (type === "payslip_generated") fields = [
     ["Employee", m.employeeName], ["Month", m.month], ["Net pay", m.netPay], ["Generated by", m.generatedBy],
   ];
