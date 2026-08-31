@@ -178,27 +178,126 @@ export function calculateLeaveSalaryImpact(leaves = [], employee = {}) {
 
 export function isPaidLeaveRecord(rec = {}) {
   const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+
+  const normalize = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
+
+  const status = normalize(
+    safe.status ||
+    safe.day_status ||
+    safe.attendance_status ||
+    safe.raw_status
+  );
+
+  const leaveType = normalize(
+    safe.leave_type ||
+    safe.leaveType ||
+    safe.request_leave_type ||
+    safe.requestLeaveType ||
+    safe.requested_leave_type ||
+    safe.requestedLeaveType ||
+    safe.leave_category ||
+    safe.leaveCategory
+  );
+
+  const leaveStatus = normalize(
+    safe.leave_status ||
+    safe.leaveStatus ||
+    safe.leave_request_status ||
+    safe.leaveRequestStatus
+  );
+
+  const paidDays = Number(
+    safe.paid_days ??
+    safe.paidDays ??
+    0
+  );
+
+  // If a leave status exists and is explicitly not approved,
+  // do not treat it as paid leave.
+  if (
+    leaveStatus &&
+    leaveStatus !== "approved"
+  ) {
+    return false;
+  }
+
   return (
+    status === "paid_leave" ||
+    status === "paid" ||
+    leaveType === "paid_leave" ||
+    leaveType === "paid" ||
     safe.is_paid_leave === true ||
     safe.isPaidLeave === true ||
-    status === "paid_leave" ||
-    leaveType === "paid" ||
-    Number(safe.paid_days || safe.paidDays || 0) > 0
+    paidDays > 0
   );
 }
 
 export function isUnpaidLeaveRecord(rec = {}) {
   const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
+
+  const normalize = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
+
+  const status = normalize(
+    safe.status ||
+    safe.day_status ||
+    safe.attendance_status ||
+    safe.raw_status
+  );
+
+  const leaveType = normalize(
+    safe.leave_type ||
+    safe.leaveType ||
+    safe.request_leave_type ||
+    safe.requestLeaveType ||
+    safe.requested_leave_type ||
+    safe.requestedLeaveType ||
+    safe.leave_category ||
+    safe.leaveCategory
+  );
+
+  const leaveStatus = normalize(
+    safe.leave_status ||
+    safe.leaveStatus ||
+    safe.leave_request_status ||
+    safe.leaveRequestStatus
+  );
+
+  const unpaidDays = Number(
+    safe.unpaid_days ??
+    safe.unpaidDays ??
+    0
+  );
+
+  if (
+    leaveStatus &&
+    leaveStatus !== "approved"
+  ) {
+    return false;
+  }
+
   return (
-    safe.is_paid_leave === false ||
-    safe.isPaidLeave === false ||
     status === "unpaid_leave" ||
+    status === "unpaid" ||
+    status === "lop" ||
+    status === "loss_of_pay" ||
+
+    leaveType === "unpaid_leave" ||
     leaveType === "unpaid" ||
-    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
+    leaveType === "lop" ||
+    leaveType === "loss_of_pay" ||
+
+    safe.is_unpaid_leave === true ||
+    safe.isUnpaidLeave === true ||
+
+    unpaidDays > 0
   );
 }
 
@@ -280,18 +379,121 @@ export function normalizeAttendanceAnalysisRecords(records = []) {
 
 export function getAttendanceStyle(rec) {
   const safe = normalizeAttendanceAnalysisRecord(rec);
-if (safe.status === "sunday") {
-  return { className: "cal-sunday", numClass: "blue-num" };
-}
-  if (safe.status === "holiday") return { className: "cal-holiday", numClass: "default-num" };
-  if (isPaidLeaveRecord(safe)) return { className: "cal-paid-leave paid-leave", numClass: "white-num" };
-  if (isUnpaidLeaveRecord(safe)) return { className: "cal-unpaid-leave unpaid-leave", numClass: "default-num" };
-  if (safe.status === "absent") return { className: "cal-absent", numClass: "red-num" };
-  if (safe.status === "half_day") return { className: "cal-halfday", numClass: "yellow-num" };
-  if (safe.status === "full_day") return { className: "cal-present", numClass: "green-num" };
-  if (isGraceLateAttendanceRecord(safe)) return { className: "cal-late", numClass: "orange-num" };
-  if (safe.status === "no_record") return { className: "cal-no-record", numClass: "default-num" };
-  return { className: "cal-absent", numClass: "red-num" };
+
+  // ============================================================
+  // PAID LEAVE
+  // ============================================================
+
+  if (
+    safe.status === "paid_leave" ||
+    isPaidLeaveRecord(safe)
+  ) {
+    return {
+      className: "cal-paid-leave paid-leave",
+      numClass: "white-num",
+    };
+  }
+
+  // ============================================================
+  // UNPAID LEAVE
+  // ============================================================
+
+  if (
+    safe.status === "unpaid_leave" ||
+    isUnpaidLeaveRecord(safe)
+  ) {
+    return {
+      className: "cal-unpaid-leave unpaid-leave",
+      numClass: "default-num",
+    };
+  }
+
+  // ============================================================
+  // SUNDAY — BLUE
+  // ============================================================
+
+  if (safe.status === "sunday") {
+    return {
+      className: "cal-sunday",
+      numClass: "blue-num",
+    };
+  }
+
+  // ============================================================
+  // HOLIDAY — BLUE
+  // ============================================================
+
+  if (safe.status === "holiday") {
+    return {
+      className: "cal-holiday",
+      numClass: "blue-num",
+    };
+  }
+
+  // ============================================================
+  // PRESENT
+  // ============================================================
+
+  if (
+    safe.status === "full_day" ||
+    safe.status === "present" ||
+    safe.status === "working"
+  ) {
+    return {
+      className: "cal-present",
+      numClass: "green-num",
+    };
+  }
+
+  // ============================================================
+  // HALF DAY
+  // ============================================================
+
+  if (safe.status === "half_day") {
+    return {
+      className: "cal-halfday",
+      numClass: "yellow-num",
+    };
+  }
+
+  // ============================================================
+  // LATE
+  // ============================================================
+
+  if (isGraceLateAttendanceRecord(safe)) {
+    return {
+      className: "cal-late",
+      numClass: "orange-num",
+    };
+  }
+
+  // ============================================================
+  // ABSENT
+  // ============================================================
+
+  if (safe.status === "absent") {
+    return {
+      className: "cal-absent",
+      numClass: "red-num",
+    };
+  }
+
+  // ============================================================
+  // NO RECORD
+  // ============================================================
+
+  if (safe.status === "no_record") {
+    return {
+      className: "cal-no-record",
+      numClass: "default-num",
+    };
+  }
+
+  // Default
+  return {
+    className: "cal-absent",
+    numClass: "red-num",
+  };
 }
 
 export function getWeekNumber(dateStr) {

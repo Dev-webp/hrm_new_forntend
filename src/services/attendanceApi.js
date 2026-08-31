@@ -43,7 +43,7 @@ function normalizeHistoryRows(data) {
 
 /** GET /api/attendance/employee/:userId?start=&end= */
 export async function fetchEmployeeAttendanceHistory(userId, fromDate, toDate) {
-  const endpoint = `/attendance/employee/${userId}`;
+  const endpoint = `/attendance/user/${userId}`;
   const params = {
     start: normalizeDate(fromDate),
     end: normalizeDate(toDate),

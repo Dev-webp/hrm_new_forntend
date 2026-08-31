@@ -623,17 +623,38 @@ function AdminCalendar() {
       const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
       const { start, end } = monthRangeBounds(monthStr);
 
-      const data = await fetchEmployeeCalendar(selectedEmployeeId, start, end);
+    const data = await fetchEmployeeCalendar(
+  selectedEmployeeId,
+  start,
+  end
+);
 
-      const map = new Map();
+console.log("RAW API DATA:", data);
 
-      data.forEach((row) => {
-        const rec = transformAttendanceRangeRecord(row);
-        map.set(rec.date, rec);
-      });
+const map = new Map();
 
-      setEmployeeRecordsMap(map);
-      return map;
+data.forEach((row) => {
+  const rec = transformAttendanceRangeRecord(row);
+
+  console.log(
+    "TRANSFORMED:",
+    row.date,
+    rec.status,
+    rec.is_paid_leave,
+    rec
+  );
+
+  map.set(rec.date, rec);
+});
+
+console.log(
+  "AUG 31 MAP RECORD:",
+  map.get("2026-08-31")
+);
+
+setEmployeeRecordsMap(map);
+
+return map;
     },
     [selectedEmployeeId]
   );
