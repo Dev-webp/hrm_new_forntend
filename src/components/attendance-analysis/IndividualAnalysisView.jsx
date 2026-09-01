@@ -76,6 +76,9 @@ function IndividualAnalysisView({
     { label: "Present Days", value: overview.presentDays },
     { label: "Late Arrivals", value: overview.lateDays },
     { label: "Break Exceeded", value: overview.exceed },
+    { label: "Paid Leave", value: overview.paidLeaveDays, tone: "primary" },
+    { label: "Unpaid Leave", value: overview.unpaidLeaveDays, tone: "danger" },
+    { label: "Total Leave", value: overview.leaveDays },
   ];
 
   const week = weeksCache[weekOffset];

@@ -1,6 +1,7 @@
 /** Attendance analysis — date/format/compute helpers (from adminAttendanceAnalysis.html) */
 import { formatTime12Hour } from "./timeFormat";
 import { isGraceLateAttendanceRecord } from "./dashboardHelpers";
+import { getCalendarAttendanceStatus } from "./calendarStatusColors";
 
 export { isGraceLateAttendanceRecord };
 
@@ -304,6 +305,7 @@ export function isUnpaidLeaveRecord(rec = {}) {
 export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
   const safe = rec || {};
   const date = safe.date || fallbackDate || "";
+  const resolvedStatus = getCalendarAttendanceStatus(safe);
   const today = new Date().toISOString().slice(0, 10);
   const defaultStatus = date && date > today ? "no_record" : "absent";
   const breakMins = safe.breakMins || {
@@ -324,7 +326,9 @@ export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
   return {
     ...safe,
     date,
-    status: safe.status || safe.day_status || defaultStatus,
+    status: resolvedStatus === "no_record" && !(safe.status || safe.day_status)
+      ? defaultStatus
+      : resolvedStatus,
     checkIn: safe.checkIn ?? safe.check_in_time ?? "--",
     checkOut: safe.checkOut ?? safe.check_out_time ?? "--",
     lateMinutes: Number(safe.lateMinutes ?? safe.late_minutes ?? 0) || 0,
@@ -522,13 +526,15 @@ export function buildWeeksCache(monthStr) {
 export function computeOverviewStats(records) {
   const safeRecords = normalizeAttendanceAnalysisRecords(records);
   const workDays = safeRecords.filter(
-    (r) => !["absent", "leave", "sunday", "holiday"].includes(r.status)
+    (r) => !["absent", "leave", "paid_leave", "unpaid_leave", "sunday", "holiday"].includes(r.status)
   );
   const presentDays = safeRecords.filter((r) => r.status === "full_day").length;
   const lateDays = safeRecords.filter(isGraceLateAttendanceRecord).length;
   const halfDays = safeRecords.filter((r) => r.status === "half_day").length;
   const absent = safeRecords.filter((r) => r.status === "absent").length;
-  const leaveDays = safeRecords.filter((r) => r.status === "leave").length;
+  const paidLeaveDays = safeRecords.filter(isPaidLeaveRecord).length;
+  const unpaidLeaveDays = safeRecords.filter(isUnpaidLeaveRecord).length;
+  const leaveDays = paidLeaveDays + unpaidLeaveDays;
   const totalDays = safeRecords.filter(
     (r) => !["sunday", "holiday"].includes(r.status)
   ).length;
@@ -548,6 +554,8 @@ export function computeOverviewStats(records) {
     halfDays,
     absent,
     leaveDays,
+    paidLeaveDays,
+    unpaidLeaveDays,
     totalDays,
     attRate,
     avgBreak,

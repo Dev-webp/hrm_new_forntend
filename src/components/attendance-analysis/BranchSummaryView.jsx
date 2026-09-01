@@ -33,7 +33,9 @@ function BranchSummaryView({
         { label: "Present", value: kpi.total_present || 0, icon: "fa-user-check", tone: "success", caption: "Recorded attendance" },
         { label: "Late", value: kpi.total_late || 0, icon: "fa-clock", tone: "warning", caption: "Requires monitoring" },
         { label: "Absent", value: totalAbsent || 0, icon: "fa-user-xmark", tone: "danger", caption: "Across selected period" },
-        { label: "Leave", value: kpi.total_leave || kpi.total_leaves || 0, icon: "fa-calendar-minus", tone: "info", caption: "Approved leave records" },
+        { label: "Paid Leave", value: kpi.total_paid_leave || 0, icon: "fa-calendar-check", tone: "primary", caption: "Date-level attendance records" },
+        { label: "Unpaid Leave", value: kpi.total_unpaid_leave || 0, icon: "fa-calendar-xmark", tone: "danger", caption: "Date-level attendance records" },
+        { label: "Total Leave", value: kpi.total_leave || kpi.total_leaves || 0, icon: "fa-calendar-minus", tone: "info", caption: "Approved leave records" },
         { label: "Best Attendance", value: bestAttendance?.full_name || "—", icon: "fa-award", tone: "primary", caption: bestAttendance ? `${bestAttendance.present_days || 0} present days` : "No employee data" },
         { label: "High Risk Employees", value: highRiskEmployees?.length || 0, icon: "fa-triangle-exclamation", tone: "danger", caption: "High absence or late count" },
       ]

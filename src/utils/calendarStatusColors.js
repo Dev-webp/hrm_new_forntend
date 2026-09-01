@@ -30,9 +30,9 @@ export const CALENDAR_STATUS_COLORS = {
     text: "#6D28D9",
   },
   unpaid_leave: {
-    background: "#FDA4CF",
-    border: "#DB2777",
-    text: "#831843",
+    background: "#FEE2E2",
+    border: "#EF4444",
+    text: "#991B1B",
   },
   no_record: {
     background: "#E2E8F0",
@@ -63,5 +63,73 @@ export function getCalendarStatusStyle(status = "no_record") {
     borderColor: color.border,
     color: color.text,
   };
+}
+
+function normalizeStatus(value) {
+  return String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+// Attendance rows are the single source of truth for a calendar day. Legacy
+// generic leave rows remain readable, but no UI derives a split from a request.
+export function getCalendarAttendanceStatus(record) {
+  // Handle null, undefined, false, or invalid values safely
+  if (!record || typeof record !== "object") {
+    return "no_record";
+  }
+
+  const status = normalizeStatus(
+    record.status ||
+    record.day_status ||
+    record.attendance_status
+  );
+
+  // Highest priority: explicit per-day attendance status
+  if (status === "paid_leave") return "paid_leave";
+  if (status === "unpaid_leave") return "unpaid_leave";
+
+  const leaveType = normalizeStatus(
+    record.leave_type ||
+    record.leaveType
+  );
+
+  // Leave type fallback
+  if (
+    leaveType === "paid_leave" ||
+    leaveType === "paid"
+  ) {
+    return "paid_leave";
+  }
+
+  if (
+    leaveType === "unpaid_leave" ||
+    leaveType === "unpaid"
+  ) {
+    return "unpaid_leave";
+  }
+
+  // Backward compatibility for generic leave records
+  if (
+    status === "leave" ||
+    normalizeStatus(
+      record.leave_status ||
+      record.leaveStatus
+    ) === "approved"
+  ) {
+    if (
+      record.is_paid_leave === true ||
+      record.isPaidLeave === true
+    ) {
+      return "paid_leave";
+    }
+
+    if (
+      record.is_paid_leave === false ||
+      record.isPaidLeave === false
+    ) {
+      return "unpaid_leave";
+    }
+  }
+
+  return status || "no_record";
 }
 

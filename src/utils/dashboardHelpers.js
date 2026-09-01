@@ -55,12 +55,26 @@ export function getLiveAttendanceStatus(record) {
   const hasCheckIn = hasAttendanceCheckIn(record);
   const hasCheckOut = hasAttendanceCheckOut(record);
 
-  if (hasCheckIn && !hasCheckOut && status !== "holiday" && status !== "leave") {
-    return status === "absent" ? "working" : status;
+  // Leave and holiday should never become working/present
+  if (
+    [
+      "holiday",
+      "leave",
+      "paid_leave",
+      "unpaid_leave",
+    ].includes(status)
+  ) {
+    return status;
+  }
+
+  // Employee checked in today → immediately count as present
+  if (hasCheckIn && !hasCheckOut) {
+    return "working";
   }
 
   return status;
 }
+
 
 export function isLivePresentRecord(record) {
   return isPresentLikeStatus(getLiveAttendanceStatus(record));

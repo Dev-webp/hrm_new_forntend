@@ -456,6 +456,42 @@ const formatActionedDateTime = (value) => {
 };
 
 
+// ==========================================
+// ACTIONED BY HELPERS
+// ==========================================
+
+const getActionedByName = (request) => {
+  return (
+    request.actioned_by_name ||
+    request.approved_by_name ||
+    request.rejected_by_name ||
+    request.actioned_by ||
+    request.approved_by ||
+    request.rejected_by ||
+    "—"
+  );
+};
+
+const getActionedByRole = (request) => {
+  return (
+    request.actioned_by_role ||
+    request.approved_by_role ||
+    request.rejected_by_role ||
+    ""
+  );
+};
+
+const getActionedAt = (request) => {
+  return (
+    request.actioned_at ||
+    request.approved_at ||
+    request.rejected_at ||
+    request.updated_at ||
+    null
+  );
+};
+
+
   return (
     <div className="admin-leave-page admin-portal-page">
     <div className="header">

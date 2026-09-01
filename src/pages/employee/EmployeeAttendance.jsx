@@ -13,6 +13,7 @@ import {
   getLateLoginStatusClass,
   normalizeAttendanceStatusValue,
 } from "../../utils/attendanceHelpers";
+import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import "../../styles/EmployeeAttendance.css";
 
 function getStatusBadgeClass(status, lateMins) {
@@ -22,6 +23,8 @@ function getStatusBadgeClass(status, lateMins) {
   if (status === "full_day") return "badge-present";
   if (status === "present") return "badge-present";
   if (status === "half_day") return "badge-halfday";
+  if (status === "paid_leave") return "badge-paid-leave";
+  if (status === "unpaid_leave") return "badge-unpaid-leave";
   if (status === "leave") return "badge-leave";
   if (status === "holiday") return "badge-leave";
   if (status === "late" || (lateMins > 0 && status !== "absent")) return "badge-late";
@@ -35,6 +38,8 @@ function getStatusText(status, lateMins) {
   if (status === "full_day") return "Present";
   if (status === "present") return "Present";
   if (status === "half_day") return "Half Day";
+  if (status === "paid_leave") return "Paid Leave";
+  if (status === "unpaid_leave") return "Unpaid Leave";
   if (status === "leave") return "On Leave";
   if (status === "holiday") return "Holiday";
   if (status === "late" || (lateMins > 0 && status !== "absent")) {
@@ -155,29 +160,11 @@ function getMonthlyLateStatus(count) {
 }
 
 function isPaidLeaveDay(rec = {}) {
-  const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === true ||
-    safe.isPaidLeave === true ||
-    status === "paid_leave" ||
-    leaveType === "paid" ||
-    Number(safe.paid_days || safe.paidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(rec) === "paid_leave";
 }
 
 function isUnpaidLeaveDay(rec = {}) {
-  const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === false ||
-    safe.isPaidLeave === false ||
-    status === "unpaid_leave" ||
-    leaveType === "unpaid" ||
-    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(rec) === "unpaid_leave";
 }
 
 function isGraceLateLogin(rec = {}) {

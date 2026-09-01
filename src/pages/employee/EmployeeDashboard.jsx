@@ -7,6 +7,7 @@ import {
   formatTime12Hour,
 } from "../../utils/timeFormat";
 import { MONTH_NAMES, normalizeArray, WEEK_DAYS } from "./employeeUtils";
+import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import "../../styles/EmployeeDashboard.css";
 
 function getGreeting() {
@@ -17,29 +18,11 @@ function getGreeting() {
 }
 
 function isPaidLeaveDay(rec = {}) {
-  const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === true ||
-    safe.isPaidLeave === true ||
-    status === "paid_leave" ||
-    leaveType === "paid" ||
-    Number(safe.paid_days || safe.paidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(rec) === "paid_leave";
 }
 
 function isUnpaidLeaveDay(rec = {}) {
-  const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === false ||
-    safe.isPaidLeave === false ||
-    status === "unpaid_leave" ||
-    leaveType === "unpaid" ||
-    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(rec) === "unpaid_leave";
 }
 
 export default function EmployeeDashboard({ embedded = false }) {
@@ -206,6 +189,8 @@ export default function EmployeeDashboard({ embedded = false }) {
     let halfDays = 0;
     let absentDays = 0;
     let leaveDays = 0;
+    let paidLeaveDays = 0;
+    let unpaidLeaveDays = 0;
     let totalProdHours = 0;
     let prodCount = 0;
     let totalBreakMinutes = 0;
@@ -223,7 +208,13 @@ export default function EmployeeDashboard({ embedded = false }) {
         const status = String(rec?.status || "").toLowerCase();
         if (["full_day", "present", "in_progress", "working"].includes(status)) fullDays++;
         else if (status === "half_day") halfDays++;
-        else if (status === "leave") leaveDays++;
+        else if (isPaidLeaveDay(rec)) {
+          paidLeaveDays++;
+          leaveDays++;
+        } else if (isUnpaidLeaveDay(rec)) {
+          unpaidLeaveDays++;
+          leaveDays++;
+        } else if (status === "leave") leaveDays++;
         else if (!isSun && !isHol) absentDays++;
         lateMinutes += Number(rec?.late_minutes || 0);
         if (Number(rec?.production_hours || 0) > 0) {
@@ -290,6 +281,8 @@ export default function EmployeeDashboard({ embedded = false }) {
       halfDays,
       absentDays,
       leaveDays,
+      paidLeaveDays,
+      unpaidLeaveDays,
       score,
       avgHours,
       avgBreakMinutes: breakCount > 0 ? Math.round(totalBreakMinutes / breakCount) : 0,
@@ -318,6 +311,12 @@ export default function EmployeeDashboard({ embedded = false }) {
     if (d?.status === "half_day") {
       statusText = "Half Day";
       statusCls = "halfday";
+    } else if (isPaidLeaveDay(d)) {
+      statusText = "Paid Leave";
+      statusCls = "paid-leave";
+    } else if (isUnpaidLeaveDay(d)) {
+      statusText = "Unpaid Leave";
+      statusCls = "unpaid-leave";
     } else if (d?.status === "leave") {
       statusText = "Leave";
       statusCls = "leave";
@@ -517,6 +516,8 @@ export default function EmployeeDashboard({ embedded = false }) {
     { label: "Total Present", value: analytics.fullDays, icon: "fa-user-check", tone: "success" },
     { label: "Late Logins", value: analytics.lateCount, icon: "fa-business-time", tone: "warning" },
     { label: "Absences", value: analytics.absentDays, icon: "fa-user-slash", tone: "danger" },
+    { label: "Paid Leave", value: analytics.paidLeaveDays, icon: "fa-calendar-check", tone: "purple" },
+    { label: "Unpaid Leave", value: analytics.unpaidLeaveDays, icon: "fa-calendar-xmark", tone: "danger" },
   ];
 
   const actionBase = userProfile.role === "SUB_ADMIN" ? "/sub-admin" : "/employee";

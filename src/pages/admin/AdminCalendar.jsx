@@ -17,7 +17,7 @@ import {
   transformAttendanceRangeRecord,
   monthRangeBounds,
 } from "../../utils/calendarHelper";
-import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import { CALENDAR_STATUS_COLORS, getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import {
   formatProductionHours,
@@ -135,6 +135,11 @@ function resolveEmployeeCalendarStatus(
   const status = normalizeAttendanceStatus(
     record.status || record.day_status
   );
+
+  const persistedLeaveStatus = getCalendarAttendanceStatus(record);
+  if (persistedLeaveStatus === "paid_leave" || persistedLeaveStatus === "unpaid_leave") {
+    return persistedLeaveStatus;
+  }
 
   // =====================================================
   // 4. MANUAL LEAVE STATUS MUST HAVE PRIORITY
@@ -623,38 +628,14 @@ function AdminCalendar() {
       const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
       const { start, end } = monthRangeBounds(monthStr);
 
-    const data = await fetchEmployeeCalendar(
-  selectedEmployeeId,
-  start,
-  end
-);
-
-console.log("RAW API DATA:", data);
-
-const map = new Map();
-
-data.forEach((row) => {
-  const rec = transformAttendanceRangeRecord(row);
-
-  console.log(
-    "TRANSFORMED:",
-    row.date,
-    rec.status,
-    rec.is_paid_leave,
-    rec
-  );
-
-  map.set(rec.date, rec);
-});
-
-console.log(
-  "AUG 31 MAP RECORD:",
-  map.get("2026-08-31")
-);
-
-setEmployeeRecordsMap(map);
-
-return map;
+      const data = await fetchEmployeeCalendar(selectedEmployeeId, start, end);
+      const map = new Map();
+      data.forEach((row) => {
+        const record = transformAttendanceRangeRecord(row);
+        if (record?.date) map.set(record.date, record);
+      });
+      setEmployeeRecordsMap(map);
+      return map;
     },
     [selectedEmployeeId]
   );
@@ -715,7 +696,10 @@ return map;
           const isLate = Number(employeeRecord?.lateMinutes || 0) > 0;
           const isCompanyHoliday = entry?.type === "holiday";
           const isCompanyHalfDay = entry?.type === "halfday";
-          const statusKey = resolveEmployeeCalendarStatus(employeeRecord, {
+          const resolvedStatus = getCalendarAttendanceStatus(employeeRecord);
+          const statusKey = ["paid_leave", "unpaid_leave"].includes(resolvedStatus)
+            ? resolvedStatus
+            : resolveEmployeeCalendarStatus(employeeRecord, {
             isSunday: isSun,
             isHoliday: isCompanyHoliday,
             isHalfDayHoliday: isCompanyHalfDay,

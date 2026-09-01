@@ -7,6 +7,7 @@ import {
   formatTime12Hour,
 } from "../../utils/timeFormat";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
+import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import "../../styles/ManagerCalendar.css";
 
 const MONTH_NAMES = [
@@ -49,29 +50,11 @@ function TooltipHoliday({ name }) {
 }
 
 function isPaidLeaveDay(rec = {}) {
-  const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === true ||
-    safe.isPaidLeave === true ||
-    status === "paid_leave" ||
-    leaveType === "paid" ||
-    Number(safe.paid_days || safe.paidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(rec) === "paid_leave";
 }
 
 function isUnpaidLeaveDay(rec = {}) {
-  const safe = rec || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === false ||
-    safe.isPaidLeave === false ||
-    status === "unpaid_leave" ||
-    leaveType === "unpaid" ||
-    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(rec) === "unpaid_leave";
 }
 
 export default function ManagerCalendar() {
@@ -395,7 +378,7 @@ export default function ManagerCalendar() {
             else if (st === "in_progress" || st === "working") pPresent += 1;
             else if (st === "absent") pAbsent += 1;
             else if (st === "half_day") pHalfDay += 1;
-            else if (st === "leave") pLeave += 1;
+            else if (["leave", "paid_leave", "unpaid_leave"].includes(st)) pLeave += 1;
             if (isGraceLateAttendanceRecord(rec)) pLate += 1;
           } else if (!isSun && !entry && dateStr <= today) {
             pAbsent += 1;

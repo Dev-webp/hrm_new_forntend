@@ -578,16 +578,16 @@
 
 .admin-calendar-page .calendar-day.calendar-paid-leave,
 .admin-calendar-page .calendar-day.paid-leave {
-  background: #F5F3FF;
-  border-color: #7C3AED;
-  color: #6D28D9;
+  background: var(--calendar-paid-leave-bg, #F5F3FF);
+  border-color: var(--calendar-paid-leave-border, #7C3AED);
+  color: var(--calendar-paid-leave-text, #6D28D9);
 }
 
 .admin-calendar-page .calendar-day.calendar-unpaid-leave,
 .admin-calendar-page .calendar-day.unpaid-leave {
-  background: #FDA4CF;
-  border-color: #DB2777;
-  color: #831843;
+  background: var(--calendar-unpaid-leave-bg, #FEE2E2);
+  border-color: var(--calendar-unpaid-leave-border, #EF4444);
+  color: var(--calendar-unpaid-leave-text, #991B1B);
 }
 
 .admin-calendar-page .calendar-day.calendar-present .status-label,
