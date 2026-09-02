@@ -15,20 +15,12 @@ import {
 } from "../../components/Cards";
 import { useToast } from "../../hooks/useToast";
 import api from "../../services/api";
-import { fetchDepartmentCount } from "../../services/departmentApi";
 import { getStoredUser } from "../../utils/auth";
 import {
   attPctColor,
   BRANCH_LABELS,
-  buildDateStr,
-  computeEmpStats,
-  computeMonthStats,
-  isDashboardAttendancePresentRecord,
-  isDashboardAbsentRecord,
-  isDashboardLeaveRecord,
   getGreeting,
   getInitials,
-  isGraceLateAttendanceRecord,
   isSunday,
   monthDays,
 } from "../../utils/dashboardHelpers";
@@ -49,8 +41,7 @@ function AdminDashboard() {
   const { toast, showToast } = useToast(2500);
 
   const [allEmployees, setAllEmployees] = useState([]);
-  const [holidaySet, setHolidaySet] = useState(new Set());
-  const [attendanceMap, setAttendanceMap] = useState(new Map());
+  const [dashboardData, setDashboardData] = useState(null);
 
   const [welcomeStats, setWelcomeStats] = useState({
     present: "--",
@@ -174,45 +165,29 @@ function AdminDashboard() {
   }, [todayStr]);
 
   const buildAlerts = useCallback(
-    (employees, attendanceData, holidays) => {
+    (employees) => {
       const alertList = [];
-      const todayRecords = [];
 
-      employees.forEach((employee) => {
-        const rows = attendanceData.get(employee.id) || [];
-        const record = rows.find((row) => row.date === todayStr);
-
-        if (record) {
-          todayRecords.push({ ...employee, ...record });
-        }
-      });
-
-      todayRecords
-        .filter(isGraceLateAttendanceRecord)
+      // Alert 1: Late employees today
+      employees
+        .filter((emp) => {
+          // Check if they have late_minutes from today's attendance
+          return emp.stats?.late > 0;
+        })
         .slice(0, 3)
-        .forEach((record) => {
+        .forEach((employee) => {
           alertList.push({
             color: "#FF8C00",
-            text: `${record.full_name} — ${record.late_minutes}m late`,
+            text: `${employee.full_name} — ${employee.stats.late} late days this month`,
             time: "Today",
           });
         });
 
+      // Alert 2: Low attendance employees
       employees
-        .map((employee) => ({
-          ...employee,
-          stats: computeEmpStats(
-            employee.id,
-            year,
-            monthNum,
-            attendanceData,
-            holidays,
-            todayStr
-          ),
-        }))
         .filter(
           (employee) =>
-            employee.stats.attPct < 50 && employee.stats.workingDays > 5
+            employee.stats?.attPct < 50 && employee.stats?.workingDays > 5
         )
         .slice(0, 3)
         .forEach((employee) => {
@@ -225,42 +200,8 @@ function AdminDashboard() {
 
       return alertList.slice(0, 5);
     },
-    [monthNum, todayStr, year]
+    []
   );
-
-  const loadLeavePanel = useCallback(async () => {
-    try {
-      const response = await api.get("/leaves", {
-        params: { status: "all", branch: currentBranch },
-      });
-      const leaves = response.data;
-      const pending = leaves.filter((leave) => leave.status === "pending");
-
-      setWelcomeStats((prev) => ({
-        ...prev,
-        pendingLeaves: pending.length,
-      }));
-
-      setLeaveItems(pending.slice(0, 5));
-    } catch {
-      setLeaveItems([]);
-    }
-  }, [currentBranch]);
-
-  const loadDepartmentCount = useCallback(async () => {
-    try {
-      const count = await fetchDepartmentCount({ branch: currentBranch });
-      setWelcomeStats((prev) => ({
-        ...prev,
-        departments: count,
-      }));
-    } catch {
-      setWelcomeStats((prev) => ({
-        ...prev,
-        departments: "--",
-      }));
-    }
-  }, [currentBranch]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -271,53 +212,25 @@ function AdminDashboard() {
       const startDate = `${currentMonthStr}-01`;
       const endDate = `${currentMonthStr}-${String(lastDay).padStart(2, "0")}`;
 
-      const [employeesRes, holidaysRes, summaryRes, bulkAttRes] =
-        await Promise.all([
-          api.get(`/admin/employees?branch=${currentBranch}`),
-          api
-            .get(`/holidays?year=${year}&month=${monthNum}`)
-            .catch(() => ({ data: [] })),
-          api.get(
-            `/dashboard/summary?month=${currentMonthStr}&branch=${currentBranch}&today=${todayStr}`
-          ),
-          api.get(
-            `/attendance/bulk-monthly?start=${startDate}&end=${endDate}&branch=${currentBranch}`
-          ),
-        ]);
-
-      const employees = employeesRes.data;
-      const holidays = holidaysRes.data;
-      const summary = summaryRes.data;
-      const bulkAttendance = bulkAttRes.data;
-
-      const nextHolidaySet = new Set(
-        holidays.map((holiday) =>
-          holiday.date ? holiday.date.slice(0, 10) : ""
-        )
-      );
-
-      const nextAttendanceMap = new Map();
-      Object.entries(bulkAttendance).forEach(([userId, rows]) => {
-        nextAttendanceMap.set(parseInt(userId, 10), rows);
+      const { data } = await api.get("/admin/dashboard/attendance", {
+        params: { start: startDate, end: endDate, branch: currentBranch, today: todayStr },
       });
 
-      setAllEmployees(employees);
-      setHolidaySet(nextHolidaySet);
-      setAttendanceMap(nextAttendanceMap);
-      setMonthKpi(summary.monthKpi);
+      setDashboardData(data);
+      setAllEmployees(data.employees || []);
+      setMonthKpi(data.monthlyStats || null);
 
       setWelcomeStats((prev) => ({
-        present: summary.today.present,
-        absent: summary.today.absent,
-        late: summary.today.late,
-        pendingLeaves: summary.pendingLeaves,
-        departments: prev.departments,
+        present: data.summary.present + data.summary.working,
+        absent: data.summary.absent,
+        late: data.summary.late,
+        pendingLeaves: data.pendingLeaves,
+        departments: prev.departments, // Keep existing dept count
       }));
 
-      setNotifications(
-        buildNotifications(summary.today, summary.pendingLeaves)
-      );
-      setAlerts(buildAlerts(employees, nextAttendanceMap, nextHolidaySet));
+      setNotifications(buildNotifications(data.summary, data.pendingLeaves));
+      setAlerts(buildAlerts(data.employees));
+      setLeaveItems(data.pendingLeaveItems || []);
 
       showToast("✓ Dashboard updated");
     } catch (error) {
@@ -326,8 +239,8 @@ function AdminDashboard() {
       setLoading(false);
     }
   }, [
-    buildAlerts,
     buildNotifications,
+    buildAlerts,
     currentBranch,
     currentMonthStr,
     monthNum,
@@ -339,28 +252,28 @@ function AdminDashboard() {
   // Initial load + reload when branch/month changes
   useEffect(() => {
     loadDashboard();
-    loadLeavePanel();
-    loadDepartmentCount();
-  }, [loadDashboard, loadLeavePanel, loadDepartmentCount]);
+  }, [loadDashboard]);
 
   // Lightweight 60s poll for live banner stats (same as original admin.html)
   useEffect(() => {
     const pollBannerStats = async () => {
       try {
-        const response = await api.get(
-          `/dashboard/summary?month=${currentMonthStr}&branch=${currentBranch}&today=${todayStr}`
-        );
-        const data = response.data;
+        const lastDay = monthDays(year, monthNum);
+        const { data } = await api.get("/admin/dashboard/attendance", {
+          params: { start: `${currentMonthStr}-01`, end: `${currentMonthStr}-${String(lastDay).padStart(2, "0")}`, branch: currentBranch, today: todayStr },
+        });
 
         setWelcomeStats((prev) => ({
           ...prev,
-          present: data.today.present,
-          absent: data.today.absent,
-          late: data.today.late,
+          present: data.summary.present + data.summary.working,
+          absent: data.summary.absent,
+          late: data.summary.late,
           pendingLeaves: data.pendingLeaves,
         }));
 
-        setNotifications(buildNotifications(data.today, data.pendingLeaves));
+        setDashboardData(data);
+        setAllEmployees(data.employees || []);
+        setNotifications(buildNotifications(data.summary, data.pendingLeaves));
       } catch {
         // Silent fail — UI keeps last known values
       }
@@ -368,105 +281,64 @@ function AdminDashboard() {
 
     const intervalId = window.setInterval(pollBannerStats, 60_000);
     return () => window.clearInterval(intervalId);
-  }, [buildNotifications, currentBranch, currentMonthStr, todayStr]);
-
-  const monthStats = useMemo(
-    () => computeMonthStats(year, monthNum, holidaySet),
-    [holidaySet, monthNum, year]
-  );
+  }, [buildNotifications, currentBranch, currentMonthStr, todayStr, monthNum, year]);
 
   const monthTiles = useMemo(
-    () => [
-      {
-        icon: "fas fa-calendar",
-        label: "Total Days",
-        value: monthStats.total,
-        accent: "#0D47A1",
-      },
-      {
-        icon: "fas fa-sun",
-        label: "Sundays",
-        value: monthStats.sundays,
-        accent: "#8b5cf6",
-      },
-      {
-        icon: "fas fa-star-and-crescent",
-        label: "Holidays",
-        value: monthStats.holidays,
-        accent: "#06b6d4",
-      },
-      {
-        icon: "fas fa-briefcase",
-        label: "Working Days",
-        value: monthStats.working,
-        accent: "#16A34A",
-      },
-      {
-        icon: "fas fa-clock",
-        label: "Late (MTD)",
-        value: monthKpi ? Number(monthKpi.total_late) : "--",
-        accent: "#FF8C00",
-      },
-      {
-        icon: "fas fa-user-times",
-        label: "Absences (MTD)",
-        value: monthKpi ? Number(monthKpi.total_absent) : "--",
-        accent: "#DC2626",
-      },
-    ],
-    [monthKpi, monthStats]
+    () => {
+      const monthStats = dashboardData?.calendar || { total: 0, sundays: 0, holidays: 0, workingDays: 0 };
+      return [
+        {
+          icon: "fas fa-calendar",
+          label: "Total Days",
+          value: monthStats.total,
+          accent: "#0D47A1",
+        },
+        {
+          icon: "fas fa-sun",
+          label: "Sundays",
+          value: monthStats.sundays,
+          accent: "#8b5cf6",
+        },
+        {
+          icon: "fas fa-star-and-crescent",
+          label: "Holidays",
+          value: monthStats.holidays,
+          accent: "#06b6d4",
+        },
+        {
+          icon: "fas fa-briefcase",
+          label: "Working Days",
+          value: monthStats.workingDays,
+          accent: "#16A34A",
+        },
+        {
+          icon: "fas fa-clock",
+          label: "Late (MTD)",
+          value: monthKpi ? Number(monthKpi.late) : "--",
+          accent: "#FF8C00",
+        },
+        {
+          icon: "fas fa-user-times",
+          label: "Absences (MTD)",
+          value: monthKpi ? Number(monthKpi.absent) : "--",
+          accent: "#DC2626",
+        },
+      ];
+    },
+    [monthKpi, dashboardData?.calendar]
   );
 
-  const branchLeaderboard = useMemo(() => {
-    const branchMap = new Map();
-
-    allEmployees.forEach((employee) => {
-      const branchName = employee.branch || "Unknown";
-
-      if (!branchMap.has(branchName)) {
-        branchMap.set(branchName, { total: 0, pctSum: 0 });
-      }
-
-      const stats = computeEmpStats(
-        employee.id,
-        year,
-        monthNum,
-        attendanceMap,
-        holidaySet,
-        todayStr
-      );
-
-      const entry = branchMap.get(branchName);
-      entry.total += 1;
-      entry.pctSum += stats.attPct;
-    });
-
-    return Array.from(branchMap.entries())
-      .map(([name, data]) => ({
-        name,
-        pct: data.total ? Math.round(data.pctSum / data.total) : 0,
-        count: data.total,
-      }))
-      .sort((a, b) => b.pct - a.pct);
-  }, [allEmployees, attendanceMap, holidaySet, monthNum, todayStr, year]);
+  const branchLeaderboard = useMemo(
+    () => (dashboardData?.branchStats || []).map((branch) => ({ name: branch.name, pct: branch.attendancePercentage, count: branch.totalEmployees })).sort((a, b) => b.pct - a.pct),
+    [dashboardData]
+  );
 
   const topPerformers = useMemo(() => {
     return allEmployees
-      .map((employee) => ({
-        ...employee,
-        stats: computeEmpStats(
-          employee.id,
-          year,
-          monthNum,
-          attendanceMap,
-          holidaySet,
-          todayStr
-        ),
-      }))
-      .filter((employee) => employee.stats.attPct > 0)
-      .sort((a, b) => b.stats.attPct - a.stats.attPct)
+      .filter((employee) => employee.stats && employee.stats.attPct > 0)
+      .sort((a, b) => (b.stats?.attPct || 0) - (a.stats?.attPct || 0))
       .slice(0, 5);
-  }, [allEmployees, attendanceMap, holidaySet, monthNum, todayStr, year]);
+  }, [allEmployees]);
 
   const departments = useMemo(
     () => [
@@ -484,65 +356,15 @@ function AdminDashboard() {
   }, [allEmployees, currentDept]);
 
   const trendChartData = useMemo(() => {
-    const lastDay = monthDays(year, monthNum);
-    const isCurrentMonth =
-      year === today.getFullYear() && monthNum === today.getMonth() + 1;
-
-    const labels = [];
-    const present = [];
-    const late = [];
-    const absent = [];
-
-    for (let day = 1; day <= lastDay; day += 1) {
-      const dateStr = buildDateStr(year, monthNum, day);
-
-      if (isCurrentMonth && dateStr > todayStr) break;
-      if (isSunday(dateStr) || holidaySet.has(dateStr)) continue;
-
-      labels.push(day);
-
-      let presentCount = 0;
-      let lateCount = 0;
-      let absentCount = 0;
-
-      allEmployees.forEach((employee) => {
-        const records = attendanceMap.get(employee.id) || [];
-        const record = records.find(
-          (row) => row.date && row.date.slice(0, 10) === dateStr
-        );
-
-        const isTodayRow = dateStr === todayStr;
-
-        if (isDashboardLeaveRecord(record, isTodayRow)) {
-          return;
-        }
-
-        if (isDashboardAbsentRecord(record, isTodayRow)) {
-          absentCount += 1;
-          return;
-        }
-
-        if (isDashboardAttendancePresentRecord(record, isTodayRow)) {
-          presentCount += 1;
-          if (isGraceLateAttendanceRecord(record)) lateCount += 1;
-        }
-      });
-
-      present.push(presentCount);
-      late.push(lateCount);
-      absent.push(absentCount);
-    }
-
-    return { labels, present, late, absent };
-  }, [
-    allEmployees,
-    attendanceMap,
-    holidaySet,
-    monthNum,
-    today,
-    todayStr,
-    year,
-  ]);
+    const dailySummary = dashboardData?.dailySummary || [];
+    
+    return {
+      labels: dailySummary.map((d) => d.day),
+      present: dailySummary.map((d) => d.present),
+      late: dailySummary.map((d) => d.late),
+      absent: dailySummary.map((d) => d.absent),
+    };
+  }, [dashboardData?.dailySummary]);
 
   const pieStats = useMemo(() => {
     let full = 0;
@@ -552,24 +374,16 @@ function AdminDashboard() {
     let leave = 0;
 
     allEmployees.forEach((employee) => {
-      const stats = computeEmpStats(
-        employee.id,
-        year,
-        monthNum,
-        attendanceMap,
-        holidaySet,
-        todayStr
-      );
-
-      full += stats.present;
-      half += stats.half;
-      late += stats.late;
-      absent += stats.absent;
-      leave += stats.leave;
+      const stats = employee.stats || {};
+      full += stats.fullDays || 0;
+      half += stats.half || 0;
+      late += stats.late || 0;
+      absent += stats.absent || 0;
+      leave += stats.leave || 0;
     });
 
     return { full, half, late, absent, leave };
-  }, [allEmployees, attendanceMap, holidaySet, monthNum, todayStr, year]);
+  }, [allEmployees]);
 
   const branchLabel = BRANCH_LABELS[currentBranch] || currentBranch;
   const displayName = user?.full_name || user?.name || "Admin";
@@ -883,14 +697,14 @@ function AdminDashboard() {
             </div>
           ) : (
             filteredEmployees.map((employee) => {
-              const stats = computeEmpStats(
-                employee.id,
-                year,
-                monthNum,
-                attendanceMap,
-                holidaySet,
-                todayStr
-              );
+              // Use stats from API response (backend is source of truth)
+              const stats = employee.stats || {
+                present: 0,
+                late: 0,
+                absent: 0,
+                leave: 0,
+                attPct: 0,
+              };
               const { cls, ring } = attPctColor(stats.attPct);
               return <div key={employee.id} className="emp-card">
                   <div className="emp-card-top">
@@ -920,7 +734,7 @@ function AdminDashboard() {
                   <div className="emp-mini-stats">
                     <div className="mini-stat">
                       <div className="msv" style={{ color: "#16A34A" }}>
-                        {stats.present}
+                        {Math.round(stats.present * 10) / 10}
                       </div>
                       <div className="msl">Present</div>
                     </div>
