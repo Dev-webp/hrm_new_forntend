@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Toast } from "../../components/Cards";
 import AttendanceAnalysisFilters from "../../components/attendance-analysis/AttendanceAnalysisFilters";
 import { useToast } from "../../hooks/useToast";
@@ -28,6 +29,7 @@ import "../../styles/adminAttendanceAnalysis.css";
 
 
 function AdminAttendanceAnalysis() {
+  const [searchParams] = useSearchParams();
   const today = new Date();
   const defaultMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const user = useMemo(() => getStoredUser(), []);
@@ -36,11 +38,16 @@ function AdminAttendanceAnalysis() {
   const headerName = isOperationalManager ? "Operational Manager" : "Super Admin";
   const headerSubtitle = isOperationalManager ? "Operations · Live" : "Chairman · Live";
 
-  const [currentBranch, setCurrentBranch] = useState("all");
-  const [currentMonth, setCurrentMonth] = useState(defaultMonth);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState("all");
+  // Check for quick-action mode from Dashboard
+  const quickActionEmployeeId = useMemo(() => searchParams.get("employeeId"), [searchParams]);
+  const quickActionBranch = useMemo(() => searchParams.get("branch") || "all", [searchParams]);
+  const quickActionMonth = useMemo(() => searchParams.get("month") || defaultMonth, [searchParams, defaultMonth]);
+
+  const [currentBranch, setCurrentBranch] = useState(quickActionBranch);
+  const [currentMonth, setCurrentMonth] = useState(quickActionMonth);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(quickActionEmployeeId ? String(quickActionEmployeeId) : "all");
   const [employees, setEmployees] = useState([]);
-  const [viewMode, setViewMode] = useState("branch");
+  const [viewMode, setViewMode] = useState(quickActionEmployeeId ? "individual" : "branch");
 
   const [summaryKpi, setSummaryKpi] = useState(null);
   const [summaryEmployees, setSummaryEmployees] = useState([]);
@@ -182,7 +189,7 @@ function AdminAttendanceAnalysis() {
         }
       }
     },
-    [currentBranch, employees, getSignal, showToast]
+    [employees, getSignal, showToast]
   );
 
   const handleLoad = useCallback(async () => {
@@ -203,6 +210,19 @@ function AdminAttendanceAnalysis() {
     loadBranchSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle quick-action mode: automatically load individual analysis
+  useEffect(() => {
+    if (quickActionEmployeeId && employees.length > 0) {
+      const empId = parseInt(quickActionEmployeeId, 10);
+      const emp = employees.find((e) => e.id === empId);
+      if (emp) {
+        loadIndividual(empId, currentMonth, employees);
+        // Clean up URL to maintain consistency
+        window.history.replaceState({}, document.title, "/admin/attendance-analysis");
+      }
+    }
+  }, [quickActionEmployeeId, employees, currentMonth, loadIndividual]);
 
   useEffect(() => {
     return () => {

@@ -63,15 +63,19 @@ export function mapApiEmployee(emp) {
     status: emp.status,
     salary: Number(emp.salary),
     role: mapRoleFromBackend(emp.role),
+
     bankName: emp.bank_name || "",
     bankAccount: emp.bank_account || "",
     bankIfsc: emp.bank_ifsc || "",
     joiningDate: emp.joining_date || "",
     aadharNumber: emp.aadhar_number || "",
     visiblePassword: emp.visible_password || "",
+
+    // 🔐 LOGIN ACCESS
+    loginAccessType: emp.login_access_type || "OFFICE",
+    allowedBranches: emp.allowed_branches || [],
   };
 }
-
 export function formatAadhar(aadhar) {
   if (!aadhar || aadhar.length !== 12) return aadhar || "—";
   return aadhar.replace(/(\d{4})(\d{4})(\d{4})/, "$1 $2 $3");
@@ -108,6 +112,10 @@ export const EMPTY_EMPLOYEE_FORM = {
   departmentCode: "",
   aadharNumber: "",
   password: "",
+
+  // 🔐 LOGIN ACCESS
+  loginAccessType: "OFFICE",
+  allowedBranches: [],
 };
 
 export function validateEmployeeForm(form) {
@@ -163,5 +171,9 @@ export function employeeToForm(employee) {
     bankIfsc: employee.bankIfsc || "",
     aadharNumber: employee.aadharNumber || "",
     password: "",
+
+    // 🔐 LOGIN ACCESS
+    loginAccessType: employee.loginAccessType || "OFFICE",
+    allowedBranches: employee.allowedBranches || [],
   };
 }

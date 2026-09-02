@@ -706,7 +706,18 @@ function AdminDashboard() {
                 attPct: 0,
               };
               const { cls, ring } = attPctColor(stats.attPct);
-              return <div key={employee.id} className="emp-card">
+              
+              // Format break time (convert minutes to readable format)
+              const formatBreakTime = (minutes) => {
+                if (minutes === 0) return "0 min";
+                if (minutes < 60) return `${minutes} min`;
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+              };
+
+              return (
+                <div key={employee.id} className="emp-card">
                   <div className="emp-card-top">
                     <div className="emp-avatar">
                       {getInitials(employee.full_name)}
@@ -757,7 +768,46 @@ function AdminDashboard() {
                       <div className="msl">Leave</div>
                     </div>
                   </div>
-                  </div>;
+
+                  <div className="emp-today-activity">
+                    <div className="activity-item">
+                      <span className="activity-icon">
+                        {employee.todayLoginTime ? "🟢" : "⚪"}
+                      </span>
+                      <span className="activity-text">
+                        Login: {employee.todayLoginTime ? employee.todayLoginTime : "Not Logged In"}
+                      </span>
+                    </div>
+                    <div className="activity-item">
+                      <span className="activity-icon">☕</span>
+                      <span className="activity-text">
+                        Break Used: {formatBreakTime(employee.todayBreakMinutes || 0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="emp-card-actions">
+                    <button
+                      type="button"
+                      className="emp-action-btn"
+                      onClick={() => navigate(`/admin/employees?employeeId=${employee.id}`)}
+                      title="View employee details"
+                    >
+                      <i className="fas fa-user" /> View Details
+                    </button>
+                    <button
+                      type="button"
+                      className="emp-action-btn"
+                      onClick={() => navigate(
+                        `/admin/attendance-analysis?employeeId=${employee.id}&branch=${encodeURIComponent(employee.branch || "all")}&month=${currentMonthStr}`
+                      )}
+                      title="View attendance analysis"
+                    >
+                      <i className="fas fa-chart-bar" /> Attendance Analysis
+                    </button>
+                  </div>
+                </div>
+              );
             })
           )}
         </div>

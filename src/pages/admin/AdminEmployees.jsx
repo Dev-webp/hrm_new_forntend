@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Toast } from "../../components/Cards";
 import EmployeeFilters from "../../components/EmployeeFilters";
 import EmployeeModal from "../../components/EmployeeModal";
@@ -20,6 +21,7 @@ import "../../styles/adminEmployees.css";
 const API_PATH = "/admin/employees";
 
 function AdminEmployees() {
+  const [searchParams] = useSearchParams();
   const [employees, setEmployees] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [activeDepartmentOptions, setActiveDepartmentOptions] = useState([]);
@@ -45,6 +47,17 @@ function AdminEmployees() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
 
   const { toast, showToast } = useToast(3000);
+
+  // Handle quick-action mode from Dashboard
+  useEffect(() => {
+    const quickActionEmployeeId = searchParams.get("employeeId");
+    if (quickActionEmployeeId) {
+      setSelectedEmployeeId(parseInt(quickActionEmployeeId, 10));
+      setDetailsOpen(true);
+      // Clean up URL to maintain consistency
+      window.history.replaceState({}, document.title, "/admin/employees");
+    }
+  }, [searchParams]);
 
   // Close branch dropdown when clicking outside
   useEffect(() => {
