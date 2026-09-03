@@ -379,16 +379,7 @@ const handleBranchSelect = (branch) => {
         loading={loading}
       />
 
-      <div className="card">
-        <div className="card-header">
-          <span>
-            <i className="fas fa-chart-line" /> Department Attendance
-            Leaderboard
-          </span>
-          <span>Ranked by presence %</span>
-        </div>
-        <AttendanceLeaderboard leaderboard={leaderboard} loading={loading} />
-      </div>
+ 
 
       <div className="card">
         <div className="card-header">

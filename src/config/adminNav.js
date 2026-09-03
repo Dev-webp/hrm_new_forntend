@@ -46,7 +46,7 @@ export const ADMIN_NAV = [
       {
         path: "/admin/employees",
         icon: "fa-users",
-        label: "Employee Control",
+        label: "Employee Management",
       },
     ],
   },
@@ -61,17 +61,17 @@ export const ADMIN_NAV = [
       {
         path: "/admin/department",
         icon: "fa-chalkboard-user",
-        label: "Department Ops",
+        label: "Add & View Department",
       },
       {
         path: "/admin/attendance",
         icon: "fa-calendar-check",
-        label: "Attendance",
+        label: "Daily Attendance",
       },
       {
         path: "/admin/calendar",
         icon: "fa-calendar-alt",
-        label: "Calendar",
+        label: "Holiday Calender",
       },
       {
         path: "/admin/breaks",
@@ -93,7 +93,7 @@ export const ADMIN_NAV = [
         icon: "fa-coins",
         label: "Payroll",
       },
-      { path: "/admin/letters", icon: "fa-file-contract", label: "Letters" },
+      { path: "/admin/letters", icon: "fa-file-contract", label: "Offer  & Relieving Letter" },
     ],
   },
   {

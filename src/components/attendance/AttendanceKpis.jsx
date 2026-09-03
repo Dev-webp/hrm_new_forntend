@@ -76,48 +76,7 @@ function AttendanceKpis({ stats, records = [], loading, error }) {
 
   return (
     <div className="kpi-grid attendance-summary-grid">
-      <div className="kpi attendance-summary-card success">
-        <div className="kpi-title">
-          <i className="fas fa-circle-check" /> Present
-        </div>
-        <div className="kpi-value">{stats.dailyPresent ?? presentCount}</div>
-        <div className="trend-up">Employees</div>
-      </div>
-      <div className="kpi attendance-summary-card warning">
-        <div className="kpi-title">
-          <i className="fas fa-clock" /> Half Day
-        </div>
-        <div className="kpi-value">{halfDayCount}</div>
-        <div className="trend-up">Employees</div>
-      </div>
-      <div className="kpi attendance-summary-card info">
-        <div className="kpi-title">
-          <i className="fas fa-signal" /> Working
-        </div>
-        <div className="kpi-value">{workingCount}</div>
-        <div className="trend-up">Employees</div>
-      </div>
-      <div className="kpi attendance-summary-card danger">
-        <div className="kpi-title">
-          <i className="fas fa-user-xmark" /> Absent
-        </div>
-        <div className="kpi-value">{absentCount}</div>
-        <div className="trend-up">Employees</div>
-      </div>
-      <div className="kpi attendance-summary-card late">
-        <div className="kpi-title">
-          <i className="fas fa-hourglass-start" /> Late Arrivals
-        </div>
-        <div className="kpi-value">{stats.lateToday ?? 0}</div>
-        <div className="trend-up">Employees</div>
-      </div>
-      <div className="kpi attendance-summary-card primary">
-        <div className="kpi-title">
-          <i className="fas fa-business-time" /> Average Production
-        </div>
-        <div className="kpi-value">{formatProductionHours(averageProductionHours)}</div>
-        <div className="trend-up">{stats.attendanceRate ?? 0}% attendance rate</div>
-      </div>
+     
     </div>
   );
 }
