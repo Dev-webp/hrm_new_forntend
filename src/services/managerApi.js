@@ -72,7 +72,7 @@ export async function fetchManagerLeaves(status = "all") {
   return normalizeArray(response.data);
 }
 
-/** PUT /leaves/:id — leaveRoutes.js */
+/** PATCH /leave/:id/status — leaveRoutes.js */
 export async function updateManagerLeaveStatus(id, status, payload = {}) {
   const response = await api.patch(`/leave/${id}/status`, { status, ...payload });
   return response.data;
