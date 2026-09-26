@@ -43,10 +43,10 @@ export const CALENDAR_STATUS_COLORS = {
 
 export const CALENDAR_STATUS_PRIORITY = [
   "holiday",
+  "half_day",
   "paid_leave",
   "unpaid_leave",
   "absent",
-  "half_day",
   "late",
   "present",
   "no_record",
@@ -83,26 +83,43 @@ export function getCalendarAttendanceStatus(record) {
     record.attendance_status
   );
 
-  // Highest priority: explicit per-day attendance status
-  if (status === "paid_leave") return "paid_leave";
-  if (status === "unpaid_leave") return "unpaid_leave";
+  const halfDaySlot = record.half_day_slot || record.halfDaySlot;
+  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+
+  // ============================================================
+  // HALF-DAY PRIORITY
+  // ============================================================
+  // If the record has a half_day_slot, it's a half-day regardless of leave type
+  // This handles both: (a) half-day leave requests and (b) worked half-day with leave
+  // ============================================================
+
+  if (status === "half_day" || isHalfDay) {
+    return "half_day";
+  }
+
+  // ============================================================
+  // FULL-DAY PAID/UNPAID LEAVE
+  // ============================================================
+  // Only return paid_leave/unpaid_leave if NOT a half-day
+  // ============================================================
+
+  if (status === "paid_leave" && !isHalfDay) return "paid_leave";
+  if (status === "unpaid_leave" && !isHalfDay) return "unpaid_leave";
 
   const leaveType = normalizeStatus(
     record.leave_type ||
     record.leaveType
   );
 
-  // Leave type fallback
+  // Leave type fallback - only if not half-day
   if (
-    leaveType === "paid_leave" ||
-    leaveType === "paid"
+    (leaveType === "paid_leave" || leaveType === "paid") && !isHalfDay
   ) {
     return "paid_leave";
   }
 
   if (
-    leaveType === "unpaid_leave" ||
-    leaveType === "unpaid"
+    (leaveType === "unpaid_leave" || leaveType === "unpaid") && !isHalfDay
   ) {
     return "unpaid_leave";
   }
@@ -116,15 +133,13 @@ export function getCalendarAttendanceStatus(record) {
     ) === "approved"
   ) {
     if (
-      record.is_paid_leave === true ||
-      record.isPaidLeave === true
+      (record.is_paid_leave === true || record.isPaidLeave === true) && !isHalfDay
     ) {
       return "paid_leave";
     }
 
     if (
-      record.is_paid_leave === false ||
-      record.isPaidLeave === false
+      (record.is_paid_leave === false || record.isPaidLeave === false) && !isHalfDay
     ) {
       return "unpaid_leave";
     }

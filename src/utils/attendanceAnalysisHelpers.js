@@ -385,6 +385,20 @@ export function getAttendanceStyle(rec) {
   const safe = normalizeAttendanceAnalysisRecord(rec);
 
   // ============================================================
+  // HALF DAY — Check first (overrides paid/unpaid leave classification)
+  // ============================================================
+  
+  const halfDaySlot = safe.half_day_slot || safe.halfDaySlot;
+  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+  
+  if (safe.status === "half_day" || isHalfDay) {
+    return {
+      className: "cal-halfday",
+      numClass: "yellow-num",
+    };
+  }
+
+  // ============================================================
   // PAID LEAVE
   // ============================================================
 
@@ -446,17 +460,6 @@ export function getAttendanceStyle(rec) {
     return {
       className: "cal-present",
       numClass: "green-num",
-    };
-  }
-
-  // ============================================================
-  // HALF DAY
-  // ============================================================
-
-  if (safe.status === "half_day") {
-    return {
-      className: "cal-halfday",
-      numClass: "yellow-num",
     };
   }
 
@@ -565,10 +568,19 @@ export function computeOverviewStats(records) {
 
 export function getDailyLogStatus(rec) {
   const safe = normalizeAttendanceAnalysisRecord(rec);
+  const halfDaySlot = safe.half_day_slot || safe.halfDaySlot;
+  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+  
+  if (safe.status === "half_day" || isHalfDay) {
+    const isPaid = safe.is_paid_leave === true || safe.isPaidLeave === true;
+    const isUnpaid = safe.is_paid_leave === false || safe.isPaidLeave === false;
+    if (isPaid) return { label: "Half Day (Paid Leave)", badge: "b-halfday" };
+    if (isUnpaid) return { label: "Half Day (Unpaid Leave)", badge: "b-halfday" };
+    return { label: "Half Day", badge: "b-halfday" };
+  }
   if (isPaidLeaveRecord(safe)) return { label: "Paid Leave", badge: "b-paid-leave" };
   if (isUnpaidLeaveRecord(safe)) return { label: "Unpaid Leave", badge: "b-unpaid-leave" };
   if (safe.status === "absent") return { label: "Absent", badge: "b-absent" };
-  if (safe.status === "half_day") return { label: "Half Day", badge: "b-halfday" };
   if (safe.status === "sunday") return { label: "Sunday", badge: "b-absent" };
   if (safe.status === "holiday") return { label: "Holiday", badge: "b-absent" };
   if (safe.status === "no_record") return { label: "No Record", badge: "b-neutral" };
