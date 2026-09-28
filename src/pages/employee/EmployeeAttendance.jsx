@@ -16,49 +16,60 @@ import {
 import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import "../../styles/EmployeeAttendance.css";
 
-function getStatusBadgeClass(status, lateMins, halfDaySlot) {
+function getStatusBadgeClass(status, lateMins, record = null) {
   status = normalizeAttendanceStatusValue(status);
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
-  // ============================================================
-  // HALF-DAY PRIORITY
-  // ============================================================
-  // If half_day_slot exists, use half-day badge regardless of status
-  // ============================================================
-
-  if (status === "half_day" || isHalfDay) return "badge-halfday";
   if (status === "in_progress" || status === "working") return "badge-working";
   if (status === "missing_checkout") return "badge-late";
   if (status === "full_day") return "badge-present";
   if (status === "present") return "badge-present";
-  if (status === "paid_leave") return "badge-paid-leave";
-  if (status === "unpaid_leave") return "badge-unpaid-leave";
+  if (status === "half_day") {
+    // Check if this half-day is linked to a leave request (worked half, leave remainder)
+    const hasLeaveRequest = Boolean(record?.leave_request_id);
+    if (hasLeaveRequest) {
+      // Just use the yellow half-day badge - leave linkage is for audit trail only
+      return "badge-halfday";
+    }
+    return "badge-halfday";
+  }
+  if (status === "paid_leave") {
+    const leaveDurationType = String(record?.leave_duration_type || "").toLowerCase();
+    const halfDaySlot = record?.half_day_slot || record?.halfDaySlot;
+    const isHalfDay = leaveDurationType === "half_day" || Boolean(halfDaySlot);
+    // All half-day statuses use yellow color
+    return isHalfDay ? "badge-halfday" : "badge-paid-leave";
+  }
+  if (status === "unpaid_leave") {
+    const leaveDurationType = String(record?.leave_duration_type || "").toLowerCase();
+    const halfDaySlot = record?.half_day_slot || record?.halfDaySlot;
+    const isHalfDay = leaveDurationType === "half_day" || Boolean(halfDaySlot);
+    // All half-day statuses use yellow color
+    return isHalfDay ? "badge-halfday" : "badge-unpaid-leave";
+  }
+  if (status === "mixed_leave") {
+    return "badge-mixed-leave";
+  }
   if (status === "leave") return "badge-leave";
   if (status === "holiday") return "badge-leave";
   if (status === "late" || (lateMins > 0 && status !== "absent")) return "badge-late";
   return "badge-absent";
 }
 
-function getStatusText(status, lateMins, halfDaySlot = null, isPaidLeave = null) {
+function getStatusText(status, lateMins, record) {
   status = normalizeAttendanceStatusValue(status);
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
-  // ============================================================
-  // HALF-DAY PRIORITY
-  // ============================================================
-  // If half_day_slot exists, show as half-day with leave type if applicable
-  // ============================================================
-
-  if (status === "half_day" || isHalfDay) {
-    if (isPaidLeave === true) return "Half Day (Paid Leave)";
-    if (isPaidLeave === false) return "Half Day (Unpaid Leave)";
-    return "Half Day";
-  }
-
   if (status === "in_progress" || status === "working") return "Working";
   if (status === "missing_checkout") return "Missing Checkout";
   if (status === "full_day") return "Present";
   if (status === "present") return "Present";
+  if (status === "half_day") {
+    // Check if this half-day is linked to a leave request (worked half, leave remainder)
+    const hasLeaveRequest = Boolean(record?.leave_request_id);
+    const hasLeaveFlag = (record?.policy_flags || []).includes("leave_period");
+    if (hasLeaveRequest || hasLeaveFlag) {
+      const isPaid = record?.is_paid_leave === true || record?.isPaidLeave === true;
+      return `Half Day ${isPaid ? '(Paid Leave)' : '(Unpaid Leave)'}`;
+    }
+    return "Half Day";
+  }
   if (status === "paid_leave") return "Paid Leave";
   if (status === "unpaid_leave") return "Unpaid Leave";
   if (status === "leave") return "On Leave";
@@ -137,9 +148,9 @@ function safeFormatTime(value) {
   }
 }
 
-function safeStatusText(status, lateMins = 0, halfDaySlot = null, isPaidLeave = null) {
+function safeStatusText(status, lateMins = 0, record) {
   try {
-    return safeText(getStatusText(status, lateMins, halfDaySlot, isPaidLeave), "No Record");
+    return safeText(getStatusText(status, lateMins, record), "No Record");
   } catch {
     return "No Record";
   }
@@ -181,11 +192,13 @@ function getMonthlyLateStatus(count) {
 }
 
 function isPaidLeaveDay(rec = {}) {
-  return getCalendarAttendanceStatus(rec) === "paid_leave";
+  const status = getCalendarAttendanceStatus(rec);
+  return status === "paid_leave" || status === "paid_leave_half_day";
 }
 
 function isUnpaidLeaveDay(rec = {}) {
-  return getCalendarAttendanceStatus(rec) === "unpaid_leave";
+  const status = getCalendarAttendanceStatus(rec);
+  return status === "unpaid_leave" || status === "unpaid_leave_half_day";
 }
 
 function isGraceLateLogin(rec = {}) {
@@ -526,37 +539,38 @@ export default function EmployeeAttendance({ embedded = false }) {
       if (!isSunday && !entry) {
         if (rec) {
           const s = normalizeAttendanceStatusValue(rec.status);
-          const halfDaySlot = rec.half_day_slot || rec.halfDaySlot;
-          const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+          const resolvedStatus = getCalendarAttendanceStatus(rec);
+          const isPaidLeave = resolvedStatus === "paid_leave";
+          const isUnpaidLeave = resolvedStatus === "unpaid_leave";
+          const isMixedLeave = resolvedStatus === "mixed_leave";
+          const isHalfDay = s === "half_day" || resolvedStatus === "half_day";
 
-          // ============================================================
-          // HALF-DAY PRIORITY
-          // ============================================================
-          // If half_day_slot exists, show as half-day regardless of leave type
-          // ============================================================
-
-          if (s === "half_day" || isHalfDay) {
-            dayClass += " p-halfday calendar-halfday";
-            const isPaid = rec.is_paid_leave === true || rec.isPaidLeave === true;
-            const isUnpaid = rec.is_paid_leave === false || rec.isPaidLeave === false;
-            const leaveLabel = isPaid ? "(Paid Leave)" : isUnpaid ? "(Unpaid Leave)" : "";
+          if (isPaidLeave) {
+            // Full-day paid leave uses purple color
+            dayClass += isHalfDay
+              ? " p-leave calendar-halfday"
+              : " p-leave calendar-paid-leave paid-leave";
             miniHtml = (
               <div className="day-mini-stats">
-                <div className="mini-row">🌓 Half Day {leaveLabel}</div>
+                <div className="mini-row">{isHalfDay ? "Half Day (Paid Leave)" : "Paid Leave"}</div>
               </div>
             );
-          } else if (isPaidLeaveDay(rec)) {
-            dayClass += " p-leave calendar-paid-leave paid-leave";
+          } else if (isUnpaidLeave) {
+            // Full-day unpaid leave uses red color
+            dayClass += isHalfDay
+              ? " p-leave calendar-halfday"
+              : " p-leave calendar-unpaid-leave unpaid-leave";
             miniHtml = (
               <div className="day-mini-stats">
-                <div className="mini-row">Paid Leave</div>
+                <div className="mini-row">{isHalfDay ? "Half Day (Unpaid Leave)" : "Unpaid Leave"}</div>
               </div>
             );
-          } else if (isUnpaidLeaveDay(rec)) {
-            dayClass += " p-leave calendar-unpaid-leave unpaid-leave";
+          } else if (isMixedLeave) {
+            // Mixed leave (half paid + half unpaid) uses orange color
+            dayClass += " p-leave calendar-mixed-leave";
             miniHtml = (
               <div className="day-mini-stats">
-                <div className="mini-row">Unpaid Leave</div>
+                <div className="mini-row">Mixed Leave</div>
               </div>
             );
           } else if (s === "full_day" || s === "present") {
@@ -573,6 +587,27 @@ export default function EmployeeAttendance({ embedded = false }) {
                 <div className="mini-row">Late {rec.late_minutes || 0}m</div>
               </div>
             );
+          } else if (s === "half_day") {
+            // Check if this half-day is linked to a leave request (worked half, leave remainder)
+            const hasLeaveRequest = Boolean(rec?.leave_request_id);
+            const hasLeaveFlag = (rec?.policy_flags || []).includes("leave_period");
+            if (hasLeaveRequest || hasLeaveFlag) {
+              // Just use the yellow half-day color - leave linkage is for audit trail only
+              dayClass += " p-halfday calendar-halfday";
+              const isPaid = rec?.is_paid_leave === true || rec?.isPaidLeave === true;
+              miniHtml = (
+                <div className="day-mini-stats">
+                  <div className="mini-row">Half Day {isPaid ? '(Paid Leave)' : '(Unpaid Leave)'}</div>
+                </div>
+              );
+            } else {
+              dayClass += " p-halfday calendar-halfday";
+              miniHtml = (
+                <div className="day-mini-stats">
+                  <div className="mini-row">🌓 Half Day</div>
+                </div>
+              );
+            }
           } else if (s === "leave") {
             dayClass += " p-leave";
             miniHtml = (
@@ -606,7 +641,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               <div className="tt-row">
                 <span>Status</span>
                 <span className="tv">
-                  {safeStatusText(s, rec.late_minutes, rec.half_day_slot, rec.is_paid_leave)}
+                  {safeStatusText(resolvedStatus, rec.late_minutes, rec)}
                 </span>
               </div>
               {rec.check_in_time && (
@@ -708,8 +743,9 @@ export default function EmployeeAttendance({ embedded = false }) {
           checkIn = safeFormatTime(rec.check_in_time);
           checkOut = safeFormatTime(rec.check_out_time);
           lateMin = Number(rec.late_minutes) || 0;
-          statusLabel = safeStatusText(rec.status, lateMin, rec.half_day_slot, rec.is_paid_leave);
-          statusClass = getStatusBadgeClass(rec.status, lateMin, rec.half_day_slot);
+          const resolvedStatus = getCalendarAttendanceStatus(rec);
+          statusLabel = safeStatusText(resolvedStatus, lateMin, rec);
+          statusClass = getStatusBadgeClass(resolvedStatus, lateMin, rec);
         } else if (dateStr === todayStr && isAttendanceActionLoading) {
           statusLabel = "Updating";
           statusClass = "badge-no-record";

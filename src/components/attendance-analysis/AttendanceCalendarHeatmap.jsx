@@ -28,26 +28,17 @@ function CalendarDay({ dateStr, dayNum, record }) {
   const safeRecord = normalizeAttendanceAnalysisRecord(record, dateStr);
   const style = getAttendanceStyle(safeRecord);
 
-  const halfDaySlot = safeRecord.half_day_slot || safeRecord.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
   const statusLabel =
-    safeRecord.status === "half_day" || isHalfDay
-      ? (() => {
-          const isPaid = safeRecord.is_paid_leave === true || safeRecord.isPaidLeave === true;
-          const isUnpaid = safeRecord.is_paid_leave === false || safeRecord.isPaidLeave === false;
-          if (isPaid) return "Half Day (Paid Leave)";
-          if (isUnpaid) return "Half Day (Unpaid Leave)";
-          return "Half Day";
-        })()
-      : isPaidLeaveRecord(safeRecord)
+    isPaidLeaveRecord(safeRecord)
       ? "Paid Leave"
       : isUnpaidLeaveRecord(safeRecord)
       ? "Unpaid Leave"
       : safeRecord.status === "full_day"
       ? "Full Day"
-      : safeRecord.status === "no_record"
-        ? "No Record"
+      : safeRecord.status === "half_day"
+        ? "Half Day"
+        : safeRecord.status === "no_record"
+          ? "No Record"
         : safeRecord.status === "sunday"
           ? "Sunday"
           : safeRecord.status === "holiday"

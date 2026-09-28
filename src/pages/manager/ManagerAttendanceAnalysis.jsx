@@ -89,19 +89,10 @@ function isUnpaidLeaveRecord(r = {}) {
 
 function statusLabel(r) {
   const safe = r || { status: "absent", lateMinutes: 0 };
-  const halfDaySlot = safe.half_day_slot || safe.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-  
-  if (safe.status === "half_day" || isHalfDay) {
-    const isPaid = safe.is_paid_leave === true || safe.isPaidLeave === true;
-    const isUnpaid = safe.is_paid_leave === false || safe.isPaidLeave === false;
-    if (isPaid) return "Half Day (Paid Leave)";
-    if (isUnpaid) return "Half Day (Unpaid Leave)";
-    return "Half Day";
-  }
   if (isPaidLeaveRecord(safe)) return "Paid Leave";
   if (isUnpaidLeaveRecord(safe)) return "Unpaid Leave";
   if (safe.status === "absent") return "Absent";
+  if (safe.status === "half_day") return "Half Day";
   if (safe.status === "sunday") return "Sunday";
   if (safe.status === "holiday") return "Holiday";
   if (isGraceLateAttendanceRecord(safe)) return "Late";

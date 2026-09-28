@@ -566,15 +566,9 @@
 }
 
 .admin-calendar-page .calendar-day.calendar-halfday {
-  background: #FACC15 !important;
-  border-color: #CA8A04 !important;
-  color: #854D0E !important;
-}
-
-.admin-calendar-page .calendar-day.employee-day.calendar-halfday {
-  background: #FACC15 !important;
-  border-color: #CA8A04 !important;
-  color: #854D0E !important;
+  background: #FACC15;
+  border-color: #CA8A04;
+  color: #854D0E;
 }
 
 .admin-calendar-page .calendar-day.calendar-empty {

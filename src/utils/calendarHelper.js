@@ -359,13 +359,6 @@ export function transformAttendanceRangeRecord(row) {
     normalizeBoolean(row.isUnpaidLeave);
 
   // ─────────────────────────────────────────────
-  // IMPORTANT: If attendance_records exists with is_paid_leave,
-  // use that as the authoritative source. Only fall back to
-  // leave request paid_days when attendance_records doesn't exist.
-  // ─────────────────────────────────────────────
-  const hasAttendanceRecord = Boolean(row.status || row.attendance_status || row.attendanceStatus || row.raw_status);
-
-  // ─────────────────────────────────────────────
   // APPROVED LEAVE CHECK
   // ─────────────────────────────────────────────
   const isApprovedLeave =
@@ -379,21 +372,17 @@ export function transformAttendanceRangeRecord(row) {
   const isPaidLeave =
     isApprovedLeave &&
     (
-      // First priority: attendance_records is_paid_leave field
-      (hasAttendanceRecord && backendPaidLeave) ||
-      
-      // Second priority: raw_status is paid_leave
       rawStatus === "paid_leave" ||
       rawStatus === "paidleave" ||
 
-      // Third priority: leave_type is paid
       leaveType === "paid_leave" ||
       leaveType === "paidleave" ||
       leaveType === "paid" ||
       leaveType === "pl" ||
 
-      // Last priority: paid_days > 0 (only when no attendance record)
-      (!hasAttendanceRecord && paidDays > 0)
+      backendPaidLeave ||
+
+      paidDays > 0
     );
 
   // ─────────────────────────────────────────────
@@ -403,41 +392,30 @@ export function transformAttendanceRangeRecord(row) {
     isApprovedLeave &&
     !isPaidLeave &&
     (
-      // First priority: attendance_records is_unpaid_leave field
-      (hasAttendanceRecord && backendUnpaidLeave) ||
-      
-      // Second priority: raw_status is unpaid_leave
       rawStatus === "unpaid_leave" ||
       rawStatus === "unpaidleave" ||
       rawStatus === "loss_of_pay" ||
       rawStatus === "lop" ||
 
-      // Third priority: leave_type is unpaid
       leaveType === "unpaid_leave" ||
       leaveType === "unpaidleave" ||
       leaveType === "unpaid" ||
       leaveType === "loss_of_pay" ||
       leaveType === "lop" ||
 
-      // Last priority: unpaid_days > 0 (only when no attendance record)
-      (!hasAttendanceRecord && unpaidDays > 0)
+      backendUnpaidLeave ||
+
+      unpaidDays > 0
     );
 
   // ─────────────────────────────────────────────
   // FINAL CALENDAR STATUS
   //
-  // HALF-DAY HAS HIGHEST PRIORITY (before paid/unpaid)
+  // LEAVE HAS HIGHEST PRIORITY
   // ─────────────────────────────────────────────
   let status = rawStatus || "no_record";
 
-  // ============================================================
-  // HALF-DAY PRIORITY
-  // ============================================================
-  // If raw_status is half_day, keep it - don't override with paid_leave
-  // ============================================================
-  if (rawStatus === "half_day") {
-    status = "half_day";
-  } else if (isPaidLeave) {
+  if (isPaidLeave) {
     status = "paid_leave";
   } else if (isUnpaidLeave) {
     status = "unpaid_leave";
@@ -639,9 +617,6 @@ export function transformAttendanceRangeRecord(row) {
     // ─────────────────────────────────────────
     // HALF DAY
     // ─────────────────────────────────────────
-    half_day_slot: row.half_day_slot ?? null,
-    halfDaySlot: row.halfDaySlot ?? null,
-
     half_day_effective_minutes:
       halfDay.effective,
 

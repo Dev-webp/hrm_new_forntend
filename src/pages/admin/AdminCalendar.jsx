@@ -136,16 +136,6 @@ function resolveEmployeeCalendarStatus(
     record.status || record.day_status
   );
 
-  const halfDaySlot = record.half_day_slot || record.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
-  // =====================================================
-  // 3.5 HALF-DAY PRIORITY (must come before paid_leave check)
-  // =====================================================
-  if (status === "half_day" || isHalfDay) {
-    return "half_day";
-  }
-
   const persistedLeaveStatus = getCalendarAttendanceStatus(record);
   if (persistedLeaveStatus === "paid_leave" || persistedLeaveStatus === "unpaid_leave") {
     return persistedLeaveStatus;
@@ -707,7 +697,9 @@ function AdminCalendar() {
           const isCompanyHoliday = entry?.type === "holiday";
           const isCompanyHalfDay = entry?.type === "halfday";
           const resolvedStatus = getCalendarAttendanceStatus(employeeRecord);
-          const statusKey = resolveEmployeeCalendarStatus(employeeRecord, {
+          const statusKey = ["paid_leave", "unpaid_leave"].includes(resolvedStatus)
+            ? resolvedStatus
+            : resolveEmployeeCalendarStatus(employeeRecord, {
             isSunday: isSun,
             isHoliday: isCompanyHoliday,
             isHalfDayHoliday: isCompanyHalfDay,
@@ -719,22 +711,16 @@ function AdminCalendar() {
 
           dayClass += " employee-day";
 
-          const halfDaySlot = employeeRecord?.half_day_slot || employeeRecord?.halfDaySlot;
-          const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
           if (statusKey === "sunday" || statusKey === "holiday") {
             dayClass += " calendar-holiday";
-          } else if (statusKey === "half_day" || isHalfDay) {
-            // All half-day statuses use yellow color
-            dayClass += " calendar-halfday";
           } else if (statusKey === "paid_leave") {
-            // Full-day paid leave uses purple color
             dayClass += " calendar-paid-leave paid-leave";
           } else if (statusKey === "unpaid_leave") {
-            // Full-day unpaid leave uses red color
             dayClass += " calendar-unpaid-leave unpaid-leave";
           } else if (statusKey === "absent") {
             dayClass += " calendar-absent";
+          } else if (statusKey === "half_day") {
+            dayClass += " calendar-halfday";
           } else if (statusKey === "late") {
             dayClass += " calendar-late";
           } else if (statusKey === "working") {
@@ -758,22 +744,27 @@ function AdminCalendar() {
           const labelText = (() => {
             if (statusKey === "sunday") return "Sunday";
             if (statusKey === "holiday") return entry.name || "Holiday";
-            if (statusKey === "half_day" || isHalfDay) {
-              const isPaid = employeeRecord?.is_paid_leave === true || employeeRecord?.isPaidLeave === true;
-              const isUnpaid = employeeRecord?.is_paid_leave === false || employeeRecord?.isPaidLeave === false;
-              if (isPaid) return "Half Day (Paid Leave)";
-              if (isUnpaid) return "Half Day (Unpaid Leave)";
-              return "Half Day";
-            }
             if (statusKey === "paid_leave") return "Paid Leave";
             if (statusKey === "unpaid_leave") return "Unpaid Leave";
             if (statusKey === "absent") return "Absent";
+            if (statusKey === "half_day") return "Half Day";
             if (statusKey === "late") return `Late ${lateMinutes}m`;
             if (statusKey === "working") return "Working";
             if (statusKey === "missing_checkout") return "Missing Checkout";
             if (statusKey === "present") return "Present";
             return "No Record";
           })();
+
+          statusLabel = (
+            <div className="status-label">
+              {st === "full_day" && "✅ Full Day"}
+              {st === "half_day" && "🌓 Half Day"}
+              {st === "absent" && "❌ Absent"}
+              {st === "leave" && "🏖️ Leave"}
+              {st === "holiday" && "🎉 Holiday"}
+              {isLate && st !== "absent" ? ` 🔴 Late ${employeeRecord.lateMinutes}m` : ""}
+            </div>
+          );
 
           statusLabel = <div className="status-label">{labelText}</div>;
 

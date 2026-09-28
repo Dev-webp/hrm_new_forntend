@@ -43,10 +43,10 @@ export const CALENDAR_STATUS_COLORS = {
 
 export const CALENDAR_STATUS_PRIORITY = [
   "holiday",
-  "half_day",
   "paid_leave",
   "unpaid_leave",
   "absent",
+  "half_day",
   "late",
   "present",
   "no_record",
@@ -84,44 +84,71 @@ export function getCalendarAttendanceStatus(record) {
   );
 
   const halfDaySlot = record.half_day_slot || record.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+  const leaveDurationType = normalizeStatus(
+    record.leave_duration_type ||
+    record.leaveDurationType
+  );
+  const isHalfDay = leaveDurationType === "half_day" || Boolean(halfDaySlot);
 
   // ============================================================
-  // HALF-DAY PRIORITY
+  // PUNCH DATA IS AUTHORITATIVE
   // ============================================================
-  // If the record has a half_day_slot, it's a half-day regardless of leave type
-  // This handles both: (a) half-day leave requests and (b) worked half-day with leave
+  // If the record has punch data (check_in_time or check_out_time),
+  // use the actual status from the backend which is based on work hours.
+  // Leave metadata is preserved for payroll purposes only.
   // ============================================================
-
-  if (status === "half_day" || isHalfDay) {
-    return "half_day";
+  
+  const hasPunch = Boolean(record.check_in_time || record.check_out_time || 
+                          record.office_in || record.office_out);
+  
+  if (hasPunch) {
+    // Use the status directly from the backend (computed based on punch data)
+    if (status === "half_day") {
+      return "half_day";
+    }
+    if (status === "full_day" || status === "present" || status === "working") {
+      return "present";
+    }
+    if (status === "absent") {
+      return "absent";
+    }
+    if (status === "late") {
+      return "late";
+    }
+    // Return the status as-is if it's a valid attendance status
+    if (status && status !== "no_record") {
+      return status;
+    }
   }
 
   // ============================================================
-  // FULL-DAY PAID/UNPAID LEAVE
+  // NO PUNCH DATA - USE LEAVE STATUS
   // ============================================================
-  // Only return paid_leave/unpaid_leave if NOT a half-day
+  // If no punch data exists, use leave status from leave request
   // ============================================================
 
-  if (status === "paid_leave" && !isHalfDay) return "paid_leave";
-  if (status === "unpaid_leave" && !isHalfDay) return "unpaid_leave";
+  // Highest priority: explicit per-day attendance status
+  if (status === "paid_leave") return isHalfDay ? "half_day" : "paid_leave";
+  if (status === "unpaid_leave") return isHalfDay ? "half_day" : "unpaid_leave";
 
   const leaveType = normalizeStatus(
     record.leave_type ||
     record.leaveType
   );
 
-  // Leave type fallback - only if not half-day
+  // Leave type fallback
   if (
-    (leaveType === "paid_leave" || leaveType === "paid") && !isHalfDay
+    leaveType === "paid_leave" ||
+    leaveType === "paid"
   ) {
-    return "paid_leave";
+    return isHalfDay ? "half_day" : "paid_leave";
   }
 
   if (
-    (leaveType === "unpaid_leave" || leaveType === "unpaid") && !isHalfDay
+    leaveType === "unpaid_leave" ||
+    leaveType === "unpaid"
   ) {
-    return "unpaid_leave";
+    return isHalfDay ? "half_day" : "unpaid_leave";
   }
 
   // Backward compatibility for generic leave records
@@ -133,15 +160,17 @@ export function getCalendarAttendanceStatus(record) {
     ) === "approved"
   ) {
     if (
-      (record.is_paid_leave === true || record.isPaidLeave === true) && !isHalfDay
+      record.is_paid_leave === true ||
+      record.isPaidLeave === true
     ) {
-      return "paid_leave";
+      return isHalfDay ? "half_day" : "paid_leave";
     }
 
     if (
-      (record.is_paid_leave === false || record.isPaidLeave === false) && !isHalfDay
+      record.is_paid_leave === false ||
+      record.isPaidLeave === false
     ) {
-      return "unpaid_leave";
+      return isHalfDay ? "half_day" : "unpaid_leave";
     }
   }
 
