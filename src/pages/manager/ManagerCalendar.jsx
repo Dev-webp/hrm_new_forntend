@@ -7,7 +7,7 @@ import {
   formatTime12Hour,
 } from "../../utils/timeFormat";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
-import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
+import { getCalendarAttendanceStatus, STATUS_LABELS } from "../../utils/calendarStatusColors";
 import "../../styles/ManagerCalendar.css";
 
 const MONTH_NAMES = [
@@ -31,11 +31,11 @@ function fmt12(timeStr) {
   return formatTime12Hour(timeStr);
 }
 
-function TooltipSunday() {
+function TooltipSunday({ isSandwich }) {
   return (
     <div className="tooltip-card">
       <div className="tt-title">Sunday</div>
-      <div>📆 Weekly Off</div>
+      <div>{isSandwich ? "Absent (Sandwich)" : "📆 Weekly Off"}</div>
     </div>
   );
 }

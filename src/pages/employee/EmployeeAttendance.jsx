@@ -13,7 +13,7 @@ import {
   getLateLoginStatusClass,
   normalizeAttendanceStatusValue,
 } from "../../utils/attendanceHelpers";
-import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
+import { getCalendarAttendanceStatus, STATUS_LABELS } from "../../utils/calendarStatusColors";
 import "../../styles/EmployeeAttendance.css";
 
 function getStatusBadgeClass(status, lateMins, record = null) {
@@ -448,6 +448,11 @@ export default function EmployeeAttendance({ embedded = false }) {
           else if (s === "absent") absentCount++;
           if (isGraceLateLogin(rec)) lateCount++;
         }
+      } else if (isSunday && !entry) {
+        // Check for sandwich penalty on Sunday
+        if (rec && rec.sandwich && rec.sandwich.some(s => s.applied === true)) {
+          absentCount++;
+        }
       }
     }
     const totalDays = lastDay;
@@ -477,6 +482,7 @@ export default function EmployeeAttendance({ embedded = false }) {
       const dateStr = `${year}-${dateKey}`;
       const entry = safeHolidayMap[dateKey];
       const isSunday = new Date(year, month, d).getDay() === 0;
+      const isSaturday = new Date(year, month, d).getDay() === 6;
       const isToday = dateStr === todayStr;
       let dayClass = "cal-day";
       let badgeHtml = null;
@@ -484,21 +490,40 @@ export default function EmployeeAttendance({ embedded = false }) {
       let tooltip = null;
 
       if (isSunday && !entry) {
-        dayClass += " is-sunday calendar-holiday";
-        badgeHtml = (
-          <div
-            className="day-badge"
-            style={{ background: "rgba(185,28,28,0.25)", color: "#ff8a8a" }}
-          >
-            📆 Sunday
-          </div>
-        );
-        tooltip = (
-          <div className="tooltip-card">
-            <div className="tt-title">Sunday</div>
-            <div>Weekly Off</div>
-          </div>
-        );
+        // Check if this Sunday has a sandwich record
+        const rec = safePersonalData[dateStr];
+        if (rec && rec.sandwich && rec.sandwich.some(s => s.applied === true)) {
+          // Sunday with sandwich penalty - use Absent styling and "Absent (Sandwich)" chip
+          dayClass += " is-absent";
+          badgeHtml = (
+            <div className="day-badge badge-absent">
+              Absent (Sandwich)
+            </div>
+          );
+          tooltip = (
+            <div className="tooltip-card">
+              <div className="tt-title">Sunday</div>
+              <div>Absent (Sandwich)</div>
+            </div>
+          );
+        } else {
+          // Regular Sunday
+          dayClass += " is-sunday calendar-holiday";
+          badgeHtml = (
+            <div
+              className="day-badge"
+              style={{ background: "rgba(185,28,28,0.25)", color: "#ff8a8a" }}
+            >
+              📆 Sunday
+            </div>
+          );
+          tooltip = (
+            <div className="tooltip-card">
+              <div className="tt-title">Sunday</div>
+              <div>Weekly Off</div>
+            </div>
+          );
+        }
       } else if (entry?.type === "holiday") {
         dayClass += " is-holiday calendar-holiday";
         badgeHtml = (
@@ -697,6 +722,12 @@ export default function EmployeeAttendance({ embedded = false }) {
         }
       }
 
+      // Add tooltip-right class for Saturday cells to prevent right-edge overflow
+      let isTooltipRight = false;
+      if (isSaturday && tooltip) {
+        isTooltipRight = true;
+      }
+
       cells.push({
         key: dateStr,
         dayClass,
@@ -704,6 +735,7 @@ export default function EmployeeAttendance({ embedded = false }) {
         badgeHtml,
         miniHtml,
         tooltip,
+        isTooltipRight,
       });
     }
 
@@ -731,8 +763,17 @@ export default function EmployeeAttendance({ embedded = false }) {
       let statusClass;
 
       if (isSunday) {
-        statusLabel = "Sunday";
-        statusClass = "badge-sunday";
+        const rec = safePersonalData[dateStr];
+        if (rec && rec.sandwich && rec.sandwich.some(s => s.applied === true)) {
+          // Sunday with sandwich penalty
+          const resolvedStatus = getCalendarAttendanceStatus(rec);
+          statusLabel = STATUS_LABELS[resolvedStatus] || resolvedStatus;
+          statusClass = getStatusBadgeClass(resolvedStatus, lateMin, rec);
+        } else {
+          // Regular Sunday
+          statusLabel = "Sunday";
+          statusClass = "badge-sunday";
+        }
       } else if (entry) {
         statusLabel =
           entry.type === "holiday" ? "Holiday" : "Half Day (Company)";
@@ -958,6 +999,7 @@ export default function EmployeeAttendance({ embedded = false }) {
           {[
             ["present", "Present"],
             ["absent", "Absent"],
+            ["sandwich_absent", "Absent (Sandwich)"],
             ["late", "Late"],
             ["halfday", "Half Day"],
             ["leave", "Leave"],
@@ -998,7 +1040,11 @@ export default function EmployeeAttendance({ embedded = false }) {
                   <div className="day-num">{cell.dayNum}</div>
                   {cell.badgeHtml}
                   {cell.miniHtml}
-                  {cell.tooltip}
+                  {cell.tooltip && (
+                    <div className={`tooltip-card ${cell.isTooltipRight ? 'tooltip-right' : ''}`}>
+                      {cell.tooltip.props.children}
+                    </div>
+                  )}
                 </div>
               )
             )

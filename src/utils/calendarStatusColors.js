@@ -9,6 +9,11 @@ export const CALENDAR_STATUS_COLORS = {
     border: "#DC2626",
     text: "#8B0000",
   },
+  sandwich_absent: {
+    background: "#FFB3B3",
+    border: "#B91C1C",
+    text: "#7F1D1D",
+  },
   late: {
     background: "#FFD29B",
     border: "#EA580C",
@@ -45,12 +50,25 @@ export const CALENDAR_STATUS_PRIORITY = [
   "holiday",
   "paid_leave",
   "unpaid_leave",
+  "sandwich_absent",
   "absent",
   "half_day",
   "late",
   "present",
   "no_record",
 ];
+
+export const STATUS_LABELS = {
+  present: "Present",
+  absent: "Absent",
+  sandwich_absent: "Absent (Sandwich)",
+  late: "Late",
+  half_day: "Half Day",
+  holiday: "Holiday",
+  paid_leave: "Paid Leave",
+  unpaid_leave: "Unpaid Leave",
+  no_record: "No Record",
+};
 
 export function getCalendarStatusColor(status = "no_record") {
   return CALENDAR_STATUS_COLORS[status] || CALENDAR_STATUS_COLORS.no_record;
@@ -75,6 +93,18 @@ export function getCalendarAttendanceStatus(record) {
   // Handle null, undefined, false, or invalid values safely
   if (!record || typeof record !== "object") {
     return "no_record";
+  }
+
+  // ============================================================
+  // SANDWICH POLICY CHECK
+  // ============================================================
+  // Check if this date has sandwich penalty applied
+  if (record.sandwich && Array.isArray(record.sandwich) && record.sandwich.length > 0) {
+    // If any sandwich entry has applied: true, return sandwich_absent
+    const hasSandwich = record.sandwich.some(s => s.applied === true);
+    if (hasSandwich) {
+      return "sandwich_absent";
+    }
   }
 
   const status = normalizeStatus(
