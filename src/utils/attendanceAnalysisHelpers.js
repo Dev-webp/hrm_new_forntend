@@ -307,7 +307,16 @@ export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
   const date = safe.date || fallbackDate || "";
   const resolvedStatus = getCalendarAttendanceStatus(safe);
   const today = new Date().toISOString().slice(0, 10);
-  const defaultStatus = date && date > today ? "no_record" : "absent";
+  
+  // Check if the date is a Sunday
+  const isSunday = date ? new Date(date + "T00:00:00").getDay() === 0 : false;
+  
+  // Override: if status is absent but it's a Sunday, change to sunday
+  // This fixes incorrect database records where Sundays were marked as absent
+  const effectiveStatus = (resolvedStatus === "absent" && isSunday) ? "sunday" : resolvedStatus;
+  
+  const defaultStatus = date && date > today ? "no_record" : isSunday ? "sunday" : "absent";
+  
   const breakMins = safe.breakMins || {
     b1: 0,
     lunch: 0,
@@ -326,9 +335,9 @@ export function normalizeAttendanceAnalysisRecord(rec, fallbackDate = "") {
   return {
     ...safe,
     date,
-    status: resolvedStatus === "no_record" && !(safe.status || safe.day_status)
+    status: effectiveStatus === "no_record" && !(safe.status || safe.day_status)
       ? defaultStatus
-      : resolvedStatus,
+      : effectiveStatus,
     checkIn: safe.checkIn ?? safe.check_in_time ?? "--",
     checkOut: safe.checkOut ?? safe.check_out_time ?? "--",
     lateMinutes: Number(safe.lateMinutes ?? safe.late_minutes ?? 0) || 0,
@@ -472,10 +481,10 @@ export function getAttendanceStyle(rec) {
   }
 
   // ============================================================
-  // ABSENT
+  // ABSENT / SANDWICH ABSENT
   // ============================================================
 
-  if (safe.status === "absent") {
+  if (safe.status === "absent" || safe.status === "sandwich_absent") {
     return {
       className: "cal-absent",
       numClass: "red-num",
@@ -493,10 +502,22 @@ export function getAttendanceStyle(rec) {
     };
   }
 
+  // ============================================================
+  // DEFAULT (for dates with no record - check if Sunday)
+  // ============================================================
+
+  if (!rec || safe.status === null || safe.status === undefined) {
+    // If no record, assume it's a Sunday (weekly off) - blue styling
+    return {
+      className: "cal-sunday",
+      numClass: "blue-num",
+    };
+  }
+
   // Default
   return {
-    className: "cal-absent",
-    numClass: "red-num",
+    className: "cal-sunday",
+    numClass: "blue-num",
   };
 }
 
@@ -531,7 +552,13 @@ export function computeOverviewStats(records) {
   const presentDays = safeRecords.filter((r) => r.status === "full_day").length;
   const lateDays = safeRecords.filter(isGraceLateAttendanceRecord).length;
   const halfDays = safeRecords.filter((r) => r.status === "half_day").length;
-  const absent = safeRecords.filter((r) => r.status === "absent").length;
+  // Count as absent: status === "absent" OR Sunday with applied sandwich penalty
+  const absent = safeRecords.filter((r) => {
+    if (r.status === "absent") return true;
+    if (r.status === "sunday" && r.sandwich && r.sandwich.some(s => s.applied === true)) return true;
+    if (r.status === "sandwich_absent") return true;
+    return false;
+  }).length;
   const paidLeaveDays = safeRecords.filter(isPaidLeaveRecord).length;
   const unpaidLeaveDays = safeRecords.filter(isUnpaidLeaveRecord).length;
   const leaveDays = paidLeaveDays + unpaidLeaveDays;

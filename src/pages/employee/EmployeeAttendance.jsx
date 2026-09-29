@@ -14,6 +14,7 @@ import {
   normalizeAttendanceStatusValue,
 } from "../../utils/attendanceHelpers";
 import { getCalendarAttendanceStatus, STATUS_LABELS } from "../../utils/calendarStatusColors";
+import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 import "../../styles/EmployeeAttendance.css";
 
 function getStatusBadgeClass(status, lateMins, record = null) {
@@ -220,6 +221,7 @@ export default function EmployeeAttendance({ embedded = false }) {
   );
   const [holidayMap, setHolidayMap] = useState({});
   const [personalData, setPersonalData] = useState({});
+  const [personalSummary, setPersonalSummary] = useState(null);
   const [currentWeek, setCurrentWeek] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedMonth, setHasLoadedMonth] = useState(false);
@@ -276,9 +278,8 @@ export default function EmployeeAttendance({ embedded = false }) {
       const lastDay = getSafeLastDay(year, month);
       const end = `${year}-${mm}-${String(lastDay).padStart(2, "0")}`;
       try {
-        const records = normalizeArray(
-          await apiFetch(`/attendance/self/history?start=${start}&end=${end}`)
-        );
+        const data = await apiFetch(`/attendance/self/history?start=${start}&end=${end}`);
+        const records = data.rows || data || []; // Handle both old and new response format
         const map = {};
         records.forEach((r) => {
           const record = normalizeAttendanceRecord(r);
@@ -286,9 +287,11 @@ export default function EmployeeAttendance({ embedded = false }) {
           if (dateKey) map[dateKey] = { ...record, date: dateKey };
         });
         setPersonalData(map);
+        setPersonalSummary(data.summary || null);
         return map;
       } catch (err) {
         setPersonalData({});
+        setPersonalSummary(null);
         throw new Error(err?.message || "Unable to load attendance history", { cause: err });
       }
     },
@@ -427,6 +430,34 @@ export default function EmployeeAttendance({ embedded = false }) {
     let holidayCount = 0;
     let halfDayHolidayCount = 0;
     let sundayCount = 0;
+
+    // Count holidays and Sundays from holiday map
+    for (let d = 1; d <= lastDay; d++) {
+      const dateKey = `${mm}-${String(d).padStart(2, "0")}`;
+      const entry = safeHolidayMap[dateKey];
+      const isSunday = new Date(year, month, d).getDay() === 0;
+      if (isSunday && !entry) sundayCount++;
+      if (entry?.type === "holiday") holidayCount++;
+      if (entry?.type === "halfday") halfDayHolidayCount++;
+    }
+
+    const totalDays = lastDay;
+    const workingDays =
+      totalDays - sundayCount - holidayCount - halfDayHolidayCount;
+
+    // Use backend summary if available, otherwise use local counting as fallback
+    if (personalSummary) {
+      return {
+        totalDays,
+        workingDays,
+        presentCount: personalSummary.present,
+        absentCount: personalSummary.absent,
+        lateCount: personalSummary.late,
+        holidayCount,
+      };
+    }
+
+    // Fallback to local counting (should not happen with new endpoint)
     let presentCount = 0;
     let absentCount = 0;
     let lateCount = 0;
@@ -436,9 +467,6 @@ export default function EmployeeAttendance({ embedded = false }) {
       const dateStr = `${year}-${dateKey}`;
       const entry = safeHolidayMap[dateKey];
       const isSunday = new Date(year, month, d).getDay() === 0;
-      if (isSunday && !entry) sundayCount++;
-      if (entry?.type === "holiday") holidayCount++;
-      if (entry?.type === "halfday") halfDayHolidayCount++;
 
       const rec = safePersonalData[dateStr];
       if (!isSunday && !entry) {
@@ -449,15 +477,14 @@ export default function EmployeeAttendance({ embedded = false }) {
           if (isGraceLateLogin(rec)) lateCount++;
         }
       } else if (isSunday && !entry) {
-        // Check for sandwich penalty on Sunday
-        if (rec && rec.sandwich && rec.sandwich.some(s => s.applied === true)) {
+        const sandwichResult = rec?.sandwich?.find(s => s.date === dateStr) || rec?.sandwich?.[0];
+        const display = getSundayDisplay(sandwichResult);
+        if (display.countsAsAbsent) {
           absentCount++;
         }
       }
     }
-    const totalDays = lastDay;
-    const workingDays =
-      totalDays - sundayCount - holidayCount - halfDayHolidayCount;
+
     return {
       totalDays,
       workingDays,
@@ -466,7 +493,7 @@ export default function EmployeeAttendance({ embedded = false }) {
       lateCount,
       holidayCount,
     };
-  }, [year, month, mm, safeHolidayMap, safePersonalData]);
+  }, [year, month, mm, safeHolidayMap, safePersonalData, personalSummary]);
 
   const calDays = useMemo(() => {
     const lastDay = getSafeLastDay(year, month);
@@ -492,38 +519,21 @@ export default function EmployeeAttendance({ embedded = false }) {
       if (isSunday && !entry) {
         // Check if this Sunday has a sandwich record
         const rec = safePersonalData[dateStr];
-        if (rec && rec.sandwich && rec.sandwich.some(s => s.applied === true)) {
-          // Sunday with sandwich penalty - use Absent styling and "Absent (Sandwich)" chip
-          dayClass += " is-absent";
-          badgeHtml = (
-            <div className="day-badge badge-absent">
-              Absent (Sandwich)
-            </div>
-          );
-          tooltip = (
-            <div className="tooltip-card">
-              <div className="tt-title">Sunday</div>
-              <div>Absent (Sandwich)</div>
-            </div>
-          );
-        } else {
-          // Regular Sunday
-          dayClass += " is-sunday calendar-holiday";
-          badgeHtml = (
-            <div
-              className="day-badge"
-              style={{ background: "rgba(185,28,28,0.25)", color: "#ff8a8a" }}
-            >
-              📆 Sunday
-            </div>
-          );
-          tooltip = (
-            <div className="tooltip-card">
-              <div className="tt-title">Sunday</div>
-              <div>Weekly Off</div>
-            </div>
-          );
-        }
+        const sandwichResult = rec?.sandwich?.find(s => s.date === dateStr) || rec?.sandwich?.[0];
+        const display = getSundayDisplay(sandwichResult);
+
+        dayClass += ` ${getDayClass(display.isPenalized)}`;
+        badgeHtml = (
+          <div className={`day-badge ${getBadgeClass(display.badgeVariant)}`}>
+            {display.label}
+          </div>
+        );
+        tooltip = (
+          <div className="tooltip-card">
+            <div className="tt-title">Sunday</div>
+            <div>{display.tooltip}</div>
+          </div>
+        );
       } else if (entry?.type === "holiday") {
         dayClass += " is-holiday calendar-holiday";
         badgeHtml = (
@@ -764,16 +774,10 @@ export default function EmployeeAttendance({ embedded = false }) {
 
       if (isSunday) {
         const rec = safePersonalData[dateStr];
-        if (rec && rec.sandwich && rec.sandwich.some(s => s.applied === true)) {
-          // Sunday with sandwich penalty
-          const resolvedStatus = getCalendarAttendanceStatus(rec);
-          statusLabel = STATUS_LABELS[resolvedStatus] || resolvedStatus;
-          statusClass = getStatusBadgeClass(resolvedStatus, lateMin, rec);
-        } else {
-          // Regular Sunday
-          statusLabel = "Sunday";
-          statusClass = "badge-sunday";
-        }
+        const sandwichResult = rec?.sandwich?.find(s => s.date === dateStr) || rec?.sandwich?.[0];
+        const display = getSundayDisplay(sandwichResult);
+        statusLabel = display.label;
+        statusClass = getBadgeClass(display.badgeVariant);
       } else if (entry) {
         statusLabel =
           entry.type === "holiday" ? "Holiday" : "Half Day (Company)";

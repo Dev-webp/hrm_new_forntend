@@ -24,6 +24,7 @@ import {
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
 import { getStoredUser } from "../../utils/auth";
+import { getSundayDisplay } from "../../utils/sundaySandwich";
 import "../../styles/adminAttendanceAnalysis.css";
 
 function AdminAttendanceAnalysis() {
@@ -687,10 +688,18 @@ function AdminAttendanceAnalysis() {
     currentRecords.forEach((r) => {
       const rec = normalizeAttendanceAnalysisRecord(r);
 
+      // Map Sunday status using sandwich helper
+      let statusLabel = rec.status;
+      if (rec.status === "sunday") {
+        const sandwichResult = rec.sandwich?.find(s => s.date === rec.date) || rec.sandwich?.[0];
+        const display = getSundayDisplay(sandwichResult);
+        statusLabel = display.label;
+      }
+
       rows.push([
         rec.date,
         dayName(rec.date),
-        rec.status,
+        statusLabel,
         formatTimeDisplay(rec.checkIn),
         formatProductionHours(rec.workHours),
         formatTimeDisplay(rec.checkOut),

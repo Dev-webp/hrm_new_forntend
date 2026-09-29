@@ -20,6 +20,7 @@ import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
+import { getSundayDisplay } from "../../utils/sundaySandwich";
 import "./ManagerAttendanceAnalysis.css";
 
 function getChart() {
@@ -324,7 +325,14 @@ export default function ManagerAttendanceAnalysis() {
       const headers = ["Date","Day","Status","Check In","Check Out","Hours","Late Minutes","Break Minutes"];
       const rows = [headers];
       records.forEach((r) => {
-        rows.push([r.date, dayName(r.date), r.status, formatTimeDisplay(r.checkIn), formatTimeDisplay(r.checkOut),
+        // Map Sunday status using sandwich helper
+        let statusLabel = r.status;
+        if (r.status === "sunday") {
+          const sandwichResult = r.sandwich?.find(s => s.date === r.date) || r.sandwich?.[0];
+          const display = getSundayDisplay(sandwichResult);
+          statusLabel = display.label;
+        }
+        rows.push([r.date, dayName(r.date), statusLabel, formatTimeDisplay(r.checkIn), formatTimeDisplay(r.checkOut),
           formatProductionHours(r.workHours), r.lateMinutes, r.breaks]);
       });
       const csv = rows.map((r) => r.join(",")).join("\n");

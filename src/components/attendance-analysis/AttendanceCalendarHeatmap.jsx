@@ -11,6 +11,7 @@ import {
   normalizeAttendanceAnalysisRecord,
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
+import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 
 /** O(1) lookup map: "YYYY-MM-DD" → record */
 function buildRecordMap(records) {
@@ -28,22 +29,28 @@ function CalendarDay({ dateStr, dayNum, record }) {
   const safeRecord = normalizeAttendanceAnalysisRecord(record, dateStr);
   const style = getAttendanceStyle(safeRecord);
 
-  const statusLabel =
-    isPaidLeaveRecord(safeRecord)
-      ? "Paid Leave"
-      : isUnpaidLeaveRecord(safeRecord)
-      ? "Unpaid Leave"
-      : safeRecord.status === "full_day"
-      ? "Full Day"
-      : safeRecord.status === "half_day"
-        ? "Half Day"
-        : safeRecord.status === "no_record"
-          ? "No Record"
-        : safeRecord.status === "sunday"
-          ? "Sunday"
-          : safeRecord.status === "holiday"
-            ? "Holiday"
-            : "Absent";
+  // Check for sandwich policy on Sundays or sandwich_absent status
+  let statusLabel;
+  if (safeRecord.status === "sunday" || safeRecord.status === "sandwich_absent") {
+    const sandwichResult = safeRecord.sandwich?.find(s => s.date === dateStr) || safeRecord.sandwich?.[0];
+    const display = getSundayDisplay(sandwichResult);
+    statusLabel = display.label;
+  } else {
+    statusLabel =
+      isPaidLeaveRecord(safeRecord)
+        ? "Paid Leave"
+        : isUnpaidLeaveRecord(safeRecord)
+        ? "Unpaid Leave"
+        : safeRecord.status === "full_day"
+          ? "Full Day"
+          : safeRecord.status === "half_day"
+            ? "Half Day"
+            : safeRecord.status === "no_record"
+              ? "No Record"
+              : safeRecord.status === "holiday"
+                ? "Holiday"
+                : "Absent";
+  }
 
   return (
     <div className={`cal-day ${style.className}`}>

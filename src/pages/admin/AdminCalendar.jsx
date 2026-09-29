@@ -19,6 +19,7 @@ import {
 } from "../../utils/calendarHelper";
 import { CALENDAR_STATUS_COLORS, getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
+import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 import {
   formatProductionHours,
   formatTime12Hour,
@@ -322,6 +323,7 @@ function AdminCalendar() {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("all");
   const [employeeRecordsMap, setEmployeeRecordsMap] = useState(new Map());
+  const [employeeSummary, setEmployeeSummary] = useState(null);
   const [selectedDayRecord, setSelectedDayRecord] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
   const [editError, setEditError] = useState("");
@@ -622,6 +624,7 @@ function AdminCalendar() {
     async (year, month) => {
       if (selectedEmployeeId === "all") {
         setEmployeeRecordsMap(new Map());
+        setEmployeeSummary(null);
         return new Map();
       }
 
@@ -630,11 +633,12 @@ function AdminCalendar() {
 
       const data = await fetchEmployeeCalendar(selectedEmployeeId, start, end);
       const map = new Map();
-      data.forEach((row) => {
+      data.rows.forEach((row) => {
         const record = transformAttendanceRangeRecord(row);
         if (record?.date) map.set(record.date, record);
       });
       setEmployeeRecordsMap(map);
+      setEmployeeSummary(data.summary);
       return map;
     },
     [selectedEmployeeId]
@@ -742,7 +746,12 @@ function AdminCalendar() {
           }
 
           const labelText = (() => {
-            if (statusKey === "sunday") return "Sunday";
+            if (statusKey === "sunday") {
+              // Use shared Sunday sandwich helper
+              const sandwichResult = employeeRecord?.sandwich?.find(s => s.date === dateStr) || employeeRecord?.sandwich?.[0];
+              const display = getSundayDisplay(sandwichResult);
+              return display.label;
+            }
             if (statusKey === "holiday") return entry.name || "Holiday";
             if (statusKey === "paid_leave") return "Paid Leave";
             if (statusKey === "unpaid_leave") return "Unpaid Leave";
@@ -1233,30 +1242,61 @@ function AdminCalendar() {
       </div>
 
       <div className="month-stats">
-        <div className="stat-card">
-          <div className="stat-value">{monthStats.totalDays}</div>
-          <div className="stat-label">Total Days</div>
-        </div>
+        {selectedEmployeeId !== "all" && employeeSummary ? (
+          <>
+            <div className="stat-card">
+              <div className="stat-value">{employeeSummary.present}</div>
+              <div className="stat-label">Present</div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{monthStats.workingDays}</div>
-          <div className="stat-label">Working Days</div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-value">{employeeSummary.absent}</div>
+              <div className="stat-label">Absent</div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{monthStats.holidaysCount}</div>
-          <div className="stat-label">Holidays</div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-value">{employeeSummary.late}</div>
+              <div className="stat-label">Late</div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{monthStats.halfDaysCount}</div>
-          <div className="stat-label">Half Days</div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-value">{employeeSummary.halfDay}</div>
+              <div className="stat-label">Half Day</div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-value">{monthStats.sundaysCount}</div>
-          <div className="stat-label">Sundays</div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-value">{employeeSummary.leave}</div>
+              <div className="stat-label">Leave</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="stat-card">
+              <div className="stat-value">{monthStats.totalDays}</div>
+              <div className="stat-label">Total Days</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-value">{monthStats.workingDays}</div>
+              <div className="stat-label">Working Days</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-value">{monthStats.holidaysCount}</div>
+              <div className="stat-label">Holidays</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-value">{monthStats.halfDaysCount}</div>
+              <div className="stat-label">Half Days</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-value">{monthStats.sundaysCount}</div>
+              <div className="stat-label">Sundays</div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="legend">
@@ -1268,6 +1308,11 @@ function AdminCalendar() {
         <div className="legend-item">
           <div className="color-dot absent"></div>
           <span>Absent</span>
+        </div>
+
+        <div className="legend-item">
+          <div className="color-dot sandwich_absent"></div>
+          <span>Absent (Sandwich)</span>
         </div>
 
         <div className="legend-item">

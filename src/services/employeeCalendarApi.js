@@ -13,7 +13,13 @@ export async function fetchEmployees(branch = "all") {
 }
 
 export async function fetchEmployeeCalendar(userId, start, end) {
-  const response = await api.get(`/attendance/user/${userId}`, {
+  // Guard against null/undefined userId
+  if (!userId || userId === "null" || userId === "undefined") {
+    console.warn("fetchEmployeeCalendar called with invalid userId:", userId);
+    return { rows: [], summary: null };
+  }
+
+  const response = await api.get(`/attendance/range/summary/user/${userId}`, {
     params: {
       start,
       end,
@@ -26,9 +32,8 @@ export async function fetchEmployeeCalendar(userId, start, end) {
     response.data
   );
 
-  return Array.isArray(response.data)
-    ? response.data
-    : [];
+  // The endpoint returns { rows, summary }
+  return response.data || { rows: [], summary: null };
 }
 export async function updateEmployeeCalendarDay(userId, payload) {
   const response = await api.put(`/attendance/${userId}`, payload);

@@ -30,6 +30,7 @@ import {
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
+import { getSundayDisplay } from "../../utils/sundaySandwich";
 
 function WeekFilter({ id, value, onChange }) {
   return (
@@ -173,7 +174,13 @@ function IndividualAnalysisView({
 
   const breakStats = useMemo(() => {
     const workFiltered = breakFiltered.filter(
-      (r) => !["absent", "sunday", "holiday"].includes(r.status)
+      (r) => {
+        // Exclude Sundays and holidays from break stats
+        if (["sunday", "holiday"].includes(r.status)) return false;
+        // Sandwich Sundays with applied penalty should be treated as absent for break stats
+        if (r.status === "sunday" && r.sandwich && r.sandwich.some(s => s.applied === true)) return false;
+        return !["absent"].includes(r.status);
+      }
     );
     let sumB1 = 0;
     let sumL = 0;

@@ -8,6 +8,7 @@ import {
 } from "../../utils/timeFormat";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import { getCalendarAttendanceStatus, STATUS_LABELS } from "../../utils/calendarStatusColors";
+import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 import "../../styles/ManagerCalendar.css";
 
 const MONTH_NAMES = [
@@ -31,15 +32,6 @@ function fmt12(timeStr) {
   return formatTime12Hour(timeStr);
 }
 
-function TooltipSunday({ isSandwich }) {
-  return (
-    <div className="tooltip-card">
-      <div className="tt-title">Sunday</div>
-      <div>{isSandwich ? "Absent (Sandwich)" : "📆 Weekly Off"}</div>
-    </div>
-  );
-}
-
 function TooltipHoliday({ name }) {
   return (
     <div className="tooltip-card">
@@ -60,6 +52,7 @@ function isUnpaidLeaveDay(rec = {}) {
 export default function ManagerCalendar() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
   const branch = localStorage.getItem("branch") || "Hyderabad";
   const fullName = localStorage.getItem("full_name") || "Manager";
 
@@ -73,6 +66,7 @@ export default function ManagerCalendar() {
   const [holidayMap, setHolidayMap] = useState({});
   const [branchMonthData, setBranchMonthData] = useState({});
   const [personalMonthData, setPersonalMonthData] = useState({});
+  const [personalSummary, setPersonalSummary] = useState(null);
   const [monthStats, setMonthStats] = useState({
     totalDays: 0,
     workingDays: 0,
@@ -243,11 +237,11 @@ export default function ManagerCalendar() {
       const end = `${year}-${mm}-${String(lastDay).padStart(2, "0")}`;
 
       try {
-        const records = await apiFetch(
-          `/attendance/self/history?start=${start}&end=${end}`
+        const data = await apiFetch(
+          `/attendance/range/summary/user/${userId}?start=${start}&end=${end}`
         );
         const map = {};
-        (Array.isArray(records) ? records : []).forEach((rec) => {
+        (Array.isArray(data.rows) ? data.rows : []).forEach((rec) => {
           const ds =
             typeof rec.date === "string"
               ? rec.date.slice(0, 10)
@@ -259,9 +253,11 @@ export default function ManagerCalendar() {
             lateMinutes: rec.late_minutes || 0,
             prodHours: rec.production_hours || 0,
             breakMinutes: rec.total_break_minutes || 0,
+            sandwich: rec.sandwich || null,
           };
         });
         personalCacheRef.current[key] = map;
+        setPersonalSummary(data.summary);
         return map;
       } catch (e) {
         console.warn("Personal history fetch failed:", e.message);
@@ -298,13 +294,10 @@ export default function ManagerCalendar() {
       let holidayCount = 0;
       let halfDayCount = 0;
       let sundayCount = 0;
-      let pPresent = 0;
-      let pAbsent = 0;
-      let pLate = 0;
-      let pHalfDay = 0;
-      let pLeave = 0;
 
       const days = [];
+
+      // Remove local counting - use backend summary instead
 
       for (let i = 0; i < firstWday; i += 1) {
         days.push({ type: "empty", key: `empty-${i}` });
@@ -324,17 +317,16 @@ export default function ManagerCalendar() {
         let tooltipContent = null;
 
         if (isSun && !entry) {
-          cssClasses += " is-sunday calendar-holiday";
+          // Use shared Sunday sandwich helper
+          const rec = viewMode === "personal" ? personalData[dateStr] : null;
+          const sandwichResult = rec?.sandwich?.find(s => s.date === dateStr) || rec?.sandwich?.[0];
+          const display = getSundayDisplay(sandwichResult);
+
+          cssClasses += ` ${getDayClass(display.isPenalized)}`;
           sundayCount += 1;
           badgeContent = (
-            <div
-              className="day-badge"
-              style={{
-                background: "rgba(185,28,28,0.25)",
-                color: "#ff8a8a",
-              }}
-            >
-              📆 Sunday
+            <div className={`day-badge ${getBadgeClass(display.badgeVariant)}`}>
+              {display.label}
             </div>
           );
         } else if (entry?.type === "holiday") {
@@ -373,16 +365,7 @@ export default function ManagerCalendar() {
           const rec = personalData[dateStr];
           const st = rec ? rec.status : null;
 
-          if (st) {
-            if (st === "full_day") pPresent += 1;
-            else if (st === "in_progress" || st === "working") pPresent += 1;
-            else if (st === "absent") pAbsent += 1;
-            else if (st === "half_day") pHalfDay += 1;
-            else if (["leave", "paid_leave", "unpaid_leave"].includes(st)) pLeave += 1;
-            if (isGraceLateAttendanceRecord(rec)) pLate += 1;
-          } else if (!isSun && !entry && dateStr <= today) {
-            pAbsent += 1;
-          }
+          // Local counting removed - using backend summary instead
 
           if (!isSun && !entry && rec) {
             if (isPaidLeaveDay(rec)) cssClasses += " p-leave calendar-paid-leave paid-leave";
@@ -429,9 +412,7 @@ export default function ManagerCalendar() {
               </div>
             );
 
-            if (isSun) {
-              tooltipContent = <TooltipSunday />;
-            } else if (entry?.type === "holiday") {
+            if (entry?.type === "holiday") {
               tooltipContent = <TooltipHoliday name={entry.name} />;
             } else {
               tooltipContent = (
@@ -480,9 +461,28 @@ export default function ManagerCalendar() {
                 </div>
               );
             }
+          } else if (isSun) {
+            const dayRec = personalData[dateStr];
+            const sandwichResult = dayRec?.sandwich?.find(s => s.date === dateStr) || dayRec?.sandwich?.[0];
+            const display = getSundayDisplay(sandwichResult);
+            tooltipContent = (
+              <div className="tooltip-card">
+                <div className="tt-title">Sunday</div>
+                <div>{display.tooltip}</div>
+              </div>
+            );
           } else {
-            if (isSun) tooltipContent = <TooltipSunday />;
-            else if (entry?.type === "holiday") {
+            if (isSun) {
+              const dayRec = personalData[dateStr];
+              const sandwichResult = dayRec?.sandwich?.find(s => s.date === dateStr) || dayRec?.sandwich?.[0];
+              const display = getSundayDisplay(sandwichResult);
+              tooltipContent = (
+                <div className="tooltip-card">
+                  <div className="tt-title">Sunday</div>
+                  <div>{display.tooltip}</div>
+                </div>
+              );
+            } else if (entry?.type === "holiday") {
               tooltipContent = <TooltipHoliday name={entry.name} />;
             } else if (dateStr <= today) {
               cssClasses += " p-absent calendar-absent";
@@ -539,10 +539,16 @@ export default function ManagerCalendar() {
                 ) : null}
               </div>
             );
-          }
-
-          if (isSun) {
-            tooltipContent = <TooltipSunday />;
+          } else if (isSun) {
+            const dayRec = personalData[dateStr];
+            const sandwichResult = dayRec?.sandwich?.find(s => s.date === dateStr) || dayRec?.sandwich?.[0];
+            const display = getSundayDisplay(sandwichResult);
+            tooltipContent = (
+              <div className="tooltip-card">
+                <div className="tt-title">Sunday</div>
+                <div>{display.tooltip}</div>
+              </div>
+            );
           } else if (entry?.type === "holiday") {
             tooltipContent = <TooltipHoliday name={entry.name} />;
           } else {
@@ -631,13 +637,6 @@ export default function ManagerCalendar() {
           halfDays: halfDayCount,
           sundays: sundayCount,
         },
-        personalStats: {
-          present: pPresent,
-          absent: pAbsent,
-          late: pLate,
-          halfDay: pHalfDay,
-          leave: pLeave,
-        },
       };
     },
     [viewMode]
@@ -666,7 +665,16 @@ export default function ManagerCalendar() {
 
     const result = renderCalendarDays(year, month, hMap, branchData, personalData);
     setMonthStats(result.monthStats);
-    setPersonalStats(result.personalStats);
+    // Use backend summary for personal stats instead of local counting
+    if (personalSummary) {
+      setPersonalStats({
+        present: personalSummary.present,
+        absent: personalSummary.absent,
+        late: personalSummary.late,
+        halfDay: personalSummary.halfDay,
+        leave: personalSummary.leave,
+      });
+    }
     buildBottomTables(year, month, lastDay, mm, hMap);
 
     setIsLoading(false);
@@ -851,6 +859,9 @@ export default function ManagerCalendar() {
           </div>
           <div className="legend-item personal-only">
             <div className="ldot absent" /> My Absent
+          </div>
+          <div className="legend-item personal-only">
+            <div className="ldot sandwich_absent" /> Absent (Sandwich)
           </div>
           <div className="legend-item personal-only">
             <div className="ldot late" /> My Late
