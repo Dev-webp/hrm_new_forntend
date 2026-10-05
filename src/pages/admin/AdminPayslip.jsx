@@ -875,15 +875,27 @@ const salaryPreview = calculateSalaryPreview();
                       </div>
                       <div className="att-box blue">
                         <div className="att-box-val">
-                          {previewData.calendar.sundayCount}
+                          {previewData.calendar.paidSundays}
                         </div>
-                        <div className="att-box-label">Sundays ✓</div>
+                        <div className="att-box-label">Paid Sundays</div>
+                      </div>
+                      <div className="att-box red">
+                        <div className="att-box-val">
+                          {previewData.calendar.unpaidSundays}
+                        </div>
+                        <div className="att-box-label">Unpaid Sundays</div>
                       </div>
                       <div className="att-box blue">
                         <div className="att-box-val">
-                          {previewData.calendar.holidayCount}
+                          {previewData.calendar.paidCompanyHolidays}
                         </div>
-                        <div className="att-box-label">Holidays ✓</div>
+                        <div className="att-box-label">Paid Holidays</div>
+                      </div>
+                      <div className="att-box red">
+                        <div className="att-box-val">
+                          {previewData.calendar.unpaidCompanyHolidays}
+                        </div>
+                        <div className="att-box-label">Unpaid Holidays</div>
                       </div>
                       <div className="att-box gold">
                         <div className="att-box-val">
@@ -975,6 +987,19 @@ const salaryPreview = calculateSalaryPreview();
                         absence(s) this month are <strong>unpaid</strong>.
                       </div>
                     )}
+                    {previewData.sandwich && (previewData.sandwich.sundaysAddedToUnpaid > 0 || Object.keys(previewData.sandwich.allowanceUsage || {}).length > 0) && (
+                      <div className="pl-explain" style={{ marginTop: "12px", background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>
+                        <strong style={{ color: "var(--red)" }}>Sandwich Policy Applied</strong>
+                        <br />
+                        Sundays added to unpaid: <strong>{previewData.sandwich.sundaysAddedToUnpaid}</strong>
+                        {Object.keys(previewData.sandwich.allowanceUsage || {}).length > 0 && (
+                          <>
+                            <br />
+                            Allowance usage: <strong>{JSON.stringify(previewData.sandwich.allowanceUsage)}</strong>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-grid" style={{ marginTop: "14px" }}>
@@ -1062,6 +1087,14 @@ const salaryPreview = calculateSalaryPreview();
                         <div className="sal-row section-head">
                           <span>Deductions (from Gross)</span>
                         </div>
+                        {previewData.salary?.penaltyDeduction > 0 && (
+                          <div className="sal-row">
+                            <span>Penalty Deduction</span>
+                            <span className="mono deduction-val">
+                              - {inr2(previewData.salary.penaltyDeduction)}
+                            </span>
+                          </div>
+                        )}
                         <div className="sal-row">
                           <span>Other Deductions</span>
                           <span className="mono deduction-val">
