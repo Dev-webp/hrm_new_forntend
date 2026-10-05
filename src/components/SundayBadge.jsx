@@ -1,4 +1,4 @@
-import React from "react";
+
 import { getSundayDisplay, getBadgeClass, getDayClass } from "../utils/sundaySandwich";
 
 /**
@@ -6,7 +6,7 @@ import { getSundayDisplay, getBadgeClass, getDayClass } from "../utils/sundaySan
  * Displays Sunday status with sandwich penalty information
  * Uses the shared sundaySandwich helper for consistent display across all calendar views
  */
-export default function SundayBadge({ sandwichResult, date, onClick }) {
+export default function SundayBadge({ sandwichResult, date, _onClick }) {
   const display = getSundayDisplay(sandwichResult);
   const badgeClass = getBadgeClass(display.badgeVariant);
   const dayClass = getDayClass(display.isPenalized);

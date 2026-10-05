@@ -87,6 +87,119 @@ function normalizeStatus(value) {
   return String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
 }
 
+export function isCalendarGraceLateLogin(record = {}) {
+  const raw = record.check_in_time || record.office_in || record.checkIn;
+  if (!raw) return false;
+  const [hours, minutes] = String(raw).slice(0, 5).split(":").map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return false;
+  const loginMinutes = hours * 60 + minutes;
+  return loginMinutes >= 10 * 60 + 15 && loginMinutes < 10 * 60 + 30;
+}
+
+export function resolveCalendarStatus(
+  record,
+  { dateStr, isSunday = false, isHoliday = false, isHalfDayHoliday = false } = {}
+) {
+  const rawStatus = normalizeStatus(
+    record?.status || record?.day_status || record?.attendance_status
+  );
+  const hasPunch = Boolean(
+    record?.check_in_time ||
+    record?.check_out_time ||
+    record?.office_in ||
+    record?.office_out ||
+    record?.checkIn ||
+    record?.checkOut
+  );
+  const workedStatuses = new Set([
+    "full_day",
+    "present",
+    "in_progress",
+    "working",
+    "missing_checkout",
+    "half_day",
+    "late",
+  ]);
+  const recordWithoutSandwich = record
+    ? { ...record, sandwich: [] }
+    : null;
+
+  if (record && (hasPunch || workedStatuses.has(rawStatus))) {
+    const actualStatus = getCalendarAttendanceStatus(recordWithoutSandwich);
+    return actualStatus === "no_record" ? rawStatus || "no_record" : actualStatus;
+  }
+
+  const sandwichResult = record?.sandwich?.find(
+    (item) => item?.date === dateStr
+  );
+  if (sandwichResult?.applied === true) {
+    return "sandwich_absent";
+  }
+
+  if (isHoliday) return "holiday";
+  if (isSunday) return "sunday";
+  if (isHalfDayHoliday) return "half_day";
+
+  if (record) {
+    return getCalendarAttendanceStatus(recordWithoutSandwich);
+  }
+
+  return "no_record";
+}
+
+export function getCalendarStatusLabel(status, record = {}, options = {}) {
+  const normalizedStatus = normalizeStatus(status);
+  if (normalizedStatus === "sandwich_absent") return "Absent (Sandwich)";
+  if (normalizedStatus === "sunday") return "📆 Sunday";
+  if (normalizedStatus === "holiday") return options.holidayName || "Holiday";
+  if (normalizedStatus === "present" || normalizedStatus === "full_day") return "Present";
+  if (normalizedStatus === "working" || normalizedStatus === "in_progress") return "Working";
+  if (normalizedStatus === "missing_checkout") return "Missing Checkout";
+  if (normalizedStatus === "half_day") {
+    const hasLeaveContext =
+      Boolean(record.leave_request_id || record.leaveRequestId) ||
+      (record.policy_flags || []).includes("leave_period");
+    if (hasLeaveContext) {
+      const isPaid = record.is_paid_leave === true || record.isPaidLeave === true;
+      return `Half Day ${isPaid ? "(Paid Leave)" : "(Unpaid Leave)"}`;
+    }
+    return "Half Day";
+  }
+  if (normalizedStatus === "paid_leave") return "Paid Leave";
+  if (normalizedStatus === "unpaid_leave") return "Unpaid Leave";
+  if (normalizedStatus === "mixed_leave") return "Mixed Leave";
+  if (normalizedStatus === "leave") return "On Leave";
+  if (normalizedStatus === "absent") return "Absent";
+  if (normalizedStatus === "late") {
+    const lateMinutes = Number(options.lateMinutes ?? record.late_minutes ?? record.lateMinutes ?? 0);
+    return lateMinutes > 0 ? `Late ${lateMinutes}m` : "Late";
+  }
+  if (normalizedStatus === "no_record") return "No Record";
+  return normalizedStatus.replace(/_/g, " ") || "No Record";
+}
+
+export function getCalendarStatusClassNames(status) {
+  const normalizedStatus = normalizeStatus(status);
+  if (["present", "full_day", "working", "in_progress"].includes(normalizedStatus)) {
+    return "calendar-present";
+  }
+  if (["absent", "sandwich_absent"].includes(normalizedStatus)) {
+    return "calendar-absent";
+  }
+  if (normalizedStatus === "late" || normalizedStatus === "missing_checkout") {
+    return "calendar-late";
+  }
+  if (normalizedStatus === "half_day") return "calendar-halfday";
+  if (normalizedStatus === "paid_leave") return "calendar-paid-leave paid-leave";
+  if (normalizedStatus === "unpaid_leave") return "calendar-unpaid-leave unpaid-leave";
+  if (normalizedStatus === "mixed_leave") return "calendar-mixed-leave";
+  if (normalizedStatus === "leave") return "calendar-leave";
+  if (normalizedStatus === "sunday" || normalizedStatus === "holiday") {
+    return "calendar-holiday";
+  }
+  return "calendar-empty";
+}
+
 // Attendance rows are the single source of truth for a calendar day. Legacy
 // generic leave rows remain readable, but no UI derives a split from a request.
 export function getCalendarAttendanceStatus(record) {
@@ -151,6 +264,10 @@ export function getCalendarAttendanceStatus(record) {
     }
   }
 
+  if (status === "absent" || status === "no_record") {
+    return status;
+  }
+
   // ============================================================
   // NO PUNCH DATA - USE LEAVE STATUS
   // ============================================================
@@ -206,4 +323,3 @@ export function getCalendarAttendanceStatus(record) {
 
   return status || "no_record";
 }
-

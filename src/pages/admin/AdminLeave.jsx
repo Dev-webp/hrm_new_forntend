@@ -274,11 +274,16 @@ const getApproverRole = (leave) =>
   leave.approver_role ||
   "";
 
-const getApprovedAt = (leave) =>
-  leave.approvedAt ||
-  leave.approved_at ||
-  "";
+const formatRole = (role) =>
+  role
+    ? String(role)
+        .toLowerCase()
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ")
+    : "";
 
+// eslint-disable-next-line no-unused-vars
 const renderApprover = (leave) => {
   const status = String(leave.status || "pending").toLowerCase();
 
@@ -411,6 +416,7 @@ const renderApprover = (leave) => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const filteredMyLeaves = myLeaves.filter(
     (leave) => myLeaveFilter === "all" || leave.status === myLeaveFilter
   );

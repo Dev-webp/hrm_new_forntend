@@ -1,4 +1,4 @@
-import { formatProductionHours } from "../../utils/timeFormat";
+
 
 function AttendanceKpis({ stats, records = [], loading, error }) {
   if (loading && !stats) {
@@ -27,19 +27,24 @@ function AttendanceKpis({ stats, records = [], loading, error }) {
 
   const normalizedStatus = (record) =>
     String(record.status || "absent").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  // eslint-disable-next-line no-unused-vars
   const presentCount = records.filter((record) =>
     ["full_day", "present"].includes(normalizedStatus(record))
   ).length;
+  // eslint-disable-next-line no-unused-vars
   const halfDayCount = records.filter((record) => normalizedStatus(record) === "half_day").length;
+  // eslint-disable-next-line no-unused-vars
   const workingCount = records.filter((record) =>
     ["working", "in_progress"].includes(normalizedStatus(record))
   ).length;
+  // eslint-disable-next-line no-unused-vars
   const absentCount = records.filter((record) => normalizedStatus(record) === "absent").length;
   const productiveRecords = records.filter((record) => Number(record.production_hours || 0) > 0);
   const productionHours = productiveRecords.reduce(
     (sum, record) => sum + Number(record.production_hours || 0),
     0
   );
+  // eslint-disable-next-line no-unused-vars
   const averageProductionHours = productiveRecords.length
     ? productionHours / productiveRecords.length
     : 0;

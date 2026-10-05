@@ -7,7 +7,7 @@ import {
   formatTime12Hour,
 } from "../../utils/timeFormat";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
-import { getCalendarAttendanceStatus, STATUS_LABELS } from "../../utils/calendarStatusColors";
+import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 import "../../styles/ManagerCalendar.css";
 
@@ -54,6 +54,7 @@ export default function ManagerCalendar() {
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
   const branch = localStorage.getItem("branch") || "Hyderabad";
+  // eslint-disable-next-line no-unused-vars
   const fullName = localStorage.getItem("full_name") || "Manager";
 
   const branchCacheRef = useRef({});
@@ -106,11 +107,11 @@ export default function ManagerCalendar() {
         if (status === 401 || status === 403) {
           clearAuthSession();
           navigate("/");
-          throw new Error("Unauthorized");
+          const cause = err.response?.data?.message || err.message || "API 401";
+          throw new Error(cause, { cause: err });
         }
-        throw new Error(
-          err.response?.data?.message || err.message || `API ${status}`
-        );
+        const cause = err.response?.data?.message || err.message || `API ${status}`;
+        throw new Error(cause, { cause: err });
       }
     },
     [navigate]
@@ -181,7 +182,7 @@ export default function ManagerCalendar() {
         }
         branchCacheRef.current[key] = map;
         return map;
-      } catch (e) {
+      } catch (_e) {
         try {
           const records = await apiFetch(
             `/attendance/range?start=${start}&end=${end}&branch=${encodeURIComponent(branch)}`
@@ -264,6 +265,7 @@ export default function ManagerCalendar() {
         return {};
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [apiFetch]
   );
 

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import AttendanceAnalysisCards from "./AttendanceAnalysisCards";
 import DepartmentAnalyticsTable from "./DepartmentAnalyticsTable";
 import { BranchTrendsChart } from "./AttendanceTrendChart";
@@ -6,27 +7,30 @@ import { monthLabel } from "../../utils/attendanceAnalysisHelpers";
 function BranchSummaryView({
   monthStr,
   branch,
-  kpi,
+  _kpi,
   employees,
   trends,
   loading,
   error,
   showTrends,
-  onToggleTrends,
+  _onToggleTrends,
   onViewFullAnalysis,
 }) {
+  // eslint-disable-next-line no-unused-vars
   const totalAbsent = employees?.reduce(
     (sum, employee) =>
       sum + Number(employee.absent_days || 0),
     0
   );
 
+  // eslint-disable-next-line no-unused-vars
   const highRiskEmployees = employees?.filter(
     (employee) =>
       Number(employee.absent_days || 0) >= 3 ||
       Number(employee.late_days || 0) >= 5
   );
 
+  // eslint-disable-next-line no-unused-vars
   const bestAttendance = [...(employees || [])].sort(
     (a, b) => {
       const scoreA =

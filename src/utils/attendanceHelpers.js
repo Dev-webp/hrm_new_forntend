@@ -269,7 +269,7 @@ export function formatLateLoginCount(recordOrCount = 0) {
   return String(count);
 }
 
-export function getRemainingGraceLateLogins(recordOrCount = 0) {
+export function getRemainingGraceLateLogins(_recordOrCount = 0) {
   return null;
 }
 

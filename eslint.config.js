@@ -20,6 +20,12 @@ export default defineConfig([
     rules: {
       // Data-fetch on mount is intentional across admin modules
       'react-hooks/set-state-in-effect': 'off',
+      // Ignore intentionally unused variables prefixed with _
+      'no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      }],
     },
   },
 ])

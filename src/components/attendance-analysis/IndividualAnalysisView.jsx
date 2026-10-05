@@ -30,7 +30,7 @@ import {
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
-import { getSundayDisplay } from "../../utils/sundaySandwich";
+
 
 function WeekFilter({ id, value, onChange }) {
   return (

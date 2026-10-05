@@ -39,3 +39,17 @@ export async function updateEmployeeCalendarDay(userId, payload) {
   const response = await api.put(`/attendance/${userId}`, payload);
   return response.data;
 }
+
+/**
+ * HR/Admin: toggle a half-day leave between Paid and Unpaid.
+ * @param {number} recordId - attendance_records.id
+ * @param {boolean} is_paid - true = Paid Half Day, false = Unpaid Half Day
+ * @param {string} reason - mandatory reason (min 5 chars)
+ */
+export async function verifyHalfDayPaidStatus(recordId, is_paid, reason) {
+  const response = await api.patch(`/attendance/${recordId}/half-day-verification`, {
+    is_paid,
+    reason,
+  });
+  return response.data;
+}

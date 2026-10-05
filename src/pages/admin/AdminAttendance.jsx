@@ -3,6 +3,7 @@ import AttendanceEditModal from "../../components/attendance/AttendanceEditModal
 import AttendanceFilters from "../../components/attendance/AttendanceFilters";
 import AttendanceKpis from "../../components/attendance/AttendanceKpis";
 import AttendanceLateAlerts from "../../components/attendance/AttendanceLateAlerts";
+// eslint-disable-next-line no-unused-vars
 import AttendanceLeaderboard from "../../components/attendance/AttendanceLeaderboard";
 import AttendanceTable, { AttendanceStatusLegend } from "../../components/attendance/AttendanceTable";
 import {
@@ -58,6 +59,7 @@ function AdminAttendance() {
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
 
   const [stats, setStats] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [leaderboard, setLeaderboard] = useState([]);
   const [records, setRecords] = useState([]);
   const [departments, setDepartments] = useState([]);

@@ -38,6 +38,7 @@ function halfDayEffectiveMinutes(row, slot) {
   return Math.max(0, workEnd - workStart - breakMinutes);
 }
 
+// eslint-disable-next-line no-unused-vars
 function getHalfDayDetails(row) {
   const checkIn = timeToMinutes(row.check_in_time);
   const checkOut = timeToMinutes(row.check_out_time);

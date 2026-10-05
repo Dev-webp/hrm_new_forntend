@@ -11,15 +11,21 @@ import {
   fetchEmployees,
   fetchEmployeeCalendar,
   updateEmployeeCalendarDay,
+  verifyHalfDayPaidStatus,
 } from "../../services/employeeCalendarApi";
 
 import {
   transformAttendanceRangeRecord,
   monthRangeBounds,
 } from "../../utils/calendarHelper";
-import { CALENDAR_STATUS_COLORS, getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
+import {
+  CALENDAR_STATUS_COLORS,
+  getCalendarStatusClassNames,
+  getCalendarStatusLabel,
+  isCalendarGraceLateLogin,
+  resolveCalendarStatus,
+} from "../../utils/calendarStatusColors";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
-import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 import {
   formatProductionHours,
   formatTime12Hour,
@@ -107,136 +113,16 @@ function resolveEmployeeCalendarStatus(
     isHoliday,
     isHalfDayHoliday,
     dateStr,
-    todayStr,
   } = {}
 ) {
-  // =====================================================
-  // 1. WEEKEND / HOLIDAY
-  // =====================================================
-  if (isSunday) return "sunday";
-
-  if (isHoliday) return "holiday";
-
-  if (isHalfDayHoliday && !record) {
-    return "half_day";
-  }
-
-  // =====================================================
-  // 2. NO ATTENDANCE RECORD
-  // =====================================================
-  if (!record) {
-    return dateStr && todayStr && dateStr <= todayStr
-      ? "absent"
-      : "no_record";
-  }
-
-  // =====================================================
-  // 3. NORMALIZE STATUS
-  // =====================================================
-  const status = normalizeAttendanceStatus(
-    record.status || record.day_status
-  );
-
-  const persistedLeaveStatus = getCalendarAttendanceStatus(record);
-  if (persistedLeaveStatus === "paid_leave" || persistedLeaveStatus === "unpaid_leave") {
-    return persistedLeaveStatus;
-  }
-
-  // =====================================================
-  // 4. MANUAL LEAVE STATUS MUST HAVE PRIORITY
-  // =====================================================
-  // IMPORTANT:
-  // Paid Leave / Unpaid Leave must be checked BEFORE
-  // absent/present/other automatic attendance statuses.
-  //
-  // This prevents a manually selected Paid Leave from
-  // being displayed as Absent.
-  // =====================================================
-
-  if (
-    status === "paid_leave" ||
-    record.is_paid_leave === true ||
-    record.isPaidLeave === true ||
-    Number(record.paid_days || record.paidDays || 0) > 0
-  ) {
-    return "paid_leave";
-  }
-
-  if (
-    status === "unpaid_leave" ||
-    record.is_unpaid_leave === true ||
-    record.isUnpaidLeave === true ||
-    Number(record.unpaid_days || record.unpaidDays || 0) > 0
-  ) {
-    return "unpaid_leave";
-  }
-
-  // =====================================================
-  // 5. APPROVED LEAVE FALLBACK
-  // =====================================================
-  // If the record does not explicitly contain paid/unpaid
-  // status, use the approved leave information.
-  // =====================================================
-
-  if (hasApprovedLeave(record)) {
-    if (
-      status === "paid_leave" ||
-      record.is_paid_leave === true ||
-      record.isPaidLeave === true ||
-      Number(record.paid_days || record.paidDays || 0) > 0
-    ) {
-      return "paid_leave";
-    }
-
-    return "unpaid_leave";
-  }
-
-  // =====================================================
-  // 6. NORMAL ATTENDANCE STATUSES
-  // =====================================================
-
-  if (status === "present") {
-    return "present";
-  }
-
-  if (status === "working") {
-    return "working";
-  }
-
-  if (status === "missing_checkout") {
-    return "missing_checkout";
-  }
-
-  if (status === "late") {
-    return "late";
-  }
-
-  if (status === "half_day") {
-    return "half_day";
-  }
-
-  if (status === "absent") {
-    return "absent";
-  }
-
-  if (status === "holiday") {
-    return "holiday";
-  }
-
-  // =====================================================
-  // 7. VALID ATTENDANCE RECORD BUT NO KNOWN STATUS
-  // =====================================================
-
-  if (hasValidAttendance(record)) {
-    return "no_record";
-  }
-
-  // =====================================================
-  // 8. DEFAULT
-  // =====================================================
-
-  return "no_record";
+  return resolveCalendarStatus(record, {
+    dateStr,
+    isSunday,
+    isHoliday,
+    isHalfDayHoliday,
+  });
 }
+// eslint-disable-next-line no-unused-vars
 function isPaidLeaveDay(rec = {}) {
   const safe = rec || {};
   const status = String(safe.status || safe.day_status || "").toLowerCase();
@@ -254,6 +140,7 @@ function isPaidLeaveDay(rec = {}) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function isUnpaidLeaveDay(rec = {}) {
   const safe = rec || {};
   const status = String(safe.status || safe.day_status || "").toLowerCase();
@@ -283,6 +170,7 @@ function escapeHtml(str) {
 
 function AdminCalendar() {
   const today = new Date();
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const currentUser = useMemo(() => getStoredUser(), []);
   const isOperationalManager = currentUser?.role === "OPERATIONAL_MANAGER";
   const canManageCalendar = currentUser?.role === "SUPER_ADMIN";
@@ -294,8 +182,11 @@ function AdminCalendar() {
     isOperationalManager ? "my" : "branch"
   );
   const [currentBranch, setCurrentBranch] = useState("all");
+  // eslint-disable-next-line no-unused-vars
   const [monthlyStatsCache, setMonthlyStatsCache] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [calendarDaysCache, setCalendarDaysCache] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [customEntries, setCustomEntries] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -322,11 +213,19 @@ function AdminCalendar() {
   const [employees, setEmployees] = useState([]);
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("all");
+  // eslint-disable-next-line no-unused-vars
   const [employeeRecordsMap, setEmployeeRecordsMap] = useState(new Map());
   const [employeeSummary, setEmployeeSummary] = useState(null);
   const [selectedDayRecord, setSelectedDayRecord] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
   const [editError, setEditError] = useState("");
+
+  // Half-day paid/unpaid verification state
+  const [halfDayVerify, setHalfDayVerify] = useState(null); // { record }
+  const [halfDayVerifyIsPaid, setHalfDayVerifyIsPaid] = useState(true);
+  const [halfDayVerifyReason, setHalfDayVerifyReason] = useState("");
+  const [halfDayVerifyError, setHalfDayVerifyError] = useState("");
+  const [halfDayVerifyLoading, setHalfDayVerifyLoading] = useState(false);
 
   const branchDropdownRef = useRef(null);
   const monthChangeTimerRef = useRef(null);
@@ -350,6 +249,7 @@ function AdminCalendar() {
     setTimeout(() => setToast({ show: false, message: "" }), 2200);
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const clearCaches = useCallback(() => {
     setMonthlyStatsCache({});
     setCalendarDaysCache({});
@@ -475,7 +375,7 @@ function AdminCalendar() {
   }, []);
 
   const fetchStatsForDate = useCallback(async (dateStr, branch) => {
-    let records = [];
+    let records;
 
     try {
       if (branch === "all") {
@@ -488,7 +388,7 @@ function AdminCalendar() {
       } else {
         records = await fetchAttendanceForDate(dateStr, branch);
       }
-    } catch (e) {
+    } catch (_e) {
       return {
         present: 0,
         absent: 0,
@@ -649,8 +549,6 @@ function AdminCalendar() {
     const month = currentDate.getMonth();
     const mm = String(month + 1).padStart(2, "0");
     const cacheKey = `${year}-${mm}|${currentBranch}|${refreshKey}`;
-    const todayStr = new Date().toISOString().slice(0, 10);
-
     setLoading(true);
     setError("");
 
@@ -696,85 +594,44 @@ function AdminCalendar() {
 
         // --- NEW: Employee mode rendering ---
         if (selectedEmployeeId !== "all") {
-          const st = employeeRecord?.status || null;
-          const isLate = Number(employeeRecord?.lateMinutes || 0) > 0;
           const isCompanyHoliday = entry?.type === "holiday";
           const isCompanyHalfDay = entry?.type === "halfday";
-          const resolvedStatus = getCalendarAttendanceStatus(employeeRecord);
-          const statusKey = ["paid_leave", "unpaid_leave"].includes(resolvedStatus)
-            ? resolvedStatus
-            : resolveEmployeeCalendarStatus(employeeRecord, {
+          const resolvedStatus = resolveEmployeeCalendarStatus(employeeRecord, {
             isSunday: isSun,
             isHoliday: isCompanyHoliday,
             isHalfDayHoliday: isCompanyHalfDay,
             dateStr,
-            todayStr,
           });
-          const normalizedStatus = normalizeAttendanceStatus(st);
+          const rawStatus = String(
+            employeeRecord?.status ||
+            employeeRecord?.day_status ||
+            employeeRecord?.attendance_status ||
+            ""
+          )
+            .trim()
+            .toLowerCase()
+            .replace(/[\s-]+/g, "_");
+          const statusKey =
+            employeeRecord &&
+            Boolean(
+              employeeRecord.check_in_time ||
+              employeeRecord.office_in ||
+              employeeRecord.checkIn
+            ) &&
+            isCalendarGraceLateLogin(employeeRecord) &&
+            !["absent", "half_day", "full_day"].includes(rawStatus) &&
+            !["paid_leave", "unpaid_leave"].includes(resolvedStatus)
+              ? "late"
+              : resolvedStatus;
           const lateMinutes = Number(employeeRecord?.lateMinutes || employeeRecord?.late_minutes || 0);
+          const labelText = getCalendarStatusLabel(statusKey, employeeRecord || {}, {
+            holidayName: entry?.name,
+            lateMinutes,
+          });
 
-          dayClass += " employee-day";
-
-          if (statusKey === "sunday" || statusKey === "holiday") {
-            dayClass += " calendar-holiday";
-          } else if (statusKey === "paid_leave") {
-            dayClass += " calendar-paid-leave paid-leave";
-          } else if (statusKey === "unpaid_leave") {
-            dayClass += " calendar-unpaid-leave unpaid-leave";
-          } else if (statusKey === "absent") {
-            dayClass += " calendar-absent";
-          } else if (statusKey === "half_day") {
-            dayClass += " calendar-halfday";
-          } else if (statusKey === "late") {
-            dayClass += " calendar-late";
-          } else if (statusKey === "working") {
-            dayClass += " working";
-          } else if (statusKey === "missing_checkout") {
-            dayClass += " calendar-late missing-checkout";
-          } else if (statusKey === "present") {
-            dayClass += " calendar-present";
-          } else {
-            dayClass += " calendar-empty";
-          }
-
-          if (normalizedStatus && normalizedStatus !== "no_record") {
-            dayClass += ` ${normalizedStatus}`;
-          }
-
-          if (statusKey === "late") {
-            dayClass += " late-day";
-          }
-
-          const labelText = (() => {
-            if (statusKey === "sunday") {
-              // Use shared Sunday sandwich helper
-              const sandwichResult = employeeRecord?.sandwich?.find(s => s.date === dateStr) || employeeRecord?.sandwich?.[0];
-              const display = getSundayDisplay(sandwichResult);
-              return display.label;
-            }
-            if (statusKey === "holiday") return entry.name || "Holiday";
-            if (statusKey === "paid_leave") return "Paid Leave";
-            if (statusKey === "unpaid_leave") return "Unpaid Leave";
-            if (statusKey === "absent") return "Absent";
-            if (statusKey === "half_day") return "Half Day";
-            if (statusKey === "late") return `Late ${lateMinutes}m`;
-            if (statusKey === "working") return "Working";
-            if (statusKey === "missing_checkout") return "Missing Checkout";
-            if (statusKey === "present") return "Present";
-            return "No Record";
-          })();
-
-          statusLabel = (
-            <div className="status-label">
-              {st === "full_day" && "✅ Full Day"}
-              {st === "half_day" && "🌓 Half Day"}
-              {st === "absent" && "❌ Absent"}
-              {st === "leave" && "🏖️ Leave"}
-              {st === "holiday" && "🎉 Holiday"}
-              {isLate && st !== "absent" ? ` 🔴 Late ${employeeRecord.lateMinutes}m` : ""}
-            </div>
-          );
-
+          dayClass += ` employee-day ${getCalendarStatusClassNames(statusKey)}`;
+          if (statusKey === "late") dayClass += " late-day";
+          if (statusKey === "missing_checkout") dayClass += " missing-checkout";
           statusLabel = <div className="status-label">{labelText}</div>;
 
           tooltipContent = (
@@ -1447,6 +1304,40 @@ function AdminCalendar() {
             <p><b>Lunch:</b> {selectedDayRecord.breakDetails?.lunch?.in || "--"} → {selectedDayRecord.breakDetails?.lunch?.out || "--"}</p>
             <p><b>Break 2:</b> {selectedDayRecord.breakDetails?.b2?.in || "--"} → {selectedDayRecord.breakDetails?.b2?.out || "--"}</p>
 
+            {/* Half-day verification button */}
+            {canManageCalendar &&
+              selectedDayRecord?.id &&
+              selectedDayRecord?.leave_request_id &&
+              (selectedDayRecord?.status === "half_day" ||
+                selectedDayRecord?.status === "paid_leave" ||
+                selectedDayRecord?.status === "unpaid_leave" ||
+                (selectedDayRecord?.half_day_slot && ["SLOT_A","SLOT_B"].includes(selectedDayRecord.half_day_slot))) && (
+              <button
+                id="btn-verify-half-day"
+                onClick={() => {
+                  setHalfDayVerifyError("");
+                  setHalfDayVerifyReason("");
+                  setHalfDayVerifyIsPaid(
+                    selectedDayRecord?.is_paid_leave !== false
+                  );
+                  setHalfDayVerify({ record: selectedDayRecord });
+                }}
+                style={{
+                  background: "linear-gradient(135deg,#7C3AED,#4F46E5)",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  marginTop: "6px",
+                  width: "100%",
+                }}
+              >
+                🔍 Verify Half-Day (Paid / Unpaid)
+              </button>
+            )}
+
             {canManageCalendar && (
               <button
                 onClick={() => {
@@ -1575,6 +1466,213 @@ function AdminCalendar() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- Half-Day Verification Modal --- */}
+      {halfDayVerify && (
+        <div className="attendance-modal" style={{ zIndex: 3000 }}>
+          <div
+            className="attendance-modal-card"
+            style={{
+              background: "linear-gradient(145deg,#1E1B4B,#312E81)",
+              border: "1px solid #4F46E5",
+              borderRadius: "16px",
+              color: "#E0E7FF",
+              maxWidth: "440px",
+              padding: "28px",
+              boxShadow: "0 20px 60px rgba(79,70,229,0.5)",
+            }}
+          >
+            <h2 style={{ color: "#A5B4FC", marginBottom: "6px", fontSize: "1.2rem" }}>
+              🔍 Half-Day Verification
+            </h2>
+            <p style={{ fontSize: "0.8rem", color: "#818CF8", marginBottom: "18px" }}>
+              {halfDayVerify.record?.date} · Record ID: {halfDayVerify.record?.id}
+            </p>
+
+            <p style={{ fontSize: "0.85rem", color: "#C7D2FE", marginBottom: "14px" }}>
+              Classify this half-day leave as <strong>Paid</strong> or <strong>Unpaid</strong>.
+              This will update the leave allocation and affect payroll.
+            </p>
+
+            {/* Toggle */}
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginBottom: "18px",
+              }}
+            >
+              <button
+                id="hd-verify-paid-btn"
+                onClick={() => setHalfDayVerifyIsPaid(true)}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "10px",
+                  fontWeight: "700",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  border: halfDayVerifyIsPaid
+                    ? "2px solid #34D399"
+                    : "2px solid #374151",
+                  background: halfDayVerifyIsPaid
+                    ? "rgba(52,211,153,0.15)"
+                    : "rgba(55,65,81,0.3)",
+                  color: halfDayVerifyIsPaid ? "#34D399" : "#9CA3AF",
+                  transition: "all 0.2s",
+                }}
+              >
+                ✅ Paid Half Day
+              </button>
+              <button
+                id="hd-verify-unpaid-btn"
+                onClick={() => setHalfDayVerifyIsPaid(false)}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "10px",
+                  fontWeight: "700",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  border: !halfDayVerifyIsPaid
+                    ? "2px solid #F87171"
+                    : "2px solid #374151",
+                  background: !halfDayVerifyIsPaid
+                    ? "rgba(248,113,113,0.15)"
+                    : "rgba(55,65,81,0.3)",
+                  color: !halfDayVerifyIsPaid ? "#F87171" : "#9CA3AF",
+                  transition: "all 0.2s",
+                }}
+              >
+                ❌ Unpaid Half Day
+              </button>
+            </div>
+
+            <label
+              style={{
+                display: "block",
+                color: "#A5B4FC",
+                fontSize: "0.82rem",
+                fontWeight: "600",
+                marginBottom: "6px",
+              }}
+            >
+              Reason <span style={{ color: "#F87171" }}>*</span>
+            </label>
+            <textarea
+              id="hd-verify-reason"
+              rows={3}
+              value={halfDayVerifyReason}
+              onChange={(e) => setHalfDayVerifyReason(e.target.value)}
+              placeholder="Mandatory: explain why this is Paid or Unpaid (min 5 chars)"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                background: "rgba(30,27,75,0.8)",
+                border: halfDayVerifyError
+                  ? "1px solid #F87171"
+                  : "1px solid #4F46E5",
+                color: "#E0E7FF",
+                resize: "vertical",
+                marginBottom: "8px",
+                fontSize: "0.85rem",
+                boxSizing: "border-box",
+              }}
+            />
+
+            {halfDayVerifyError && (
+              <div
+                style={{
+                  color: "#F87171",
+                  fontSize: "0.78rem",
+                  marginBottom: "12px",
+                  background: "rgba(248,113,113,0.1)",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(248,113,113,0.3)",
+                }}
+              >
+                {halfDayVerifyError}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "6px" }}>
+              <button
+                id="hd-verify-save-btn"
+                disabled={halfDayVerifyLoading}
+                onClick={async () => {
+                  const reason = halfDayVerifyReason.trim();
+                  if (reason.length < 5) {
+                    setHalfDayVerifyError("Please enter a reason of at least 5 characters.");
+                    return;
+                  }
+                  setHalfDayVerifyError("");
+                  setHalfDayVerifyLoading(true);
+                  try {
+                    await verifyHalfDayPaidStatus(
+                      halfDayVerify.record.id,
+                      halfDayVerifyIsPaid,
+                      reason
+                    );
+                    setHalfDayVerify(null);
+                    setSelectedDayRecord(null);
+                    setEmployeeRecordsMap(new Map());
+                    setCalendarDaysCache({});
+                    setMonthlyStatsCache({});
+                    setRefreshKey((prev) => prev + 1);
+                    showToast(
+                      halfDayVerifyIsPaid
+                        ? "✅ Half-day classified as Paid"
+                        : "✅ Half-day classified as Unpaid"
+                    );
+                  } catch (err) {
+                    setHalfDayVerifyError(
+                      err?.response?.data?.message ||
+                        "Failed to update. Please try again."
+                    );
+                  } finally {
+                    setHalfDayVerifyLoading(false);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: "11px",
+                  borderRadius: "8px",
+                  background: halfDayVerifyLoading
+                    ? "#374151"
+                    : "linear-gradient(135deg,#7C3AED,#4F46E5)",
+                  color: "#fff",
+                  border: "none",
+                  fontWeight: "700",
+                  cursor: halfDayVerifyLoading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                {halfDayVerifyLoading ? "Saving…" : "Save Verification"}
+              </button>
+              <button
+                onClick={() => {
+                  setHalfDayVerify(null);
+                  setHalfDayVerifyError("");
+                  setHalfDayVerifyReason("");
+                }}
+                style={{
+                  padding: "11px 18px",
+                  borderRadius: "8px",
+                  background: "rgba(55,65,81,0.5)",
+                  color: "#9CA3AF",
+                  border: "1px solid #374151",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

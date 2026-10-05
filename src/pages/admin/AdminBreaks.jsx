@@ -324,8 +324,6 @@ function AdminLeave() {
     if (totalUsed > MAX_BREAK_MINUTES) exceeding++;
     const break3Used = getBreak3Minutes(empBreaks);
     const break3Count = getVisibleBreak3Sessions(empBreaks).length;
-    const break3History = getVisibleBreak3Sessions(empBreaks)
-      .join(", ") || "—";
     const limitStatus = totalUsed > MAX_BREAK_MINUTES ? "Exceeded" : "Within limit";
 
     const remaining = Math.max(0, MAX_BREAK_MINUTES - totalUsed);

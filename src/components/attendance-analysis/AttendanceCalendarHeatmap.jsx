@@ -11,7 +11,7 @@ import {
   normalizeAttendanceAnalysisRecord,
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
-import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
+import { getSundayDisplay } from "../../utils/sundaySandwich";
 
 /** O(1) lookup map: "YYYY-MM-DD" → record */
 function buildRecordMap(records) {

@@ -429,6 +429,7 @@ export function transformAttendanceRangeRecord(row) {
 
     // FINAL STATUS USED BY CALENDAR
     status,
+    sandwich: row.sandwich,
 
     // DEBUGGING VALUES
     raw_status:

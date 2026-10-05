@@ -204,6 +204,7 @@ export default function EmployeeBreaks() {
     [myBreaks.break3Sessions]
   );
 
+  // eslint-disable-next-line no-unused-vars
   const standardTotal = useMemo(
     () => SLOT_CONFIG
       .filter((cfg) => cfg.key !== "break3")

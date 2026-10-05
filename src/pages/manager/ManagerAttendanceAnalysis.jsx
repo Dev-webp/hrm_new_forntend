@@ -40,7 +40,7 @@ function getInitials(name) {
 
 function formatDateReadable(dateStr) {
   if (!dateStr) return "";
-  const [y, m, d] = String(dateStr).slice(0, 10).split("-").map(Number);
+  const [_y, m, d] = String(dateStr).slice(0, 10).split("-").map(Number);
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${months[m - 1]} ${d}`;
 }
@@ -108,6 +108,7 @@ function statusBadgeClass(r) {
   if (isGraceLateAttendanceRecord(safe)) return "b-late";
   return "b-present";
 }
+// eslint-disable-next-line no-unused-vars
 function heatmapColor(r) {
   if (!r) return CALENDAR_STATUS_COLORS.no_record.background;
 
@@ -134,6 +135,7 @@ export default function ManagerAttendanceAnalysis() {
   const [summary, setSummary] = useState(null);
   const [records, setRecords] = useState([]);
   const [leaves, setLeaves] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [toast, setToast] = useState("");
@@ -164,15 +166,15 @@ export default function ManagerAttendanceAnalysis() {
   // ── Destroy a specific chart instance ──────────────────────────────────────
   const destroyChart = useCallback((key) => {
     if (chartInstances.current[key]) {
-      try { chartInstances.current[key].destroy(); } catch (_) {}
+      try { chartInstances.current[key].destroy(); } catch { /* ignore */ }
       delete chartInstances.current[key];
     }
   }, []);
 
-  // ── Cleanup all charts on unmount ──────────────────────────────────────────
   useEffect(() => {
+    const currentChartInstances = chartInstances.current;
     return () => {
-      Object.keys(chartInstances.current).forEach(destroyChart);
+      Object.keys(currentChartInstances).forEach(destroyChart);
     };
   }, [destroyChart]);
 
@@ -925,6 +927,7 @@ return Array(offset)
 const isSunday = new Date(dateStr).getDay() === 0;
 
 const halfDaySlot = r.half_day_slot || r.halfDaySlot;
+// eslint-disable-next-line no-unused-vars
 const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== "INVALID");
 if (isSunday || r.status === "sunday") {
   className += " cal-sunday";

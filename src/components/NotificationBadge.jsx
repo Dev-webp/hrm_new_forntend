@@ -90,6 +90,7 @@ export default function NotificationBadge({ type = "notifications" }) {
       window.removeEventListener(countEvent, loadCount);
       socketRef.current?.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, authToken]);
 
   if (count <= 0) return null;

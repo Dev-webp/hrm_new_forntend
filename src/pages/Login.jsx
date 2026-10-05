@@ -39,8 +39,7 @@ return;
     },
 
     (error) => {
-      let errorMessage =
-        "Unable to get your location.";
+      let errorMessage;
 
       switch (error.code) {
         case error.PERMISSION_DENIED:
@@ -63,7 +62,7 @@ return;
             "Unable to determine your location. Please try again.";
       }
 
-      reject(new Error(errorMessage));
+      reject(new Error(errorMessage, { cause: error }));
     },
 
     {

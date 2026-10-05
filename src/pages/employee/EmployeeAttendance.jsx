@@ -13,7 +13,7 @@ import {
   getLateLoginStatusClass,
   normalizeAttendanceStatusValue,
 } from "../../utils/attendanceHelpers";
-import { getCalendarAttendanceStatus, STATUS_LABELS } from "../../utils/calendarStatusColors";
+import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import { getSundayDisplay, getBadgeClass, getDayClass } from "../../utils/sundaySandwich";
 import "../../styles/EmployeeAttendance.css";
 
@@ -62,7 +62,6 @@ function getStatusText(status, lateMins, record) {
   if (status === "full_day") return "Present";
   if (status === "present") return "Present";
   if (status === "half_day") {
-    // Check if this half-day is linked to a leave request (worked half, leave remainder)
     const hasLeaveRequest = Boolean(record?.leave_request_id);
     const hasLeaveFlag = (record?.policy_flags || []).includes("leave_period");
     if (hasLeaveRequest || hasLeaveFlag) {
@@ -517,7 +516,6 @@ export default function EmployeeAttendance({ embedded = false }) {
       let tooltip = null;
 
       if (isSunday && !entry) {
-        // Check if this Sunday has a sandwich record
         const rec = safePersonalData[dateStr];
         const sandwichResult = rec?.sandwich?.find(s => s.date === dateStr) || rec?.sandwich?.[0];
         const display = getSundayDisplay(sandwichResult);
@@ -581,7 +579,6 @@ export default function EmployeeAttendance({ embedded = false }) {
           const isHalfDay = s === "half_day" || resolvedStatus === "half_day";
 
           if (isPaidLeave) {
-            // Full-day paid leave uses purple color
             dayClass += isHalfDay
               ? " p-leave calendar-halfday"
               : " p-leave calendar-paid-leave paid-leave";
@@ -591,7 +588,6 @@ export default function EmployeeAttendance({ embedded = false }) {
               </div>
             );
           } else if (isUnpaidLeave) {
-            // Full-day unpaid leave uses red color
             dayClass += isHalfDay
               ? " p-leave calendar-halfday"
               : " p-leave calendar-unpaid-leave unpaid-leave";
@@ -601,7 +597,6 @@ export default function EmployeeAttendance({ embedded = false }) {
               </div>
             );
           } else if (isMixedLeave) {
-            // Mixed leave (half paid + half unpaid) uses orange color
             dayClass += " p-leave calendar-mixed-leave";
             miniHtml = (
               <div className="day-mini-stats">
@@ -623,11 +618,9 @@ export default function EmployeeAttendance({ embedded = false }) {
               </div>
             );
           } else if (s === "half_day") {
-            // Check if this half-day is linked to a leave request (worked half, leave remainder)
             const hasLeaveRequest = Boolean(rec?.leave_request_id);
             const hasLeaveFlag = (rec?.policy_flags || []).includes("leave_period");
             if (hasLeaveRequest || hasLeaveFlag) {
-              // Just use the yellow half-day color - leave linkage is for audit trail only
               dayClass += " p-halfday calendar-halfday";
               const isPaid = rec?.is_paid_leave === true || rec?.isPaidLeave === true;
               miniHtml = (
@@ -679,6 +672,12 @@ export default function EmployeeAttendance({ embedded = false }) {
                   {safeStatusText(resolvedStatus, rec.late_minutes, rec)}
                 </span>
               </div>
+              {rec.policy_flags?.includes("missing_checkout_previous_date") && rec.policy_reason && (
+                <div className="tt-row">
+                  <span>Reason</span>
+                  <span className="tv">{safeText(rec.policy_reason, "Missing checkout")}</span>
+                </div>
+              )}
               {rec.check_in_time && (
                 <div className="tt-row">
                   <span>In</span>
@@ -1202,5 +1201,3 @@ export default function EmployeeAttendance({ embedded = false }) {
     </div>
   );
 }
-
-

@@ -26,11 +26,12 @@ export function useEmployeeApi() {
         if (status === 401 || status === 403) {
           clearAuthSession();
           navigate("/login");
-          throw new Error("Unauthorized");
+          const cause = err.response?.data?.message || err.message || "API 401";
+          throw new Error(cause, { cause: err });
         }
         const message =
           err.response?.data?.message || err.message || `Request failed`;
-        throw new Error(message);
+        throw new Error(message, { cause: err });
       }
     },
     [navigate]

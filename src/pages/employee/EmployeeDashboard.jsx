@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
@@ -6,7 +6,8 @@ import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
-import { MONTH_NAMES, normalizeArray, WEEK_DAYS } from "./employeeUtils";
+import { normalizeArray, WEEK_DAYS } from "./employeeUtils";
+
 import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import "../../styles/EmployeeDashboard.css";
 
@@ -32,7 +33,7 @@ export default function EmployeeDashboard({ embedded = false }) {
 
   const userProfile = useMemo(() => {
     const decoded = parseJwt(token) || {};
-    let storedUser = {};
+    let storedUser;
     try {
       storedUser = JSON.parse(localStorage.getItem("user") || "null") || {};
     } catch {
@@ -60,9 +61,6 @@ export default function EmployeeDashboard({ embedded = false }) {
   const [allLeaves, setAllLeaves] = useState([]);
   const [todayData, setTodayData] = useState(null);
   const [holidayList, setHolidayList] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [policyExpanded, setPolicyExpanded] = useState(false);
-  const [greetingMsg, setGreetingMsg] = useState("");
   const [liveDateLabel, setLiveDateLabel] = useState("—");
   const [liveTimeLabel, setLiveTimeLabel] = useState("—");
 
@@ -86,7 +84,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       .then((profile) => {
         if (cancelled || !profile) return;
         setProfileData(profile);
-        let storedUser = {};
+        let storedUser;
         try {
           storedUser = JSON.parse(localStorage.getItem("user") || "null") || {};
         } catch {
@@ -106,7 +104,6 @@ export default function EmployeeDashboard({ embedded = false }) {
 
   const updateDateTime = useCallback(() => {
     const now = new Date();
-    setGreetingMsg(`${getGreeting()}, ${userProfile.firstName}`);
     setLiveDateLabel(
       now.toLocaleDateString("en-IN", {
         weekday: "short",
@@ -123,7 +120,7 @@ export default function EmployeeDashboard({ embedded = false }) {
         hour12: true,
       })
     );
-  }, [userProfile.firstName]);
+  }, []);
 
   useEffect(() => {
     updateDateTime();
@@ -349,6 +346,7 @@ export default function EmployeeDashboard({ embedded = false }) {
     };
   }, [todayData]);
 
+  // eslint-disable-next-line no-unused-vars
   const calendarDays = useMemo(() => {
     const { y, m, mm, lastDay } = monthMeta;
     const holidaySet = new Set(
@@ -422,8 +420,9 @@ export default function EmployeeDashboard({ embedded = false }) {
     return cells;
   }, [safeAttendance, holidayList, monthMeta]);
 
+  // eslint-disable-next-line no-unused-vars
   const detailRows = useMemo(() => {
-    const { y, m, mm, lastDay } = monthMeta;
+    const { y, _m, mm, lastDay } = monthMeta;
     const holidaySet = new Set(
       holidayList.map((h) => {
         const d = h.date;

@@ -239,6 +239,7 @@ const handleBranchSelect = (branch) => {
   setBranchMenuOpen(false);
 };
 
+// eslint-disable-next-line no-unused-vars
 const handleDeptSelect = (dept) => {
   setCurrentDept(dept);
 };
@@ -281,7 +282,7 @@ const handleSearchChange = (e) => {
       a.click();
       URL.revokeObjectURL(a.href);
       showToast("✅ PDF downloaded", "green");
-    } catch (e) {
+    } catch (_e) {
       showToast("Download failed", "red");
     }
   };
@@ -293,7 +294,7 @@ const handleSearchChange = (e) => {
     try {
       const p = await fetchPayslip(id);
       setViewPayslip(p);
-    } catch (e) {
+    } catch (_e) {
       showToast("Failed to load payslip", "red");
     } finally {
       setViewLoading(false);
@@ -317,7 +318,7 @@ const handleOpenGenModal = async () => {
   try {
     const emps = await fetchPayrollEmployees();
     setEmployees(Array.isArray(emps) ? emps : []);
-  } catch (e) {
+  } catch (_e) {
     showToast("Failed to load employees", "red");
   }
 };
@@ -465,18 +466,29 @@ const calculateSalaryPreview = () => {
     previewData.calendar?.totalDaysInMonth || 30
   );
 
-  const fullDays = Number(previewData.attendance?.fullDays || 0);
-  const halfDays = Number(previewData.attendance?.halfDays || 0);
-  const sundays = Number(previewData.calendar?.sundayCount || 0);
-  const holidays = Number(previewData.calendar?.holidayCount || 0);
-  const paidLeaves = Number(previewData.leave?.paidLeaveUsed || 0);
+  // Use new breakdown structure from backend
+  const breakdown = previewData.breakdown?.payableDays || {};
+  const fullDays = Number(breakdown.presentFullDays || 0);
+  const halfDays = Number(breakdown.presentHalfDays || 0);
+  const paidLeaveFullDays = Number(breakdown.paidLeaveFullDays || 0);
+  const paidLeaveHalfDays = Number(breakdown.paidLeaveHalfDays || 0);
+  const paidSundays = Number(breakdown.paidSundays || 0);
+  const companyHolidays = Number(breakdown.companyHolidays || 0);
+  const finalPayableDays = Number(breakdown.finalPayableDays || 0);
 
-  const payableDays =
+  // Legacy compatibility for calendar/leave data
+  const sundays = Number(previewData.calendar?.sundayCount || paidSundays);
+  const holidays = Number(previewData.calendar?.holidayCount || companyHolidays);
+  const paidLeaves = Number(previewData.leave?.paidLeaveUsed || (paidLeaveFullDays + paidLeaveHalfDays * 0.5));
+
+  const payableDays = finalPayableDays || (
     fullDays +
-    sundays +
-    holidays +
-    paidLeaves +
-    halfDays * 0.5;
+    paidLeaveFullDays +
+    paidLeaveHalfDays * 0.5 +
+    paidSundays +
+    companyHolidays +
+    halfDays * 0.5
+  );
 
   const dailyRate = salary / totalDays;
 
@@ -495,7 +507,7 @@ const calculateSalaryPreview = () => {
     0,
     Number(previewData.calendar?.workingDaysCount || 0) -
       fullDays -
-      paidLeaves -
+      paidLeaveFullDays -
       halfDays * 0.5
   );
 
@@ -917,29 +929,29 @@ const salaryPreview = calculateSalaryPreview();
                       </div>
                       <div className="att-box green">
                         <div className="att-box-val">
-                          {previewData.attendance.fullDays}
+                          {previewData.breakdown?.payableDays?.presentFullDays || previewData.attendance?.fullDays || 0}
                         </div>
                         <div className="att-box-label">Full Days</div>
                       </div>
                       <div className="att-box amber">
                         <div className="att-box-val">
-                          {previewData.attendance.halfDays}
+                          {previewData.breakdown?.payableDays?.presentHalfDays || previewData.attendance?.halfDays || 0}
                         </div>
                         <div className="att-box-label">Half Days</div>
                       </div>
                       <div className="att-box red">
                         <div className="att-box-val">
-                          {previewData.attendance.absentDays}
+                          {previewData.breakdown?.absence?.unapprovedAbsence || previewData.attendance?.absentDays || 0}
                         </div>
                         <div className="att-box-label">Absent</div>
                       </div>
                       <div
                         className={`att-box ${
-                          previewData.attendance.lateLogins > 6 ? "red" : "amber"
+                          (previewData.attendance?.lateLogins || 0) > 6 ? "red" : "amber"
                         }`}
                       >
                         <div className="att-box-val">
-                          {previewData.attendance.lateLogins}
+                          {previewData.attendance?.lateLogins || 0}
                         </div>
                         <div className="att-box-label">Late Logins</div>
                       </div>
@@ -964,17 +976,17 @@ const salaryPreview = calculateSalaryPreview();
                     {previewData.leave.eligible ? (
                       <div className="pl-explain">
                         <strong>✓ Paid Leave Eligible</strong> (
-                        {previewData.leave.monthsCompleted} months completed)<br />
+                        {previewData.leave.daysSinceJoining ?? previewData.leave.monthsCompleted} days since joining)<br />
                         Quota: <strong>{previewData.leave.allowedPaidLeave} paid leave/month</strong>
                         <br />
                         Total absences this month:{" "}
                         <strong>
                           {previewData.leave.totalAbsences ||
-                            previewData.attendance.absentDays +
-                              (previewData.attendance.formalLeaveCount || 0)}
+                            (previewData.attendance?.absentDays || 0) +
+                              (previewData.attendance?.formalLeaveCount || 0)}
                         </strong>
                         <br />
-                        → <strong>{previewData.leave.paidLeaveUsed} absence(s)</strong>{" "}
+                        → <strong>{previewData.leave.paidLeaveUsed || 0} absence(s)</strong>{" "}
                         covered by paid leave quota
                       </div>
                     ) : (
@@ -990,13 +1002,13 @@ const salaryPreview = calculateSalaryPreview();
                           ✗ Not Yet Eligible for Paid Leave
                         </strong>
                         <br />
-                        {previewData.leave.monthsCompleted} month(s) completed —
-                        eligible after <strong>3 months</strong> from joining date.
+                        {previewData.leave.daysSinceJoining ?? previewData.leave.monthsCompleted} day(s) since joining —
+                        eligible after <strong>90 days</strong> from joining date.
                         <br />
                         All{" "}
                         {previewData.leave.totalAbsences ||
-                          previewData.attendance.absentDays +
-                            (previewData.attendance.formalLeaveCount || 0)}{" "}
+                          (previewData.attendance?.absentDays || 0) +
+                            (previewData.attendance?.formalLeaveCount || 0)}{" "}
                         absence(s) this month are <strong>unpaid</strong>.
                       </div>
                     )}

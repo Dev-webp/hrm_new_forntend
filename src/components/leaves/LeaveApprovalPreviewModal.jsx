@@ -1,5 +1,6 @@
 import "./LeaveApprovalPreviewModal.css";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatLeaveDuration(leave) {
   if ((leave?.leave_duration_type || "full_day") !== "half_day") return "Full Day";
   return leave.half_day_session === "morning"

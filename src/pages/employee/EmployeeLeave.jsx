@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
-import { escapeHtml, normalizeArray } from "./employeeUtils";
+import { normalizeArray } from "./employeeUtils";
 import { fetchMyLeaveBalance } from "../../services/employeeApi";
 import DeleteLeaveConfirmModal from "../../components/leaves/DeleteLeaveConfirmModal";
 import "../../styles/EmployeeLeave.css";
@@ -30,6 +30,7 @@ export default function EmployeeLeave({ embedded = false }) {
     leaveType: "Unpaid",
     leaveDurationType: "full_day",
     halfDaySession: "",
+    halfDayPaymentType: "", // NEW: Paid or Unpaid for half-day
     fromDate: "",
     toDate: "",
     reason: "",
@@ -248,7 +249,7 @@ const renderReason = (reason) => {
   }, [form.fromDate, form.toDate, form.leaveDurationType, calcDays]);
 
   const submitLeave = async () => {
-    const { leaveType, leaveDurationType, halfDaySession, fromDate, toDate, reason } = form;
+    const { leaveType, leaveDurationType, halfDaySession, halfDayPaymentType, fromDate, toDate, reason } = form;
 
     if (!fromDate || !toDate) {
       showToast("Please select dates", "error");
@@ -270,6 +271,11 @@ const renderReason = (reason) => {
       return;
     }
 
+    if (leaveDurationType === "half_day" && !halfDayPaymentType) {
+      showToast("Please select Paid Half Day or Unpaid Half Day", "error");
+      return;
+    }
+
     try {
       await apiFetch("/leaves", {
         method: "POST",
@@ -281,6 +287,7 @@ const renderReason = (reason) => {
           reason: reason.trim(),
           leave_duration_type: leaveDurationType,
           half_day_session: leaveDurationType === "half_day" ? halfDaySession : null,
+          half_day_payment_type: leaveDurationType === "half_day" ? halfDayPaymentType : null,
         },
       });
 
@@ -290,6 +297,7 @@ const renderReason = (reason) => {
         leaveType: "Unpaid",
         leaveDurationType: "full_day",
         halfDaySession: "",
+        halfDayPaymentType: "",
         fromDate: "",
         toDate: "",
         reason: "",
@@ -403,7 +411,7 @@ const renderReason = (reason) => {
               <div className="balance-icon">🛡️</div>
               <h3>Eligibility</h3>
               <span>{leaveBalance?.eligible ? "Eligible" : "Probation"}</span>
-              <p>{leaveBalance?.probationMonths || 3} months probation rule</p>
+              <p>{(leaveBalance?.daysSinceJoining ?? leaveBalance?.probationMonths ?? 0)} / {leaveBalance?.eligibilityThresholdDays ?? 90} days</p>
             </div>
           </div>
 
@@ -643,18 +651,46 @@ const renderReason = (reason) => {
             </div>
 
             {form.leaveDurationType === "half_day" && (
-              <div className="form-group">
-                <label htmlFor="lSession">Half-Day Session</label>
-                <select
-                  id="lSession"
-                  value={form.halfDaySession}
-                  onChange={(e) => setForm((f) => ({ ...f, halfDaySession: e.target.value }))}
-                >
-                  <option value="">Select session</option>
-                  <option value="morning">Morning Half Day</option>
-                  <option value="afternoon">Afternoon Half Day</option>
-                </select>
-              </div>
+              <>
+                <div className="form-group">
+                  <label htmlFor="lSession">Half-Day Session</label>
+                  <select
+                    id="lSession"
+                    value={form.halfDaySession}
+                    onChange={(e) => setForm((f) => ({ ...f, halfDaySession: e.target.value }))}
+                  >
+                    <option value="">Select session</option>
+                    <option value="morning">Morning Half Day</option>
+                    <option value="afternoon">Afternoon Half Day</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Half-Day Payment Type</label>
+                  <div className="radio-group">
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="halfDayPaymentType"
+                        value="paid"
+                        checked={form.halfDayPaymentType === "paid"}
+                        onChange={(e) => setForm((f) => ({ ...f, halfDayPaymentType: e.target.value }))}
+                      />
+                      Paid Half Day
+                    </label>
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="halfDayPaymentType"
+                        value="unpaid"
+                        checked={form.halfDayPaymentType === "unpaid"}
+                        onChange={(e) => setForm((f) => ({ ...f, halfDayPaymentType: e.target.value }))}
+                      />
+                      Unpaid Half Day
+                    </label>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="form-row">
