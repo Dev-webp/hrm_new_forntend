@@ -458,43 +458,13 @@ const handleOpenGenModal = async () => {
 
 
 const calculateSalaryPreview = () => {
-  if (!previewData || !selectedEmployee) return null;
+  if (!previewData?.salary || !selectedEmployee) return null;
 
-  const salary = Number(selectedEmployee?.salary || 0);
-
-  const totalDays = Number(
-    previewData.calendar?.totalDaysInMonth || 30
-  );
-
-  // Use new breakdown structure from backend
-  const breakdown = previewData.breakdown?.payableDays || {};
-  const fullDays = Number(breakdown.presentFullDays || 0);
-  const halfDays = Number(breakdown.presentHalfDays || 0);
-  const paidLeaveFullDays = Number(breakdown.paidLeaveFullDays || 0);
-  const paidLeaveHalfDays = Number(breakdown.paidLeaveHalfDays || 0);
-  const paidSundays = Number(breakdown.paidSundays || 0);
-  const companyHolidays = Number(breakdown.companyHolidays || 0);
-  const finalPayableDays = Number(breakdown.finalPayableDays || 0);
-
-  // Legacy compatibility for calendar/leave data
-  const sundays = Number(previewData.calendar?.sundayCount || paidSundays);
-  const holidays = Number(previewData.calendar?.holidayCount || companyHolidays);
-  const paidLeaves = Number(previewData.leave?.paidLeaveUsed || (paidLeaveFullDays + paidLeaveHalfDays * 0.5));
-
-  const payableDays = finalPayableDays || (
-    fullDays +
-    paidLeaveFullDays +
-    paidLeaveHalfDays * 0.5 +
-    paidSundays +
-    companyHolidays +
-    halfDays * 0.5
-  );
-
-  const dailyRate = salary / totalDays;
-
-  const earnedBasic = dailyRate * payableDays;
-
-  const leaveDeduction = Math.max(0, salary - earnedBasic);
+  const canonicalSalary = previewData.salary;
+  const dailyRate = Number(canonicalSalary.dailyRate || 0);
+  const payableDays = Number(canonicalSalary.payableDays || 0);
+  const earnedBasic = Number(canonicalSalary.earnedSalary || 0);
+  const leaveDeduction = Number(canonicalSalary.absenceDeduction || 0);
 
   const grossPay = earnedBasic + Number(genIncentives || 0);
 
@@ -503,13 +473,7 @@ const calculateSalaryPreview = () => {
     Number(genDeductions || 0) -
     Number(genTax || 0);
 
-  const unpaidLeaveDays = Math.max(
-    0,
-    Number(previewData.calendar?.workingDaysCount || 0) -
-      fullDays -
-      paidLeaveFullDays -
-      halfDays * 0.5
-  );
+  const unpaidLeaveDays = Number(previewData.leave?.unpaidLeaveDays || 0);
 
   return {
     dailyRate,
@@ -965,18 +929,18 @@ const salaryPreview = calculateSalaryPreview();
                         <div className="att-box-val">
                           {previewData.leave.unpaidLeaveDays}
                         </div>
-                        <div className="att-box-label">Unpaid Leave</div>
+                        <div className="att-box-label">Unpaid Days</div>
                       </div>
                     </div>
                    <div className="att-note">
   Daily Rate = <span>{inr2(salaryPreview.dailyRate)}</span> ·
   Payable Days = <span>{salaryPreview.payableDays}</span> ·
-  Unpaid Leave Days = <span>{salaryPreview.unpaidLeaveDays}</span>
+  Unpaid Days = <span>{salaryPreview.unpaidLeaveDays}</span>
 </div>
                     {previewData.leave.eligible ? (
                       <div className="pl-explain">
                         <strong>✓ Paid Leave Eligible</strong> (
-                        {previewData.leave.daysSinceJoining ?? previewData.leave.monthsCompleted} days since joining)<br />
+                        {previewData.leave.monthsCompleted} completed months since joining)<br />
                         Quota: <strong>{previewData.leave.allowedPaidLeave} paid leave/month</strong>
                         <br />
                         Total absences this month:{" "}
@@ -986,8 +950,8 @@ const salaryPreview = calculateSalaryPreview();
                               (previewData.attendance?.formalLeaveCount || 0)}
                         </strong>
                         <br />
-                        → <strong>{previewData.leave.paidLeaveUsed || 0} absence(s)</strong>{" "}
-                        covered by paid leave quota
+                        Paid leave days counted:{" "}
+                        <strong>{previewData.leave.paidLeaveUsed ?? 0}</strong>
                       </div>
                     ) : (
                       <div
@@ -1002,8 +966,7 @@ const salaryPreview = calculateSalaryPreview();
                           ✗ Not Yet Eligible for Paid Leave
                         </strong>
                         <br />
-                        {previewData.leave.daysSinceJoining ?? previewData.leave.monthsCompleted} day(s) since joining —
-                        eligible after <strong>90 days</strong> from joining date.
+                        Eligibility begins <strong>90 calendar days</strong> after joining.
                         <br />
                         All{" "}
                         {previewData.leave.totalAbsences ||
@@ -1065,7 +1028,7 @@ const salaryPreview = calculateSalaryPreview();
 </div>
 
 <div className="sal-row">
-  <span>Unpaid Leave Days</span>
+  <span>Unpaid Days</span>
   <span>{salaryPreview.unpaidLeaveDays}</span>
 </div>
 
