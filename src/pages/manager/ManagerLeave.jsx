@@ -15,7 +15,6 @@ import "./ManagerLeave.css";
 
 const EMPTY_FORM = {
   leaveType: "Unpaid",
-  usePaidLeave: false,
   duration: "full_day",
   halfDaySession: "morning",
   leaveFrom: "",
@@ -162,8 +161,7 @@ export default function ManagerLeave() {
     try {
       await createLeaveRequest({
         user_id: manager.id,
-        leave_type: form.usePaidLeave ? "Paid" : form.leaveType,
-        use_paid_leave: form.usePaidLeave,
+        leave_type: form.leaveType,
         from_date: form.leaveFrom,
         to_date: toDate,
         reason: form.reason.trim(),
@@ -410,7 +408,7 @@ export default function ManagerLeave() {
 
 
 
-      {applyOpen ? <div className="manager-leave-modal-overlay" onMouseDown={() => setApplyOpen(false)}><section className="manager-leave-apply-modal" onMouseDown={(event) => event.stopPropagation()}><h2>Apply for Leave</h2><div className="manager-leave-form-grid"><label>Leave Type<select value={form.leaveType} onChange={(event) => setForm({ ...form, leaveType: event.target.value })}><option value="Unpaid">Unpaid Leave</option><option value="Sick">Sick Leave</option><option value="Casual">Casual Leave</option><option value="Emergency">Emergency Leave</option></select></label><label>Use my available paid leave?<select value={form.usePaidLeave ? "yes" : "no"} onChange={(event) => setForm({ ...form, usePaidLeave: event.target.value === "yes" })}><option value="no">No</option><option value="yes">Yes</option></select></label><label>Duration<select value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })}><option value="full_day">Full Day</option><option value="half_day">Half Day</option></select></label>{form.duration === "half_day" ? <label>Session<select value={form.halfDaySession} onChange={(event) => setForm({ ...form, halfDaySession: event.target.value })}><option value="morning">Morning</option><option value="afternoon">Afternoon</option></select></label> : null}<label>From Date<input type="date" value={form.leaveFrom} onChange={(event) => setForm({ ...form, leaveFrom: event.target.value })} /></label>{form.duration === "full_day" ? <label>To Date<input type="date" min={form.leaveFrom} value={form.leaveTo} onChange={(event) => setForm({ ...form, leaveTo: event.target.value })} /></label> : null}<label className="wide">Reason<textarea value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} /></label></div><div className="manager-leave-modal-actions"><button type="button" className="cancel" onClick={() => setApplyOpen(false)}>Cancel</button><button type="button" className="submit" onClick={submitLeave} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</button></div></section></div> : null}
+      {applyOpen ? <div className="manager-leave-modal-overlay" onMouseDown={() => setApplyOpen(false)}><section className="manager-leave-apply-modal" onMouseDown={(event) => event.stopPropagation()}><h2>Apply for Leave</h2><div className="manager-leave-form-grid"><label>Leave Type<select value={form.leaveType} onChange={(event) => setForm({ ...form, leaveType: event.target.value })}><option value="Unpaid">Unpaid Leave</option><option value="Sick">Sick Leave</option><option value="Casual">Casual Leave</option><option value="Emergency">Emergency Leave</option></select></label><label>Duration<select value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })}><option value="full_day">Full Day</option><option value="half_day">Half Day</option></select></label>{form.duration === "half_day" ? <label>Session<select value={form.halfDaySession} onChange={(event) => setForm({ ...form, halfDaySession: event.target.value })}><option value="morning">Morning</option><option value="afternoon">Afternoon</option></select></label> : null}<label>From Date<input type="date" value={form.leaveFrom} onChange={(event) => setForm({ ...form, leaveFrom: event.target.value })} /></label>{form.duration === "full_day" ? <label>To Date<input type="date" min={form.leaveFrom} value={form.leaveTo} onChange={(event) => setForm({ ...form, leaveTo: event.target.value })} /></label> : null}<label className="wide">Reason<textarea value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} /></label></div><div className="manager-leave-modal-actions"><button type="button" className="cancel" onClick={() => setApplyOpen(false)}>Cancel</button><button type="button" className="submit" onClick={submitLeave} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</button></div></section></div> : null}
 
       <LeaveApprovalPreviewModal open={approval.open} preview={approval.preview} loading={approval.loading} error={approval.error} saving={approving} onClose={() => !approving && setApproval({ open: false, leave: null, preview: null, loading: false, error: "" })} onConfirm={confirmApproval} />
       <DeleteLeaveConfirmModal open={Boolean(deleteTarget)} leave={deleteTarget} saving={deleteSaving} onClose={() => !deleteSaving && setDeleteTarget(null)} onConfirm={confirmDelete} />

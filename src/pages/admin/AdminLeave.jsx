@@ -53,7 +53,6 @@ const [employeeFilter, setEmployeeFilter] = useState("all");
   const [applySaving, setApplySaving] = useState(false);
   const [applyForm, setApplyForm] = useState({
     leave_type: "Unpaid",
-    use_paid_leave: false,
     leave_duration_type: "full_day",
     half_day_session: "",
     from_date: "",
@@ -137,7 +136,6 @@ const [deleteSaving, setDeleteSaving] = useState(false);
       setApplyForm((prev) => ({
         ...prev,
         leave_type: "Unpaid",
-        use_paid_leave: false,
       }));
     } catch (err) {
       showToast(err.response?.data?.message || err.message || "Failed to load your leave data");
@@ -385,8 +383,7 @@ const renderApprover = (leave) => {
     try {
       await createLeaveRequest({
         user_id: currentUser.id,
-        leave_type: applyForm.use_paid_leave ? "Paid" : applyForm.leave_type,
-        use_paid_leave: applyForm.use_paid_leave,
+        leave_type: applyForm.leave_type,
         from_date: applyForm.from_date,
         to_date: applyForm.to_date,
         reason: applyForm.reason.trim(),
@@ -400,7 +397,6 @@ const renderApprover = (leave) => {
       setApplyModalOpen(false);
       setApplyForm({
         leave_type: "Unpaid",
-        use_paid_leave: false,
         leave_duration_type: "full_day",
         half_day_session: "",
         from_date: "",
@@ -1032,19 +1028,6 @@ const getActionedAt = (request) => {
               <option value="Sick">Sick Leave</option>
               <option value="Casual">Casual Leave</option>
               <option value="Emergency">Emergency Leave</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Use my available paid leave?</label>
-            <select
-              value={applyForm.use_paid_leave ? "yes" : "no"}
-              onChange={(event) =>
-                setApplyForm((prev) => ({ ...prev, use_paid_leave: event.target.value === "yes" }))
-              }
-            >
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
             </select>
           </div>
 

@@ -16,13 +16,21 @@ import {
 import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
 import "../../styles/EmployeeAttendance.css";
 
-function getStatusBadgeClass(status, lateMins) {
+function getStatusBadgeClass(status, lateMins, halfDaySlot) {
   status = normalizeAttendanceStatusValue(status);
+  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+
+  // ============================================================
+  // HALF-DAY PRIORITY
+  // ============================================================
+  // If half_day_slot exists, use half-day badge regardless of status
+  // ============================================================
+
+  if (status === "half_day" || isHalfDay) return "badge-halfday";
   if (status === "in_progress" || status === "working") return "badge-working";
   if (status === "missing_checkout") return "badge-late";
   if (status === "full_day") return "badge-present";
   if (status === "present") return "badge-present";
-  if (status === "half_day") return "badge-halfday";
   if (status === "paid_leave") return "badge-paid-leave";
   if (status === "unpaid_leave") return "badge-unpaid-leave";
   if (status === "leave") return "badge-leave";
@@ -31,13 +39,26 @@ function getStatusBadgeClass(status, lateMins) {
   return "badge-absent";
 }
 
-function getStatusText(status, lateMins) {
+function getStatusText(status, lateMins, halfDaySlot = null, isPaidLeave = null) {
   status = normalizeAttendanceStatusValue(status);
+  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+
+  // ============================================================
+  // HALF-DAY PRIORITY
+  // ============================================================
+  // If half_day_slot exists, show as half-day with leave type if applicable
+  // ============================================================
+
+  if (status === "half_day" || isHalfDay) {
+    if (isPaidLeave === true) return "Half Day (Paid Leave)";
+    if (isPaidLeave === false) return "Half Day (Unpaid Leave)";
+    return "Half Day";
+  }
+
   if (status === "in_progress" || status === "working") return "Working";
   if (status === "missing_checkout") return "Missing Checkout";
   if (status === "full_day") return "Present";
   if (status === "present") return "Present";
-  if (status === "half_day") return "Half Day";
   if (status === "paid_leave") return "Paid Leave";
   if (status === "unpaid_leave") return "Unpaid Leave";
   if (status === "leave") return "On Leave";
@@ -116,9 +137,9 @@ function safeFormatTime(value) {
   }
 }
 
-function safeStatusText(status, lateMins = 0) {
+function safeStatusText(status, lateMins = 0, halfDaySlot = null, isPaidLeave = null) {
   try {
-    return safeText(getStatusText(status, lateMins), "No Record");
+    return safeText(getStatusText(status, lateMins, halfDaySlot, isPaidLeave), "No Record");
   } catch {
     return "No Record";
   }
@@ -505,7 +526,26 @@ export default function EmployeeAttendance({ embedded = false }) {
       if (!isSunday && !entry) {
         if (rec) {
           const s = normalizeAttendanceStatusValue(rec.status);
-          if (isPaidLeaveDay(rec)) {
+          const halfDaySlot = rec.half_day_slot || rec.halfDaySlot;
+          const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+
+          // ============================================================
+          // HALF-DAY PRIORITY
+          // ============================================================
+          // If half_day_slot exists, show as half-day regardless of leave type
+          // ============================================================
+
+          if (s === "half_day" || isHalfDay) {
+            dayClass += " p-halfday calendar-halfday";
+            const isPaid = rec.is_paid_leave === true || rec.isPaidLeave === true;
+            const isUnpaid = rec.is_paid_leave === false || rec.isPaidLeave === false;
+            const leaveLabel = isPaid ? "(Paid Leave)" : isUnpaid ? "(Unpaid Leave)" : "";
+            miniHtml = (
+              <div className="day-mini-stats">
+                <div className="mini-row">🌓 Half Day {leaveLabel}</div>
+              </div>
+            );
+          } else if (isPaidLeaveDay(rec)) {
             dayClass += " p-leave calendar-paid-leave paid-leave";
             miniHtml = (
               <div className="day-mini-stats">
@@ -531,13 +571,6 @@ export default function EmployeeAttendance({ embedded = false }) {
             miniHtml = (
               <div className="day-mini-stats">
                 <div className="mini-row">Late {rec.late_minutes || 0}m</div>
-              </div>
-            );
-          } else if (s === "half_day") {
-            dayClass += " p-halfday calendar-halfday";
-            miniHtml = (
-              <div className="day-mini-stats">
-                <div className="mini-row">🌓 Half Day</div>
               </div>
             );
           } else if (s === "leave") {
@@ -573,7 +606,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               <div className="tt-row">
                 <span>Status</span>
                 <span className="tv">
-                  {safeStatusText(s, rec.late_minutes)}
+                  {safeStatusText(s, rec.late_minutes, rec.half_day_slot, rec.is_paid_leave)}
                 </span>
               </div>
               {rec.check_in_time && (
@@ -675,8 +708,8 @@ export default function EmployeeAttendance({ embedded = false }) {
           checkIn = safeFormatTime(rec.check_in_time);
           checkOut = safeFormatTime(rec.check_out_time);
           lateMin = Number(rec.late_minutes) || 0;
-          statusLabel = safeStatusText(rec.status, lateMin);
-          statusClass = getStatusBadgeClass(rec.status, lateMin);
+          statusLabel = safeStatusText(rec.status, lateMin, rec.half_day_slot, rec.is_paid_leave);
+          statusClass = getStatusBadgeClass(rec.status, lateMin, rec.half_day_slot);
         } else if (dateStr === todayStr && isAttendanceActionLoading) {
           statusLabel = "Updating";
           statusClass = "badge-no-record";

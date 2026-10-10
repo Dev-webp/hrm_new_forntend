@@ -28,7 +28,6 @@ export default function EmployeeLeave({ embedded = false }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({
     leaveType: "Unpaid",
-    usePaidLeave: false,
     leaveDurationType: "full_day",
     halfDaySession: "",
     fromDate: "",
@@ -66,7 +65,7 @@ export default function EmployeeLeave({ embedded = false }) {
       const balance = await fetchMyLeaveBalance();
       setLeaveBalance(balance);
 
-      setForm((f) => ({ ...f, leaveType: "Unpaid", usePaidLeave: false }));
+      setForm((f) => ({ ...f, leaveType: "Unpaid" }));
     } catch (e) {
       showToast(`Error: ${e.message}`, "error");
     } finally {
@@ -249,7 +248,7 @@ const renderReason = (reason) => {
   }, [form.fromDate, form.toDate, form.leaveDurationType, calcDays]);
 
   const submitLeave = async () => {
-    const { leaveType, usePaidLeave, leaveDurationType, halfDaySession, fromDate, toDate, reason } = form;
+    const { leaveType, leaveDurationType, halfDaySession, fromDate, toDate, reason } = form;
 
     if (!fromDate || !toDate) {
       showToast("Please select dates", "error");
@@ -276,8 +275,7 @@ const renderReason = (reason) => {
         method: "POST",
         body: {
           user_id: userId,
-          leave_type: usePaidLeave ? "Paid" : leaveType,
-          use_paid_leave: usePaidLeave,
+          leave_type: leaveType,
           from_date: fromDate,
           to_date: toDate,
           reason: reason.trim(),
@@ -290,7 +288,6 @@ const renderReason = (reason) => {
       setModalOpen(false);
       setForm({
         leaveType: "Unpaid",
-        usePaidLeave: false,
         leaveDurationType: "full_day",
         halfDaySession: "",
         fromDate: "",
@@ -347,7 +344,8 @@ const renderReason = (reason) => {
 
         <div className="content subadmin-leave-content">
           <div className="leave-info-banner">
-            💡 1 paid leave is credited every month after probation and must be used within that month — it does not carry over. Future month leaves cannot be used.
+            💡 1 paid leave is credited every month after probation. Unused paid
+            leaves carry forward. Future month leaves cannot be used.
           </div>
 
           <div className="employee-leave-kpis subadmin-leave-kpis">
@@ -622,20 +620,6 @@ const renderReason = (reason) => {
                 <option value="Sick">Sick Leave</option>
                 <option value="Casual">Casual Leave</option>
                 <option value="Emergency">Emergency Leave</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="usePaidLeave">Use my available paid leave?</label>
-              <select
-                id="usePaidLeave"
-                value={form.usePaidLeave ? "yes" : "no"}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, usePaidLeave: e.target.value === "yes" }))
-                }
-              >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
               </select>
             </div>
 
