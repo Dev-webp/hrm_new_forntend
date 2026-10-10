@@ -22,6 +22,12 @@ export function getStoredBranch() {
 }
 
 export function setAuthSession({ token, user }) {
+  // Clear any previously exchanged Invoice/CRM session first — a fresh
+  // HRMS login must never inherit whoever's Invoice token was last set,
+  // even if the browser wasn't explicitly logged out in between.
+  localStorage.removeItem("vjc_invoice_auth");
+  localStorage.removeItem("vjc_invoice_user");
+
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
   localStorage.setItem("full_name", user?.full_name || user?.name || "Employee");
@@ -43,6 +49,12 @@ export function clearAuthSession() {
   localStorage.removeItem("full_name");
   localStorage.removeItem("designation");
   localStorage.removeItem("employee_code");
+  // Also clear the exchanged Invoice/CRM session — otherwise the next
+  // person to log into HRMS on this browser inherits whoever's Invoice
+  // token was last exchanged (e.g. seeing "Zakir" data while logged in
+  // as a different admin).
+  localStorage.removeItem("vjc_invoice_auth");
+  localStorage.removeItem("vjc_invoice_user");
 }
 
 export function isAuthenticated() {

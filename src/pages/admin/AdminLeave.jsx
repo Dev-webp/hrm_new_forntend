@@ -583,10 +583,6 @@ const getActionedAt = (request) => {
             <strong>{myLeaveBalance?.current_month_credit ?? 0}</strong>
           </div>
           <div className="operational-balance-card">
-            <span>Carry Forward</span>
-            <strong>{myLeaveBalance?.carry_forward ?? 0}</strong>
-          </div>
-          <div className="operational-balance-card">
             <span>Paid Used</span>
             <strong>{myLeaveBalance?.paid_used ?? 0}</strong>
           </div>

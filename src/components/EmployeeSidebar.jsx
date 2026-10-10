@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { clearAuthSession } from "../utils/auth";
 import { parseJwt } from "../utils/parseJwt";
 import { fetchEmployeeUnreadCount } from "../services/notificationsApi";
+import { useInvoiceAuth } from "../context/InvoiceAuthContext";
+import AssignmentNotifier from "./AssignmentNotifier";
 import "../styles/EmployeeSidebar.css";
 import logo from "../assets/logoimagefinally1.png";
 
@@ -11,6 +13,14 @@ const NAV_ITEMS = [
   { id: "attendance", path: "/employee/attendance", icon: "fa-calendar-check", label: "Attendance" },
   { id: "leave", path: "/employee/leave", icon: "fa-umbrella-beach", label: "Leave" },
   { id: "breaks", path: "/employee/breaks", icon: "fa-coffee", label: "Breaks" },
+  // Only shown if this person's Invoice account has the "customers" permission.
+  { id: "leads", path: "/employee/crm/leads", icon: "fa-bullseye", label: "Leads", invoicePermission: "customers" },
+  { id: "customers", path: "/employee/crm/customers", icon: "fa-address-book", label: "Customers", invoicePermission: "customers" },
+  { id: "reports", path: "/employee/invoice/reports", icon: "fa-chart-pie", label: "Reports", invoicePermission: "reports" },
+  { id: "invoices", path: "/employee/invoice/invoices", icon: "fa-file-invoice", label: "Invoices", invoicePermission: "invoices" },
+  { id: "quotes", path: "/employee/invoice/quotes", icon: "fa-file-signature", label: "Quotes", invoicePermission: "quotes" },
+  { id: "payments", path: "/employee/invoice/payments", icon: "fa-credit-card", label: "Payments", invoicePermission: "payments" },
+  { id: "items", path: "/employee/invoice/items", icon: "fa-boxes-stacked", label: "Items", invoicePermission: "services" },
   { id: "messages", path: "/employee/messages", icon: "fa-envelope", label: "Messages" },
   { id: "payslip", path: "/employee/payslip", icon: "fa-file-invoice-dollar", label: "Payslip" },
   { id: "instructions", path: "/employee/instructions", icon: "fa-book-open", label: "Instructions" },
@@ -21,6 +31,13 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const { user: invoiceUser } = useInvoiceAuth();
+  const invoicePermissions = invoiceUser?.permissions || {};
+
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => !item.invoicePermission || invoicePermissions[item.invoicePermission]
+  );
+
 
   const profile = useMemo(() => {
     const token = localStorage.getItem("token");
@@ -94,9 +111,11 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
         </div>
       </div>
 
+      <AssignmentNotifier />
+
       <div className="nav-section">
         <div className="nav-label-group">Menu</div>
-        {NAV_ITEMS.map((item) => (
+        {visibleItems.map((item) => (
           <button
             key={item.id}
             type="button"

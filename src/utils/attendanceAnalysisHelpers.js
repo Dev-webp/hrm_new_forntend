@@ -31,7 +31,7 @@ export const ANALYSIS_TABS = [
   { id: "weekly", label: "📆 Weekly Deep Dive" },
   { id: "dailylog", label: "📋 Day Log" },
   { id: "breakanalytics", label: "☕ Break Analytics" },
-  { id: "leavesalary", label: "🌿 Leave & Salary" },
+  { id: "leavesalary", label: "🌿 Leave " },
 ];
 
 export const WEEK_FILTER_OPTIONS = [

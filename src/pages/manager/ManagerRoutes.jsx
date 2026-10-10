@@ -16,6 +16,19 @@ const ManagerEmployee = lazy(() => import("./ManagerEmployee"));
 const ManagerLeave = lazy(() => import("./ManagerLeave"));
 const ManagerNotifications = lazy(() => import("./ManagerNotifications"));
 const ManagerPayslip = lazy(() => import("./ManagerPayslip"));
+const Leads = lazy(() => import("../../modules/crm/Leads"));
+const Customers = lazy(() => import("../../modules/crm/Customers"));
+const LeadProfileHistory = lazy(() => import("../../modules/crm/LeadProfileHistory"));
+
+const Invoices = lazy(() => import("../../modules/invoice/Invoices"));
+const Quotes = lazy(() => import("../../modules/invoice/Quotes"));
+const Payments = lazy(() => import("../../modules/invoice/Payments"));
+const Expenses = lazy(() => import("../../modules/invoice/Expenses"));
+
+const InvoiceReports = lazy(() => import("../../modules/invoice/Reports"));
+const InvoiceDashboard = lazy(() => import("../../modules/invoice/Dashboard"));
+const Items = lazy(() => import("../../modules/invoice/Items"));
+
 
 const PLACEHOLDER_TITLES = {
   employees: "Employees",
@@ -56,6 +69,20 @@ function ManagerRoutes() {
           <Route path="notifications" element={<ManagerNotifications />} />
           <Route path="payslip" element={<ManagerPayslip />} />
 
+
+          <Route path="crm/leads" element={<Leads />} />
+<Route path="crm/customers" element={<Customers />} />
+<Route path="crm/lead-history/:id" element={<LeadProfileHistory />} />
+
+<Route path="invoice/invoices" element={<Invoices />} />
+<Route path="invoice/quotes" element={<Quotes />} />
+<Route path="invoice/payments" element={<Payments />} />
+<Route path="invoice/expenses" element={<Expenses />} />
+
+<Route path="invoice/reports" element={<InvoiceReports />} />
+<Route path="invoice/dashboard" element={<InvoiceDashboard />} />
+<Route path="invoice/items" element={<Items />} />
+
         {placeholderSlugs.map((slug) => (
           <Route
             key={slug}
@@ -76,3 +103,8 @@ function ManagerRoutes() {
 }
 
 export default ManagerRoutes;
+
+
+
+
+

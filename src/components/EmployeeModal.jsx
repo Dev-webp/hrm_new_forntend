@@ -220,7 +220,114 @@ function EmployeeFormModal({
 
         </div>
 
+{/* ====================================================
+    CRM / INVOICE ACCESS
+==================================================== */}
+{/* ====================================================
+    INVOICE / CRM ACCESS
+    Replace your existing block (currently wrapped in
+    {mode === "edit" && (...)}) with this one — same
+    toggle you already built, minus the edit-only
+    restriction, plus the missing permission checkboxes
+    underneath.
+==================================================== */}
 
+<div className="crm-access-form-section">
+
+  <div className="crm-access-form-header">
+    <div>
+      <label className="crm-access-form-title">
+        <i className="fas fa-chart-pie" />
+        Invoice / CRM Access
+      </label>
+
+      <p className="crm-access-form-description">
+        Control whether this employee can access the Invoice / CRM system.
+      </p>
+    </div>
+
+    <span
+      className={`crm-access-status-badge ${
+        form.invoice_access ? "enabled" : "disabled"
+      }`}
+    >
+      <i
+        className={
+          form.invoice_access
+            ? "fas fa-check-circle"
+            : "fas fa-ban"
+        }
+      />
+
+      {form.invoice_access ? "Access Enabled" : "Access Disabled"}
+    </span>
+  </div>
+
+  <label className="crm-access-toggle">
+    <input
+      type="checkbox"
+      checked={form.invoice_access === true}
+      onChange={(event) =>
+        onChange({
+          ...form,
+          invoice_access: event.target.checked,
+        })
+      }
+    />
+
+    <span className="crm-toggle-slider"></span>
+
+    <span className="crm-toggle-text">
+      {form.invoice_access
+        ? "Employee can access Invoice / CRM"
+        : "Employee cannot access Invoice / CRM"}
+    </span>
+  </label>
+
+  {form.invoice_access && (
+    <div
+      style={{
+        marginTop: 14,
+        paddingTop: 14,
+        borderTop: "1px solid rgba(0,0,0,0.08)",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "8px 16px",
+      }}
+    >
+      {[
+        ["customers", "CRM (Leads, Customers, Follow-ups)"],
+        ["invoices", "Invoices (incl. Approvals, Rejected, Finance Dashboard)"],
+        ["quotes", "Quotes (Proforma Invoice)"],
+        ["payments", "Payments"],
+        ["expenses", "Expenses"],
+        ["reports", "Reports"],
+        ["services", "Items"],
+      ].map(([key, label]) => (
+        <label
+          key={key}
+          style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}
+        >
+          <input
+            type="checkbox"
+            checked={Boolean(form.invoice_permissions?.[key])}
+            onChange={(event) =>
+              onChange({
+                ...form,
+                invoice_permissions: {
+                  ...form.invoice_permissions,
+                  [key]: event.target.checked,
+                },
+              })
+            }
+          />
+          {label}
+        </label>
+      ))}
+    </div>
+  )}
+
+</div>
         {/* ====================================================
             ROLE / EMPLOYEE ID
         ==================================================== */}
@@ -1087,7 +1194,46 @@ function EmployeeDetailsModal({
 
         <div className="details-grid">
 
+{/* ====================================================
+    INVOICE / CRM ACCESS
+==================================================== */}
 
+<div className="section-title">
+  <i className="fas fa-chart-pie" />
+  {" "}Invoice / CRM Access
+</div>
+
+<div className="detail-item crm-access-detail-card">
+
+  <div className="detail-icon crm-access-detail-icon">
+    <i className="fas fa-chart-pie" />
+  </div>
+
+  <div className="detail-content">
+
+    <div className="detail-label">
+      CRM / Invoice Access
+    </div>
+
+    <div className="detail-value">
+
+      {employee.invoice_access === true ? (
+        <span className="crm-detail-status enabled">
+          <i className="fas fa-check-circle" />
+          Access Enabled
+        </span>
+      ) : (
+        <span className="crm-detail-status disabled">
+          <i className="fas fa-ban" />
+          Access Disabled
+        </span>
+      )}
+
+    </div>
+
+  </div>
+
+</div>
           {/* PERSONAL INFORMATION */}
 
           <div className="section-title">

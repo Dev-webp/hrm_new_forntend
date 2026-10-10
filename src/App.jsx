@@ -4,14 +4,18 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from "react-router-dom";
+
+import { InvoiceAuthProvider } from "./context/InvoiceAuthContext";
+import { getStoredUser, getStoredRole, isAuthenticated } from "./utils/auth";
 
 import RequireAuth from "./components/RequireAuth";
 import PageLoading from "./components/PageLoading";
-import {
-  getStoredRole,
-  isAuthenticated,
-} from "./utils/auth";
+
+// =====================================================
+// LAZY IMPORTS
+// =====================================================
 
 const DashboardLayout = lazy(
   () => import("./layouts/DashboardLayout")
@@ -34,19 +38,12 @@ const ManagerRoutes = lazy(
 );
 
 const OperationalManagerRoutes = lazy(
-  () =>
-    import(
-      "./pages/operations/OperationalManagerRoutes"
-    )
+  () => import("./pages/operations/OperationalManagerRoutes")
 );
 
 const SubAdminRoutes = lazy(
-  () =>
-    import(
-      "./pages/subadmin/SubAdminRoutes"
-    )
+  () => import("./pages/subadmin/SubAdminRoutes")
 );
-
 
 // =====================================================
 // MOBILE DEVICE CHECK
@@ -74,17 +71,15 @@ function isMobileDevice() {
   const smallScreen =
     Math.min(window.screen.width, window.screen.height) <= 900;
 
-  // 4. Coarse pointer = usually touchscreen
+  // 4. Coarse pointer
   const coarsePointer =
     window.matchMedia &&
     window.matchMedia("(pointer: coarse)").matches;
 
-  // Strong mobile indicators
   if (mobileUserAgent) {
     return true;
   }
 
-  // Desktop-site mode on phones/tablets
   if (touchDevice && smallScreen && coarsePointer) {
     return true;
   }
@@ -108,8 +103,7 @@ function MobileAccessDenied() {
         background: "#f5f7fa",
         padding: "20px",
         boxSizing: "border-box",
-        fontFamily:
-          "Plus Jakarta Sans, Arial, sans-serif",
+        fontFamily: "Plus Jakarta Sans, Arial, sans-serif",
       }}
     >
       <div
@@ -120,8 +114,7 @@ function MobileAccessDenied() {
           borderRadius: "18px",
           padding: "40px 30px",
           textAlign: "center",
-          boxShadow:
-            "0 10px 40px rgba(0, 0, 0, 0.08)",
+          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08)",
           boxSizing: "border-box",
         }}
       >
@@ -185,17 +178,15 @@ function MobileAccessDenied() {
   );
 }
 
-
 // =====================================================
 // ROOT REDIRECT
 // =====================================================
 
 function RootRedirect() {
-
   if (!isAuthenticated()) {
     return (
       <Navigate
-        to="/"
+        to="/login"
         replace
       />
     );
@@ -247,33 +238,233 @@ function RootRedirect() {
   );
 }
 
+// =====================================================
+// AUTHENTICATED APP
+// =====================================================
+
+function AuthenticatedApp() {
+  /*
+   * HRMS remains the primary authentication system.
+   *
+   * invoice_access comes from the HRMS logged-in user.
+   *
+   * InvoiceAuthProvider will automatically perform:
+   *
+   * HRMS JWT
+   *    ↓
+   * HRMS /invoice-sso
+   *    ↓
+   * SSO token
+   *    ↓
+   * Invoice /auth/sso
+   *    ↓
+   * Invoice JWT + permissions
+   *
+   * The Invoice token must NEVER replace the HRMS token.
+   *
+   * IMPORTANT FIX: this component mounts once, including on the
+   * /login route, BEFORE the user has logged in — at that point
+   * getStoredUser() returns nothing, so hasInvoiceAccess would be
+   * frozen at `false` forever, since nothing forces this component
+   * to re-render after a client-side navigate() following login.
+   * Subscribing to useLocation() forces a re-render (and therefore
+   * a fresh read of getStoredUser()) on every route change,
+   * including the one immediately after login — which is what
+   * actually fixes the "works after refresh, not on first login"
+   * symptom.
+   */
+
+  const location = useLocation();
+  const hasInvoiceAccess =
+    getStoredUser()?.invoice_access === true;
+
+  return (
+    <InvoiceAuthProvider
+      key={location.pathname.split("/")[1]}
+      hasInvoiceAccess={hasInvoiceAccess}
+    >
+      <Suspense
+        fallback={
+          <PageLoading label="Loading HRMS…" />
+        }
+      >
+        <Routes>
+
+          {/* =================================================
+              LOGIN
+          ================================================= */}
+
+          <Route
+            path="/"
+            element={<RootRedirect />}
+          />
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          {/* =================================================
+              ADMIN
+          ================================================= */}
+
+          <Route
+            path="/admin/*"
+            element={
+              <RequireAuth>
+                <DashboardLayout role="admin" />
+              </RequireAuth>
+            }
+          >
+            <Route
+              path="*"
+              element={<AdminRoutes />}
+            />
+          </Route>
+
+          {/* =================================================
+              MANAGER
+          ================================================= */}
+
+          <Route
+            path="/manager/*"
+            element={
+              <RequireAuth>
+                <DashboardLayout role="manager" />
+              </RequireAuth>
+            }
+          >
+            <Route
+              path="*"
+              element={<ManagerRoutes />}
+            />
+          </Route>
+
+          {/* =================================================
+              OPERATIONAL MANAGER
+          ================================================= */}
+
+          <Route
+            path="/operations/*"
+            element={
+              <RequireAuth>
+                <DashboardLayout
+                  role="operational-manager"
+                />
+              </RequireAuth>
+            }
+          >
+            <Route
+              path="*"
+              element={
+                <OperationalManagerRoutes />
+              }
+            />
+          </Route>
+
+          {/* =================================================
+              EMPLOYEE
+          ================================================= */}
+
+          <Route
+            path="/employee/*"
+            element={
+              <RequireAuth>
+                <EmployeeRoutes />
+              </RequireAuth>
+            }
+          />
+
+          {/* =================================================
+              SUB ADMIN
+          ================================================= */}
+
+          <Route
+            path="/sub-admin/*"
+            element={
+              <RequireAuth>
+                <DashboardLayout
+                  role="sub-admin"
+                />
+              </RequireAuth>
+            }
+          >
+            <Route
+              path="*"
+              element={<SubAdminRoutes />}
+            />
+          </Route>
+
+          {/* =================================================
+              SUBADMIN - OLD COMPATIBILITY ROUTE
+          ================================================= */}
+
+          <Route
+            path="/subadmin/*"
+            element={
+              <RequireAuth>
+                <DashboardLayout
+                  role="sub-admin"
+                />
+              </RequireAuth>
+            }
+          >
+            <Route
+              path="*"
+              element={<SubAdminRoutes />}
+            />
+          </Route>
+
+          {/* =================================================
+              HOME
+          ================================================= */}
+
+          <Route
+            path="/home"
+            element={<RootRedirect />}
+          />
+
+          {/* =================================================
+              UNKNOWN ROUTES
+          ================================================= */}
+
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
+          />
+
+        </Routes>
+      </Suspense>
+    </InvoiceAuthProvider>
+  );
+}
 
 // =====================================================
-// APP
+// MAIN APP
 // =====================================================
 
 function App() {
-
   const [mobileBlocked, setMobileBlocked] =
     useState(false);
 
   const [checkingDevice, setCheckingDevice] =
     useState(true);
 
-
   // ===================================================
-  // CHECK DEVICE BEFORE SHOWING HRMS
+  // CHECK DEVICE
   // ===================================================
 
   useEffect(() => {
-
     const mobile = isMobileDevice();
 
     setMobileBlocked(mobile);
     setCheckingDevice(false);
-
   }, []);
-
 
   // ===================================================
   // DEVICE CHECK LOADING
@@ -287,7 +478,6 @@ function App() {
     );
   }
 
-
   // ===================================================
   // BLOCK MOBILE DEVICES
   // ===================================================
@@ -296,196 +486,15 @@ function App() {
     return <MobileAccessDenied />;
   }
 
-
   // ===================================================
-  // DESKTOP HRMS
+  // DESKTOP APP
   // ===================================================
 
   return (
     <div className="hrms-desktop-app">
-
       <BrowserRouter>
-
-        <Suspense
-          fallback={
-            <PageLoading
-              label="Loading HRMS…"
-            />
-          }
-        >
-
-          <Routes>
-
-            {/* =================================================
-                LOGIN
-            ================================================= */}
-
-            <Route
-              path="/"
-              element={<Login />}
-            />
-
-            <Route
-              path="/login"
-              element={<Login />}
-            />
-
-
-            {/* =================================================
-                ADMIN
-            ================================================= */}
-
-            <Route
-              path="/admin/*"
-              element={
-                <RequireAuth>
-                  <DashboardLayout
-                    role="admin"
-                  />
-                </RequireAuth>
-              }
-            >
-              <Route
-                path="*"
-                element={<AdminRoutes />}
-              />
-            </Route>
-
-
-            {/* =================================================
-                MANAGER
-            ================================================= */}
-
-            <Route
-              path="/manager/*"
-              element={
-                <RequireAuth>
-                  <DashboardLayout
-                    role="manager"
-                  />
-                </RequireAuth>
-              }
-            >
-              <Route
-                path="*"
-                element={<ManagerRoutes />}
-              />
-            </Route>
-
-
-            {/* =================================================
-                OPERATIONAL MANAGER
-            ================================================= */}
-
-            <Route
-              path="/operations/*"
-              element={
-                <RequireAuth>
-                  <DashboardLayout
-                    role="operational-manager"
-                  />
-                </RequireAuth>
-              }
-            >
-              <Route
-                path="*"
-                element={
-                  <OperationalManagerRoutes />
-                }
-              />
-            </Route>
-
-
-            {/* =================================================
-                EMPLOYEE
-            ================================================= */}
-
-            <Route
-              path="/employee/*"
-              element={
-                <RequireAuth>
-                  <EmployeeRoutes />
-                </RequireAuth>
-              }
-            />
-
-
-            {/* =================================================
-                SUB ADMIN
-            ================================================= */}
-
-            <Route
-              path="/sub-admin/*"
-              element={
-                <RequireAuth>
-                  <DashboardLayout
-                    role="sub-admin"
-                  />
-                </RequireAuth>
-              }
-            >
-              <Route
-                path="*"
-                element={
-                  <SubAdminRoutes />
-                }
-              />
-            </Route>
-
-
-            {/* =================================================
-                SUBADMIN
-            ================================================= */}
-
-            <Route
-              path="/subadmin/*"
-              element={
-                <RequireAuth>
-                  <DashboardLayout
-                    role="sub-admin"
-                  />
-                </RequireAuth>
-              }
-            >
-              <Route
-                path="*"
-                element={
-                  <SubAdminRoutes />
-                }
-              />
-            </Route>
-
-
-            {/* =================================================
-                HOME
-            ================================================= */}
-
-            <Route
-              path="/home"
-              element={<RootRedirect />}
-            />
-
-
-            {/* =================================================
-                UNKNOWN ROUTES
-            ================================================= */}
-
-            <Route
-              path="*"
-              element={
-                <Navigate
-                  to="/"
-                  replace
-                />
-              }
-            />
-
-          </Routes>
-
-        </Suspense>
-
+        <AuthenticatedApp />
       </BrowserRouter>
-
     </div>
   );
 }

@@ -74,6 +74,12 @@ export function mapApiEmployee(emp) {
     // 🔐 LOGIN ACCESS
     loginAccessType: emp.login_access_type || "OFFICE",
     allowedBranches: emp.allowed_branches || [],
+
+    // 🧾 INVOICE / CRM ACCESS — permission detail itself lives in the
+    // Invoice database, not here, so only the on/off flag round-trips.
+    // See the note in buildEmployeePayload about re-checking permission
+    // boxes on every edit.
+    invoiceAccess: emp.invoice_access === true,
   };
 }
 export function formatAadhar(aadhar) {
@@ -116,6 +122,18 @@ export const EMPTY_EMPLOYEE_FORM = {
   // 🔐 LOGIN ACCESS
   loginAccessType: "OFFICE",
   allowedBranches: [],
+
+  // 🧾 INVOICE / CRM ACCESS
+  invoiceAccess: false,
+  invoicePermissions: {
+    customers: false,
+    invoices: false,
+    quotes: false,
+    payments: false,
+    expenses: false,
+    reports: false,
+    services: false,
+  },
 };
 
 export function validateEmployeeForm(form) {
@@ -151,6 +169,16 @@ export function buildEmployeePayload(form) {
     bank_ifsc: form.bankIfsc.trim(),
     aadhar_number: form.aadharNumber.trim(),
     password: form.password.trim() || undefined,
+
+    // 🧾 INVOICE / CRM ACCESS
+    // NOTE: since the Invoice database is the source of truth for the
+    // actual permission set, editing an employee re-sends whatever is
+    // currently checked in this form — including on a plain edit where
+    // you didn't mean to touch CRM access. Always re-verify the CRM
+    // checkboxes are correct before saving an existing employee, not
+    // just when granting access for the first time.
+    invoice_access: form.invoiceAccess === true,
+    invoice_permissions: form.invoiceAccess ? form.invoicePermissions : undefined,
   };
 }
 
@@ -175,5 +203,20 @@ export function employeeToForm(employee) {
     // 🔐 LOGIN ACCESS
     loginAccessType: employee.loginAccessType || "OFFICE",
     allowedBranches: employee.allowedBranches || [],
+
+    // 🧾 INVOICE / CRM ACCESS — the on/off flag comes from HRMS, but the
+    // actual permission checkboxes always start unchecked here, since
+    // that detail lives in the Invoice database, not HRMS's. Re-check
+    // whichever boxes this person should actually have before saving.
+    invoiceAccess: employee.invoiceAccess === true,
+    invoicePermissions: {
+      customers: false,
+      invoices: false,
+      quotes: false,
+      payments: false,
+      expenses: false,
+      reports: false,
+      services: false,
+    },
   };
 }

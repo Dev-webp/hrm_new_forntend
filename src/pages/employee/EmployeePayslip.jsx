@@ -115,7 +115,7 @@ export default function EmployeePayslip({ embedded = false }) {
     }, 3000);
   }, []);
 
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
   const latestAvailableMonth = useMemo(
     () => (allPayslips[0]?.month ? String(allPayslips[0].month).slice(0, 7) : ""),

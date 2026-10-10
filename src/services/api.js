@@ -4,7 +4,7 @@ import { clearAuthSession, getAuthToken } from "../utils/auth";
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+  "http://localhost:5001/api";
   
 
 // Shared Axios instance — attaches JWT from localStorage on every request
@@ -34,7 +34,14 @@ api.interceptors.response.use(
 
     // Keep protected-route behavior, but let login form handle bad credentials in-place.
     if (error.response?.status === 401 && !isLoginRequest && !skipAuthRedirect) {
-      clearAuthSession();
+      console.log(`[api.js interceptor] 401 detected - url: ${error.config?.url}, method: ${error.config?.method}, status: ${error.response?.status}, timestamp: ${performance.now()}`);
+      // Only clear HRMS auth, NOT invoice auth - invoice auth is independent
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("branch");
+      localStorage.removeItem("full_name");
+      localStorage.removeItem("designation");
+      localStorage.removeItem("employee_code");
       window.location.assign("/");
     }
 

@@ -1,5 +1,5 @@
 export const SOCKET_SERVER_URL =
-  import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+  import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 export function loadSocketIoClient() {
   if (typeof window !== "undefined" && window.io) {
     return Promise.resolve(window.io);

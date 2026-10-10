@@ -347,8 +347,7 @@ const renderReason = (reason) => {
 
         <div className="content subadmin-leave-content">
           <div className="leave-info-banner">
-            💡 1 paid leave is credited every month after probation. Unused paid
-            leaves carry forward. Future month leaves cannot be used.
+            💡 1 paid leave is credited every month after probation and must be used within that month — it does not carry over. Future month leaves cannot be used.
           </div>
 
           <div className="employee-leave-kpis subadmin-leave-kpis">
@@ -387,13 +386,6 @@ const renderReason = (reason) => {
               <h3>Current Month Credit</h3>
               <span>{leaveBalance?.current_month_credit || 0}</span>
               <p>This month credited leave</p>
-            </div>
-
-            <div className="balance-card paid">
-              <div className="balance-icon">🔁</div>
-              <h3>Carry Forward</h3>
-              <span>{leaveBalance?.carry_forward || 0}</span>
-              <p>Unused previous paid leaves</p>
             </div>
 
             <div className="balance-card used">

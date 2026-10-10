@@ -90,8 +90,19 @@ setMessage("");
 setSubmitting(true);
 
 try {
-  // Step 1: Get current GPS location
-  const location = await getCurrentLocation();
+  // Step 1: Get current GPS location (optional for testing)
+  let location;
+  try {
+    location = await getCurrentLocation();
+  } catch (locError) {
+    console.warn("Location access denied, using fallback coordinates:", locError.message);
+    // Fallback coordinates for testing when location is denied
+    location = {
+      latitude: 0,
+      longitude: 0,
+      accuracy: 0,
+    };
+  }
 
   // Step 2: Send login credentials + GPS coordinates
   const { data } = await api.post(

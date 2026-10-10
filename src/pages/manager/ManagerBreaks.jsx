@@ -7,7 +7,7 @@ const MAX_BREAK_MINUTES = 60;
 const MAX_DAILY_BREAK_SESSIONS = 6;
 const STANDARD_BREAK_TYPES = ["break1", "lunch", "break2", "break3"];
 const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_URL || "http://localhost:5001/api";
   
 const BREAK_LABELS = { break1: "☕ Break 1", lunch: "🍽️ Lunch", break2: "🧋 Break 2", break3: "☕ Break 3" };
 

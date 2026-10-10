@@ -71,15 +71,6 @@ function IndividualAnalysisView({
     [safeRecords]
   );
 
-  const overviewKpis = [
-    { label: "Attendance Rate", value: `${overview.attRate}%` },
-    { label: "Present Days", value: overview.presentDays },
-    { label: "Late Arrivals", value: overview.lateDays },
-    { label: "Break Exceeded", value: overview.exceed },
-    { label: "Paid Leave", value: overview.paidLeaveDays, tone: "primary" },
-    { label: "Unpaid Leave", value: overview.unpaidLeaveDays, tone: "danger" },
-    { label: "Total Leave", value: overview.leaveDays },
-  ];
 
   const week = weeksCache[weekOffset];
   const weekView = useMemo(() => {
@@ -265,7 +256,7 @@ function IndividualAnalysisView({
         id="tab-overview"
         className={`tab-pane${activeTab === "overview" ? " active" : ""}`}
       >
-        <AttendanceAnalysisCards items={overviewKpis} loading={loading} />
+       
         <div className="chart-row">
           <div className="card" style={{ maxHeight: 320 }}>
             <div className="chart-subtitle">Check-In Time (Hour of Day)</div>
@@ -456,42 +447,8 @@ function IndividualAnalysisView({
         id="tab-breakanalytics"
         className={`tab-pane${activeTab === "breakanalytics" ? " active" : ""}`}
       >
-        <AttendanceAnalysisCards
-          items={[
-            { label: "Avg Daily Break", value: `${breakStats.avg}m` },
-            {
-              label: "Days >60m",
-              value: breakStats.exceed,
-              valueStyle: { color: "#DC2626" },
-            },
-            { label: "Break1 Total", value: `${breakStats.sumB1}m` },
-            { label: "Lunch Total", value: `${breakStats.sumL}m` },
-            { label: "Break2 Total", value: `${breakStats.sumB2}m` },
-            { label: "Break3 Total", value: `${breakStats.sumB3}m` },
-            { label: "Break3 Sessions", value: breakStats.break3Count },
-          ]}
-          loading={loading}
-        />
-        <div className="chart-row">
-          <div className="card">
-            <BreakPieChart
-              pieData={[
-                breakStats.sumB1,
-                breakStats.sumL,
-                breakStats.sumB2,
-                breakStats.sumB3,
-              ]}
-            />
-          </div>
-          <div className="card">
-            <AttendanceTrendChart
-              labels={breakFiltered.map((r) =>
-                parseInt(r.date.slice(8, 10), 10)
-              )}
-              values={breakFiltered.map((r) => r.breaks)}
-            />
-          </div>
-        </div>
+      
+     
         <div className="card">
           <div className="card-title">
             Detailed Break Log — Full Month
@@ -599,26 +556,11 @@ function IndividualAnalysisView({
         className={`tab-pane${activeTab === "leavesalary" ? " active" : ""}`}
       >
         <div className="card">
-          <div className="card-title">Leave Balance & Salary Impact</div>
-          <AttendanceAnalysisCards
-            items={[
-              { label: "Leaves Taken", value: formatLeaveNumber(leaveStats.totalLeaves) },
-              {
-                label: "Paid Leaves Left",
-                value: formatLeaveNumber(leaveStats.paidLeavesLeft),
-              },
-              { label: "Extra Days", value: formatLeaveNumber(leaveStats.extraDays) },
-              {
-                label: "Salary Deduction",
-                value: `₹${Math.round(leaveStats.salaryDeduction).toLocaleString("en-IN")}`,
-                valueStyle: { fontSize: 22 },
-              },
-            ]}
-          />
-          <div className="leave-policy-box">
-            <i className="fas fa-info-circle" />
         
-          </div>
+          
+         
+    
+        
           <div style={{ marginTop: 24 }}>
             <div className="card-title">Approved Leaves</div>
             <table className="data-table" id="leaveTable">

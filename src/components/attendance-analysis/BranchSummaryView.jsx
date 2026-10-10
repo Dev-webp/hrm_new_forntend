@@ -46,16 +46,7 @@ function BranchSummaryView({
   return (
     <div id="branchView">
      
-      <div className="analysis-toolbar">
-        <div>
-          <strong>Workforce attendance overview</strong>
-          <span>
-            Review trends and employees needing attention.
-          </span>
-        </div>
-
-   
-      </div>
+     
 
       {showTrends && trends?.length > 0 && (
         <div className="card">

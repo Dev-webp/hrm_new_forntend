@@ -834,7 +834,7 @@ export default function ManagerAttendanceAnalysis() {
                 ["weekly", "📆 Weekly Deep Dive"],
                 ["dailylog", "📋 Day Log"],
                 ["breakanalytics", "☕ Break Analytics"],
-                ["leavesalary", "🌿 Leave & Salary"],
+                ["leavesalary", "🌿 Leave "],
               ].map(([id, label]) => (
                 <button
                   key={id}
@@ -1205,47 +1205,7 @@ if (isSunday || r.status === "sunday") {
               </div>
             )}
 
-            {/* ── Tab: Leave & Salary ── */}
-            {activeTab === "leavesalary" && (
-              <div className="tab-pane active">
-                <div className="card">
-                  <div className="card-title">Leave Balance & Salary Impact</div>
-                  {leaveSalaryKpi && (
-                    <div className="kpi-grid">
-                      <div className="kpi-tile"><div className="label">Leaves Taken</div><div className="value">{formatLeaveNumber(leaveSalaryKpi.totalLeaves)}</div></div>
-                      <div className="kpi-tile"><div className="label">Paid Leaves Left</div><div className="value">{formatLeaveNumber(leaveSalaryKpi.paidLeavesLeft)}</div></div>
-                      <div className="kpi-tile"><div className="label">Extra Days</div><div className="value">{formatLeaveNumber(leaveSalaryKpi.extraDays)}</div></div>
-                      <div className="kpi-tile"><div className="label">Salary Deduction</div><div className="value" style={{ fontSize: "22px" }}>₹{Math.round(leaveSalaryKpi.salaryDeduction).toLocaleString("en-IN")}</div></div>
-                    </div>
-                  )}
-                 
-                  <div style={{ marginTop: "24px" }}>
-                    <div className="card-title">Approved Leaves</div>
-                    <table className="data-table">
-                      <thead>
-                        <tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Paid Days</th><th>Unpaid Days</th><th>Reason</th><th>Status</th></tr>
-                      </thead>
-                      <tbody>
-                        {leaves.length
-                          ? leaves.map((l) => (
-                              <tr key={l.id}>
-                                <td>{l?.leave_type || l?.leaveType || "—"}</td>
-                                <td>{formatDateReadable(String(l?.from_date || "").slice(0, 10)) || "—"}</td>
-                                <td>{formatDateReadable(String(l?.to_date || "").slice(0, 10)) || "—"}</td>
-                                <td>{formatLeaveNumber(getLeaveDays(l))}</td>
-                                <td>{formatLeaveNumber(getLeavePaidDays(l))}</td>
-                                <td>{formatLeaveNumber(getLeaveUnpaidDays(l))}</td>
-                                <td>{l?.reason || "—"}</td>
-                                <td><span className="badge b-present">{l?.status || "approved"}</span></td>
-                              </tr>
-                            ))
-                          : <tr><td colSpan="8" style={{ color: "#64748B", textAlign: "center" }}>No approved leaves</td></tr>}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
+      
           </div>
         )}
       </div>
