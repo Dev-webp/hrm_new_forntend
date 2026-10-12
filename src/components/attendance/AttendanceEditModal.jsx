@@ -12,8 +12,16 @@ const TIME_FIELDS = [
 ];
 
 function to12Hour(time) {
-  if (!time || time === "--") return "";
-  const [rawHour, rawMinute] = String(time).slice(0, 5).split(":").map(Number);
+  if (!time || time === "--" || time === "") return "";
+  const timeStr = String(time).trim();
+
+  // If already in 12-hour format, return as-is
+  if (timeStr.match(/^\d{1,2}:\d{2}\s*(AM|PM)$/i)) {
+    return timeStr.toUpperCase();
+  }
+
+  // Parse 24-hour format (HH:MM or HH:MM:SS)
+  const [rawHour, rawMinute] = timeStr.slice(0, 5).split(":").map(Number);
   if (Number.isNaN(rawHour) || Number.isNaN(rawMinute)) return "";
   const suffix = rawHour >= 12 ? "PM" : "AM";
   const hour = rawHour % 12 || 12;
@@ -24,6 +32,7 @@ function to24Hour(value) {
   const text = String(value || "").trim();
   if (!text) return null;
 
+  // Try 12-hour format first (e.g., "7:00 PM" or "7:00PM")
   const match12 = text.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (match12) {
     let hour = Number(match12[1]);
@@ -35,7 +44,8 @@ function to24Hour(value) {
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
   }
 
-  const match24 = text.match(/^(\d{1,2}):(\d{2})$/);
+  // Try 24-hour format (e.g., "19:00" or "19:00:00")
+  const match24 = text.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
   if (match24) {
     const hour = Number(match24[1]);
     const minute = Number(match24[2]);

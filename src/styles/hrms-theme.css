@@ -1810,6 +1810,22 @@ textarea::placeholder {
   color: var(--calendar-holiday-text) !important;
 }
 
+.admin-analysis-page .cal-day.sandwich-lop,
+.manager-analysis-page .cal-day.sandwich-lop,
+.employee-attendance-page .cal-day.sandwich-lop,
+.cal-day.sandwich-lop {
+  background: var(--calendar-absent-bg) !important;
+  border-color: var(--calendar-absent-border) !important;
+  color: var(--calendar-absent-text) !important;
+}
+
+.admin-analysis-page .cal-day.sandwich-lop .day-num,
+.manager-analysis-page .cal-day.sandwich-lop .day-num,
+.employee-attendance-page .cal-day.sandwich-lop .day-num,
+.cal-day.sandwich-lop .day-num {
+  color: var(--calendar-absent-text) !important;
+}
+
 .admin-calendar-page .calendar-day.calendar-late,
 .manager-calendar-page .cal-day.calendar-late,
 .employee-attendance-page .cal-day.calendar-late,

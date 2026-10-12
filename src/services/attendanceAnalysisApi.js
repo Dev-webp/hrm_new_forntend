@@ -79,13 +79,13 @@ export async function fetchAnalysisTrends(branch, months = 6, signal) {
 }
 
 /** GET /api/leaves/approved-monthly?userId=&month=YYYY-MM */
-export async function fetchEmployeeLeaves(userId, month, signal) {
-  const ck = `leaves|${userId}|${month}`;
+export async function fetchEmployeeLeaves(userId, month, signal, includeContext = false) {
+  const ck = `leaves|${userId}|${month}|${includeContext}`;
   const cached = cGet(ck);
   if (cached) return cached;
 
   const { data } = await api.get("/leaves/approved-monthly", {
-    params: { userId, month },
+    params: { userId, month, ...(includeContext ? { context: "1" } : {}) },
     signal,
   });
   cSet(ck, data);

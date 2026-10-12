@@ -385,10 +385,7 @@ export default function ManagerCalendar() {
           }
 
           if (!isSun && !entry && rec) {
-            const halfDaySlot = rec.half_day_slot || rec.halfDaySlot;
-            const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-            
-            if (st === "half_day" || isHalfDay) cssClasses += " p-halfday calendar-halfday";
+            if (st === "half_day") cssClasses += " p-halfday calendar-halfday";
             else if (isPaidLeaveDay(rec)) cssClasses += " p-leave calendar-paid-leave paid-leave";
             else if (isUnpaidLeaveDay(rec)) cssClasses += " p-leave calendar-unpaid-leave unpaid-leave";
             else if (st === "full_day") cssClasses += " p-present calendar-present";
@@ -404,23 +401,14 @@ export default function ManagerCalendar() {
           }
 
           if (rec && !isSun) {
-            const halfDaySlot = rec.half_day_slot || rec.halfDaySlot;
-            const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-            
             let statusLabel = {
               full_day: "✅ Present",
               absent: "❌ Absent",
               half_day: "🌓 Half Day",
               leave: "🏖️ Leave",
               holiday: "🎉 Holiday",
+              no_record: "No Record",
             }[st] || "—";
-
-            if (st === "half_day" || isHalfDay) {
-              const isPaid = rec.is_paid_leave === true || rec.isPaidLeave === true;
-              const isUnpaid = rec.is_paid_leave === false || rec.isPaidLeave === false;
-              if (isPaid) statusLabel = "🌓 Half Day (Paid Leave)";
-              else if (isUnpaid) statusLabel = "🌓 Half Day (Unpaid Leave)";
-            }
 
             if (st === "in_progress" || st === "working") statusLabel = "Working";
             if (st === "missing_checkout") statusLabel = "Missing Checkout";

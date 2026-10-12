@@ -85,42 +85,53 @@ export function getCalendarAttendanceStatus(record) {
 
   const halfDaySlot = record.half_day_slot || record.halfDaySlot;
   const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+  const hasAttendance = Boolean(
+    record.check_in_time ||
+    record.check_out_time ||
+    record.office_in ||
+    record.office_out ||
+    record.checkIn ||
+    record.checkOut
+  );
+  const leaveDurationType = normalizeStatus(
+    record.leave_duration_type ||
+    record.leaveDurationType
+  );
 
-  // ============================================================
-  // HALF-DAY PRIORITY
-  // ============================================================
-  // If the record has a half_day_slot, it's a half-day regardless of leave type
-  // This handles both: (a) half-day leave requests and (b) worked half-day with leave
-  // ============================================================
-
-  if (status === "half_day" || isHalfDay) {
-    return "half_day";
+  // A half-day leave slot is a request, not an attendance result. Without
+  // punches it must not turn the day into paid leave or a worked half day.
+  if (
+    !hasAttendance &&
+    (
+      isHalfDay ||
+      leaveDurationType === "half_day" ||
+      record.half_day_session ||
+      record.halfDaySession
+    )
+  ) {
+    return "no_record";
   }
 
-  // ============================================================
-  // FULL-DAY PAID/UNPAID LEAVE
-  // ============================================================
-  // Only return paid_leave/unpaid_leave if NOT a half-day
-  // ============================================================
+  // Explicit day-level status wins over leave-request metadata.
+  if (status && status !== "leave") {
+    if (status === "paid") return "paid_leave";
+    if (status === "unpaid") return "unpaid_leave";
+    return status;
+  }
 
-  if (status === "paid_leave" && !isHalfDay) return "paid_leave";
-  if (status === "unpaid_leave" && !isHalfDay) return "unpaid_leave";
+  if (hasAttendance) return status || "no_record";
 
   const leaveType = normalizeStatus(
     record.leave_type ||
     record.leaveType
   );
 
-  // Leave type fallback - only if not half-day
-  if (
-    (leaveType === "paid_leave" || leaveType === "paid") && !isHalfDay
-  ) {
+  // Leave metadata is a fallback for rows without an attendance result.
+  if (leaveType === "paid_leave" || leaveType === "paid") {
     return "paid_leave";
   }
 
-  if (
-    (leaveType === "unpaid_leave" || leaveType === "unpaid") && !isHalfDay
-  ) {
+  if (leaveType === "unpaid_leave" || leaveType === "unpaid") {
     return "unpaid_leave";
   }
 
@@ -132,19 +143,14 @@ export function getCalendarAttendanceStatus(record) {
       record.leaveStatus
     ) === "approved"
   ) {
-    if (
-      (record.is_paid_leave === true || record.isPaidLeave === true) && !isHalfDay
-    ) {
+    if (record.is_paid_leave === true || record.isPaidLeave === true) {
       return "paid_leave";
     }
 
-    if (
-      (record.is_paid_leave === false || record.isPaidLeave === false) && !isHalfDay
-    ) {
+    if (record.is_paid_leave === false || record.isPaidLeave === false) {
       return "unpaid_leave";
     }
   }
 
   return status || "no_record";
 }
-

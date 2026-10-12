@@ -18,7 +18,7 @@ const ManagerNotifications = lazy(() => import("./ManagerNotifications"));
 const ManagerPayslip = lazy(() => import("./ManagerPayslip"));
 const Leads = lazy(() => import("../../modules/crm/Leads"));
 const Customers = lazy(() => import("../../modules/crm/Customers"));
-const LeadProfileHistory = lazy(() => import("../../modules/crm/LeadProfileHistory"));
+const LeadProfileHistory = lazy(() => import("../../modules/crm/LeadProfilesHistory"));
 
 const Invoices = lazy(() => import("../../modules/invoice/Invoices"));
 const Quotes = lazy(() => import("../../modules/invoice/Quotes"));

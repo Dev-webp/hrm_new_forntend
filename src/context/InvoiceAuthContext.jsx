@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
-const INVOICE_API_URL = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000/api";
+const INVOICE_API_URL = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000";
 
 const InvoiceAuthContext = createContext(null);
 
@@ -75,6 +75,12 @@ export function InvoiceAuthProvider({ hasInvoiceAccess, children }) {
         return exchangeData.token;
       } catch (err) {
         console.log(`[InvoiceAuthContext] SSO exchange FAILED: ${err.message}, timestamp: ${performance.now()}`);
+        // During local development, if Invoice backend is not available, skip SSO gracefully
+        if (import.meta.env.DEV && (err.message.includes('fetch') || err.message.includes('404') || err.message.includes('ECONNREFUSED'))) {
+          console.log(`[InvoiceAuthContext] Invoice backend not available in development - skipping SSO`);
+          setError("Invoice/CRM not available in development");
+          return null;
+        }
         setError(err.message || "Unable to connect to Invoice/CRM.");
         return null;
       } finally {

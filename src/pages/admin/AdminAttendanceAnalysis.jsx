@@ -24,6 +24,7 @@ import {
 } from "../../utils/attendanceAnalysisHelpers";
 import { formatProductionHours } from "../../utils/timeFormat";
 import { getStoredUser } from "../../utils/auth";
+import { computeEmployeeSandwichByDate } from "../../utils/sandwichCalendar";
 import "../../styles/adminAttendanceAnalysis.css";
 
 function AdminAttendanceAnalysis() {
@@ -69,6 +70,7 @@ function AdminAttendanceAnalysis() {
   const [currentEmpId, setCurrentEmpId] = useState(null);
   const [currentRecords, setCurrentRecords] = useState([]);
   const [currentLeaves, setCurrentLeaves] = useState([]);
+  const [currentSandwichByDate, setCurrentSandwichByDate] = useState(new Map());
   const [weeksCache, setWeeksCache] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,7 @@ function AdminAttendanceAnalysis() {
   const abortRef = useRef(null);
   const searchTimerRef = useRef(null);
   const recordsCacheRef = useRef({});
+  const sandwichCacheRef = useRef({});
   const monthChangeTimerRef = useRef(null);
   const fetchIdRef = useRef(0);
 
@@ -207,6 +210,8 @@ function AdminAttendanceAnalysis() {
       }
 
       const cacheKey = `${normalizedEmpId}-${monthStr}`;
+      const fetchId = ++fetchIdRef.current;
+      setCurrentSandwichByDate(new Map());
 
       if (recordsCacheRef.current[cacheKey]) {
         try {
@@ -215,11 +220,16 @@ function AdminAttendanceAnalysis() {
           const monthlyLeaves = await fetchEmployeeLeaves(
             normalizedEmpId,
             monthStr,
-            signal
+            signal,
+            true
           );
+          if (fetchId !== fetchIdRef.current) return false;
 
           setCurrentRecords(recordsCacheRef.current[cacheKey]);
           setCurrentLeaves(monthlyLeaves || []);
+          setCurrentSandwichByDate(
+            sandwichCacheRef.current[cacheKey] || new Map()
+          );
           setCurrentEmpId(normalizedEmpId);
           setSelectedEmployeeId(String(normalizedEmpId));
           setViewMode("individual");
@@ -248,14 +258,12 @@ function AdminAttendanceAnalysis() {
 
       showToast(`Loading ${emp.name}…`);
 
-      const fetchId = ++fetchIdRef.current;
-
       try {
         const signal = getSignal();
 
         const [data, monthlyLeaves] = await Promise.all([
           fetchAnalysisIndividual(normalizedEmpId, monthStr, signal),
-          fetchEmployeeLeaves(normalizedEmpId, monthStr, signal),
+          fetchEmployeeLeaves(normalizedEmpId, monthStr, signal, true),
         ]);
 
         if (fetchId !== fetchIdRef.current) {
@@ -265,11 +273,20 @@ function AdminAttendanceAnalysis() {
         const transformedRecords = normalizeAttendanceAnalysisRecords(
           data.records || []
         );
+        const sandwichByDate = computeEmployeeSandwichByDate({
+          attendance: data.contextRecords || [],
+          leaves: monthlyLeaves || [],
+          holidays: data.holidays || [],
+          joiningDate: data.joiningDate || emp.joining_date || emp.joiningDate,
+          month: monthStr,
+        });
 
         recordsCacheRef.current[cacheKey] = transformedRecords;
+        sandwichCacheRef.current[cacheKey] = sandwichByDate;
 
         setCurrentRecords(transformedRecords);
         setCurrentLeaves(monthlyLeaves || []);
+        setCurrentSandwichByDate(sandwichByDate);
         setWeeksCache(buildWeeksCache(monthStr));
 
         showToast(`Loaded ${emp.name}`);
@@ -450,6 +467,9 @@ function AdminAttendanceAnalysis() {
     setCurrentBranch(branch);
     setSelectedEmployeeId("all");
     setCurrentEmpId(null);
+    setCurrentSandwichByDate(new Map());
+    recordsCacheRef.current = {};
+    sandwichCacheRef.current = {};
 
     invalidateAnalysisCache("employees");
     invalidateAnalysisCache("summary");
@@ -795,6 +815,7 @@ function AdminAttendanceAnalysis() {
         <IndividualAnalysisView
           employee={selectedEmployee}
           records={currentRecords}
+          sandwichByDate={currentSandwichByDate}
           leaves={currentLeaves}
           monthStr={currentMonth}
           weeksCache={weeksCache}

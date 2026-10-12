@@ -25,6 +25,28 @@ import {
 } from "../../utils/timeFormat";
 import { getStoredUser } from "../../utils/auth";
 
+// Helper to convert 24-hour format (HH:MM) to 12-hour format (HH:MM AM/PM)
+function convertTo12HourFormat(time24) {
+  if (!time24 || time24 === "--" || time24 === "") return "";
+  const [hours, minutes] = time24.split(":");
+  const hour = parseInt(hours, 10);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${suffix}`;
+}
+
+// Helper to convert 12-hour format (HH:MM AM/PM) to 24-hour format (HH:MM)
+function convertTo24HourFormat(time12) {
+  if (!time12 || time12.trim() === "") return "";
+  const match = time12.trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return time12; // Return as-is if already in 24-hour format or invalid
+  let [_, hours, minutes, suffix] = match;
+  let hour = parseInt(hours, 10);
+  if (suffix.toUpperCase() === "PM" && hour !== 12) hour += 12;
+  if (suffix.toUpperCase() === "AM" && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, "0")}:${minutes}`;
+}
+
 import "../../styles/adminCalendar.css";
 
 const MONTH_NAMES = [
@@ -136,13 +158,29 @@ function resolveEmployeeCalendarStatus(
     record.status || record.day_status
   );
 
+  const hasAttendance = Boolean(
+    record.check_in_time ||
+    record.check_out_time ||
+    record.checkIn ||
+    record.checkOut
+  );
   const halfDaySlot = record.half_day_slot || record.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
+  const isHalfDayLeave =
+    normalizeAttendanceStatus(record.leave_duration_type) === "half_day" ||
+    Boolean(record.half_day_session || record.halfDaySession);
+
+  if (!hasAttendance && (isHalfDayLeave || (halfDaySlot && halfDaySlot !== "INVALID"))) {
+    return "no_record";
+  }
+
+  if (hasAttendance) {
+    return getCalendarAttendanceStatus(record);
+  }
 
   // =====================================================
   // 3.5 HALF-DAY PRIORITY (must come before paid_leave check)
   // =====================================================
-  if (status === "half_day" || isHalfDay) {
+  if (status === "half_day") {
     return "half_day";
   }
 
@@ -719,12 +757,9 @@ function AdminCalendar() {
 
           dayClass += " employee-day";
 
-          const halfDaySlot = employeeRecord?.half_day_slot || employeeRecord?.halfDaySlot;
-          const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
           if (statusKey === "sunday" || statusKey === "holiday") {
             dayClass += " calendar-holiday";
-          } else if (statusKey === "half_day" || isHalfDay) {
+          } else if (statusKey === "half_day") {
             // All half-day statuses use yellow color
             dayClass += " calendar-halfday";
           } else if (statusKey === "paid_leave") {
@@ -758,11 +793,7 @@ function AdminCalendar() {
           const labelText = (() => {
             if (statusKey === "sunday") return "Sunday";
             if (statusKey === "holiday") return entry.name || "Holiday";
-            if (statusKey === "half_day" || isHalfDay) {
-              const isPaid = employeeRecord?.is_paid_leave === true || employeeRecord?.isPaidLeave === true;
-              const isUnpaid = employeeRecord?.is_paid_leave === false || employeeRecord?.isPaidLeave === false;
-              if (isPaid) return "Half Day (Paid Leave)";
-              if (isUnpaid) return "Half Day (Unpaid Leave)";
+            if (statusKey === "half_day") {
               return "Half Day";
             }
             if (statusKey === "paid_leave") return "Paid Leave";
@@ -1446,28 +1477,28 @@ function AdminCalendar() {
             </select>
 
             <label>Login Time</label>
-            <input id="editLogin" type="time" defaultValue={editRecord.checkIn !== "--" ? editRecord.checkIn : ""} />
+            <input id="editLogin" type="text" placeholder="e.g., 10:43 AM" defaultValue={convertTo12HourFormat(editRecord.checkIn)} />
 
             <label>Logout Time</label>
-            <input id="editLogout" type="time" defaultValue={editRecord.checkOut !== "--" ? editRecord.checkOut : ""} />
+            <input id="editLogout" type="text" placeholder="e.g., 7:00 PM" defaultValue={convertTo12HourFormat(editRecord.checkOut)} />
 
             <label>Break 1 In</label>
-            <input id="editB1In" type="time" defaultValue={editRecord.breakDetails?.b1?.in !== "--" ? editRecord.breakDetails?.b1?.in : ""} />
+            <input id="editB1In" type="text" placeholder="e.g., 10:43 AM" defaultValue={convertTo12HourFormat(editRecord.breakDetails?.b1?.in)} />
 
             <label>Break 1 Out</label>
-            <input id="editB1Out" type="time" defaultValue={editRecord.breakDetails?.b1?.out !== "--" ? editRecord.breakDetails?.b1?.out : ""} />
+            <input id="editB1Out" type="text" placeholder="e.g., 7:00 PM" defaultValue={convertTo12HourFormat(editRecord.breakDetails?.b1?.out)} />
 
             <label>Lunch In</label>
-            <input id="editLunchIn" type="time" defaultValue={editRecord.breakDetails?.lunch?.in !== "--" ? editRecord.breakDetails?.lunch?.in : ""} />
+            <input id="editLunchIn" type="text" placeholder="e.g., 10:43 AM" defaultValue={convertTo12HourFormat(editRecord.breakDetails?.lunch?.in)} />
 
             <label>Lunch Out</label>
-            <input id="editLunchOut" type="time" defaultValue={editRecord.breakDetails?.lunch?.out !== "--" ? editRecord.breakDetails?.lunch?.out : ""} />
+            <input id="editLunchOut" type="text" placeholder="e.g., 7:00 PM" defaultValue={convertTo12HourFormat(editRecord.breakDetails?.lunch?.out)} />
 
             <label>Break 2 In</label>
-            <input id="editB2In" type="time" defaultValue={editRecord.breakDetails?.b2?.in !== "--" ? editRecord.breakDetails?.b2?.in : ""} />
+            <input id="editB2In" type="text" placeholder="e.g., 10:43 AM" defaultValue={convertTo12HourFormat(editRecord.breakDetails?.b2?.in)} />
 
             <label>Break 2 Out</label>
-            <input id="editB2Out" type="time" defaultValue={editRecord.breakDetails?.b2?.out !== "--" ? editRecord.breakDetails?.b2?.out : ""} />
+            <input id="editB2Out" type="text" placeholder="e.g., 7:00 PM" defaultValue={convertTo12HourFormat(editRecord.breakDetails?.b2?.out)} />
 
             <label>Reason <span style={{ color: "#DC2626" }}>*</span></label>
             <textarea
@@ -1502,14 +1533,14 @@ function AdminCalendar() {
                     source: "calendar",
                     reason,
                     status: status === "auto" ? null : status,
-                    check_in_time: document.getElementById("editLogin").value || null,
-                    check_out_time: document.getElementById("editLogout").value || null,
-                    break1_in: document.getElementById("editB1In").value || null,
-                    break1_out: document.getElementById("editB1Out").value || null,
-                    break3_in: document.getElementById("editLunchIn").value || null,
-                    break3_out: document.getElementById("editLunchOut").value || null,
-                    break2_in: document.getElementById("editB2In").value || null,
-                    break2_out: document.getElementById("editB2Out").value || null,
+                    check_in_time: convertTo24HourFormat(document.getElementById("editLogin").value) || null,
+                    check_out_time: convertTo24HourFormat(document.getElementById("editLogout").value) || null,
+                    break1_in: convertTo24HourFormat(document.getElementById("editB1In").value) || null,
+                    break1_out: convertTo24HourFormat(document.getElementById("editB1Out").value) || null,
+                    break3_in: convertTo24HourFormat(document.getElementById("editLunchIn").value) || null,
+                    break3_out: convertTo24HourFormat(document.getElementById("editLunchOut").value) || null,
+                    break2_in: convertTo24HourFormat(document.getElementById("editB2In").value) || null,
+                    break2_out: convertTo24HourFormat(document.getElementById("editB2Out").value) || null,
                   });
 
                   setEditError("");

@@ -14,19 +14,24 @@ import {
   normalizeAttendanceStatusValue,
 } from "../../utils/attendanceHelpers";
 import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
+import { addDays, toDateStr } from "../../utils/dateHelper";
+import {
+  computeEmployeeSandwichByDate,
+  hasAppliedSandwichPenalty,
+} from "../../utils/sandwichCalendar";
 import "../../styles/EmployeeAttendance.css";
 
-function getStatusBadgeClass(status, lateMins, halfDaySlot) {
+function getStatusBadgeClass(status, lateMins) {
   status = normalizeAttendanceStatusValue(status);
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
 
   // ============================================================
   // HALF-DAY PRIORITY
   // ============================================================
-  // If half_day_slot exists, use half-day badge regardless of status
+  // IMPORTANT: Only use half-day badge if status is actually half_day
+  // Do NOT use half_day_slot alone to force half-day display
   // ============================================================
 
-  if (status === "half_day" || isHalfDay) return "badge-halfday";
+  if (status === "half_day") return "badge-halfday";
   if (status === "in_progress" || status === "working") return "badge-working";
   if (status === "missing_checkout") return "badge-late";
   if (status === "full_day") return "badge-present";
@@ -35,23 +40,21 @@ function getStatusBadgeClass(status, lateMins, halfDaySlot) {
   if (status === "unpaid_leave") return "badge-unpaid-leave";
   if (status === "leave") return "badge-leave";
   if (status === "holiday") return "badge-leave";
+  if (status === "no_record") return "badge-no-record";
   if (status === "late" || (lateMins > 0 && status !== "absent")) return "badge-late";
   return "badge-absent";
 }
 
-function getStatusText(status, lateMins, halfDaySlot = null, isPaidLeave = null) {
+function getStatusText(status, lateMins) {
   status = normalizeAttendanceStatusValue(status);
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
 
   // ============================================================
   // HALF-DAY PRIORITY
   // ============================================================
-  // If half_day_slot exists, show as half-day with leave type if applicable
+  // IMPORTANT: Only show half-day if status is actually half_day
   // ============================================================
 
-  if (status === "half_day" || isHalfDay) {
-    if (isPaidLeave === true) return "Half Day (Paid Leave)";
-    if (isPaidLeave === false) return "Half Day (Unpaid Leave)";
+  if (status === "half_day") {
     return "Half Day";
   }
 
@@ -63,6 +66,7 @@ function getStatusText(status, lateMins, halfDaySlot = null, isPaidLeave = null)
   if (status === "unpaid_leave") return "Unpaid Leave";
   if (status === "leave") return "On Leave";
   if (status === "holiday") return "Holiday";
+  if (status === "no_record") return "No Record";
   if (status === "late" || (lateMins > 0 && status !== "absent")) {
     return `Late${lateMins ? ` (${lateMins}m)` : ""}`;
   }
@@ -137,9 +141,9 @@ function safeFormatTime(value) {
   }
 }
 
-function safeStatusText(status, lateMins = 0, halfDaySlot = null, isPaidLeave = null) {
+function safeStatusText(status, lateMins = 0) {
   try {
-    return safeText(getStatusText(status, lateMins, halfDaySlot, isPaidLeave), "No Record");
+    return safeText(getStatusText(status, lateMins), "No Record");
   } catch {
     return "No Record";
   }
@@ -207,6 +211,8 @@ export default function EmployeeAttendance({ embedded = false }) {
   );
   const [holidayMap, setHolidayMap] = useState({});
   const [personalData, setPersonalData] = useState({});
+  const [sandwichByDate, setSandwichByDate] = useState(new Map());
+  const [sandwichError, setSandwichError] = useState("");
   const [currentWeek, setCurrentWeek] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedMonth, setHasLoadedMonth] = useState(false);
@@ -214,6 +220,8 @@ export default function EmployeeAttendance({ embedded = false }) {
   const [isAttendanceActionLoading, setIsAttendanceActionLoading] = useState(false);
   const [todayStatus, setTodayStatus] = useState(null);
   const [toast, setToast] = useState({ msg: "", visible: false });
+  const monthLoadRef = useRef(0);
+  const profileCacheRef = useRef(null);
 
   useEffect(() => {
     const storedToken = getStoredToken();
@@ -231,25 +239,41 @@ export default function EmployeeAttendance({ embedded = false }) {
   }, []);
 
   const fetchHolidays = useCallback(
-    async (year, month) => {
+    async (year, month, branch) => {
       try {
-        const data = normalizeArray(
-          await apiFetch(`/holidays?year=${year}&month=${month + 1}`)
-        );
-        const map = {};
-        data.forEach((h) => {
-          const d = getDateKey(h?.date);
-          if (d) {
-            map[d.slice(5, 10)] = {
-              name: safeText(h?.name, "Holiday"),
-              type: safeText(h?.type, "holiday"),
-            };
-          }
+        const months = [-1, 0, 1].map((offset) => {
+          const date = new Date(year, month + offset, 1);
+          return { year: date.getFullYear(), month: date.getMonth() + 1 };
         });
-        setHolidayMap(map);
-        return map;
+        const rows = (
+          await Promise.all(
+            months.map(({ year: holidayYear, month: holidayMonth }) =>
+              apiFetch(
+                `/holidays?year=${holidayYear}&month=${holidayMonth}&branch=${encodeURIComponent(branch || "")}`
+              )
+            )
+          )
+        ).flatMap(normalizeArray);
+        const currentMonthMap = {};
+        const holidayDates = rows
+          .map((holiday) => {
+            const date = toDateStr(holiday?.date);
+            if (!date) return null;
+            if (date.startsWith(`${year}-${String(month + 1).padStart(2, "0")}-`)) {
+              currentMonthMap[date.slice(5, 10)] = {
+                name: safeText(holiday?.name, "Holiday"),
+                type: safeText(holiday?.type, "holiday"),
+              };
+            }
+            return {
+              date,
+              name: safeText(holiday?.name, "Holiday"),
+              type: safeText(holiday?.type, "holiday"),
+            };
+          })
+          .filter(Boolean);
+        return { currentMonthMap, holidayDates };
       } catch (err) {
-        setHolidayMap({});
         throw new Error(err?.message || "Unable to load holidays", { cause: err });
       }
     },
@@ -259,9 +283,11 @@ export default function EmployeeAttendance({ embedded = false }) {
   const fetchPersonalMonth = useCallback(
     async (year, month) => {
       const mm = String(month + 1).padStart(2, "0");
-      const start = `${year}-${mm}-01`;
+      const periodStart = `${year}-${mm}-01`;
       const lastDay = getSafeLastDay(year, month);
-      const end = `${year}-${mm}-${String(lastDay).padStart(2, "0")}`;
+      const periodEnd = `${year}-${mm}-${String(lastDay).padStart(2, "0")}`;
+      const start = addDays(periodStart, -2);
+      const end = addDays(periodEnd, 1);
       try {
         const records = normalizeArray(
           await apiFetch(`/attendance/self/history?start=${start}&end=${end}`)
@@ -272,10 +298,8 @@ export default function EmployeeAttendance({ embedded = false }) {
           const dateKey = getDateKey(record?.date);
           if (dateKey) map[dateKey] = { ...record, date: dateKey };
         });
-        setPersonalData(map);
         return map;
       } catch (err) {
-        setPersonalData({});
         throw new Error(err?.message || "Unable to load attendance history", { cause: err });
       }
     },
@@ -292,33 +316,74 @@ export default function EmployeeAttendance({ embedded = false }) {
   }, [apiFetch]);
 
   const loadMonth = useCallback(async () => {
+    const loadId = ++monthLoadRef.current;
     if (!token) {
       setHolidayMap({});
       setPersonalData({});
+      setSandwichByDate(new Map());
+      setSandwichError("");
       setHasLoadedMonth(false);
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
     setLoadError("");
+    setSandwichError("");
+    setSandwichByDate(new Map());
     const safeDate = getSafeMonthDate(currentDate);
     const year = safeDate.getFullYear();
     const month = safeDate.getMonth();
     try {
-      await Promise.all([
-        fetchHolidays(year, month),
+      let profile = profileCacheRef.current;
+      let profileError = null;
+      if (!profile) {
+        try {
+          profile = await apiFetch("/employee/profile");
+          profileCacheRef.current = profile;
+        } catch (error) {
+          profileError = error;
+        }
+      }
+      const [holidayData, attendanceMap] = await Promise.all([
+        fetchHolidays(year, month, profile?.branch),
         fetchPersonalMonth(year, month),
       ]);
+      if (loadId !== monthLoadRef.current) return;
+      setHolidayMap(holidayData.currentMonthMap);
+      setPersonalData(attendanceMap);
       setHasLoadedMonth(true);
+
+      try {
+        if (profileError) throw profileError;
+        const leaves = normalizeArray(await apiFetch("/employee/my-leaves"));
+        if (loadId !== monthLoadRef.current) return;
+        setSandwichByDate(
+          computeEmployeeSandwichByDate({
+            attendance: Object.values(attendanceMap),
+            leaves,
+            holidays: holidayData.holidayDates,
+            joiningDate: profile?.joining_date,
+            month: `${year}-${String(month + 1).padStart(2, "0")}`,
+            todayStr: toDateStr(new Date()),
+          })
+        );
+      } catch (error) {
+        if (loadId !== monthLoadRef.current) return;
+        setSandwichError(
+          `Sandwich policy details are unavailable: ${error?.message || "Unable to load policy context"}`
+        );
+      }
     } catch (err) {
+      if (loadId !== monthLoadRef.current) return;
       setHolidayMap({});
       setPersonalData({});
+      setSandwichByDate(new Map());
       setHasLoadedMonth(false);
       setLoadError(err?.message || "Unable to load attendance data");
     } finally {
-      setIsLoading(false);
+      if (loadId === monthLoadRef.current) setIsLoading(false);
     }
-  }, [currentDate, fetchHolidays, fetchPersonalMonth, token]);
+  }, [apiFetch, currentDate, fetchHolidays, fetchPersonalMonth, token]);
 
   useEffect(() => {
     loadMonth();
@@ -392,7 +457,7 @@ export default function EmployeeAttendance({ embedded = false }) {
   const year = safeCurrentDate.getFullYear();
   const month = safeCurrentDate.getMonth();
   const mm = String(month + 1).padStart(2, "0");
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = toDateStr(new Date());
   const safeHolidayMap = useMemo(
     () => (isObjectMap(holidayMap) ? holidayMap : {}),
     [holidayMap]
@@ -525,24 +590,12 @@ export default function EmployeeAttendance({ embedded = false }) {
       const rec = safePersonalData[dateStr];
       if (!isSunday && !entry) {
         if (rec) {
-          const s = normalizeAttendanceStatusValue(rec.status);
-          const halfDaySlot = rec.half_day_slot || rec.halfDaySlot;
-          const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
-          // ============================================================
-          // HALF-DAY PRIORITY
-          // ============================================================
-          // If half_day_slot exists, show as half-day regardless of leave type
-          // ============================================================
-
-          if (s === "half_day" || isHalfDay) {
+          const s = getCalendarAttendanceStatus(rec);
+          if (s === "half_day") {
             dayClass += " p-halfday calendar-halfday";
-            const isPaid = rec.is_paid_leave === true || rec.isPaidLeave === true;
-            const isUnpaid = rec.is_paid_leave === false || rec.isPaidLeave === false;
-            const leaveLabel = isPaid ? "(Paid Leave)" : isUnpaid ? "(Unpaid Leave)" : "";
             miniHtml = (
               <div className="day-mini-stats">
-                <div className="mini-row">🌓 Half Day {leaveLabel}</div>
+                <div className="mini-row">🌓 Half Day</div>
               </div>
             );
           } else if (isPaidLeaveDay(rec)) {
@@ -587,6 +640,12 @@ export default function EmployeeAttendance({ embedded = false }) {
                 <div className="mini-row">❌ Absent</div>
               </div>
             );
+          } else if (s === "no_record") {
+            miniHtml = (
+              <div className="day-mini-stats">
+                <div className="mini-row">No Record</div>
+              </div>
+            );
           }
           if (isGraceLateLogin(rec) && !["absent", "half_day", "full_day"].includes(s) && !isPaidLeaveDay(rec) && !isUnpaidLeaveDay(rec)) {
             dayClass = dayClass.replace(" p-present", "");
@@ -606,7 +665,7 @@ export default function EmployeeAttendance({ embedded = false }) {
               <div className="tt-row">
                 <span>Status</span>
                 <span className="tv">
-                  {safeStatusText(s, rec.late_minutes, rec.half_day_slot, rec.is_paid_leave)}
+                  {safeStatusText(s, rec.late_minutes)}
                 </span>
               </div>
               {rec.check_in_time && (
@@ -662,6 +721,37 @@ export default function EmployeeAttendance({ embedded = false }) {
         }
       }
 
+      const policyEntries = sandwichByDate.get(dateStr) || [];
+      const hasAppliedPenalty = hasAppliedSandwichPenalty(policyEntries);
+      if (hasAppliedPenalty) {
+        dayClass += " sandwich-lop";
+      }
+      if (policyEntries.length) {
+        dayClass += " has-sandwich-policy";
+        miniHtml = (
+          <>
+            {miniHtml}
+            <div className="sandwich-indicator" aria-label="Sandwich policy applies">
+              ◇ Policy
+            </div>
+          </>
+        );
+        const tooltipContent = tooltip?.props?.children;
+        tooltip = (
+          <div className="tooltip-card">
+            {tooltipContent}
+            <div className="sandwich-tooltip">
+              <strong>Sandwich policy</strong>
+              {policyEntries.map((result, index) => (
+                <div key={`${result.anchorType}-${result.reason}-${index}`}>
+                {result.applied ? "Applied" : "Not applied"}: {result.reason}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       cells.push({
         key: dateStr,
         dayClass,
@@ -673,7 +763,7 @@ export default function EmployeeAttendance({ embedded = false }) {
     }
 
     return cells;
-  }, [year, month, mm, safeHolidayMap, safePersonalData, todayStr, isAttendanceActionLoading, safeMonthName]);
+  }, [year, month, mm, safeHolidayMap, safePersonalData, sandwichByDate, todayStr, isAttendanceActionLoading, safeMonthName]);
 
   const detailRows = useMemo(() => {
     const lastDay = getSafeLastDay(year, month);
@@ -707,9 +797,10 @@ export default function EmployeeAttendance({ embedded = false }) {
         if (rec) {
           checkIn = safeFormatTime(rec.check_in_time);
           checkOut = safeFormatTime(rec.check_out_time);
-          lateMin = Number(rec.late_minutes) || 0;
-          statusLabel = safeStatusText(rec.status, lateMin, rec.half_day_slot, rec.is_paid_leave);
-          statusClass = getStatusBadgeClass(rec.status, lateMin, rec.half_day_slot);
+          lateMin = Number.isNaN(Number(rec.late_minutes)) ? 0 : Number(rec.late_minutes);
+          const attendanceStatus = getCalendarAttendanceStatus(rec);
+          statusLabel = safeStatusText(attendanceStatus, lateMin);
+          statusClass = getStatusBadgeClass(attendanceStatus, lateMin);
         } else if (dateStr === todayStr && isAttendanceActionLoading) {
           statusLabel = "Updating";
           statusClass = "badge-no-record";
@@ -935,6 +1026,11 @@ export default function EmployeeAttendance({ embedded = false }) {
           ))}
         </div>
 
+        {sandwichError ? (
+          <div className="sandwich-policy-error" role="status">
+            {sandwichError}
+          </div>
+        ) : null}
         <div className="calendar-grid" id="calGrid">
           {safeWeekDays.map((d) => (
             <div key={d} className="cal-weekday">
@@ -1116,5 +1212,3 @@ export default function EmployeeAttendance({ embedded = false }) {
     </div>
   );
 }
-
-

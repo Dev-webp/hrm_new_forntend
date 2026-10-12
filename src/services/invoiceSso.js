@@ -19,7 +19,7 @@ const API_BASE_URL =
 
 const INVOICE_BACKEND_URL =
   import.meta.env.VITE_INVOICE_API_URL ||
-  "https://invoice.vjcoverseas.com/api";
+  "http://localhost:5000";
 
 /**
  * Runs the two-step SSO exchange and writes vjc_invoice_auth / vjc_invoice_user.

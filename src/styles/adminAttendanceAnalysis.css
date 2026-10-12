@@ -521,6 +521,23 @@
   line-height: 1;
 }
 
+.admin-analysis-page .sandwich-indicator {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  color: #7c3aed;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-analysis-page .cal-tooltip-custom .sandwich-policy-detail {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(124, 58, 237, 0.3);
+  color: #6d28d9;
+}
+
 .admin-analysis-page .cal-present {
   background: var(--calendar-present-bg, #C8F2D6);
   border-color: var(--calendar-present-border, #16A34A);

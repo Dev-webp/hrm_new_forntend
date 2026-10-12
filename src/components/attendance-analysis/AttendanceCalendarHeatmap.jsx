@@ -10,6 +10,8 @@ import {
   isUnpaidLeaveRecord,
   normalizeAttendanceAnalysisRecord,
 } from "../../utils/attendanceAnalysisHelpers";
+import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
+import { hasAppliedSandwichPenalty } from "../../utils/sandwichCalendar";
 import { formatProductionHours } from "../../utils/timeFormat";
 
 /** O(1) lookup map: "YYYY-MM-DD" → record */
@@ -24,39 +26,44 @@ function buildRecordMap(records) {
 }
 
 /** Pure day cell — no state, no hooks */
-function CalendarDay({ dateStr, dayNum, record }) {
+function CalendarDay({ dateStr, dayNum, record, sandwichResults = [] }) {
   const safeRecord = normalizeAttendanceAnalysisRecord(record, dateStr);
   const style = getAttendanceStyle(safeRecord);
+  const hasSandwichPolicy = sandwichResults.length > 0;
+  const hasAppliedPenalty = hasAppliedSandwichPenalty(sandwichResults);
+  const className = [
+    "cal-day",
+    style.className,
+    hasSandwichPolicy ? "has-sandwich-policy" : "",
+    hasAppliedPenalty ? "sandwich-lop" : "",
+  ].filter(Boolean).join(" ");
 
-  const halfDaySlot = safeRecord.half_day_slot || safeRecord.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-
+  const resolvedStatus = getCalendarAttendanceStatus(safeRecord);
   const statusLabel =
-    safeRecord.status === "half_day" || isHalfDay
-      ? (() => {
-          const isPaid = safeRecord.is_paid_leave === true || safeRecord.isPaidLeave === true;
-          const isUnpaid = safeRecord.is_paid_leave === false || safeRecord.isPaidLeave === false;
-          if (isPaid) return "Half Day (Paid Leave)";
-          if (isUnpaid) return "Half Day (Unpaid Leave)";
-          return "Half Day";
-        })()
-      : isPaidLeaveRecord(safeRecord)
+    resolvedStatus === "half_day"
+      ? "Half Day"
+      : resolvedStatus === "paid_leave" || isPaidLeaveRecord(safeRecord)
       ? "Paid Leave"
-      : isUnpaidLeaveRecord(safeRecord)
+      : resolvedStatus === "unpaid_leave" || isUnpaidLeaveRecord(safeRecord)
       ? "Unpaid Leave"
-      : safeRecord.status === "full_day"
+      : resolvedStatus === "full_day"
       ? "Full Day"
-      : safeRecord.status === "no_record"
+      : resolvedStatus === "no_record"
         ? "No Record"
-        : safeRecord.status === "sunday"
+        : resolvedStatus === "sunday"
           ? "Sunday"
-          : safeRecord.status === "holiday"
+          : resolvedStatus === "holiday"
             ? "Holiday"
             : "Absent";
 
   return (
-    <div className={`cal-day ${style.className}`}>
+    <div className={className}>
       <div className={`day-num ${style.numClass}`}>{dayNum}</div>
+      {hasSandwichPolicy ? (
+        <span className="sandwich-indicator" aria-label="Sandwich policy result">
+          ◇
+        </span>
+      ) : null}
       <div className="cal-tooltip-custom">
         {safeRecord ? (
           <>
@@ -100,12 +107,34 @@ function CalendarDay({ dateStr, dayNum, record }) {
             {safeRecord.breakMins.b3}m)
             <br />
             Total Break: <strong>{safeRecord.breaks}m</strong>
+            {hasSandwichPolicy ? (
+              <>
+                <hr />
+                <div className="sandwich-policy-detail"><strong>Sandwich policy</strong></div>
+                {sandwichResults.map((result, index) => (
+                  <div key={`${result.anchorType}-${result.reason}-${index}`}>
+                    {result.applied ? "Applied" : "Not applied"}: {result.reason}
+                  </div>
+                ))}
+              </>
+            ) : null}
           </>
         ) : (
           <>
             {formatDateReadable(dateStr)}
             <br />
             No record
+            {hasSandwichPolicy ? (
+              <>
+                <hr />
+                <div className="sandwich-policy-detail"><strong>Sandwich policy</strong></div>
+                {sandwichResults.map((result, index) => (
+                  <div key={`${result.anchorType}-${result.reason}-${index}`}>
+                    {result.applied ? "Applied" : "Not applied"}: {result.reason}
+                  </div>
+                ))}
+              </>
+            ) : null}
           </>
         )}
       </div>
@@ -113,7 +142,7 @@ function CalendarDay({ dateStr, dayNum, record }) {
   );
 }
 
-function AttendanceCalendarHeatmap({ monthStr, records }) {
+function AttendanceCalendarHeatmap({ monthStr, records, sandwichByDate = new Map() }) {
   const [y, m] = monthStr.split("-").map(Number);
 
   const recordMap = useMemo(() => buildRecordMap(records), [records]);
@@ -139,7 +168,13 @@ function AttendanceCalendarHeatmap({ monthStr, records }) {
       const dateStr = formatDateYMD(new Date(y, m - 1, d));
       const rec = recordMap[dateStr] ?? null;
       result.push(
-        <CalendarDay key={dateStr} dateStr={dateStr} dayNum={d} record={rec} />
+        <CalendarDay
+          key={dateStr}
+          dateStr={dateStr}
+          dayNum={d}
+          record={rec}
+          sandwichResults={sandwichByDate.get(dateStr) || []}
+        />
       );
     }
 
@@ -152,7 +187,7 @@ function AttendanceCalendarHeatmap({ monthStr, records }) {
     }
 
     return result;
-  }, [y, m, recordMap]);
+  }, [y, m, recordMap, sandwichByDate]);
 
   return <div className="cal-grid">{cells}</div>;
 }

@@ -216,6 +216,26 @@ export function isPaidLeaveRecord(rec = {}) {
     safe.paidDays ??
     0
   );
+  const hasAttendance = Boolean(
+    safe.check_in_time ||
+    safe.check_out_time ||
+    safe.office_in ||
+    safe.office_out ||
+    safe.checkIn ||
+    safe.checkOut
+  );
+  const halfDayMetadata =
+    normalize(safe.leave_duration_type || safe.leaveDurationType) === "half_day" ||
+    Boolean(safe.half_day_session || safe.halfDaySession) ||
+    Boolean((safe.half_day_slot || safe.halfDaySlot) && (safe.half_day_slot || safe.halfDaySlot) !== "INVALID");
+
+  if (hasAttendance) {
+    return status === "paid_leave" || status === "paid";
+  }
+
+  if (halfDayMetadata) {
+    return false;
+  }
 
   // If a leave status exists and is explicitly not approved,
   // do not treat it as paid leave.
@@ -276,6 +296,26 @@ export function isUnpaidLeaveRecord(rec = {}) {
     safe.unpaidDays ??
     0
   );
+  const hasAttendance = Boolean(
+    safe.check_in_time ||
+    safe.check_out_time ||
+    safe.office_in ||
+    safe.office_out ||
+    safe.checkIn ||
+    safe.checkOut
+  );
+  const halfDayMetadata =
+    normalize(safe.leave_duration_type || safe.leaveDurationType) === "half_day" ||
+    Boolean(safe.half_day_session || safe.halfDaySession) ||
+    Boolean((safe.half_day_slot || safe.halfDaySlot) && (safe.half_day_slot || safe.halfDaySlot) !== "INVALID");
+
+  if (hasAttendance) {
+    return status === "unpaid_leave" || status === "unpaid";
+  }
+
+  if (halfDayMetadata) {
+    return false;
+  }
 
   if (
     leaveStatus &&
@@ -383,15 +423,13 @@ export function normalizeAttendanceAnalysisRecords(records = []) {
 
 export function getAttendanceStyle(rec) {
   const safe = normalizeAttendanceAnalysisRecord(rec);
+  const status = getCalendarAttendanceStatus(safe);
 
   // ============================================================
   // HALF DAY — Check first (overrides paid/unpaid leave classification)
   // ============================================================
   
-  const halfDaySlot = safe.half_day_slot || safe.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-  
-  if (safe.status === "half_day" || isHalfDay) {
+  if (status === "half_day") {
     return {
       className: "cal-halfday",
       numClass: "yellow-num",
@@ -403,7 +441,7 @@ export function getAttendanceStyle(rec) {
   // ============================================================
 
   if (
-    safe.status === "paid_leave" ||
+    status === "paid_leave" ||
     isPaidLeaveRecord(safe)
   ) {
     return {
@@ -417,7 +455,7 @@ export function getAttendanceStyle(rec) {
   // ============================================================
 
   if (
-    safe.status === "unpaid_leave" ||
+    status === "unpaid_leave" ||
     isUnpaidLeaveRecord(safe)
   ) {
     return {
@@ -430,7 +468,7 @@ export function getAttendanceStyle(rec) {
   // SUNDAY — BLUE
   // ============================================================
 
-  if (safe.status === "sunday") {
+  if (status === "sunday") {
     return {
       className: "cal-sunday",
       numClass: "blue-num",
@@ -441,7 +479,7 @@ export function getAttendanceStyle(rec) {
   // HOLIDAY — BLUE
   // ============================================================
 
-  if (safe.status === "holiday") {
+  if (status === "holiday") {
     return {
       className: "cal-holiday",
       numClass: "blue-num",
@@ -453,9 +491,9 @@ export function getAttendanceStyle(rec) {
   // ============================================================
 
   if (
-    safe.status === "full_day" ||
-    safe.status === "present" ||
-    safe.status === "working"
+    status === "full_day" ||
+    status === "present" ||
+    status === "working"
   ) {
     return {
       className: "cal-present",
@@ -478,7 +516,7 @@ export function getAttendanceStyle(rec) {
   // ABSENT
   // ============================================================
 
-  if (safe.status === "absent") {
+  if (status === "absent") {
     return {
       className: "cal-absent",
       numClass: "red-num",
@@ -489,7 +527,7 @@ export function getAttendanceStyle(rec) {
   // NO RECORD
   // ============================================================
 
-  if (safe.status === "no_record") {
+  if (status === "no_record") {
     return {
       className: "cal-no-record",
       numClass: "default-num",
@@ -568,22 +606,16 @@ export function computeOverviewStats(records) {
 
 export function getDailyLogStatus(rec) {
   const safe = normalizeAttendanceAnalysisRecord(rec);
-  const halfDaySlot = safe.half_day_slot || safe.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-  
-  if (safe.status === "half_day" || isHalfDay) {
-    const isPaid = safe.is_paid_leave === true || safe.isPaidLeave === true;
-    const isUnpaid = safe.is_paid_leave === false || safe.isPaidLeave === false;
-    if (isPaid) return { label: "Half Day (Paid Leave)", badge: "b-halfday" };
-    if (isUnpaid) return { label: "Half Day (Unpaid Leave)", badge: "b-halfday" };
+  const status = getCalendarAttendanceStatus(safe);
+  if (status === "half_day") {
     return { label: "Half Day", badge: "b-halfday" };
   }
   if (isPaidLeaveRecord(safe)) return { label: "Paid Leave", badge: "b-paid-leave" };
   if (isUnpaidLeaveRecord(safe)) return { label: "Unpaid Leave", badge: "b-unpaid-leave" };
-  if (safe.status === "absent") return { label: "Absent", badge: "b-absent" };
-  if (safe.status === "sunday") return { label: "Sunday", badge: "b-absent" };
-  if (safe.status === "holiday") return { label: "Holiday", badge: "b-absent" };
-  if (safe.status === "no_record") return { label: "No Record", badge: "b-neutral" };
+  if (status === "absent") return { label: "Absent", badge: "b-absent" };
+  if (status === "sunday") return { label: "Sunday", badge: "b-absent" };
+  if (status === "holiday") return { label: "Holiday", badge: "b-absent" };
+  if (status === "no_record") return { label: "No Record", badge: "b-neutral" };
   if (isGraceLateAttendanceRecord(safe)) return { label: "Late", badge: "b-late" };
   return { label: "Present", badge: "b-present" };
 }

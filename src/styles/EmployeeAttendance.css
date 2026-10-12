@@ -190,6 +190,9 @@
         .day-num { font-size: 1rem; font-weight: 700; color: var(--gold); margin-bottom: 5px; }
         .day-badge { font-size: 0.63rem; padding: 2px 7px; border-radius: 10px; display: inline-block; margin-bottom: 4px; white-space: nowrap; }
         .day-mini-stats { margin-top: 4px; }
+        .sandwich-indicator { display: inline-block; margin-top: 3px; color: #8b5cf6; font-size: 0.68rem; font-weight: 700; }
+        .sandwich-tooltip { margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(139, 92, 246, 0.35); color: #6d28d9; }
+        .sandwich-policy-error { margin: 8px 0; color: #8a5a00; font-size: 0.85rem; }
         .mini-row { font-size: 0.67rem; display: flex; justify-content: space-between; padding: 1px 0; color: #64748B; }
         .tooltip-card { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: #FFFFFF; border: 1px solid var(--gold); border-radius: 18px; padding: 12px 15px; min-width: 200px; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.15s; color: var(--text-main); font-size: 0.73rem; line-height: 1.65; box-shadow: 0 12px 32px rgba(26, 43, 75,0.7); }
         .tooltip-card::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--gold); }

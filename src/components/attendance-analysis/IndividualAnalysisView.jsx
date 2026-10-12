@@ -52,6 +52,7 @@ function WeekFilter({ id, value, onChange }) {
 function IndividualAnalysisView({
   employee,
   records,
+  sandwichByDate,
   leaves,
   monthStr,
   weeksCache,
@@ -272,7 +273,11 @@ function IndividualAnalysisView({
             Attendance Heatmap — hover for details
           </div>
           <div className="cal-heatmap-wrap">
-            <AttendanceCalendarHeatmap monthStr={monthStr} records={safeRecords} />
+            <AttendanceCalendarHeatmap
+              monthStr={monthStr}
+              records={safeRecords}
+              sandwichByDate={sandwichByDate}
+            />
             {loading ? (
               <div className="cal-loading-overlay" aria-busy="true">
                 <div className="loading-spinner" />

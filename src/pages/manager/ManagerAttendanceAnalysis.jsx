@@ -14,7 +14,10 @@ import {
   getLeaveUnpaidDays,
   normalizeAttendanceAnalysisRecords,
 } from "../../utils/attendanceAnalysisHelpers";
-import { CALENDAR_STATUS_COLORS } from "../../utils/calendarStatusColors";
+import {
+  CALENDAR_STATUS_COLORS,
+  getCalendarAttendanceStatus,
+} from "../../utils/calendarStatusColors";
 import { isGraceLateAttendanceRecord } from "../../utils/dashboardHelpers";
 import {
   formatProductionHours,
@@ -62,68 +65,49 @@ function getWeekNumber(dateStr) {
 
 // ─── Status helpers ──────────────────────────────────────────────────────────
 function isPaidLeaveRecord(r = {}) {
-  const safe = r || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === true ||
-    safe.isPaidLeave === true ||
-    status === "paid_leave" ||
-    leaveType === "paid" ||
-    Number(safe.paid_days || safe.paidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(r) === "paid_leave";
 }
 
 function isUnpaidLeaveRecord(r = {}) {
-  const safe = r || {};
-  const status = String(safe.status || safe.day_status || "").toLowerCase();
-  const leaveType = String(safe.leave_type || safe.leaveType || safe.leave_category || safe.leaveCategory || "").toLowerCase();
-  return (
-    safe.is_paid_leave === false ||
-    safe.isPaidLeave === false ||
-    status === "unpaid_leave" ||
-    leaveType === "unpaid" ||
-    Number(safe.unpaid_days || safe.unpaidDays || 0) > 0
-  );
+  return getCalendarAttendanceStatus(r) === "unpaid_leave";
 }
 
 function statusLabel(r) {
   const safe = r || { status: "absent", lateMinutes: 0 };
-  const halfDaySlot = safe.half_day_slot || safe.halfDaySlot;
-  const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== 'INVALID');
-  
-  if (safe.status === "half_day" || isHalfDay) {
-    const isPaid = safe.is_paid_leave === true || safe.isPaidLeave === true;
-    const isUnpaid = safe.is_paid_leave === false || safe.isPaidLeave === false;
-    if (isPaid) return "Half Day (Paid Leave)";
-    if (isUnpaid) return "Half Day (Unpaid Leave)";
+  const status = getCalendarAttendanceStatus(safe);
+  if (status === "half_day") {
     return "Half Day";
   }
   if (isPaidLeaveRecord(safe)) return "Paid Leave";
   if (isUnpaidLeaveRecord(safe)) return "Unpaid Leave";
-  if (safe.status === "absent") return "Absent";
-  if (safe.status === "sunday") return "Sunday";
-  if (safe.status === "holiday") return "Holiday";
+  if (status === "absent") return "Absent";
+  if (status === "sunday") return "Sunday";
+  if (status === "holiday") return "Holiday";
+  if (status === "no_record") return "No Record";
   if (isGraceLateAttendanceRecord(safe)) return "Late";
   return "Present";
 }
 function statusBadgeClass(r) {
   const safe = r || { status: "absent", lateMinutes: 0 };
+  const status = getCalendarAttendanceStatus(safe);
   if (isPaidLeaveRecord(safe)) return "b-paid-leave";
   if (isUnpaidLeaveRecord(safe)) return "b-unpaid-leave";
-  if (safe.status === "absent") return "b-absent";
-  if (safe.status === "half_day") return "b-halfday";
+  if (status === "absent") return "b-absent";
+  if (status === "half_day") return "b-halfday";
+  if (status === "no_record") return "b-neutral";
   if (isGraceLateAttendanceRecord(safe)) return "b-late";
   return "b-present";
 }
 function heatmapColor(r) {
   if (!r) return CALENDAR_STATUS_COLORS.no_record.background;
+  const status = getCalendarAttendanceStatus(r);
 
   if (isPaidLeaveRecord(r)) return CALENDAR_STATUS_COLORS.paid_leave.background;
   if (isUnpaidLeaveRecord(r)) return CALENDAR_STATUS_COLORS.unpaid_leave.background;
-  if (r.status === "sunday" || r.status === "holiday") return CALENDAR_STATUS_COLORS.holiday.background;
-  if (r.status === "absent") return CALENDAR_STATUS_COLORS.absent.background;
-  if (r.status === "half_day") return CALENDAR_STATUS_COLORS.half_day.background;
+  if (status === "sunday" || status === "holiday") return CALENDAR_STATUS_COLORS.holiday.background;
+  if (status === "absent") return CALENDAR_STATUS_COLORS.absent.background;
+  if (status === "half_day") return CALENDAR_STATUS_COLORS.half_day.background;
+  if (status === "no_record") return CALENDAR_STATUS_COLORS.no_record.background;
   if (isGraceLateAttendanceRecord(r)) return CALENDAR_STATUS_COLORS.late.background;
 
   return CALENDAR_STATUS_COLORS.present.background;
@@ -924,13 +908,12 @@ return Array(offset)
   let numClass = "default-num";
 
 const isSunday = new Date(dateStr).getDay() === 0;
+const status = getCalendarAttendanceStatus(r);
 
-const halfDaySlot = r.half_day_slot || r.halfDaySlot;
-const isHalfDay = Boolean(halfDaySlot && halfDaySlot !== "INVALID");
-if (isSunday || r.status === "sunday") {
+if (isSunday || status === "sunday") {
   className += " cal-sunday";
   numClass = "blue-num";
-} else if (r.status === "holiday") {
+} else if (status === "holiday") {
   className += " cal-holiday";
 } else if (isPaidLeaveRecord(r)) {
   className += " cal-paid-leave paid-leave";
@@ -938,12 +921,14 @@ if (isSunday || r.status === "sunday") {
 } else if (isUnpaidLeaveRecord(r)) {
   className += " cal-unpaid-leave unpaid-leave";
   numClass = "white-num";
-} else if (r.status === "absent") {
+} else if (status === "absent") {
   className += " cal-absent";
   numClass = "red-num";
-} else if (r.status === "half_day") {
+} else if (status === "half_day") {
   className += " cal-halfday";
   numClass = "yellow-num";
+} else if (status === "no_record") {
+  className += " cal-no-record";
 } else if (isGraceLateAttendanceRecord(r)) {
   className += " cal-late";
   numClass = "orange-num";
