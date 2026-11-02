@@ -1,7 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
+
+// Custom debounce function to avoid lodash dependency
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 import { useSearchParams } from "react-router-dom";
 import { Toast } from "../../components/Cards";
-import EmployeeFilters from "../../components/EmployeeFilters";
 import EmployeeModal from "../../components/EmployeeModal";
 import { useToast } from "../../hooks/useToast";
 import api from "../../services/api";
@@ -10,8 +22,10 @@ import { updateEmployeeStatus } from "../../services/employeeApi";
 import {
   BRANCH_OPTIONS,
   EMPTY_EMPLOYEE_FORM,
+  ROLE_OPTIONS,
   buildEmployeePayload,
   employeeToForm,
+  formatDate,
   mapApiEmployee,
   validateEmployeeForm,
 } from "../../utils/employeeHelpers";
@@ -51,7 +65,8 @@ function AdminEmployees() {
   const [currentDept, setCurrentDept] = useState("all");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active"); // Default to showing only active employees
+  const [viewMode, setViewMode] = useState("active"); // Toggle between active/inactive views
 
   // --- Branch dropdown ---
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
@@ -135,20 +150,31 @@ function AdminEmployees() {
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const roleMatch = roleFilter === "all" || employee.role === roleFilter;
-      const statusMatch = statusFilter === "all" || employee.status === statusFilter;
+      const statusMatch = viewMode === "all" || employee.status === viewMode;
       return roleMatch && statusMatch;
     });
-  }, [employees, roleFilter, statusFilter]);
+  }, [employees, roleFilter, viewMode]);
+
+  // Debounce search input for performance
+  const debouncedSearch = useCallback(
+    debounce((value) => setSearch(value), 300),
+    []
+  );
 
   const stats = useMemo(() => {
-    const total = filteredEmployees.length;
-    const activeCount = filteredEmployees.filter((e) => e.status === "active").length;
+    const total = employees.length;
+    const activeCount = employees.filter((e) => e.status === "active").length;
+    const inactiveCount = total - activeCount;
+    const activePercentage = total > 0 ? Math.round((activeCount / total) * 100) : 0;
+    const inactivePercentage = total > 0 ? Math.round((inactiveCount / total) * 100) : 0;
     return {
       total,
       activeCount,
-      inactiveCount: total - activeCount,
+      inactiveCount,
+      activePercentage,
+      inactivePercentage,
     };
-  }, [filteredEmployees]);
+  }, [employees]);
 
   const selectedEmployee = useMemo(
     () => employees.find((employee) => employee.id === selectedEmployeeId),
@@ -163,7 +189,8 @@ function AdminEmployees() {
   const openAddModal = () => {
     setFormMode("add");
     setEditingEmployeeId(null);
-    setForm({ ...EMPTY_EMPLOYEE_FORM, department: activeDepartmentOptions[0] || "" });
+    const emptyForm = { ...EMPTY_EMPLOYEE_FORM, department: activeDepartmentOptions[0] || "" };
+    setForm(emptyForm);
     setFormError("");
     setFormOpen(true);
   };
@@ -173,9 +200,11 @@ function AdminEmployees() {
     if (!employee) return;
 
     setDetailsOpen(false);
+    setSelectedEmployeeId(null);
     setFormMode("edit");
     setEditingEmployeeId(employeeId);
-    setForm(employeeToForm(employee));
+    const employeeFormData = employeeToForm(employee);
+    setForm(employeeFormData);
     setFormError("");
     setFormOpen(true);
   };
@@ -252,17 +281,34 @@ function AdminEmployees() {
     const employee = employees.find((item) => item.id === employeeId);
     if (!employee) return;
 
-    const newValue = employee.invoice_access !== true;
+    const newValue = employee.invoiceAccess !== true;
     if (!window.confirm(`${newValue ? "Enable" : "Disable"} CRM / Invoice access for ${employee.name}?`)) return;
 
     try {
       await api.patch(`${API_PATH}/${employeeId}/invoice-access`, { invoice_access: newValue });
       setEmployees((prev) =>
-        prev.map((item) => (item.id === employeeId ? { ...item, invoice_access: newValue } : item))
+        prev.map((item) => (item.id === employeeId ? { ...item, invoiceAccess: newValue } : item))
       );
       showToast(`${employee.name} CRM / Invoice access ${newValue ? "enabled" : "disabled"}`);
     } catch (error) {
       showToast(`CRM access update failed: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleOpsAccess = async (employeeId) => {
+    const employee = employees.find((item) => item.id === employeeId);
+    if (!employee) return;
+
+    const newValue = !employee.opsAccess;
+
+    try {
+      await api.patch(`${API_PATH}/${employeeId}/ops-access`, { ops_access: newValue });
+      setEmployees((prev) =>
+        prev.map((item) => (item.id === employeeId ? { ...item, opsAccess: newValue } : item))
+      );
+      showToast(`${employee.name} OPS access ${newValue ? "enabled" : "disabled"}`);
+    } catch (error) {
+      showToast(`OPS access update failed: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -275,414 +321,917 @@ function AdminEmployees() {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearch("");
+    setRoleFilter("all");
+    setCurrentDept("all");
+    setViewMode("active");
+  };
+
   // --- Render helpers ---
 
   const renderStats = () => (
-    <div className="ax-stats">
-      <div className="ax-stat-card">
-        <div className="ax-stat-icon ax-navy">
-          <i className="fas fa-users" />
+    <div className="em-stats-container">
+      <div className="em-stat-card em-stat-total">
+        <div className="em-stat-icon-wrapper">
+          <div className="em-stat-icon">
+            <i className="fas fa-users" />
+          </div>
         </div>
-        <div>
-          <div className="ax-stat-number">{stats.total}</div>
-          <div className="ax-stat-label">Total employees</div>
-        </div>
-      </div>
-
-      <div className="ax-stat-card">
-        <div className="ax-stat-icon ax-teal">
-          <i className="fas fa-circle-check" />
-        </div>
-        <div>
-          <div className="ax-stat-number">{stats.activeCount}</div>
-          <div className="ax-stat-label">Active</div>
+        <div className="em-stat-content">
+          <div className="em-stat-number">{stats.total}</div>
+          <div className="em-stat-label">Total Employees</div>
         </div>
       </div>
 
-      <div className="ax-stat-card">
-        <div className="ax-stat-icon ax-orange">
-          <i className="fas fa-circle-pause" />
+      <div className="em-stat-card em-stat-active">
+        <div className="em-stat-icon-wrapper">
+          <div className="em-stat-icon">
+            <i className="fas fa-check-circle" />
+          </div>
         </div>
-        <div>
-          <div className="ax-stat-number">{stats.inactiveCount}</div>
-          <div className="ax-stat-label">Inactive</div>
+        <div className="em-stat-content">
+          <div className="em-stat-number">{stats.activeCount}</div>
+          <div className="em-stat-label">Active Employees</div>
+          <div className="em-stat-percentage">{stats.activePercentage}%</div>
+        </div>
+      </div>
+
+      <div className="em-stat-card em-stat-inactive">
+        <div className="em-stat-icon-wrapper">
+          <div className="em-stat-icon">
+            <i className="fas fa-pause-circle" />
+          </div>
+        </div>
+        <div className="em-stat-content">
+          <div className="em-stat-number">{stats.inactiveCount}</div>
+          <div className="em-stat-label">Inactive Employees</div>
+          <div className="em-stat-percentage">{stats.inactivePercentage}%</div>
         </div>
       </div>
     </div>
   );
 
-  const renderEmployeeCard = (employee) => {
+  const EmployeeCard = memo(({ employee, onDetails, onInvoiceAccess, onOpsAccess }) => {
     const roleMeta = getRoleMeta(employee.role);
     const isActive = (employee.status || "active") === "active";
 
+    // Determine role badge class
+    const getRoleBadgeClass = (role) => {
+      const roleLower = role?.toLowerCase() || '';
+      if (roleLower.includes('manager') && !roleLower.includes('operational')) return 'manager';
+      if (roleLower.includes('operational')) return 'ops-manager';
+      if (roleLower.includes('admin') || roleLower.includes('super')) return 'default';
+      return 'employee';
+    };
+
+    const roleBadgeClass = getRoleBadgeClass(employee.role);
+
     return (
-      <div key={employee.id} className="ax-card">
-        <div className="ax-card-top">
-          <div className="ax-avatar" style={{ background: roleMeta.color }}>
+      <div className="em-card">
+        <div className="em-card-header">
+          <div className="em-avatar" style={{ background: roleMeta.color }}>
             {employee.initials || employee.name?.slice(0, 2)?.toUpperCase() || "E"}
           </div>
-          <div className="ax-card-person">
-            <h4>{employee.name}</h4>
-            <div className="ax-role-row">
-              <span className="ax-role-badge" style={{ color: roleMeta.color, borderColor: roleMeta.color }}>
+          <div className="em-card-info">
+            <h3 className="em-card-name">{employee.name}</h3>
+            <div className="em-card-meta">
+              <span className={`em-role-badge ${roleBadgeClass}`}>
                 {roleMeta.label}
               </span>
-              <span className={`ax-status-dot${isActive ? " active" : ""}`}>
-                <i className="fas fa-circle" /> {isActive ? "Active" : "Inactive"}
+              <span className={`em-status-indicator${isActive ? " active" : " inactive"}`}>
+                <span className="em-status-dot" />
+                {isActive ? "Active" : "Inactive"}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="ax-card-details">
-          <div><i className="fas fa-building" /> {employee.department || "—"}</div>
-          <div><i className="fas fa-id-card" /> {employee.empId || "—"}</div>
-          <div><i className="fas fa-envelope" /> {employee.email || "—"}</div>
-          <div><i className="fas fa-store" /> {employee.branch || "—"}</div>
+        <div className="em-card-details">
+          <div className="em-detail-row">
+            <i className="fas fa-building em-detail-icon" />
+            <span className="em-detail-label">Department</span>
+            <span className="em-detail-value">{employee.department || "—"}</span>
+          </div>
+          <div className="em-detail-row">
+            <i className="fas fa-id-card em-detail-icon" />
+            <span className="em-detail-label">Employee ID</span>
+            <span className="em-detail-value">{employee.empId || "—"}</span>
+          </div>
+          <div className="em-detail-row">
+            <i className="fas fa-envelope em-detail-icon" />
+            <span className="em-detail-label">Email</span>
+            <span className="em-detail-value">{employee.email || "—"}</span>
+          </div>
+          <div className="em-detail-row">
+            <i className="fas fa-map-marker-alt em-detail-icon" />
+            <span className="em-detail-label">Branch</span>
+            <span className="em-detail-value">{employee.branch || "—"}</span>
+          </div>
+          <div className="em-detail-row">
+            <i className="fas fa-calendar em-detail-icon" />
+            <span className="em-detail-label">Joining Date</span>
+            <span className="em-detail-value">{employee.dateOfBirth ? formatDate(employee.dateOfBirth) : "—"}</span>
+          </div>
         </div>
 
-        <div className="ax-card-actions">
+        <div className="em-card-actions">
           <button
             type="button"
-            className="ax-btn-outline"
-            onClick={() => {
-              setSelectedEmployeeId(employee.id);
-              setDetailsOpen(true);
-            }}
+            className="em-action-btn em-btn-details"
+            onClick={onDetails}
           >
             <i className="fas fa-file-alt" /> Details
           </button>
 
           <button
             type="button"
-            className={`ax-btn-crm${employee.invoice_access ? " enabled" : ""}`}
-            onClick={() => handleInvoiceAccess(employee.id)}
+            className={`em-action-btn em-btn-crm${employee.invoiceAccess ? " enabled" : ""}`}
+            onClick={() => onInvoiceAccess(employee.id)}
           >
-            <i className={employee.invoice_access ? "fas fa-check-circle" : "fas fa-ban"} />
-            {employee.invoice_access ? "CRM Enabled" : "Enable CRM"}
+            <i className={employee.invoiceAccess ? "fas fa-check-circle" : "fas fa-link"} />
+            {employee.invoiceAccess ? "CRM Enabled" : "Enable CRM"}
+          </button>
+
+          <button
+            type="button"
+            className={`em-action-btn em-btn-ops${employee.opsAccess ? " enabled" : ""}`}
+            onClick={() => onOpsAccess(employee.id)}
+          >
+            <i className={employee.opsAccess ? "fas fa-check-circle" : "fas fa-layer-group"} />
+            {employee.opsAccess ? "OPS Enabled" : "Enable OPS"}
           </button>
         </div>
       </div>
     );
-  };
+  });
+
+  EmployeeCard.displayName = 'EmployeeCard';
 
   return (
-    <div className="admin-employees-page admin-portal-page ax-page">
+    <div className="em-page">
       <style>{`
-        .ax-page {
+        .em-page {
+          --primary-blue: #1264E8;
+          --navy-dark: #102443;
           --navy: #143967;
-          --navy-dark: #0E2A4D;
-          --orange: #F6821F;
-          --teal: #14A79E;
-          --mist: #F3F6FB;
-          --line: #E2E7EF;
-          --muted: #64748B;
+          --secondary-text: #64748B;
+          --border-color: #DCE5F0;
+          --active-green: #079B68;
+          --crm-orange: #F97316;
+          --ops-purple: #8B5CF6;
+          --page-bg: #F4F7FB;
+          --card-bg: #FFFFFF;
+          --card-radius: 16px;
+          --btn-radius: 10px;
+        }
+
+        /* Page Background */
+        .em-page {
+          background: var(--page-bg);
+          min-height: 100vh;
+          padding: 20px;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+          box-sizing: border-box;
         }
 
         /* --- Header --- */
-        .ax-header {
+        .em-header {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          flex-wrap: wrap;
+          align-items: center;
+          margin-bottom: 20px;
+          padding: 20px 24px;
+          background: var(--card-bg);
+          border-radius: var(--card-radius);
+          border: 1px solid var(--border-color);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .em-header-left {
+          display: flex;
+          align-items: center;
           gap: 16px;
-          margin-bottom: 22px;
-        }
-        .ax-title h1 {
-          font-size: 26px;
-          font-weight: 700;
-          color: var(--navy-dark);
-          margin: 0 0 4px;
-        }
-        .ax-title p {
-          font-size: 14px;
-          color: var(--muted);
-          margin: 0;
-        }
-        .ax-header-actions {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .ax-add-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--orange);
-          color: #fff;
-          border: none;
-          border-radius: 10px;
-          padding: 11px 18px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.15s ease, transform 0.1s ease;
-        }
-        .ax-add-btn:hover {
-          background: #DD6E12;
-        }
-        .ax-add-btn:active {
-          transform: scale(0.98);
         }
 
-        .ax-branch {
-          position: relative;
-        }
-        .ax-branch-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: #fff;
-          border: 1.5px solid var(--line);
-          border-radius: 10px;
-          padding: 10px 14px;
-          font-size: 14px;
-          color: var(--navy-dark);
-          cursor: pointer;
-          transition: border-color 0.15s ease;
-        }
-        .ax-branch-btn:hover {
-          border-color: var(--navy);
-        }
-        .ax-branch-menu {
-          position: absolute;
-          right: 0;
-          top: calc(100% + 6px);
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 10px;
-          box-shadow: 0 8px 24px rgba(14, 42, 77, 0.14);
-          min-width: 180px;
-          padding: 6px;
-          z-index: 20;
-          display: none;
-        }
-        .ax-branch-menu.show {
-          display: block;
-        }
-        .ax-branch-item {
-          padding: 9px 12px;
-          border-radius: 7px;
-          font-size: 13.5px;
-          color: var(--navy-dark);
-          cursor: pointer;
-        }
-        .ax-branch-item:hover {
-          background: var(--orange);
-          color: #fff;
-        }
-
-        /* --- Stats --- */
-        .ax-stats {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 14px;
-          margin-bottom: 22px;
-        }
-        .ax-stat-card {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 14px;
-          padding: 16px 18px;
-        }
-        .ax-stat-icon {
-          width: 42px;
-          height: 42px;
-          border-radius: 11px;
+        .em-header-icon {
+          width: 48px;
+          height: 48px;
+          background: #E3F2FD;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 16px;
-          color: #fff;
+          color: var(--primary-blue);
+          font-size: 20px;
           flex-shrink: 0;
         }
-        .ax-stat-icon.ax-navy { background: var(--navy); }
-        .ax-stat-icon.ax-teal { background: var(--teal); }
-        .ax-stat-icon.ax-orange { background: var(--orange); }
-        .ax-stat-number {
-          font-size: 22px;
+
+        .em-header-title h1 {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--navy-dark);
+          margin: 0 0 4px 0;
+        }
+
+        .em-header-title p {
+          font-size: 13px;
+          color: var(--secondary-text);
+          margin: 0;
+        }
+
+        .em-header-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .em-add-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--primary-blue);
+          color: #fff;
+          border: none;
+          border-radius: var(--btn-radius);
+          padding: 10px 20px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .em-add-btn:hover {
+          background: #0E5BC7;
+          transform: translateY(-1px);
+        }
+
+        .em-branch-dropdown {
+          position: relative;
+        }
+
+        .em-branch-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #fff;
+          border: 1.5px solid var(--border-color);
+          border-radius: var(--btn-radius);
+          padding: 10px 16px;
+          font-size: 14px;
+          color: var(--navy-dark);
+          cursor: pointer;
+          transition: border-color 0.2s ease;
+        }
+
+        .em-branch-btn:hover {
+          border-color: var(--primary-blue);
+        }
+
+        .em-branch-menu {
+          position: absolute;
+          right: 0;
+          top: calc(100% + 8px);
+          background: #fff;
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(16, 36, 67, 0.12);
+          min-width: 180px;
+          padding: 8px;
+          z-index: 30;
+          display: none;
+        }
+
+        .em-branch-menu.show {
+          display: block;
+        }
+
+        .em-branch-item {
+          padding: 10px 14px;
+          border-radius: 8px;
+          font-size: 14px;
+          color: var(--navy-dark);
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .em-branch-item:hover {
+          background: #F4F7FB;
+        }
+
+        /* --- Summary Cards --- */
+        .em-stats-container {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 20px;
+          margin-bottom: 20px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .em-stat-card {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: var(--card-radius);
+          padding: 20px 24px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .em-stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(16, 36, 67, 0.1);
+        }
+
+        .em-stat-icon-wrapper {
+          flex-shrink: 0;
+        }
+
+        .em-stat-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          color: #fff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .em-stat-total .em-stat-icon {
+          background: linear-gradient(135deg, var(--primary-blue) 0%, #0E5BC7 100%);
+        }
+
+        .em-stat-active .em-stat-icon {
+          background: linear-gradient(135deg, var(--active-green) 0%, #058A5B 100%);
+        }
+
+        .em-stat-inactive .em-stat-icon {
+          background: linear-gradient(135deg, var(--crm-orange) 0%, #E65A0F 100%);
+        }
+
+        .em-stat-content {
+          flex: 1;
+        }
+
+        .em-stat-number {
+          font-size: 32px;
           font-weight: 700;
           color: var(--navy-dark);
           line-height: 1.1;
-        }
-        .ax-stat-label {
-          font-size: 12.5px;
-          color: var(--muted);
-          margin-top: 2px;
+          margin-bottom: 4px;
         }
 
-        /* --- Card grid --- */
-        .admin-employee-card-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 14px;
+        .em-stat-label {
+          font-size: 14px;
+          color: var(--secondary-text);
+          font-weight: 600;
+          margin-bottom: 2px;
         }
-        .ax-card {
-          background: #fff;
-          border: 1px solid var(--line);
-          border-radius: 14px;
-          padding: 16px;
-          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+        .em-stat-percentage {
+          font-size: 13px;
+          color: var(--secondary-text);
+          font-weight: 500;
         }
-        .ax-card:hover {
-          border-color: var(--navy);
-          box-shadow: 0 4px 16px rgba(14, 42, 77, 0.08);
-        }
-        .ax-card-top {
+
+        /* --- Combined Filter Bar --- */
+        .em-filter-bar {
           display: flex;
-          gap: 12px;
           align-items: center;
-          margin-bottom: 12px;
+          gap: 12px;
+          margin-bottom: 20px;
+          padding: 14px 18px;
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: var(--btn-radius);
+          flex-wrap: nowrap;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          width: 100%;
+          box-sizing: border-box;
         }
-        .ax-avatar {
-          width: 44px;
-          height: 44px;
+
+        .em-view-label {
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--navy-dark);
+          white-space: nowrap;
+        }
+
+        .em-tabs-container {
+          display: flex;
+          background: #F4F7FB;
+          border-radius: 8px;
+          padding: 4px;
+          flex-shrink: 0;
+        }
+
+        .em-tab-btn {
+          padding: 10px 24px;
+          border: none;
+          border-radius: 6px;
+          background: transparent;
+          color: var(--secondary-text);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+        }
+
+        .em-tab-btn.active {
+          background: var(--primary-blue);
+          color: #fff;
+          box-shadow: 0 2px 8px rgba(18, 100, 232, 0.2);
+        }
+
+        .em-tab-btn:hover:not(.active) {
+          background: rgba(18, 100, 232, 0.1);
+        }
+
+        .em-search-wrapper {
+          position: relative;
+          flex: 1;
+          min-width: 200px;
+          max-width: 300px;
+        }
+
+        .em-search-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--secondary-text);
+          font-size: 14px;
+        }
+
+        .em-search-input {
+          width: 100%;
+          padding: 11px 14px 11px 40px;
+          border: 1.5px solid var(--border-color);
+          border-radius: var(--btn-radius);
+          font-size: 14px;
+          color: var(--navy-dark);
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .em-search-input:focus {
+          border-color: var(--primary-blue);
+          box-shadow: 0 0 0 3px rgba(18, 100, 232, 0.1);
+        }
+
+        .em-search-input::placeholder {
+          color: #94A3B8;
+        }
+
+        .em-filter-select {
+          padding: 11px 14px;
+          border: 1.5px solid var(--border-color);
+          border-radius: var(--btn-radius);
+          font-size: 14px;
+          color: var(--navy-dark);
+          background: #fff;
+          cursor: pointer;
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+          min-width: 130px;
+          flex-shrink: 0;
+        }
+
+        .em-filter-select:focus {
+          border-color: var(--primary-blue);
+          box-shadow: 0 0 0 3px rgba(18, 100, 232, 0.1);
+        }
+
+        .em-reset-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 16px;
+          border: 1.5px solid var(--border-color);
+          border-radius: var(--btn-radius);
+          background: #fff;
+          color: var(--navy-dark);
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+        }
+
+        .em-reset-btn:hover {
+          background: #F4F7FB;
+          border-color: var(--primary-blue);
+        }
+
+        /* --- Employee Card Grid --- */
+        .em-card-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 20px;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* --- Employee Card --- */
+        .em-card {
+          background: var(--card-bg);
+          border: 3px solid #044172;
+          border-radius: var(--card-radius);
+          padding: 20px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .em-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(16, 36, 67, 0.12);
+          border-color: var(--primary-blue);
+        }
+
+        .em-card-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          margin-bottom: 16px;
+          width: 100%;
+        }
+
+        .em-avatar {
+          width: 52px;
+          height: 52px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: #fff;
           font-weight: 700;
-          font-size: 14px;
+          font-size: 18px;
           flex-shrink: 0;
+          background: var(--primary-blue);
+          box-shadow: 0 2px 8px rgba(18, 100, 232, 0.2);
         }
-        .ax-card-person h4 {
-          margin: 0 0 4px;
-          font-size: 15px;
+
+        .em-card-info {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+        }
+
+        .em-card-name {
+          font-size: 16px;
+          font-weight: 700;
           color: var(--navy-dark);
+          margin: 0 0 8px 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.3;
         }
-        .ax-role-row {
+
+        .em-card-meta {
           display: flex;
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
         }
-        .ax-role-badge {
-          font-size: 10.5px;
+
+        .em-role-badge {
+          font-size: 11px;
           font-weight: 700;
-          letter-spacing: 0.3px;
-          border: 1.3px solid;
+          padding: 4px 12px;
           border-radius: 999px;
-          padding: 2px 8px;
-        }
-        .ax-status-dot {
-          font-size: 11.5px;
-          color: var(--muted);
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .ax-status-dot i {
-          font-size: 6px;
-          color: #C3CBD4;
-        }
-        .ax-status-dot.active i {
-          color: var(--teal);
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
         }
 
-        .ax-card-details {
+        .em-role-badge.employee {
+          background: #E3F2FD;
+          color: var(--primary-blue);
+        }
+
+        .em-role-badge.manager {
+          background: #F3E8FF;
+          color: var(--ops-purple);
+        }
+
+        .em-role-badge.ops-manager {
+          background: #FFF1E5;
+          color: var(--crm-orange);
+        }
+
+        .em-role-badge.default {
+          background: #F4F7FB;
+          color: var(--secondary-text);
+        }
+
+        .em-status-indicator {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .em-status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+        }
+
+        .em-status-indicator.active {
+          color: var(--active-green);
+        }
+
+        .em-status-indicator.active .em-status-dot {
+          background: var(--active-green);
+          box-shadow: 0 0 0 2px rgba(7, 155, 104, 0.1);
+        }
+
+        .em-status-indicator.inactive {
+          color: var(--secondary-text);
+        }
+
+        .em-status-indicator.inactive .em-status-dot {
+          background: #CBD5E1;
+        }
+
+        .em-card-details {
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          font-size: 13px;
-          color: #3F4C58;
-          border-top: 1px solid var(--line);
-          border-bottom: 1px solid var(--line);
-          padding: 12px 0;
-          margin-bottom: 12px;
-        }
-        .ax-card-details i {
-          width: 16px;
-          color: #93A0AC;
+          gap: 12px;
+          margin-bottom: 16px;
+          padding: 16px 0;
+          border-top: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color);
+          flex: 1;
         }
 
-        .ax-card-actions {
+        .em-detail-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 13px;
+        }
+
+        .em-detail-icon {
+          width: 18px;
+          color: var(--secondary-text);
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+
+        .em-detail-label {
+          width: 95px;
+          color: var(--secondary-text);
+          font-weight: 500;
+          flex-shrink: 0;
+        }
+
+        .em-detail-value {
+          color: var(--navy-dark);
+          font-weight: 600;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .em-card-actions {
           display: flex;
           gap: 8px;
-        }
-        .ax-btn-outline {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          background: #fff;
-          border: 1.3px solid var(--line);
-          color: var(--navy-dark);
-          border-radius: 9px;
-          padding: 9px 10px;
-          font-size: 12.5px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: border-color 0.15s ease, color 0.15s ease;
-        }
-        .ax-btn-outline:hover {
-          border-color: var(--navy);
-          color: var(--navy);
-        }
-        .ax-btn-crm {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          background: #FFF1E5;
-          border: 1.3px solid #FBD5AE;
-          color: var(--orange);
-          border-radius: 9px;
-          padding: 9px 10px;
-          font-size: 12.5px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.15s ease;
-        }
-        .ax-btn-crm.enabled {
-          background: #E4F6F4;
-          border-color: #B7E6E1;
-          color: var(--teal);
+          margin-top: auto;
         }
 
-        .ax-loading-state,
-        .ax-empty-state {
+        .em-action-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 10px 12px;
+          border: 1.5px solid var(--border-color);
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-height: 40px;
+        }
+
+        .em-btn-details {
+          background: #fff;
+          color: var(--navy-dark);
+        }
+
+        .em-btn-details:hover {
+          background: #F4F7FB;
+          border-color: var(--primary-blue);
+          color: var(--primary-blue);
+        }
+
+        .em-btn-crm {
+          background: #FFF7ED;
+          border-color: #FED7AA;
+          color: var(--crm-orange);
+        }
+
+        .em-btn-crm:hover {
+          background: #FFEDD5;
+          border-color: var(--crm-orange);
+        }
+
+        .em-btn-crm.enabled {
+          background: #DCFCE7;
+          border-color: #86EFAC;
+          color: var(--active-green);
+        }
+
+        .em-btn-crm.enabled:hover {
+          background: #BBF7D0;
+          border-color: var(--active-green);
+        }
+
+        .em-btn-ops {
+          background: #FAF5FF;
+          border-color: #E9D5FF;
+          color: var(--ops-purple);
+        }
+
+        .em-btn-ops:hover {
+          background: #F3E8FF;
+          border-color: var(--ops-purple);
+        }
+
+        .em-btn-ops.enabled {
+          background: #DCFCE7;
+          border-color: #86EFAC;
+          color: var(--active-green);
+        }
+
+        .em-btn-ops.enabled:hover {
+          background: #BBF7D0;
+          border-color: var(--active-green);
+        }
+
+        /* --- Loading/Empty States --- */
+        .em-loading-state,
+        .em-empty-state {
           grid-column: 1 / -1;
           text-align: center;
-          padding: 48px 16px;
-          color: var(--muted);
+          padding: 80px 20px;
+          color: var(--secondary-text);
           font-size: 14px;
+          background: var(--card-bg);
+          border-radius: var(--card-radius);
+          border: 1px dashed var(--border-color);
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 1400px) {
+          .em-card-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+
+        @media (max-width: 1100px) {
+          .em-card-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .em-stats-container {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .em-filter-bar {
+            flex-wrap: wrap;
+          }
+
+          .em-search-wrapper {
+            max-width: 100%;
+            min-width: 200px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .em-page {
+            padding: 16px;
+          }
+
+          .em-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+          }
+
+          .em-header-right {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .em-stats-container {
+            grid-template-columns: 1fr;
+          }
+
+          .em-card-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .em-filter-bar {
+            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 8px;
+          }
+
+          .em-view-label {
+            width: 100%;
+            margin-bottom: 4px;
+          }
+
+          .em-tabs-container {
+            width: 100%;
+            margin-bottom: 8px;
+          }
+
+          .em-tab-btn {
+            flex: 1;
+            text-align: center;
+          }
+
+          .em-search-wrapper {
+            max-width: 100%;
+            min-width: 100%;
+            order: 3;
+          }
+
+          .em-filter-select {
+            min-width: calc(50% - 4px);
+            order: 4;
+          }
+
+          .em-reset-btn {
+            width: 100%;
+            order: 5;
+          }
+
+          .em-card-actions {
+            flex-wrap: wrap;
+          }
+
+          .em-action-btn {
+            min-width: calc(50% - 4px);
+          }
         }
       `}</style>
 
-      <div className="ax-header">
-        <div className="ax-title">
-          <h1>Employees</h1>
-          <p>Manage employee profiles, roles, departments, and branches.</p>
+      {/* Header */}
+      <div className="em-header">
+        <div className="em-header-left">
+          <div className="em-header-icon">
+            <i className="fas fa-users" />
+          </div>
+          <div className="em-header-title">
+            <h1>Employees</h1>
+            <p>Manage employee profiles, roles, departments, and branches.</p>
+          </div>
         </div>
 
-        <div className="ax-header-actions">
-          <button type="button" className="ax-add-btn" onClick={openAddModal}>
+        <div className="em-header-right">
+          <button type="button" className="em-add-btn" onClick={openAddModal}>
             <i className="fas fa-plus" /> Add Employee
           </button>
 
-          <div className="ax-branch" ref={branchDropdownRef}>
+          <div className="em-branch-dropdown" ref={branchDropdownRef}>
             <button
               type="button"
-              className="ax-branch-btn"
+              className="em-branch-btn"
               onClick={(event) => {
                 event.stopPropagation();
                 setBranchMenuOpen((prev) => !prev);
               }}
             >
-              <i className="fas fa-store" /> {branchLabel} <i className="fas fa-chevron-down" />
+              <i className="fas fa-building" /> {branchLabel} <i className="fas fa-chevron-down" />
             </button>
 
-            <div className={`ax-branch-menu${branchMenuOpen ? " show" : ""}`}>
+            <div className={`em-branch-menu${branchMenuOpen ? " show" : ""}`}>
               {BRANCH_OPTIONS.map((option) => (
                 <div
                   key={option.value}
-                  className="ax-branch-item"
+                  className="em-branch-item"
                   onClick={() => {
                     setCurrentBranch(option.value);
                     setBranchMenuOpen(false);
@@ -696,27 +1245,90 @@ function AdminEmployees() {
         </div>
       </div>
 
+      {/* Summary Cards */}
       {renderStats()}
 
-      <EmployeeFilters
-        search={search}
-        onSearchChange={setSearch}
-        department={currentDept}
-        onDepartmentChange={setCurrentDept}
-        departments={departmentOptions}
-        roleFilter={roleFilter}
-        onRoleFilterChange={setRoleFilter}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-      />
+      {/* Combined Filter Bar */}
+      <div className="em-filter-bar">
+        <span className="em-view-label">View:</span>
+        <div className="em-tabs-container">
+          <button
+            type="button"
+            className={`em-tab-btn${viewMode === 'active' ? ' active' : ''}`}
+            onClick={() => setViewMode('active')}
+          >
+            Active ({stats.activeCount})
+          </button>
+          <button
+            type="button"
+            className={`em-tab-btn${viewMode === 'inactive' ? ' active' : ''}`}
+            onClick={() => setViewMode('inactive')}
+          >
+            Inactive ({stats.inactiveCount})
+          </button>
+        </div>
 
-      <div className="admin-employee-card-grid">
+        <div className="em-search-wrapper">
+          <i className="fas fa-search em-search-icon" />
+          <input
+            type="text"
+            className="em-search-input"
+            placeholder="Search by name, email or employee ID"
+            value={search}
+            onChange={(event) => debouncedSearch(event.target.value)}
+          />
+        </div>
+
+        <select
+          className="em-filter-select"
+          value={roleFilter}
+          onChange={(event) => setRoleFilter(event.target.value)}
+        >
+          <option value="all">All Roles</option>
+          {ROLE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="em-filter-select"
+          value={currentDept}
+          onChange={(event) => setCurrentDept(event.target.value)}
+        >
+          <option value="all">All Departments</option>
+          {departmentOptions.map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
+
+        <button type="button" className="em-reset-btn" onClick={handleResetFilters}>
+          <i className="fas fa-redo" /> Reset
+        </button>
+      </div>
+
+      {/* Employee Card Grid */}
+      <div className="em-card-grid">
         {loading ? (
-          <div className="ax-loading-state">Loading employees...</div>
+          <div className="em-loading-state">Loading employees...</div>
         ) : filteredEmployees.length === 0 ? (
-          <div className="ax-empty-state">No employees found</div>
+          <div className="em-empty-state">No employees found</div>
         ) : (
-          filteredEmployees.map(renderEmployeeCard)
+          filteredEmployees.map((employee) => (
+            <EmployeeCard
+              key={employee.id}
+              employee={employee}
+              onDetails={() => {
+                setSelectedEmployeeId(employee.id);
+                setDetailsOpen(true);
+              }}
+              onInvoiceAccess={handleInvoiceAccess}
+              onOpsAccess={handleOpsAccess}
+            />
+          ))
         )}
       </div>
 

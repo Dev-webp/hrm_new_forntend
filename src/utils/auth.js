@@ -1,4 +1,5 @@
 /** Centralized auth/session helpers (localStorage). */
+import { clearOpsSession } from "../modules/ops/services/opsApi";
 
 export function getAuthToken() {
   return localStorage.getItem("token");
@@ -27,6 +28,8 @@ export function setAuthSession({ token, user }) {
   // even if the browser wasn't explicitly logged out in between.
   localStorage.removeItem("vjc_invoice_auth");
   localStorage.removeItem("vjc_invoice_user");
+  // The OPS session lives in memory only; a fresh HRMS login never inherits one.
+  clearOpsSession();
 
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
@@ -43,6 +46,7 @@ export function setAuthSession({ token, user }) {
 }
 
 export function clearAuthSession() {
+  clearOpsSession();
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("branch");

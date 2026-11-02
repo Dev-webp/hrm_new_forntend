@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
@@ -65,6 +65,12 @@ export default function EmployeeDashboard({ embedded = false }) {
   const [greetingMsg, setGreetingMsg] = useState("");
   const [liveDateLabel, setLiveDateLabel] = useState("—");
   const [liveTimeLabel, setLiveTimeLabel] = useState("—");
+  
+  // Timer state
+  const [timerElapsed, setTimerElapsed] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [onBreak, setOnBreak] = useState(false);
+  const timerIntervalRef = useRef(null);
 
   const safeAttendance = useMemo(
     () => (Array.isArray(allAttendance) ? allAttendance.filter(Boolean) : []),
@@ -348,6 +354,118 @@ export default function EmployeeDashboard({ embedded = false }) {
             : "Great! You are on time today.",
     };
   }, [todayData]);
+
+  // Timer logic
+  useEffect(() => {
+    // Don't show timer for SUPER_ADMIN
+    if (userProfile.role === "SUPER_ADMIN") {
+      setTimerRunning(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const d = todayData;
+    
+    if (!d?.check_in_time) {
+      // No check-in - stop timer
+      setTimerRunning(false);
+      setTimerElapsed(0);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      return;
+    }
+
+    if (d?.check_out_time) {
+      // Already checked out - stop timer
+      setTimerRunning(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Parse check-in time
+    let checkInTime;
+    try {
+      checkInTime = new Date(d.check_in_time);
+    } catch (e) {
+      console.error("Invalid check-in time:", d.check_in_time);
+      setTimerRunning(false);
+      setTimerElapsed(0);
+      return;
+    }
+
+    // Validate the date
+    if (isNaN(checkInTime.getTime())) {
+      console.error("Invalid check-in date:", d.check_in_time);
+      setTimerRunning(false);
+      setTimerElapsed(0);
+      return;
+    }
+
+    // Timer starts immediately from check-in time (no 10 AM delay)
+    const timerStartTime = checkInTime;
+    const now = new Date();
+    
+    // Check if currently on break
+    const isOnBreak = d?.on_break === true || d?.current_break_start;
+    setOnBreak(isOnBreak);
+
+    // If on break, stop timer
+    if (isOnBreak) {
+      setTimerRunning(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      // Calculate elapsed time up to break start
+      const breakStart = d?.current_break_start ? new Date(d.current_break_start) : now;
+      const elapsed = Math.max(0, breakStart - timerStartTime);
+      setTimerElapsed(elapsed);
+      return;
+    }
+
+    // Calculate initial elapsed time
+    const elapsed = Math.max(0, now - timerStartTime);
+    setTimerElapsed(elapsed);
+    setTimerRunning(true);
+
+    // Start timer interval
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+
+    timerIntervalRef.current = setInterval(() => {
+      const currentTime = new Date();
+      const newElapsed = Math.max(0, currentTime - timerStartTime);
+      setTimerElapsed(newElapsed);
+    }, 1000);
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  }, [todayData, userProfile.role]);
+
+  // Format elapsed time for display
+  const timerDisplay = useMemo(() => {
+    if (isNaN(timerElapsed) || timerElapsed < 0) {
+      return "00:00:00";
+    }
+    const totalSeconds = Math.floor(timerElapsed / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }, [timerElapsed]);
 
   const calendarDays = useMemo(() => {
     const { y, m, mm, lastDay } = monthMeta;
@@ -636,6 +754,51 @@ export default function EmployeeDashboard({ embedded = false }) {
               ))}
             </div>
           </section>
+
+          {/* Working Hours Timer - Only for non-SUPER_ADMIN */}
+          {userProfile.role !== "SUPER_ADMIN" && (
+            <section className="timer-card dashboard-snapshot">
+              <div className="timer-header">
+                <div>
+                  <div className="timer-title">Working Hours Timer</div>
+                  <span className="timer-subtitle">Active working hours (excludes breaks)</span>
+                </div>
+                <span className={`timer-status ${timerRunning ? 'running' : onBreak ? 'break' : 'stopped'}`}>
+                  {timerRunning ? (
+                    <>
+                      <i className="fas fa-circle" style={{ animation: 'timerPulse 1s infinite' }} />
+                      Active
+                    </>
+                  ) : onBreak ? (
+                    <>
+                      <i className="fas fa-pause-circle" />
+                      On Break
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-stop-circle" />
+                      Stopped
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="timer-display">
+                <div className="timer-time">{timerDisplay}</div>
+                <div className="timer-label">Hours : Minutes : Seconds</div>
+              </div>
+              {todayData?.check_in_time && (
+                <div className="timer-info">
+                  {timerRunning ? (
+                    <span>Counting from check-in time</span>
+                  ) : onBreak ? (
+                    <span>Timer paused during break</span>
+                  ) : (
+                    <span>Waiting for check-in</span>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
 
           <div className="employee-main-grid">
             <section className="today-card dashboard-snapshot">

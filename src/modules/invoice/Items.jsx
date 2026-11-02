@@ -28,7 +28,7 @@ import {
   Pagination,
 } from "@mui/material";
 
-const API_BASE = "http://localhost:5000/api/items";
+const API_BASE = (import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api") + "/items";
 // ✅ Indian currency format
 const formatPrice = (value) => {
   if (!value) return "₹0";
@@ -335,27 +335,21 @@ const res = await axios.delete(`${API_BASE}/${id}`, authHeader());
         </Box>
       ) : (
         <TableContainer component={Paper}>
-          <Table>
+          <Table
+            sx={{
+              "& th, & td": {
+                borderRight: "1px solid #e5e7eb",
+              },
+              "& th:last-child, & td:last-child": {
+                borderRight: "none",
+              },
+            }}
+          >
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-              <TableRow>
-                <TableCell><strong>Service</strong></TableCell>
-                <TableCell><strong>Category</strong></TableCell>
-                <TableCell><strong>Country</strong></TableCell>
-                <TableCell><strong>Price</strong></TableCell>
-                <TableCell><strong>GST</strong></TableCell>
-                <TableCell><strong>Total</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
-              </TableRow>
+              <TableRow><TableCell><strong>Service</strong></TableCell><TableCell><strong>Category</strong></TableCell><TableCell><strong>Country</strong></TableCell><TableCell><strong>Price</strong></TableCell><TableCell><strong>GST</strong></TableCell><TableCell><strong>Total</strong></TableCell><TableCell><strong>Status</strong></TableCell><TableCell><strong>Actions</strong></TableCell></TableRow>
             </TableHead>
             <TableBody>
-              {items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                    No services found. "+ Add Service" To create a new service!
-                  </TableCell>
-                </TableRow>
-              ) : (
+              {items.length === 0 ? (<TableRow><TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>No services found. "+ Add Service" To create a new service!</TableCell></TableRow>) : (
                 items.map((item) => (
                   <TableRow key={item.id} hover>
                     <TableCell>{item.service_name || item.serviceName}</TableCell>

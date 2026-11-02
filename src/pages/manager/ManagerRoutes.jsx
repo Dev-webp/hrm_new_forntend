@@ -6,6 +6,7 @@ import { getPlaceholderManagerRoutes } from "../../config/managerNav";
 import { getStoredRole } from "../../utils/auth";
 import ManagerPlaceholder from "./ManagerPlaceholder";
 
+const OpsRoutes = lazy(() => import("../../modules/ops/OpsRoutes"));
 const ManagerAttendance = lazy(() => import("./ManagerAttendance"));
 const ManagerAttendanceAnalysis = lazy(() => import("./ManagerAttendanceAnalysis"));
 const ManagerBreaks = lazy(() => import("./ManagerBreaks"));
@@ -94,6 +95,8 @@ function ManagerRoutes() {
             }
           />
         ))}
+
+          <Route path="ops/*" element={<OpsRoutes />} />
 
           <Route path="*" element={<ManagerPlaceholder title="Manager module" />} />
         </Routes>

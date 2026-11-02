@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BRANCH_LABELS } from "../utils/dashboardHelpers";
-import { BRANCH_OPTIONS } from "../config/adminNav";
+import { BRANCH_OPTIONS } from "../utils/employeeHelpers";
 import NotificationBadge from "./NotificationBadge";
 
 function Navbar({

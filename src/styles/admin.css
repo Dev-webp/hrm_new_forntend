@@ -6,6 +6,16 @@
   box-sizing: border-box;
 }
 
+/* Performance: Optimize rendering */
+img {
+  content-visibility: auto;
+}
+
+/* Performance: Reduce paint on scroll */
+.nav-section {
+  will-change: transform;
+}
+
 :root {
   --gold: #FF8C00;
   --gold-light: #f0cc5a;
@@ -42,8 +52,8 @@ body.hrms-dashboard #root {
 }
 
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -51,8 +61,12 @@ body.hrms-dashboard #root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gold-border);
-  border-radius: 10px;
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .app-layout {
@@ -64,14 +78,15 @@ body.hrms-dashboard #root {
 
 .sidebar {
   width: 260px;
-  background: var(--bg2);
-  border-right: 2px solid var(--gold-border);
+  height: 100vh;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 }
 
 .sidebar.collapsed {
@@ -103,53 +118,51 @@ body.hrms-dashboard #root {
 }
 
 .sidebar-header {
-  padding: 24px 20px 18px;
-  border-bottom: 1px solid var(--gold-border);
-  margin-bottom: 16px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
 }
 
 .sidebar-header h2 {
-  font-size: 1.4rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #fff 20%, var(--gold));
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e293b 0%, #f97316 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .sidebar-header p {
-  font-size: 0.65rem;
-  color: var(--gold);
+  font-size: 0.7rem;
+  color: #94a3b8;
   margin-top: 4px;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
+  font-weight: 500;
 }
 
 .nav-section {
   padding: 0 12px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .nav-label {
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--muted);
-  padding: 8px 8px 4px;
+  display: none;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
-  margin: 1px 0;
+  padding: 8px 14px;
+  margin: 2px 0;
   border-radius: 10px;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--muted);
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   white-space: nowrap;
   border: none;
   background: transparent;
@@ -157,37 +170,158 @@ body.hrms-dashboard #root {
   text-align: left;
   font-family: inherit;
   text-decoration: none;
+  position: relative;
 }
 
 .nav-item i {
   width: 20px;
   font-size: 1rem;
-  color: #606480;
+  color: #94a3b8;
   flex-shrink: 0;
+  transition: color 0.2s ease;
 }
 
 .nav-item:hover {
-  background: var(--gold-dim);
-  color: var(--gold);
+  background: rgba(255, 140, 0, 0.08);
+  color: #f97316;
+  transform: translateX(2px);
+}
+
+.nav-item-wrapper:hover > .nav-item {
+  background: rgba(255, 140, 0, 0.1);
+  color: #f97316;
+  transition: all 0.2s ease;
+}
+
+.nav-item-wrapper:hover > .nav-item i {
+  color: #f97316;
+}
+
+.nav-item:hover {
+  background: rgba(255, 140, 0, 0.1);
+  color: #f97316;
+  transition: all 0.2s ease;
 }
 
 .nav-item:hover i {
-  color: var(--gold);
+  color: #f97316;
 }
 
 .nav-item.active {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 140, 0, 0.18),
-    rgba(255, 140, 0, 0.04)
-  );
-  border-left: 2px solid var(--gold);
-  color: var(--gold);
-  padding-left: 10px;
+  background: linear-gradient(90deg, rgba(255, 140, 0, 0.15) 0%, rgba(255, 140, 0, 0.05) 100%);
+  border-left: 3px solid #f97316;
+  color: #f97316;
+  padding-left: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(255, 140, 0, 0.1);
 }
 
 .nav-item.active i {
-  color: var(--gold);
+  color: #f97316;
+}
+
+/* Submenu Styles */
+.nav-item-wrapper {
+  position: relative;
+  pointer-events: auto;
+  padding: 4px 0;
+}
+
+.nav-section {
+  overflow: visible;
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.nav-item-wrapper:hover .submenu-arrow {
+  color: #f97316;
+  transform: rotate(90deg);
+}
+
+.submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--gold-border);
+  border-radius: 10px;
+  min-width: 220px;
+  max-width: 280px;
+  z-index: 99999;
+  box-shadow: 0 8px 24px rgba(26, 43, 75, 0.3);
+  overflow: visible;
+  animation: slideIn 0.2s ease-out;
+  padding: 8px 0;
+  display: none;
+  pointer-events: auto;
+}
+
+.nav-item-wrapper > .nav-item:hover + .submenu {
+  display: block !important;
+}
+
+.nav-item-wrapper .nav-item:hover ~ .submenu {
+  display: block !important;
+}
+
+.sidebar.collapsed .submenu {
+  display: none !important;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 140, 0, 0.08);
+  color: #f97316;
+}
+
+.submenu-item.active {
+  background: linear-gradient(90deg, rgba(255, 140, 0, 0.15) 0%, rgba(255, 140, 0, 0.05) 100%);
+  color: #f97316;
+  border-left: 2px solid #f97316;
+  font-weight: 500;
+}
+
+.submenu-item i {
+  width: 18px;
+  font-size: 0.9rem;
+  color: #606480;
+}
+
+.submenu-item:hover i,
+.submenu-item.active i {
+  color: #f97316;
 }
 
 .secure-badge {

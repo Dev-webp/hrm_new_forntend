@@ -22,7 +22,7 @@ import RepeatIcon      from "@mui/icons-material/Repeat";
 import RefreshIcon     from "@mui/icons-material/Refresh";
 
 // ─── Config ──────────────────────────────────────────────────
-const API = "http://localhost:5000/api";
+const API = import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api";
 
 const formatPrice = (value) =>
   Number(value || 0).toLocaleString("en-IN", {
@@ -102,10 +102,15 @@ const emptyLineItem = () => ({
 
 // ─── Line item calculation ────────────────────────────────────
 const lineAmount = (li) => {
-  const base    = li.qty * li.rate;
-  const disc    = base * (li.discount / 100);
+  const qty = Number(li.qty) || 0;
+  const rate = Number(li.rate) || 0;
+  const discount = Number(li.discount) || 0;
+  const gst = Number(li.gst) || 0;
+
+  const base = qty * rate;
+  const disc = base * (discount / 100);
   const taxable = base - disc;
-  const gstAmt  = taxable * (li.gst / 100);
+  const gstAmt = taxable * (gst / 100);
   return { taxable, gstAmt, total: taxable + gstAmt };
 };
 
@@ -134,24 +139,10 @@ function GeneratedInvoicesDialog({ open, onClose, profile }) {
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
               <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-                <TableRow>
-                  {["Invoice #", "Date", "Amount", "Status"].map(h => (
-                    <TableCell key={h}><strong>{h}</strong></TableCell>
-                  ))}
-                </TableRow>
+                <TableRow>{["Invoice #", "Date", "Amount", "Status"].map(h => (<TableCell key={h}><strong>{h}</strong></TableCell>))}</TableRow>
               </TableHead>
               <TableBody>
-                {profile.generatedInvoices.map((inv, i) => (
-                  <TableRow key={i} hover>
-                    <TableCell sx={{ color: "#1976d2", fontWeight: "bold" }}>{inv.id}</TableCell>
-                    <TableCell>{formatDate(inv.date)}</TableCell>
-                    <TableCell><strong>{formatPrice(inv.amount)}</strong></TableCell>
-                    <TableCell>
-                      <Chip label={inv.status} size="small"
-                        color={inv.status === "Paid" ? "success" : inv.status === "Sent" ? "primary" : "default"} />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {profile.generatedInvoices.map((inv, i) => (<TableRow key={i} hover><TableCell sx={{ color: "#1976d2", fontWeight: "bold" }}>{inv.id}</TableCell><TableCell>{formatDate(inv.date)}</TableCell><TableCell><strong>{formatPrice(inv.amount)}</strong></TableCell><TableCell><Chip label={inv.status} size="small" color={inv.status === "Paid" ? "success" : inv.status === "Sent" ? "primary" : "default"} /></TableRow>))}
               </TableBody>
             </Table>
           </TableContainer>

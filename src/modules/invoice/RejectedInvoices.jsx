@@ -9,8 +9,9 @@ import {
 
 // ─── API Base — same backend used across the app ─────────────
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api",
 });
+
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("vjc_invoice_auth");
@@ -222,19 +223,10 @@ const filtered = normalizedInvoices
           }}
         >
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>              {["Invoice #", "Sales Consultant", "Customer", "Date", "Due Date", "Grand Total", "Balance", "Status", "Actions"].map((h) => (
-                <TableCell key={h} sx={{ whiteSpace: "nowrap" }}><strong>{h}</strong></TableCell>
-              ))}
-            </TableRow>
+            <TableRow>{["Invoice #", "Sales Consultant", "Customer", "Date", "Due Date", "Grand Total", "Balance", "Status", "Actions"].map((h) => (<TableCell key={h} sx={{ whiteSpace: "nowrap" }}><strong>{h}</strong></TableCell>))}</TableRow>
           </TableHead>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                  No Rejected invoices found
-                </TableCell>
-              </TableRow>
-           ) : filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
+            {filtered.length === 0 ? (<TableRow><TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>No Rejected invoices found</TableCell></TableRow>) : filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
               <TableRow key={inv.id} hover>
                 <TableCell sx={{ color: "#1976d2", fontWeight: "bold" }}>{inv.invoiceNo}</TableCell>
                <TableCell sx={{ whiteSpace: "nowrap" }}>{inv.salesConsultant}</TableCell>
@@ -242,9 +234,7 @@ const filtered = normalizedInvoices
                 <TableCell>{inv.invoiceDate}</TableCell>
                 <TableCell>{inv.dueDate}</TableCell>
                 <TableCell><strong>{formatPrice(inv.grandTotal)}</strong></TableCell>
-                <TableCell sx={{ color: inv.balanceAmount > 0 ? "#d32f2f" : "#2e7d32" }}>
-                  {formatPrice(inv.balanceAmount)}
-                </TableCell>
+                <TableCell sx={{ color: inv.balanceAmount > 0 ? "#d32f2f" : "#2e7d32" }}>{formatPrice(inv.balanceAmount)}</TableCell>
                 <TableCell>
                   <Chip
                     label="Rejected"

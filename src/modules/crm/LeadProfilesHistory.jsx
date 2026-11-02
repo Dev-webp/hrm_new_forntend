@@ -7,7 +7,7 @@ import {
 import PersonIcon from "@mui/icons-material/Person";
 import PrintIcon from "@mui/icons-material/Print";
 
-const API = "http://localhost:5000/api";
+const API = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000/api";
 
 const authHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("vjc_invoice_auth")}`,
@@ -182,22 +182,10 @@ export default function LeadProfileHistory() {
           <TableContainer component={Paper} sx={{ mb: 3 }}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "#1a2472" }}>
-                  <TableCell sx={headerCellSx}>Assigned By</TableCell>
-                  <TableCell sx={headerCellSx}>Assigned Date</TableCell>
-                  <TableCell sx={headerCellSx}>Branch</TableCell>
-                  <TableCell sx={headerCellSx}>User</TableCell>
-                </TableRow>
+                <TableRow sx={{ bgcolor: "#1a2472" }}><TableCell sx={headerCellSx}>Assigned By</TableCell><TableCell sx={headerCellSx}>Assigned Date</TableCell><TableCell sx={headerCellSx}>Branch</TableCell><TableCell sx={headerCellSx}>User</TableCell></TableRow>
               </TableHead>
               <TableBody>
-                {displayAssignedHistory.map((h, i) => (
-                  <TableRow key={h.id || i}>
-                    <TableCell sx={cellBorderSx}>{h.assigned_by_name}</TableCell>
-                    <TableCell sx={cellBorderSx}>{fmtDate(h.assigned_date)}</TableCell>
-                    <TableCell sx={cellBorderSx}>{h.branch}</TableCell>
-                    <TableCell sx={cellBorderSx}>{h.user_name}</TableCell>
-                  </TableRow>
-                ))}
+                {displayAssignedHistory.map((h, i) => (<TableRow key={h.id || i}><TableCell sx={cellBorderSx}>{h.assigned_by_name}</TableCell><TableCell sx={cellBorderSx}>{fmtDate(h.assigned_date)}</TableCell><TableCell sx={cellBorderSx}>{h.branch}</TableCell><TableCell sx={cellBorderSx}>{h.user_name}</TableCell></TableRow>))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -208,22 +196,10 @@ export default function LeadProfileHistory() {
           <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "#1a2472" }}>
-                  <TableCell sx={headerCellSx}>Created Date</TableCell>
-                  <TableCell sx={headerCellSx}>Remark</TableCell>
-                  <TableCell sx={headerCellSx}>Stage</TableCell>
-                  <TableCell sx={headerCellSx}>Commented By</TableCell>
-                </TableRow>
+                <TableRow sx={{ bgcolor: "#1a2472" }}><TableCell sx={headerCellSx}>Created Date</TableCell><TableCell sx={headerCellSx}>Remark</TableCell><TableCell sx={headerCellSx}>Stage</TableCell><TableCell sx={headerCellSx}>Commented By</TableCell></TableRow>
               </TableHead>
               <TableBody>
-                {notes.map((n, i) => (
-                  <TableRow key={n.id || i}>
-                    <TableCell sx={{ ...cellBorderSx, whiteSpace: "nowrap" }}>{fmtDateTime(n.created_at)}</TableCell>
-                    <TableCell sx={cellBorderSx}>{n.remark}</TableCell>
-                    <TableCell sx={cellBorderSx}>{n.stage || "Enquiry"}</TableCell>
-                    <TableCell sx={cellBorderSx}>{n.commented_by}</TableCell>
-                  </TableRow>
-                ))}
+                {notes.map((n, i) => (<TableRow key={n.id || i}><TableCell sx={{ ...cellBorderSx, whiteSpace: "nowrap" }}>{fmtDateTime(n.created_at)}</TableCell><TableCell sx={cellBorderSx}>{n.remark}</TableCell><TableCell sx={cellBorderSx}>{n.stage || "Enquiry"}</TableCell><TableCell sx={cellBorderSx}>{n.commented_by}</TableCell></TableRow>))}
               </TableBody>
             </Table>
           </TableContainer>

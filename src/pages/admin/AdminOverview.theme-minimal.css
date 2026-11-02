@@ -1,0 +1,84 @@
+/**
+ * Minimalist Theme - Ultra Clean Design
+ * Focus on whitespace, simple borders, and typography
+ */
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #fafafa;
+  --text-primary: #111111;
+  --text-secondary: #666666;
+  --border-color: #e0e0e0;
+  --shadow-sm: none;
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --navy: #111111;
+  --hrms: #000000;
+  --invoice: #000000;
+  --ops: #000000;
+  --crm: #000000;
+  --good: #000000;
+  --warning: #000000;
+  --bad: #000000;
+  --present: #000000;
+  --late: #000000;
+  --absent: #000000;
+  --sales: #000000;
+  --receipts: #000000;
+  --expenses: #000000;
+}
+
+.admin-overview {
+  background: #ffffff;
+  padding: 32px;
+}
+
+.section-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-shadow: none;
+  border-left: 2px solid #000000;
+}
+
+.section-card__header {
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.section-card__icon {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #e0e0e0;
+}
+
+.small-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.small-card__value {
+  color: #000000;
+  font-weight: 600;
+ }
+
+.attention-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-shadow: none;
+  border-left: 3px solid #000000;
+}
+
+.chart-card,
+.ops-panel,
+.bottom-panel {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-shadow: none;
+  border-left: 2px solid #000000;
+}

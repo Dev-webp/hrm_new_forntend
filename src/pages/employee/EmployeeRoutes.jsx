@@ -16,9 +16,11 @@ const EmployeeLeads = lazy(() => import("./EmployeeLeads"));
 const EmployeeCustomers = lazy(() => import("./EmployeeCustomers"));
 const EmployeeReports = lazy(() => import("./EmployeeReports"));
 const EmployeeInvoices = lazy(() => import("./EmployeeInvoices"));
+const EmployeeRejectedInvoices = lazy(() => import("./EmployeeRejectedInvoices"));
 const EmployeeQuotes = lazy(() => import("./EmployeeQuotes"));
 const EmployeePayments = lazy(() => import("./EmployeePayments"));
 const EmployeeItems = lazy(() => import("./EmployeeItems"));
+const EmployeeOps = lazy(() => import("./EmployeeOps"));
 
 export default function EmployeeRoutes() {
   const role = getStoredRole();
@@ -42,9 +44,11 @@ export default function EmployeeRoutes() {
           <Route path="crm/customers" element={<EmployeeCustomers />} />
           <Route path="invoice/reports" element={<EmployeeReports />} />
           <Route path="invoice/invoices" element={<EmployeeInvoices />} />
+          <Route path="invoice/rejected" element={<EmployeeRejectedInvoices />} />
           <Route path="invoice/quotes" element={<EmployeeQuotes />} />
           <Route path="invoice/payments" element={<EmployeePayments />} />
           <Route path="invoice/items" element={<EmployeeItems />} />
+          <Route path="ops/*" element={<EmployeeOps />} />
           <Route index element={<Navigate to="dashboard" replace />} />
         </Routes>
       </Suspense>

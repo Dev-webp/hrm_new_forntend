@@ -223,15 +223,6 @@ function EmployeeFormModal({
 {/* ====================================================
     CRM / INVOICE ACCESS
 ==================================================== */}
-{/* ====================================================
-    INVOICE / CRM ACCESS
-    Replace your existing block (currently wrapped in
-    {mode === "edit" && (...)}) with this one — same
-    toggle you already built, minus the edit-only
-    restriction, plus the missing permission checkboxes
-    underneath.
-==================================================== */}
-
 <div className="crm-access-form-section">
 
   <div className="crm-access-form-header">
@@ -248,29 +239,29 @@ function EmployeeFormModal({
 
     <span
       className={`crm-access-status-badge ${
-        form.invoice_access ? "enabled" : "disabled"
+        form.invoiceAccess ? "enabled" : "disabled"
       }`}
     >
       <i
         className={
-          form.invoice_access
+          form.invoiceAccess
             ? "fas fa-check-circle"
             : "fas fa-ban"
         }
       />
 
-      {form.invoice_access ? "Access Enabled" : "Access Disabled"}
+      {form.invoiceAccess ? "Access Enabled" : "Access Disabled"}
     </span>
   </div>
 
   <label className="crm-access-toggle">
     <input
       type="checkbox"
-      checked={form.invoice_access === true}
+      checked={form.invoiceAccess === true}
       onChange={(event) =>
         onChange({
           ...form,
-          invoice_access: event.target.checked,
+          invoiceAccess: event.target.checked,
         })
       }
     />
@@ -278,13 +269,13 @@ function EmployeeFormModal({
     <span className="crm-toggle-slider"></span>
 
     <span className="crm-toggle-text">
-      {form.invoice_access
+      {form.invoiceAccess
         ? "Employee can access Invoice / CRM"
         : "Employee cannot access Invoice / CRM"}
     </span>
   </label>
 
-  {form.invoice_access && (
+  {form.invoiceAccess && (
     <div
       style={{
         marginTop: 14,
@@ -310,12 +301,12 @@ function EmployeeFormModal({
         >
           <input
             type="checkbox"
-            checked={Boolean(form.invoice_permissions?.[key])}
+            checked={Boolean(form.invoicePermissions?.[key])}
             onChange={(event) =>
               onChange({
                 ...form,
-                invoice_permissions: {
-                  ...form.invoice_permissions,
+                invoicePermissions: {
+                  ...form.invoicePermissions,
                   [key]: event.target.checked,
                 },
               })
@@ -328,6 +319,106 @@ function EmployeeFormModal({
   )}
 
 </div>
+
+{/* ====================================================
+    OPS ACCESS
+==================================================== */}
+<div className="crm-access-form-section">
+
+  <div className="crm-access-form-header">
+    <div>
+      <label className="crm-access-form-title">
+        <i className="fas fa-cogs" />
+        OPS Access
+      </label>
+
+      <p className="crm-access-form-description">
+        Control which OPS modules this employee can access.
+      </p>
+    </div>
+
+    <span
+      className={`crm-access-status-badge ${
+        form.opsAccess ? "enabled" : "disabled"
+      }`}
+    >
+      <i
+        className={
+          form.opsAccess
+            ? "fas fa-check-circle"
+            : "fas fa-ban"
+        }
+      />
+
+      {form.opsAccess ? "Access Enabled" : "Access Disabled"}
+    </span>
+  </div>
+
+  <label className="crm-access-toggle">
+    <input
+      type="checkbox"
+      checked={form.opsAccess === true}
+      onChange={(event) =>
+        onChange({
+          ...form,
+          opsAccess: event.target.checked,
+        })
+      }
+    />
+
+    <span className="crm-toggle-slider"></span>
+
+    <span className="crm-toggle-text">
+      {form.opsAccess
+        ? "Employee can access OPS modules"
+        : "Employee cannot access OPS modules"}
+    </span>
+  </label>
+
+  {form.opsAccess && (
+    <div
+      style={{
+        marginTop: 14,
+        paddingTop: 14,
+        borderTop: "1px solid rgba(0,0,0,0.08)",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "8px 16px",
+      }}
+    >
+      {[
+        ["ops_leads", "OPS Leads"],
+        ["quality_audit", "Quality Audit"],
+        ["case_filing", "Case Filing"],
+        ["case_processing", "Case Processing"],
+        ["ops_reports", "OPS Reports"],
+        ["ops_employees", "OPS Employees"],
+      ].map(([key, label]) => (
+        <label
+          key={key}
+          style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}
+        >
+          <input
+            type="checkbox"
+            checked={Boolean(form.ops_permissions?.[key])}
+            onChange={(event) =>
+              onChange({
+                ...form,
+                ops_permissions: {
+                  ...form.ops_permissions,
+                  [key]: event.target.checked,
+                },
+              })
+            }
+          />
+          {label}
+        </label>
+      ))}
+    </div>
+  )}
+
+</div>
+
         {/* ====================================================
             ROLE / EMPLOYEE ID
         ==================================================== */}
@@ -428,6 +519,26 @@ function EmployeeFormModal({
                 onChange({
                   ...form,
                   joiningDate: event.target.value,
+                })
+              }
+            />
+
+          </div>
+
+          <div className="form-group">
+
+            <label htmlFor="empDateOfBirth">
+              Date of Birth
+            </label>
+
+            <input
+              id="empDateOfBirth"
+              type="date"
+              value={form.dateOfBirth || ""}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  dateOfBirth: event.target.value,
                 })
               }
             />
@@ -1525,6 +1636,27 @@ function EmployeeDetailsModal({
 
               <div className="detail-value">
                 {formatDate(employee.joiningDate)}
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="detail-item">
+
+            <div className="detail-icon">
+              <i className="fas fa-birthday-cake" />
+            </div>
+
+            <div className="detail-content">
+
+              <div className="detail-label">
+                Date of Birth
+              </div>
+
+              <div className="detail-value">
+                {formatDate(employee.dateOfBirth)}
               </div>
 
             </div>

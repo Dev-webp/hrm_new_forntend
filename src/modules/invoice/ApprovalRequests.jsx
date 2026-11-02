@@ -5,7 +5,8 @@ import {
   DialogTitle, DialogContent, DialogActions, Divider, Grid, Pagination,
 } from "@mui/material";
 
-const API = "http://localhost:5000/api";
+const API = import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api";
+
 const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
 
 function ApprovalRequests() {
@@ -133,24 +134,10 @@ function ApprovalRequests() {
           }}
         >
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-           <TableRow>
-              <TableCell><strong>Invoice #</strong></TableCell>
-              <TableCell><strong>Customer</strong></TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap" }}><strong>Sales Consultant</strong></TableCell>
-              <TableCell><strong>Service Type</strong></TableCell>
-              <TableCell><strong>Grand Total</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell><strong>Actions</strong></TableCell>
-            </TableRow>
+           <TableRow><TableCell><strong>Invoice #</strong></TableCell><TableCell><strong>Customer</strong></TableCell><TableCell sx={{ whiteSpace: "nowrap" }}><strong>Sales Consultant</strong></TableCell><TableCell><strong>Service Type</strong></TableCell><TableCell><strong>Grand Total</strong></TableCell><TableCell><strong>Status</strong></TableCell><TableCell><strong>Actions</strong></TableCell></TableRow>
           </TableHead>
           <TableBody>
-            {invoices.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                  No pending invoices for approval.
-                </TableCell>
-              </TableRow>
-            ) : invoices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
+            {invoices.length === 0 ? (<TableRow><TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>No pending invoices for approval.</TableCell></TableRow>) : invoices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
               <TableRow key={inv.id} hover>
                 <TableCell sx={{ color: "#1976d2", fontWeight: "bold" }}>{inv.invoice_number}</TableCell>
                 <TableCell>{inv.customer_name}</TableCell>

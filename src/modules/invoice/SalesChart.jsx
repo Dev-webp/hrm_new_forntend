@@ -12,7 +12,8 @@ import {
 const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
 
 function SalesChart({ data }) {
-  const chartData = data?.chart || [];
+  // Handle both array and object with .chart property
+  const chartData = Array.isArray(data) ? data : (data?.chart || []);
   const totalSales = data?.totalSales || 0;
   const totalReceipts = data?.totalReceipts || 0;
   const totalExpenses = data?.totalExpenses || 0;

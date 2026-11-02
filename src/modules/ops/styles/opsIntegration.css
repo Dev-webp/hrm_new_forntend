@@ -1,0 +1,106 @@
+/* Hand-written adjustments for running the OPS pages inside the HRMS shell.
+ * Everything is under .ops-portal; nothing here can affect HRMS or Invoice. */
+
+/* The OPS pages were designed to fill a whole window next to OPS's own sidebar.
+ * Inside HRMS they fill the content area beside the HRMS sidebar instead. */
+.ops-portal.ops-embedded {
+  min-height: 100%;
+  width: 100%;
+  background: var(--bg-app);
+}
+
+.ops-portal.ops-embedded .main {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Slim header: stands in for OPS's sidebar title and notification bell. */
+.ops-portal .ops-topbar-integrated {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 32px;
+  background: #fff;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.ops-portal .ops-topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-blue-dark);
+  font-size: 14px;
+}
+
+/* The bell was styled for a dark sidebar; make it readable on a light bar. */
+.ops-portal .ops-topbar-integrated .notif-bell-wrap {
+  padding: 0;
+}
+
+.ops-portal .ops-topbar-integrated .notif-bell-btn {
+  background: #eef2f9;
+  color: var(--brand-blue-dark);
+}
+
+.ops-portal .ops-topbar-integrated .notif-bell-btn:hover {
+  background: #e1e8f5;
+}
+
+.ops-portal .ops-topbar-integrated .notif-panel {
+  left: auto;
+  right: 0;
+}
+
+/* Connection / permission messages shown instead of a page. */
+.ops-portal .ops-state {
+  margin: 32px;
+  padding: 18px 22px;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  color: var(--text-muted);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ops-portal .ops-state-error {
+  color: var(--danger);
+  border-left: 4px solid var(--danger);
+}
+
+/* Case Filing Ops topbar layout fix */
+.ops-portal .topbar {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ops-portal .topbar h1 {
+  flex: 1;
+  min-width: 200px;
+}
+
+.ops-portal .case-date-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ops-portal .case-date-filters input[type="date"] {
+  padding: 8px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 13.5px;
+  background: #fff;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+
+.ops-portal .case-date-filters input[type="date"]:focus {
+  outline: none;
+  border-color: var(--brand-blue-light);
+  box-shadow: 0 0 0 3px rgba(79,172,254,0.10);
+}

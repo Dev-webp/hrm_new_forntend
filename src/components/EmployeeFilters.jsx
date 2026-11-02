@@ -11,6 +11,7 @@ function EmployeeFilters({
   onRoleFilterChange,
   statusFilter,
   onStatusFilterChange,
+  hideStatusFilter = false,
 }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [deptOpen, setDeptOpen] = useState(false);
@@ -288,21 +289,23 @@ function EmployeeFilters({
             </select>
           </div>
 
-          <div className="ef-select-wrap">
-            <i className="fas fa-circle-dot" />
-            <select
-              className="ef-select"
-              value={statusFilter}
-              onChange={(event) => onStatusFilterChange(event.target.value)}
-              aria-label="Filter by status"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!hideStatusFilter && (
+            <div className="ef-select-wrap">
+              <i className="fas fa-circle-dot" />
+              <select
+                className="ef-select"
+                value={statusFilter}
+                onChange={(event) => onStatusFilterChange(event.target.value)}
+                aria-label="Filter by status"
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className={`ef-dept${deptOpen ? " open" : ""}`} ref={deptRef}>

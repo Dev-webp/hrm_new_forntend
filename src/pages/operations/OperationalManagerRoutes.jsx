@@ -5,6 +5,7 @@ import RouteErrorBoundary from "../../components/RouteErrorBoundary";
 import { getStoredRole } from "../../utils/auth";
 import ManagerPlaceholder from "../manager/ManagerPlaceholder";
 
+const OpsRoutes = lazy(() => import("../../modules/ops/OpsRoutes"));
 const AdminAttendanceAnalysis = lazy(() => import("../admin/AdminAttendanceAnalysis"));
 const AdminCalendar = lazy(() => import("../admin/AdminCalendar"));
 const AdminDashboard = lazy(() => import("../admin/AdminDashboard"));
@@ -45,6 +46,8 @@ function OperationalManagerRoutes() {
           <Route path="settings" element={<ManagerPlaceholder title="Settings" />} />
 
           <Route path="my-payslip" element={<OperationalSelfServicePage><EmployeePayslip /></OperationalSelfServicePage>} />
+
+          <Route path="ops/*" element={<OpsRoutes />} />
 
           <Route path="*" element={<ManagerPlaceholder title="Operational Manager module" />} />
         </Routes>

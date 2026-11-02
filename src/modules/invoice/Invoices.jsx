@@ -9,8 +9,9 @@ import {
 
 // ─── API Base — same backend used across the app ─────────────
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api",
 });
+
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("vjc_invoice_auth");
@@ -27,8 +28,8 @@ const formatPrice = (value) =>
   });
 
 const STATUS_COLOR = {
-  Approved: "info",
-  Paid:     "success",
+  approved: "info",
+  paid:     "success",
 };
 
 // ─── Component ──────────────────────────────────────────────
@@ -54,9 +55,22 @@ function Invoices() {
     setLoading(true);
     setError("");
     try {
+      console.log('[Invoices] Fetching all invoices from:', API.defaults.baseURL + '/invoices');
       const res = await API.get("/invoices");
-      setInvoices(res.data.invoices || res.data.data || []);
+      console.log('[Invoices] Response:', res.data);
+      const allInvoices = res.data.invoices || res.data.data || [];
+      console.log('[Invoices] All invoices array:', allInvoices);
+      console.log('[Invoices] Invoice statuses:', allInvoices.map(inv => ({ id: inv.id, invoice_number: inv.invoice_number, status: inv.status })));
+      // Filter for approved invoices only - check both lowercase and uppercase
+      const approvedInvoices = allInvoices.filter(inv => {
+        const status = (inv.status || '').toLowerCase();
+        return status === 'approved' || status === 'paid';
+      });
+      console.log('[Invoices] Approved invoices:', approvedInvoices);
+      console.log('[Invoices] Approved count:', approvedInvoices.length);
+      setInvoices(approvedInvoices);
     } catch (err) {
+      console.error('[Invoices] Error:', err);
       setError("Failed to load invoices — please check the backend connection.");
     } finally {
       setLoading(false);
@@ -64,22 +78,29 @@ function Invoices() {
   };
 
   // ── Normalize invoice from the real `invoices` table shape ──
-  const normalizeInvoice = (inv) => ({
-    id:                     inv.id,
-    invoiceNo:              inv.invoice_number,
-    originalInvoiceNo:      inv.original_invoice_number || "-",
-    customerName:           inv.customer_name || "",
-    invoiceDate:            (inv.invoice_date || "").slice(0, 10),
-    dueDate:                (inv.due_date || "").slice(0, 10),
-    subtotal:               Number(inv.subtotal || 0),
-    taxAmount:              Number(inv.tax_amount || 0),
-    grandTotal:             Number(inv.grand_total || 0),
-    paidAmount:             Number(inv.paid_amount || 0),
-    balanceAmount:          Number(inv.balance_amount || 0),
-    status:                 inv.status || "Approved",
-    serviceType:            inv.service_type || "",
-    notes:                  inv.notes || "",
-  });
+  const normalizeInvoice = (inv) => {
+    // Calculate paid amount from payments if available
+    const paidAmount = Number(inv.paid_amount || 0);
+    const grandTotal = Number(inv.amount || inv.grand_total || 0);
+    const balanceAmount = grandTotal - paidAmount;
+
+    return {
+      id:                     inv.id,
+      invoiceNo:              inv.invoice_number,
+      originalInvoiceNo:      inv.original_invoice_number || "-",
+      customerName:           inv.customer_name || "",
+      invoiceDate:            (inv.created_at || inv.invoice_date || "").slice(0, 10),
+      dueDate:                (inv.due_date || "").slice(0, 10),
+      subtotal:               Number(inv.subtotal || 0),
+      taxAmount:              Number(inv.tax_amount || 0),
+      grandTotal:             grandTotal,
+      paidAmount:             paidAmount,
+      balanceAmount:          balanceAmount,
+      status:                 inv.status || "Approved",
+      serviceType:            inv.service_type || "",
+      notes:                  inv.notes || "",
+    };
+  };
 
   const normalizedInvoices = invoices.map(normalizeInvoice);
 
@@ -89,7 +110,7 @@ const filtered = normalizedInvoices
       const matchSearch =
         (inv.customerName || "").toLowerCase().includes(search.toLowerCase()) ||
         (inv.invoiceNo || "").toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === "All" || inv.status === statusFilter;
+      const matchStatus = statusFilter === "All" || inv.status?.toLowerCase() === statusFilter;
 
       // NEW — Year / Month filter (based on invoiceDate, format YYYY-MM-DD)
       const invYear = inv.invoiceDate ? inv.invoiceDate.slice(0, 4) : "";
@@ -113,9 +134,9 @@ const filtered = normalizedInvoices
     { value: "11", label: "November" }, { value: "12", label: "December" },
   ];
   // ── Stats ──
-  const totalRevenue = normalizedInvoices.reduce((s, i) => s + (i.grandTotal - i.balanceAmount), 0);
+  const totalRevenue = normalizedInvoices.reduce((s, i) => s + i.paidAmount, 0);
   const partialCount = normalizedInvoices.filter(
-    (i) => i.status === "Approved" && i.balanceAmount > 0
+    (i) => i.balanceAmount > 0
   ).length;
   const outstanding = normalizedInvoices.reduce((s, i) => s + i.balanceAmount, 0);
 
@@ -187,8 +208,8 @@ const filtered = normalizedInvoices
           select size="small" label="Status" value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)} sx={{ width: 160 }}
         >
-          {["All", "Approved", "Paid"].map((s) => (
-            <MenuItem key={s} value={s}>{s}</MenuItem>
+          {["All", "approved", "paid"].map((s) => (
+            <MenuItem key={s} value={s}>{s === "approved" ? "Approved" : s === "paid" ? "Paid" : s}</MenuItem>
           ))}
         </TextField>
         <TextField
@@ -224,20 +245,10 @@ const filtered = normalizedInvoices
           }}
         >
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
-              {["Invoice #", "Original Invoice", "Customer", "Date", "Due Date", "Grand Total", "Balance", "Status", "Actions"].map((h) => (
-                <TableCell key={h}><strong>{h}</strong></TableCell>
-              ))}
-            </TableRow>
+            <TableRow>{["Invoice #", "Original Invoice", "Customer", "Date", "Due Date", "Grand Total", "Balance", "Status", "Actions"].map((h) => (<TableCell key={h}><strong>{h}</strong></TableCell>))}</TableRow>
           </TableHead>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                  No Approved invoices found
-                </TableCell>
-              </TableRow>
-           ) : filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
+            {filtered.length === 0 ? (<TableRow><TableCell colSpan={9} align="center" sx={{ py: 4, color: "text.secondary" }}>No Approved invoices found</TableCell></TableRow>) : filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
               <TableRow key={inv.id} hover>
                 <TableCell sx={{ color: "#1976d2", fontWeight: "bold" }}>{inv.invoiceNo}</TableCell>
                 <TableCell>{inv.originalInvoiceNo}</TableCell>
@@ -245,13 +256,11 @@ const filtered = normalizedInvoices
                 <TableCell>{inv.invoiceDate}</TableCell>
                 <TableCell>{inv.dueDate}</TableCell>
                 <TableCell><strong>{formatPrice(inv.grandTotal)}</strong></TableCell>
-                <TableCell sx={{ color: inv.balanceAmount > 0 ? "#d32f2f" : "#2e7d32" }}>
-                  {formatPrice(inv.balanceAmount)}
-                </TableCell>
+                <TableCell sx={{ color: inv.balanceAmount > 0 ? "#d32f2f" : "#2e7d32" }}>{formatPrice(inv.balanceAmount)}</TableCell>
                 <TableCell>
                   <Chip
                     label={inv.balanceAmount > 0 ? "Partially Paid" : "Paid"}
-                    color={STATUS_COLOR[inv.status] || "default"}
+                    color={STATUS_COLOR[inv.status.toLowerCase()] || "default"}
                     size="small"
                   />
                 </TableCell>
@@ -295,7 +304,7 @@ const filtered = normalizedInvoices
                 <Typography color="text.secondary">Status</Typography>
                 <Chip
                   label={selected.balanceAmount > 0 ? "Partially Paid" : "Paid"}
-                  color={STATUS_COLOR[selected.status] || "default"}
+                  color={STATUS_COLOR[selected.status?.toLowerCase()] || "default"}
                 />
               </Grid>
               <Grid item xs={4}>

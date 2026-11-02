@@ -1,0 +1,167 @@
+/**
+ * Glassmorphism Theme - Frosted Glass Effect
+ * Semi-transparent cards with blur and vibrant gradients
+ */
+
+:root {
+  --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --bg-card: rgba(255, 255, 255, 0.25);
+  --bg-hover: rgba(255, 255, 255, 0.35);
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6e;
+  --border-color: rgba(255, 255, 255, 0.3);
+  --shadow-sm: 0 8px 32px rgba(31, 38, 135, 0.15);
+  --shadow-md: 0 8px 32px rgba(31, 38, 135, 0.25);
+  --shadow-lg: 0 8px 32px rgba(31, 38, 135, 0.35);
+  --navy: #667eea;
+  --hrms: #667eea;
+  --invoice: #f093fb;
+  --ops: #4facfe;
+  --crm: #43e97b;
+  --good: #10b981;
+  --warning: #f59e0b;
+  --bad: #ef4444;
+  --present: #10b981;
+  --late: #f59e0b;
+  --absent: #ef4444;
+  --sales: #3b82f6;
+  --receipts: #10b981;
+  --expenses: #ef4444;
+}
+
+.admin-overview {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.section-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+.section-card:hover {
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+}
+
+.section-card--hrms {
+  background: rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.section-card--invoice {
+  background: rgba(240, 147, 251, 0.15);
+  border: 1px solid rgba(240, 147, 251, 0.3);
+}
+
+.section-card--ops {
+  background: rgba(79, 172, 254, 0.15);
+  border: 1px solid rgba(79, 172, 254, 0.3);
+}
+
+.section-card--crm {
+  background: rgba(67, 233, 123, 0.15);
+  border: 1px solid rgba(67, 233, 123, 0.3);
+}
+
+.section-card__header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-card__icon {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  color: #667eea;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+}
+
+.section-card--invoice .section-card__icon {
+  color: #f093fb;
+  box-shadow: 0 4px 16px rgba(240, 147, 251, 0.2);
+}
+
+.section-card--ops .section-card__icon {
+  color: #4facfe;
+  box-shadow: 0 4px 16px rgba(79, 172, 254, 0.2);
+}
+
+.section-card--crm .section-card__icon {
+  color: #43e97b;
+  box-shadow: 0 4px 16px rgba(67, 233, 123, 0.2);
+}
+
+.small-card {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(31, 38, 135, 0.1);
+}
+
+.small-card:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.small-card__value {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-card--invoice .small-card__value {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-card--ops .small-card__value {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-card--crm .small-card__value {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.attention-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+.attention-card__value {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.chart-card,
+.ops-panel,
+.bottom-panel {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+.chart-card:hover,
+.ops-panel:hover,
+.bottom-panel:hover {
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.25);
+}

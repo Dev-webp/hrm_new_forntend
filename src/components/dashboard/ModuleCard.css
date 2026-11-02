@@ -1,0 +1,152 @@
+/* Module Card Styles */
+.module-card {
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border, #dce5f0);
+  border-radius: var(--border-radius-xl, 12px);
+  padding: var(--spacing-6, 24px);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+  transition: all 200ms ease-in-out;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.module-card:hover {
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.16));
+  transform: translateY(-4px);
+}
+
+.module-card--loading {
+  pointer-events: none;
+}
+
+.module-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border, #dce5f0);
+}
+
+.module-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.module-card__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #17243a);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.module-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.module-card__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.module-card__metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary, #17243a);
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.module-card__metric-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #65748b);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.module-card__footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--border, #dce5f0);
+  text-align: right;
+}
+
+.module-card__link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-blue, #1769e0);
+  transition: color 150ms ease-in-out;
+}
+
+.module-card:hover .module-card__link {
+  color: var(--primary-dark, #10264a);
+}
+
+/* Loading Skeleton */
+.module-card__skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border, #dce5f0);
+}
+
+.module-card__skeleton-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  flex-shrink: 0;
+}
+
+.module-card__skeleton-title {
+  height: 18px;
+  width: 120px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.module-card__skeleton-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.module-card__skeleton-metric {
+  height: 40px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .module-card {
+    padding: var(--spacing-4, 16px);
+  }
+
+  .module-card__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .module-card__metric-value {
+    font-size: 20px;
+  }
+}

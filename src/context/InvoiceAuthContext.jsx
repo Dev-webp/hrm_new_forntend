@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
-const INVOICE_API_URL = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000";
+// Works whether VITE_INVOICE_API_URL is "http://localhost:5000" or "http://localhost:5000/api".
+const INVOICE_ORIGIN = (import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000")
+  .replace(/\/+$/, "")
+  .replace(/\/api$/, "");
 
 const InvoiceAuthContext = createContext(null);
 
@@ -45,7 +48,7 @@ export function InvoiceAuthProvider({ hasInvoiceAccess, children }) {
         }
 
         console.log(`[InvoiceAuthContext] SSO STEP 2 START (auth/sso), timestamp: ${performance.now()}`);
-        const exchangeRes = await fetch(`${INVOICE_API_URL}/auth/sso`, {
+        const exchangeRes = await fetch(`${INVOICE_ORIGIN}/api/auth/sso`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssoToken: ssoData.ssoToken }),

@@ -1,5 +1,5 @@
 .admin-breaks-page {
-  padding: 28px 32px 48px;
+  padding: 20px 24px 32px;
   background: #FFFFFF;
 }
 
@@ -144,15 +144,22 @@
   border-collapse: collapse;
   font-size: 0.8rem;
   min-width: 1000px;
+  border: 1px solid rgba(255, 140, 0, 0.2);
 }
 
 .admin-breaks-page .breaks-table th {
   text-align: left;
-  padding: 16px 12px;
-  background: #EAF4FF;
-  color: #FF8C00;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+  padding: 12px 12px;
+  background: #FFF4E5;
+  color: #1A2B4B;
+  font-weight: 700;
+  font-size: 14px;
+  border-bottom: 2px solid #FF8C00;
+  border-right: 1px solid rgba(255, 140, 0, 0.3);
+}
+
+.admin-breaks-page .breaks-table th:last-child {
+  border-right: none;
 }
 
 .admin-breaks-page .breaks-table th:nth-child(6) {
@@ -165,9 +172,15 @@
 }
 
 .admin-breaks-page .breaks-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid rgba(255, 140, 0, 0.1);
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 140, 0, 0.15);
+  border-right: 1px solid rgba(255, 140, 0, 0.1);
   vertical-align: middle;
+  font-size: 13px;
+}
+
+.admin-breaks-page .breaks-table td:last-child {
+  border-right: none;
 }
 
 .admin-breaks-page .break-time-cell {

@@ -1,0 +1,593 @@
+/**
+ * VJC Overseas Unified Portal - Professional Dashboard Styles
+ * Enterprise-grade dashboard design system
+ */
+
+:root {
+  /* Color Palette */
+  --primary-blue: #1769E0;
+  --primary-dark: #10264A;
+  --primary-light: #4A90E2;
+
+  --success: #159A63;
+  --warning: #E99A17;
+  --danger: #D9363E;
+  --info: #3983E6;
+
+  --background: #F5F8FC;
+  --surface: #FFFFFF;
+  --border: #DCE5F0;
+
+  --text-primary: #17243A;
+  --text-secondary: #65748B;
+  --text-muted: #8B95A5;
+  --text-inverse: #FFFFFF;
+
+  /* Spacing */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.20);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+
+.dashboard {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--background);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   WELCOME SECTION
+   ============================================================ */
+
+.dashboard__welcome {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__welcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-4);
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+
+.dashboard__welcome-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.dashboard__welcome-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: var(--spacing-1) 0 0 0;
+  font-weight: 500;
+}
+
+.dashboard__welcome-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.dashboard__date-filter {
+  display: flex;
+  gap: var(--spacing-1);
+  background: var(--background);
+  padding: var(--spacing-1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.dashboard__date-filter button {
+  padding: var(--spacing-2) var(--spacing-4);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.dashboard__date-filter button:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dashboard__date-filter button.active {
+  background: var(--surface);
+  color: var(--primary-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__last-updated {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ============================================================
+   MODULE CARDS GRID
+   ============================================================ */
+
+.dashboard__modules {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+}
+
+/* ============================================================
+   KPI GRID
+   ============================================================ */
+
+.dashboard__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
+}
+
+/* ============================================================
+   CHART SECTION
+   ============================================================ */
+
+.dashboard__chart-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-5);
+}
+
+.dashboard__chart-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.25px;
+}
+
+.dashboard__chart-controls {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.dashboard__chart-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--spacing-6);
+}
+
+.dashboard__chart-large {
+  grid-column: span 8;
+}
+
+.dashboard__chart-medium {
+  grid-column: span 4;
+}
+
+.dashboard__chart-small {
+  grid-column: span 3;
+}
+
+/* ============================================================
+   OPS & LEADS SECTION
+   ============================================================ */
+
+.dashboard__ops-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-5);
+}
+
+.dashboard__section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.25px;
+}
+
+.dashboard__section-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-blue);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.dashboard__section-link:hover {
+  color: var(--primary-dark);
+}
+
+.dashboard__ops-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+.dashboard__pending-work {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  margin-top: var(--spacing-5);
+}
+
+.dashboard__pending-work-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-3) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard__pending-work-items {
+  display: flex;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.dashboard__pending-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.dashboard__pending-item:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__pending-item-count {
+  background: var(--danger);
+  color: var(--text-inverse);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  min-width: 20px;
+  text-align: center;
+}
+
+.dashboard__pending-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   ATTENDANCE SUMMARY
+   ============================================================ */
+
+.dashboard__attendance-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-4);
+}
+
+/* ============================================================
+   RECENT ACTIVITY
+   ============================================================ */
+
+.dashboard__activity-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+}
+
+.dashboard__activity-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-4);
+}
+
+.dashboard__activity-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dashboard__activity-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard__activity-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard__activity-table td {
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: var(--spacing-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard__activity-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard__activity-table tr:hover {
+  background: var(--background);
+}
+
+/* ============================================================
+   QUICK ACTIONS
+   ============================================================ */
+
+.dashboard__quick-actions {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.dashboard__quick-action {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.dashboard__quick-action:hover {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: var(--text-inverse);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard__quick-action-icon {
+  font-size: 18px;
+}
+
+.dashboard__quick-action-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   NOTIFICATIONS
+   ============================================================ */
+
+.dashboard__notifications {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.dashboard__notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--background);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--primary-blue);
+  transition: all var(--transition-base);
+}
+
+.dashboard__notification-item:hover {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__notification-item.urgent {
+  border-left-color: var(--danger);
+}
+
+.dashboard__notification-item.warning {
+  border-left-color: var(--warning);
+}
+
+.dashboard__notification-item.success {
+  border-left-color: var(--success);
+}
+
+.dashboard__notification-content {
+  flex: 1;
+}
+
+.dashboard__notification-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.dashboard__notification-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+
+@media (max-width: 1200px) {
+  .dashboard__modules {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard__ops-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .dashboard__activity-section {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard__chart-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .dashboard__chart-large,
+  .dashboard__chart-medium,
+  .dashboard__chart-small {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard__welcome {
+    padding: var(--spacing-4);
+  }
+
+  .dashboard__welcome-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard__welcome-title {
+    font-size: 22px;
+  }
+
+  .dashboard__modules {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard__kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard__ops-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard__attendance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard__quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard__chart-section,
+  .dashboard__ops-section,
+  .dashboard__attendance-summary {
+    padding: var(--spacing-4);
+  }
+}

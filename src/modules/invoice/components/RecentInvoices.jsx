@@ -57,29 +57,12 @@ function RecentInvoices({ invoices = [] }) {
       <TableContainer>
         <Table>
           <TableHead>
-                        <TableRow>
-              <TableCell sx={{ borderRight: "1px solid #e5e7eb" }}><b>Invoice No</b></TableCell>
-              <TableCell sx={{ borderRight: "1px solid #e5e7eb" }}><b>Original Invoice</b></TableCell>
-<TableCell sx={{ borderRight: "1px solid #e5e7eb" }}><b>Customer Name</b></TableCell>
-              <TableCell align="right" sx={{ borderRight: "1px solid #e5e7eb" }}><b>Amount</b></TableCell>
-              <TableCell align="right" sx={{ borderRight: "1px solid #e5e7eb" }}><b>Paid</b></TableCell>
-              <TableCell><b>Status</b></TableCell>
-            </TableRow>
+                        <TableRow><TableCell sx={{ borderRight: "1px solid #e5e7eb" }}><b>Invoice No</b></TableCell><TableCell sx={{ borderRight: "1px solid #e5e7eb" }}><b>Original Invoice</b></TableCell><TableCell sx={{ borderRight: "1px solid #e5e7eb" }}><b>Customer Name</b></TableCell><TableCell align="right" sx={{ borderRight: "1px solid #e5e7eb" }}><b>Amount</b></TableCell><TableCell align="right" sx={{ borderRight: "1px solid #e5e7eb" }}><b>Paid</b></TableCell><TableCell><b>Status</b></TableCell></TableRow>
           </TableHead>
 
           <TableBody>
-            {displayed.length === 0 ? (
-              <TableRow>
-<TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>
-                  No invoices yet
-                </TableCell>
-              </TableRow>
-            ) : displayed.map((invoice) => (
-              <TableRow
-                key={invoice.invoiceNo}
-                hover
-                sx={{ "&:hover": { backgroundColor: "#f8fafc" } }}
-              >
+            {displayed.length === 0 ? (<TableRow><TableCell colSpan={6} align="center" sx={{ py: 3, color: "text.secondary" }}>No invoices yet</TableCell></TableRow>) : displayed.map((invoice) => (
+              <TableRow key={invoice.invoiceNo} hover sx={{ "&:hover": { backgroundColor: "#f8fafc" } }}>
                 <TableCell sx={{ color: "#2563eb", fontWeight: 600, cursor: "pointer", borderRight: "1px solid #e5e7eb" }}>
                   {invoice.invoiceNo}
                 </TableCell>
@@ -89,28 +72,7 @@ function RecentInvoices({ invoices = [] }) {
 </TableCell>
 <TableCell sx={{ borderRight: "1px solid #e5e7eb" }}>{invoice.customerName}</TableCell>
 
-                <TableCell align="right" sx={{ fontWeight: 700, borderRight: "1px solid #e5e7eb" }}>
-                  {fmt(invoice.amount)}
-                </TableCell>
-
-                <TableCell align="right" sx={{ fontWeight: 700, color: "#16a34a", borderRight: "1px solid #e5e7eb" }}>
-                  {fmt(invoice.paidAmount)}
-                </TableCell>
-
-                <TableCell>
-                  <Chip
-                    label={invoice.status}
-                    color={
-                      invoice.status === "Paid"
-                        ? "success"
-                        : invoice.status === "Overdue"
-                        ? "error"
-                        : "warning"
-                    }
-                    size="small"
-                    sx={{ fontWeight: "bold" }}
-                  />
-                </TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700, borderRight: "1px solid #e5e7eb" }}>{fmt(invoice.amount)}</TableCell><TableCell align="right" sx={{ fontWeight: 700, color: "#16a34a", borderRight: "1px solid #e5e7eb" }}>{fmt(invoice.paidAmount)}</TableCell><TableCell><Chip label={invoice.status} color={invoice.status === "Paid" ? "success" : invoice.status === "Overdue" ? "error" : "warning"} size="small" sx={{ fontWeight: "bold" }} /></TableCell>
               </TableRow>
             ))}
           </TableBody>

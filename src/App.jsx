@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import { InvoiceAuthProvider } from "./context/InvoiceAuthContext";
+import { OpsAuthProvider } from "./context/OpsAuthContext";
 import { getStoredUser, getStoredRole, isAuthenticated } from "./utils/auth";
 
 import RequireAuth from "./components/RequireAuth";
@@ -44,6 +45,8 @@ const OperationalManagerRoutes = lazy(
 const SubAdminRoutes = lazy(
   () => import("./pages/subadmin/SubAdminRoutes")
 );
+
+const OpsRoutes = lazy(() => import("./modules/ops/OpsRoutes"));
 
 // =====================================================
 // MOBILE DEVICE CHECK
@@ -275,14 +278,22 @@ function AuthenticatedApp() {
    */
 
   const location = useLocation();
-  const hasInvoiceAccess =
-    getStoredUser()?.invoice_access === true;
+  const storedUser = getStoredUser();
+  const hasInvoiceAccess = storedUser?.invoice_access === true;
+  // HRMS only decides whether the person may enter OPS. Their OPS roles are
+  // read from OPS itself after sign-in. Keyed by user id so a different person
+  // on the same browser always starts with no OPS session.
+  const hasOpsAccess = storedUser?.ops_access === true;
 
   return (
     <InvoiceAuthProvider
       key={location.pathname.split("/")[1]}
       hasInvoiceAccess={hasInvoiceAccess}
     >
+      <OpsAuthProvider
+        key={storedUser?.id ?? "anonymous"}
+        hasOpsAccess={hasOpsAccess}
+      >
       <Suspense
         fallback={
           <PageLoading label="Loading HRMS…" />
@@ -415,6 +426,15 @@ function AuthenticatedApp() {
             />
           </Route>
 
+          <Route
+            path="/ops/*"
+            element={
+              <RequireAuth>
+                <OpsRoutes />
+              </RequireAuth>
+            }
+          />
+
           {/* =================================================
               HOME
           ================================================= */}
@@ -440,6 +460,7 @@ function AuthenticatedApp() {
 
         </Routes>
       </Suspense>
+      </OpsAuthProvider>
     </InvoiceAuthProvider>
   );
 }

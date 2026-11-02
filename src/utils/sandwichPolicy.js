@@ -32,7 +32,10 @@ function getDayState(att, isHoliday, isPreJoining, todayStr, approvedLeaveDates,
     (att.check_in_time && !att.check_out_time);
 
   if (isInferred) {
-    if (!att) return "pending";
+    if (!att) {
+      // No record on a past date is "off" for sandwich purposes
+      return "off";
+    }
     if (att.date && att.date > todayStr) return "pending";
     if (att.date && att.date === todayStr && !att.check_out_time) return "pending";
   }
@@ -137,9 +140,9 @@ export function applySandwichPolicy(data = {}, options = {}) {
   const allowanceUsage = new Map();
   const sandwichResults = [];
 
-  // Anchors = Sundays and company holidays inside the payroll month, in date order
+  // Anchors = Only Sundays inside the payroll month, in date order (holidays excluded)
   const anchors = [...allDates].sort()
-    .filter((ds) => inPeriod(ds) && (getDayOfWeek(ds) === 0 || holidayMap.has(ds)));
+    .filter((ds) => inPeriod(ds) && getDayOfWeek(ds) === 0);
 
   for (const anchor of anchors) {
     const isSunday = getDayOfWeek(anchor) === 0;
@@ -154,12 +157,13 @@ export function applySandwichPolicy(data = {}, options = {}) {
     if (joiningDate && anchor < joiningDate) continue;       // before joining
 
     // The day before the anchor must be an ordinary day that is "off"
-    const before = addDays(anchor, -1);
+    // If day before is non_ordinary (holiday/Sunday), check the day before that
+    let before = addDays(anchor, -1);
+    let beforeState = stateOf(before);
     if (!isOrdinaryDay(before, holidayMap)) {
-      if (holidayMap.has(before)) add(before, false, "HOLIDAY_EXCLUDED");
-      continue;
+      before = addDays(anchor, -2);
+      beforeState = stateOf(before);
     }
-    const beforeState = stateOf(before);
     if (beforeState === "worked")   { add(before, false, "SATURDAY_WORKED");  continue; }
     if (beforeState === "excluded") { add(before, false, "HOLIDAY_EXCLUDED"); continue; }
     if (beforeState !== "off")      { add(before, false, "SATURDAY_PENDING"); continue; }

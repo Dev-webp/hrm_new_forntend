@@ -29,7 +29,9 @@ import AddIcon from "@mui/icons-material/Add";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import ListAltIcon from "@mui/icons-material/ListAlt";
-const API = "http://localhost:5000/api";
+import TeamMonitorTab from "./TeamMonitorTab";
+
+const API = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000/api";
 
 // ── Assumption: after login you store the logged-in user's basic info here.
 // If your Login.jsx stores it under a different key / shape, just change
@@ -1031,26 +1033,10 @@ function NotesDialog({ open, onClose, lead, onSaved }) {
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "#f5f5f5" }}>
-                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Remark</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Stage</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Reminder</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Commented By</TableCell>
-              </TableRow>
+              <TableRow sx={{ bgcolor: "#f5f5f5" }}><TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell><TableCell sx={{ fontWeight: 700 }}>Remark</TableCell><TableCell sx={{ fontWeight: 700 }}>Stage</TableCell><TableCell sx={{ fontWeight: 700 }}>Reminder</TableCell><TableCell sx={{ fontWeight: 700 }}>Commented By</TableCell></TableRow>
             </TableHead>
             <TableBody>
-              {notes.map((n, i) => (
-                <TableRow key={n.id || i}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>{n.remark}</TableCell>
-                  <TableCell>
-                    <Chip label={n.stage || "Enquiry"} size="small" color="info" variant="outlined" />
-                  </TableCell>
-                  <TableCell>{n.reminder || "—"}</TableCell>
-                  <TableCell>{n.commented_by || "—"}</TableCell>
-                </TableRow>
-              ))}
+              {notes.map((n, i) => (<TableRow key={n.id || i}><TableCell>{i + 1}</TableCell><TableCell>{n.remark}</TableCell><TableCell><Chip label={n.stage || "Enquiry"} size="small" color="info" variant="outlined" /></TableCell><TableCell>{n.reminder || "—"}</TableCell><TableCell>{n.commented_by || "—"}</TableCell></TableRow>))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -1262,35 +1248,10 @@ function PendingAssignmentTab() {
         }}
       >
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-          <TableRow>
-            <TableCell padding="none" sx={{ width: 56, textAlign: "center" }}>
-              <Checkbox
-                checked={leads.length > 0 && selectedIds.length === leads.length}
-                onChange={toggleSelectAll}
-              />
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 190 }}>Created - Updated</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 200 }}>Name</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 130 }}>Mobile</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 320 }}>Email</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Interested Country</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 140 }}>Service Type</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Source</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Status</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Department</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 230 }}>Review</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 180 }}>Branch</TableCell>
-            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 400 }}>Last Remark</TableCell>
-          </TableRow>
+          <TableRow><TableCell padding="none" sx={{ width: 56, textAlign: "center" }}><Checkbox checked={leads.length > 0 && selectedIds.length === leads.length} onChange={toggleSelectAll} /></TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 190 }}>Created - Updated</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 200 }}>Name</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 130 }}>Mobile</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 320 }}>Email</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Interested Country</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 140 }}>Service Type</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Source</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Status</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Department</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 230 }}>Review</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 180 }}>Branch</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 400 }}>Last Remark</TableCell></TableRow>
         </TableHead>
         <TableBody>
-          {leads.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                No pending leads — everything got assigned.
-              </TableCell>
-            </TableRow>
-          )}
+          {leads.length === 0 && (<TableRow><TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>No pending leads — everything got assigned.</TableCell></TableRow>)}
                     {leads.map((lead) => (
             <TableRow key={lead.id}>
               <TableCell padding="none" sx={{ textAlign: "center" }}>
@@ -1316,43 +1277,7 @@ function PendingAssignmentTab() {
                 </Typography>
               </TableCell>
               <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.lead_name}</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.contact_number}</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.email || "—"}</TableCell>
-              <TableCell>
-                {(lead.interested_countries || []).map((c) => (
-                  <Chip key={c} label={c} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-                ))}
-              </TableCell>
-              <TableCell>{lead.service_type || "—"}</TableCell>
-              <TableCell>{lead.source}</TableCell>
-              <TableCell>
-                <Chip label={lead.status || "New"} size="small" variant="outlined" />
-              </TableCell>
-              <TableCell>{lead.department_name || "—"}</TableCell>
-              <TableCell>
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<HistoryIcon fontSize="small" />}
-                    onClick={() => openHistory(lead)}
-                    sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}
-                  >
-                    History
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<StickyNote2Icon fontSize="small" />}
-                    onClick={() => { setNotesLead(lead); setNotesOpen(true); }}
-                    sx={{ textTransform: "none", minWidth: "auto", px: 1, height: 32, borderRadius: 1 }}
-                  >
-                    Notes
-                  </Button>
-                </Stack>
-              </TableCell>
-              <TableCell>{lead.branch || "—"}</TableCell>
-              <TableCell>{lead.last_remark || "—"}</TableCell>
+              <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.contact_number}</TableCell><TableCell sx={{ whiteSpace: "nowrap" }}>{lead.email || "—"}</TableCell><TableCell>{(lead.interested_countries || []).map((c) => (<Chip key={c} label={c} size="small" sx={{ mr: 0.5, mb: 0.5 }} />))}</TableCell><TableCell>{lead.service_type || "—"}</TableCell><TableCell>{lead.source}</TableCell><TableCell><Chip label={lead.status || "New"} size="small" variant="outlined" /></TableCell><TableCell>{lead.department_name || "—"}</TableCell><TableCell><Stack direction="row" spacing={0.5} alignItems="center"><Button size="small" variant="outlined" startIcon={<HistoryIcon fontSize="small" />} onClick={() => openHistory(lead)} sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}>History</Button><Button size="small" variant="outlined" startIcon={<StickyNote2Icon fontSize="small" />} onClick={() => { setNotesLead(lead); setNotesOpen(true); }} sx={{ textTransform: "none", minWidth: "auto", px: 1, height: 32, borderRadius: 1 }}>Notes</Button></Stack></TableCell><TableCell>{lead.branch || "—"}</TableCell><TableCell>{lead.last_remark || "—"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -1416,11 +1341,7 @@ function ReminderBell() {
   const [reminders, setReminders] = useState([]);
   const [open, setOpen] = useState(false);
 
-  console.log(`[ReminderBell] Component MOUNT, timestamp: ${performance.now()}`);
-
   const fetchDue = async () => {
-    const authHeaderValue = authHeader();
-    console.log(`[ReminderBell] fetchDue called - Authorization header: ${JSON.stringify(authHeaderValue)}, timestamp: ${performance.now()}`);
     try {
       const res = await fetch(`${API}/leads/reminders/due`, { headers: authHeader() });
       const data = await res.json();
@@ -1431,7 +1352,6 @@ function ReminderBell() {
   };
 
   useEffect(() => {
-    console.log(`[ReminderBell] useEffect triggered, calling fetchDue, timestamp: ${performance.now()}`);
     fetchDue();
     const interval = setInterval(fetchDue, 45000);
     return () => clearInterval(interval);
@@ -1687,6 +1607,7 @@ const [statusFilter, setStatusFilter] = useState("All");
           <Tab label="View Enquiry" />
           {isChairman && <Tab label="Departments" />}
           {isChairman && <Tab label="Pending Assignment" />}
+          <Tab label="Team Monitor" value={4} />
         </Tabs>
         <Stack direction="row" spacing={1} alignItems="center">
           {isChairman && <ChairmanAssignmentFeed />}
@@ -1712,6 +1633,9 @@ const [statusFilter, setStatusFilter] = useState("All");
 
       {/* ── Tab 3: Pending Assignment (chairman only) ── */}
       {tab === 3 && isChairman && <PendingAssignmentTab />}
+
+      {/* ── Tab 4: Team Monitor ── */}
+      {tab === 4 && <TeamMonitorTab />}
 
       {/* ── Tab 1: View Enquiry ── */}
       {tab === 1 && (

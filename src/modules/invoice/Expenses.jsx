@@ -5,7 +5,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 // ─── Config ──────────────────────────────────────────────────
-const API = "http://localhost:5000/api";
+
+const API = import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api";
 
 const CATEGORIES = [
   "Travel", "Food", "Office Supplies", "Rent", "Mobile Recharge",

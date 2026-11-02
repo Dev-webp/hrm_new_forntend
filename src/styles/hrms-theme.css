@@ -124,16 +124,19 @@ body.hrms-dashboard {
 .sidebar .nav-item.active,
 .employee-sidebar .nav-item.active,
 .manager-sidebar .nav-item.active {
-  background: #ff8c00 !important;
-  border-left-color: #ffffff !important;
+  background: linear-gradient(90deg, #ff8c00 0%, #ff6b00 100%) !important;
+  border-left: 3px solid #ffffff !important;
   color: #ffffff !important;
-  box-shadow: 0 8px 18px rgba(8, 48, 111, 0.22);
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+  padding-left: 11px !important;
 }
 
 .sidebar .nav-item.active i,
 .employee-sidebar .nav-item.active i,
 .manager-sidebar .nav-item.active i {
   color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 .employee-sidebar .emp-avatar,

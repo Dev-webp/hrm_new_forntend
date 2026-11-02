@@ -1,6 +1,7 @@
 // Reusable stat/card widgets used across admin dashboard sections
 
 export function WelcomeStat({ value, label, colorClass, icon, accentColor }) {
+  const displayValue = isNaN(value) ? 0 : value;
   return (
     <div
       className="welcome-stat"
@@ -12,7 +13,7 @@ export function WelcomeStat({ value, label, colorClass, icon, accentColor }) {
         </div>
       ) : null}
       <div className="ws-copy">
-        <div className={`ws-val ${colorClass}`}>{value}</div>
+        <div className={`ws-val ${colorClass}`}>{displayValue}</div>
         <div className="ws-lbl">{label}</div>
       </div>
     </div>
@@ -20,6 +21,7 @@ export function WelcomeStat({ value, label, colorClass, icon, accentColor }) {
 }
 
 export function StripTile({ icon, label, value, accentColor }) {
+  const displayValue = isNaN(value) ? 0 : value;
   return (
     <div
       className="strip-tile"
@@ -29,7 +31,7 @@ export function StripTile({ icon, label, value, accentColor }) {
         <i className={icon} />
       </div>
       <div className="tile-copy">
-        <div className="tile-val">{value}</div>
+        <div className="tile-val">{displayValue}</div>
         <div className="tile-lbl">{label}</div>
       </div>
     </div>

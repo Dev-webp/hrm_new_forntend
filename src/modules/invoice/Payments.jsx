@@ -23,7 +23,7 @@ import RefreshIcon      from "@mui/icons-material/Refresh";
 import CloseIcon        from "@mui/icons-material/Close";
 
 // ─── Config ──────────────────────────────────────────────────
-const API = "http://localhost:5000/api";
+const API = import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api";
 
 const formatPrice = (value) =>
   Number(value || 0).toLocaleString("en-IN", {
@@ -318,21 +318,10 @@ function ViewPaymentDialog({ open, onClose, payment }) {
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-                  <TableRow>
-                    {["Stage", "Sent On", "Method", "Note"].map(h => (
-                      <TableCell key={h}><strong>{h}</strong></TableCell>
-                    ))}
-                  </TableRow>
+                  <TableRow>{["Stage", "Sent On", "Method", "Note"].map(h => (<TableCell key={h}><strong>{h}</strong></TableCell>))}</TableRow>
                 </TableHead>
                 <TableBody>
-                  {payment.reminderLog.map((log, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Chip label={log.stage} size="small" color="warning" /></TableCell>
-                      <TableCell>{log.date}</TableCell>
-                      <TableCell>{log.method}</TableCell>
-                      <TableCell>{log.note || "—"}</TableCell>
-                    </TableRow>
-                  ))}
+                  {payment.reminderLog.map((log, i) => (<TableRow key={i}><TableCell><Chip label={log.stage} size="small" color="warning" /></TableCell><TableCell>{log.date}</TableCell><TableCell>{log.method}</TableCell><TableCell>{log.note || "—"}</TableCell></TableRow>))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -419,13 +408,16 @@ const res  = await fetch(`${API}/customers`, {
   // ── Fetch invoices from backend ──
   const fetchInvoices = useCallback(async () => {
     try {
-      const res  = await fetch(`${API}/sales-invoices`);
+      const token = localStorage.getItem("vjc_invoice_auth");
+      const res  = await fetch(`${API}/invoices`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       const data = await res.json();
      const list = Array.isArray(data)
   ? data
   : (data.data || data.invoices || []);
 
-console.log("SALES INVOICES API:", list);
+console.log("INVOICES API:", list);
 
 setInvoices(list);
     } catch (err) {
@@ -669,7 +661,16 @@ id: inv.invoice_id || inv.invoice_number || inv.invoice_no || inv.id || "",  cus
         </Box>
       ) : (
         <TableContainer component={Paper}>
-          <Table>
+          <Table
+            sx={{
+              "& th, & td": {
+                borderRight: "1px solid #e5e7eb",
+              },
+              "& th:last-child, & td:last-child": {
+                borderRight: "none",
+              },
+            }}
+          >
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
               <TableRow>
                 {["Payment #","Invoice #","Customer","Due Date","Amount Due","Received","Payment Method","Status","Actions"].map((h) => (

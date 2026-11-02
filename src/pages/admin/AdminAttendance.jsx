@@ -54,7 +54,7 @@ function AdminAttendance() {
   const [lateStatusFilter, setLateStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
-  const [lateAlertsVisible, setLateAlertsVisible] = useState(true);
+  const [lateAlertsVisible, setLateAlertsVisible] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
 
   const [stats, setStats] = useState(null);
@@ -318,7 +318,7 @@ const handleBranchSelect = (branch) => {
           </h1>
           <p>
             Live from database · Real‑time editing · {branchLabel} ·{" "}
-            <i className="fas fa-calendar-check" /> {currentDateStr}
+            {currentDateStr}
           </p>
         </div>
 
@@ -379,8 +379,6 @@ const handleBranchSelect = (branch) => {
         loading={loading}
       />
 
- 
-
       <div className="card">
         <div className="card-header">
           <span>
@@ -399,6 +397,8 @@ const handleBranchSelect = (branch) => {
           onSearchChange={setSearch}
           lateStatusFilter={lateStatusFilter}
           onLateStatusFilterChange={setLateStatusFilter}
+          onToggleLateEmployees={handleToggleLateAlerts}
+          lateAlertsVisible={lateAlertsVisible}
         />
         <AttendanceStatusLegend />
 

@@ -9,7 +9,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-const API = "http://localhost:5000/api";
+const API = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000/api";
 
 const statusColor = (s) => s === "Active" ? "success" : s === "Inactive" ? "default" : "warning";
 const typeColor = (t) => t === "Business" ? "primary" : "secondary";
@@ -359,7 +359,6 @@ fetch(`${API}/customers`, {
   console.log("FULL JSON =", JSON.stringify(d, null, 2));
 
   console.log("FULL RESPONSE =", d);
-  console.log("CUSTOMER OPTIONS (from API) =", d.customers || []);
 setCustomerOptions(d.customers || []);
 })
     .catch((err) => {
@@ -394,8 +393,7 @@ const taxType =
     ? (activeCustomer?.state === form.stateBy ? "CGST_SGST" : "IGST")
     : form.taxType;
 
-const taxPercent = 18;
-  const extraServicesTotal = extraServices.reduce((s, x) => s + Number(x.amount || 0), 0);
+const taxPercent = form.paymentMode === "Cash" ? 0 : 18;  const extraServicesTotal = extraServices.reduce((s, x) => s + Number(x.amount || 0), 0);
   const passThroughTotal = passThroughExpenses.reduce((s, x) => s + Number(x.amount || 0), 0); // NEW
   const totalAmountNum = Number(form.totalAmount || 0) + extraServicesTotal;
   // passThroughTotal ఇక్కడ కలవదు — GST calculation తర్వాత, direct గా Grand Total లో కలుస్తుంది
@@ -1204,6 +1202,36 @@ function PaymentDialog({ open, onClose, customer, onSuccess }) {
   );
 }
 
+// ── Sticky (frozen) column helpers ─────────────────────────────────────────
+const STICKY_SHADOW = "2px 0 4px -2px rgba(0,0,0,0.25)";
+const STICKY_BORDER = "1px solid #e5e7eb";
+
+const stickyBase = (left, width) => ({
+  position: "sticky",
+  left,
+  width,
+  minWidth: width,
+  maxWidth: width,
+  boxSizing: "border-box",
+  overflow: "hidden",              // text leak ("iding") aapadaniki
+  borderRight: STICKY_BORDER,      // column line sticky tho paatu undali
+  backgroundClip: "padding-box",   // border background tho kappabadakunda
+});
+
+const stickyHead = (left, width, last = false) => ({
+  ...stickyBase(left, width),
+  zIndex: 3,
+  backgroundColor: "#f5f5f5",
+  ...(last ? { boxShadow: STICKY_SHADOW } : {}),
+});
+
+const stickyBody = (left, width, last = false) => ({
+  ...stickyBase(left, width),
+  zIndex: 2,
+  backgroundColor: "#fff",
+  ...(last ? { boxShadow: STICKY_SHADOW } : {}),
+});
+
 // ── Main Component ─────────────────────────────────────────────────────────
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -1238,6 +1266,10 @@ function Customers() {
 
   // NEW — PDFs dropdown (Invoice PDF / Agreement PDF)
   const [pdfMenuAnchor, setPdfMenuAnchor] = useState({ el: null, customerId: null });
+
+  // NEW — Send to Ops confirm dialog
+  const [sendToOpsDialog, setSendToOpsDialog] = useState({ open: false, customer: null });
+  const [sendToOpsLoading, setSendToOpsLoading] = useState(false);
 
   const persistInvoicedIds = (nextSet) => {
     try {
@@ -1378,30 +1410,72 @@ const res = await fetch(`${API}/customers/${selected.id}`, {
       alert("❌ Invoice ID not found for this customer");
       return;
     }
-    try {
-      const token = localStorage.getItem("vjc_invoice_auth");
-      const res = await fetch(`${API}/invoices/${invoiceId}/download-agreement-pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        alert("❌ Agreement not yet generated for this invoice");
-        return;
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Agreement-${customerName || "invoice"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
+    try {    } catch (err) {
       alert("❌ Failed to download Agreement PDF");
     }
   };
-  const sortedCustomers = [...customers];
 
+  // ▼▼▼ NEW — paste this whole function here ▼▼▼
+  const handleAgreementLink = async (invoiceId) => {
+    if (!invoiceId) {
+      alert("❌ Invoice ID not found for this customer");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("vjc_invoice_auth");
+      const res = await fetch(`${API}/invoices/${invoiceId}/agreement-link`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(`❌ ${data.message || "Agreement link not available yet"}`);
+        return;
+      }
+      const statusLine = data.signed
+        ? "✅ This agreement is already signed."
+        : "📝 Not signed yet — share this link with the client to sign.";
+      try {
+        await navigator.clipboard.writeText(data.link);
+        alert(`${statusLine}\n\nLink copied to clipboard:\n${data.link}`);
+      } catch {
+        window.prompt(`${statusLine}\nCopy this agreement link:`, data.link);
+      }
+    } catch (err) {
+      alert("❌ Failed to fetch agreement link");
+    }
+  };
+  // ▲▲▲ NEW function ends here ▲▲▲
+
+  // NEW — Send to Ops: opens confirm dialog first
+  const openSendToOpsDialog = (customer) => {
+    setSendToOpsDialog({ open: true, customer });
+  };
+
+  const confirmSendToOps = async () => {
+    const customer = sendToOpsDialog.customer;
+    if (!customer?.last_invoice_id) return;
+    setSendToOpsLoading(true);
+    try {
+      const token = localStorage.getItem("vjc_invoice_auth");
+      const res = await fetch(`${API}/invoices/${customer.last_invoice_id}/send-to-ops`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(`❌ ${data.message || "Failed to send to Ops"}`);
+      } else {
+        alert("✅ Sent to Ops — the counselor can now review and add this lead.");
+        fetchCustomers();
+      }
+    } catch (err) {
+      alert("❌ Failed to send to Ops");
+    } finally {
+      setSendToOpsLoading(false);
+      setSendToOpsDialog({ open: false, customer: null });
+    }
+  };
+  const sortedCustomers = [...customers];
 const displayCustomers = sortedCustomers.filter((customer) => {
   if (filterStatus === "Paid") {
     return Number(customer.outstanding || 0) === 0;
@@ -1478,51 +1552,37 @@ const displayCustomers = sortedCustomers.filter((customer) => {
 ) : ( 
    <>
 <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-          <Table
-            sx={{
-              "& th, & td": {
-                borderRight: "1px solid #e5e7eb",
-              },
-              "& th:last-child, & td:last-child": {
-                borderRight: "none",
-              },
-            }}
-          >
+<Table
+  sx={{
+    borderCollapse: "separate",
+    borderSpacing: 0,
+    "& th, & td": {
+      borderRight: "1px solid #e5e7eb",
+    },
+    "& th:last-child, & td:last-child": {
+      borderRight: "none",
+    },
+  }}
+>
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-                            <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Customer ID</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Customer Name</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Service Type</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Payment </TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Outstanding</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Last Transaction</TableCell>
-                               <TableCell sx={{ fontWeight: 700, minWidth: 230 }}>Actions</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>PDFs</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Discount Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-              </TableRow>
+                            <TableRow><TableCell sx={{ fontWeight: 700, ...stickyHead(0, 110) }}>Customer ID</TableCell><TableCell sx={{ fontWeight: 700, ...stickyHead(110, 260) }}>Customer Name</TableCell><TableCell sx={{ fontWeight: 700, ...stickyHead(370, 220, true) }}>Service Type</TableCell><TableCell sx={{ fontWeight: 700 }}>Phone</TableCell><TableCell sx={{ fontWeight: 700 }}>Type</TableCell><TableCell sx={{ fontWeight: 700 }}>Payment </TableCell><TableCell sx={{ fontWeight: 700 }}>Outstanding</TableCell><TableCell sx={{ fontWeight: 700 }}>Last Transaction</TableCell><TableCell sx={{ fontWeight: 700, minWidth: 230 }}>Actions</TableCell><TableCell sx={{ fontWeight: 700 }}>PDFs</TableCell><TableCell sx={{ fontWeight: 700 }}>Ops</TableCell><TableCell sx={{ fontWeight: 700 }}>Discount Status</TableCell><TableCell sx={{ fontWeight: 700 }}>Status</TableCell></TableRow>
             </TableHead>
             <TableBody>
-              {customers.length === 0 && (
-                <TableRow>
-                                                                       <TableCell colSpan={12} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                    No customers found. Click "+ ADD CUSTOMER" to create a customer.
-                  </TableCell>
-                </TableRow>
-              )}
+              {customers.length === 0 && (<TableRow><TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>No customers found. Click "+ ADD CUSTOMER" to create a customer.</TableCell></TableRow>)}
 {displayCustomers.map((customer) => (
   
-                <TableRow key={customer.id} hover>
-                  <TableCell>
+<TableRow
+  key={customer.id}
+  hover
+  sx={{ "&:hover > .stickyCol": { backgroundColor: "#f5f5f5" } }}
+><TableCell className="stickyCol" sx={stickyBody(0, 110)}>
   <Typography variant="body2" fontWeight={600} color="primary">
     {customer.display_customer_id || customer.customer_id}
   </Typography>
 </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Avatar sx={{ width: 32, height: 32, fontSize: 12, bgcolor: "#1976d2" }}>
+                  <TableCell className="stickyCol" sx={stickyBody(110, 260)}>
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    <Avatar sx={{ width: 32, height: 32, fontSize: 12, bgcolor: "#1976d2" }}>
                         {customer.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
                       </Avatar>
                       <Box>
@@ -1531,12 +1591,12 @@ const displayCustomers = sortedCustomers.filter((customer) => {
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={customer.service_type || customer.company || "—"}
-                      size="small" variant="outlined" color="info"
-                    />
-                  </TableCell>
+<TableCell className="stickyCol" sx={stickyBody(370, 220, true)}>
+  <Chip
+    label={customer.service_type || customer.company || "—"}
+    size="small" variant="outlined" color="info"
+  />
+</TableCell>
                   <TableCell>{customer.phone}</TableCell>
                   <TableCell>
                     <Chip label={customer.type} color={typeColor(customer.type)} size="small" variant="outlined" />
@@ -1614,14 +1674,48 @@ const displayCustomers = sortedCustomers.filter((customer) => {
                           }}>
                             Invoice PDF
                           </MenuItem>
-                          <MenuItem onClick={() => {
+                                                   <MenuItem onClick={() => {
                             handleDownloadAgreementPdf(customer.last_invoice_id, customer.name);
                             setPdfMenuAnchor({ el: null, customerId: null });
                           }}>
                             Agreement PDF
                           </MenuItem>
+                          <MenuItem onClick={() => {
+                            handleAgreementLink(customer.last_invoice_id);
+                            setPdfMenuAnchor({ el: null, customerId: null });
+                          }}>
+                            Agreement Link
+                          </MenuItem>
                         </Menu>
                       </>
+                    )}
+                  </TableCell>
+                                   <TableCell>
+                    {customer.invoice_status === "Approved" && (
+                      <Stack spacing={0.5} alignItems="flex-start">
+                        {customer.agreement_generated && (
+                          <Chip
+                            label={customer.agreement_signed ? "Agreement Signed" : "Agreement Pending"}
+                            color={customer.agreement_signed ? "success" : "warning"}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                        {customer.sent_to_ops ? (
+                          <Chip label="Sent ✓" color="success" size="small" variant="outlined" />
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                            disabled={!customer.agreement_signed}
+                            title={!customer.agreement_signed ? "Client must sign the agreement first" : ""}
+                            onClick={() => openSendToOpsDialog(customer)}
+                          >
+                            Send to Ops
+                          </Button>
+                        )}
+                      </Stack>
                     )}
                   </TableCell>
                                    <TableCell>
@@ -1712,6 +1806,48 @@ const displayCustomers = sortedCustomers.filter((customer) => {
         customer={selected}
         onSuccess={fetchCustomers}
       />
+
+      {/* NEW — Send to Ops confirmation dialog */}
+      <Dialog
+        open={sendToOpsDialog.open}
+        onClose={() => (!sendToOpsLoading && setSendToOpsDialog({ open: false, customer: null }))}
+        maxWidth="sm" fullWidth
+      >
+        <DialogTitle>
+          Send to Ops — Review before sending
+        </DialogTitle>
+        <DialogContent dividers>
+          {sendToOpsDialog.customer && (
+            <Table size="small">
+              <TableBody>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Student Name</TableCell><TableCell>{sendToOpsDialog.customer.name}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Phone</TableCell><TableCell>{sendToOpsDialog.customer.phone}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Email</TableCell><TableCell>{sendToOpsDialog.customer.email}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Service Type</TableCell><TableCell>{sendToOpsDialog.customer.service_type || sendToOpsDialog.customer.company || "—"}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Invoice No</TableCell><TableCell>{sendToOpsDialog.customer.last_invoice_id ? `#${sendToOpsDialog.customer.last_invoice_id}` : "—"}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell><TableCell>{fmt(sendToOpsDialog.customer.last_invoice_total)}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Paid Amount</TableCell><TableCell>{fmt(sendToOpsDialog.customer.total_payments)}</TableCell></TableRow>
+                <TableRow><TableCell sx={{ fontWeight: 600 }}>Outstanding</TableCell><TableCell>{fmt(sendToOpsDialog.customer.outstanding)}</TableCell></TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Payment Status</TableCell>
+                  <TableCell>{Number(sendToOpsDialog.customer.outstanding || 0) === 0 ? "Paid" : "Partial"}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
+          <Alert severity="info" sx={{ mt: 2 }}>
+            Once sent, this student will appear in the Ops Portal for the counselor to review and add as a lead. This cannot be undone from here.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSendToOpsDialog({ open: false, customer: null })} disabled={sendToOpsLoading}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="secondary" onClick={confirmSendToOps} disabled={sendToOpsLoading}>
+            {sendToOpsLoading ? "Sending..." : "Confirm & Send to Ops"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

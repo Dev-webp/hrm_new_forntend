@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api"
+  baseURL: import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api",
 });
+
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("vjc_invoice_auth");

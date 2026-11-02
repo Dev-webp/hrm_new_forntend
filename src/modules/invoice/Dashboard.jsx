@@ -19,7 +19,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import PersonIcon from "@mui/icons-material/Person";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 const API = axios.create({
-  baseURL:  "http://localhost:5000/api"
+  baseURL: import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api"
 });
 
 const fmt = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");

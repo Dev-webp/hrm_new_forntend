@@ -18,6 +18,8 @@ const AdminAttendanceAnalysis = lazy(
 const AdminBreaks = lazy(() => import("./AdminBreaks"));
 const AdminCalendar = lazy(() => import("./AdminCalendar"));
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
+const AdminOverview = lazy(() => import("./AdminOverview"));
+const OverallDashboard = lazy(() => import("../OverallDashboard"));
 const AdminEmployees = lazy(() => import("./AdminEmployees"));
 const AdminLeave = lazy(() => import("./AdminLeave"));
 const AdminActivityLogs = lazy(() => import("./AdminActivityLogs"));
@@ -29,6 +31,7 @@ const OfferLetter = lazy(() => import("./OfferLetter"));
 const ExperienceLetter = lazy(() => import("./ExperienceLetter"));
 const LettersHome = lazy(() => import("./LettersHome"));
 const AdminProfile = lazy(() => import("./AdminProfile"));
+const ShiftManagement = lazy(() => import("./ShiftManagement"));
 
 
 const ApprovalRequests = lazy(() => import("../../modules/invoice/ApprovalRequests"));
@@ -78,6 +81,16 @@ const InvoiceReports = lazy(
 const Items = lazy(
   () => import("../../modules/invoice/Items")
 );
+
+const InvoiceEmployees = lazy(
+  () => import("../../modules/invoice/Employees")
+);
+
+// ======================================================
+// OPS MODULES
+// ======================================================
+
+const OpsRoutes = lazy(() => import("../../modules/ops/OpsRoutes"));
 
 // ======================================================
 // ADMIN ROUTES
@@ -141,7 +154,22 @@ function AdminRoutes() {
 
           <Route
             index
+            element={<AdminOverview />}
+          />
+
+          <Route
+            path="overview"
+            element={<AdminOverview />}
+          />
+
+          <Route
+            path="dashboard"
             element={<AdminDashboard />}
+          />
+
+          <Route
+            path="overall-dashboard"
+            element={<OverallDashboard />}
           />
 
           {/* ==================================================
@@ -264,6 +292,15 @@ function AdminRoutes() {
           />
 
           {/* ==================================================
+              SHIFT MANAGEMENT
+          ================================================== */}
+
+          <Route
+            path="shifts"
+            element={<ShiftManagement />}
+          />
+
+          {/* ==================================================
               CRM (all wrapped in InvoiceGate — waits for the SSO
               token exchange to finish before rendering the page,
               fixing the "Invalid token on first load" race)
@@ -350,6 +387,24 @@ function AdminRoutes() {
           <Route
             path="invoice/items"
             element={<Items />}
+          />
+
+          {/* ==================================================
+              INVOICE EMPLOYEES
+          ================================================== */}
+
+          <Route
+            path="invoice/employees"
+            element={<InvoiceEmployees />}
+          />
+
+          {/* ==================================================
+              OPS PORTAL
+          ================================================== */}
+
+          <Route
+            path="ops/*"
+            element={<OpsRoutes />}
           />
 
           {/* ==================================================

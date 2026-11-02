@@ -68,6 +68,7 @@ export function mapApiEmployee(emp) {
     bankAccount: emp.bank_account || "",
     bankIfsc: emp.bank_ifsc || "",
     joiningDate: emp.joining_date || "",
+    dateOfBirth: emp.date_of_birth || "",
     aadharNumber: emp.aadhar_number || "",
     visiblePassword: emp.visible_password || "",
 
@@ -80,6 +81,10 @@ export function mapApiEmployee(emp) {
     // See the note in buildEmployeePayload about re-checking permission
     // boxes on every edit.
     invoiceAccess: emp.invoice_access === true,
+
+    // 🎯 OPS ACCESS — OPS system integration flag
+    opsAccess: emp.ops_access === true,
+    ops_permissions: emp.ops_permissions || {},
   };
 }
 export function formatAadhar(aadhar) {
@@ -111,6 +116,7 @@ export const EMPTY_EMPLOYEE_FORM = {
   employeeCode: "",
   salary: "",
   joiningDate: "",
+  dateOfBirth: "",
   loginEmail: "",
   bankName: "",
   bankAccount: "",
@@ -133,6 +139,17 @@ export const EMPTY_EMPLOYEE_FORM = {
     expenses: false,
     reports: false,
     services: false,
+  },
+
+  // 🎯 OPS ACCESS
+  opsAccess: false,
+  ops_permissions: {
+    ops_leads: false,
+    quality_audit: false,
+    case_filing: false,
+    case_processing: false,
+    ops_reports: false,
+    ops_employees: false,
   },
 };
 
@@ -164,6 +181,7 @@ export function buildEmployeePayload(form) {
     employee_code: form.employeeCode.trim() || undefined,
     salary: parseFloat(form.salary),
     joiningDate: form.joiningDate || undefined,
+    date_of_birth: form.dateOfBirth || undefined,
     bank_name: form.bankName.trim(),
     bank_account: form.bankAccount.trim(),
     bank_ifsc: form.bankIfsc.trim(),
@@ -179,11 +197,16 @@ export function buildEmployeePayload(form) {
     // just when granting access for the first time.
     invoice_access: form.invoiceAccess === true,
     invoice_permissions: form.invoiceAccess ? form.invoicePermissions : undefined,
+
+    // 🎯 OPS ACCESS
+    ops_access: form.opsAccess === true,
+    ops_permissions: form.opsAccess ? form.ops_permissions : undefined,
   };
 }
 
 export function employeeToForm(employee) {
   return {
+    id: employee.id,
     name: employee.name,
     designation: employee.designation || "",
     department: employee.department,
@@ -193,6 +216,7 @@ export function employeeToForm(employee) {
     employeeCode: employee.empId || "",
     salary: String(employee.salary ?? ""),
     joiningDate: employee.joiningDate || employee.joining_date || "",
+    dateOfBirth: employee.dateOfBirth || employee.date_of_birth || "",
     loginEmail: employee.email,
     bankName: employee.bankName || "",
     bankAccount: employee.bankAccount || "",
@@ -209,7 +233,7 @@ export function employeeToForm(employee) {
     // that detail lives in the Invoice database, not HRMS's. Re-check
     // whichever boxes this person should actually have before saving.
     invoiceAccess: employee.invoiceAccess === true,
-    invoicePermissions: {
+    invoicePermissions: employee.invoiceAccess ? (employee.invoicePermissions || {
       customers: false,
       invoices: false,
       quotes: false,
@@ -217,6 +241,6 @@ export function employeeToForm(employee) {
       expenses: false,
       reports: false,
       services: false,
-    },
+    }) : {},
   };
 }

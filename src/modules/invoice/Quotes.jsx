@@ -13,7 +13,7 @@ import AddIcon from "@mui/icons-material/Add";
 const getToken = () => localStorage.getItem("vjc_invoice_auth");
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api"
+  baseURL: import.meta.env.VITE_INVOICE_API_URL || "https://invoice.vjcoverseas.com/api"
 });
 
 // Every axios request lo auto token add avutundi
@@ -399,34 +399,28 @@ console.log("QUOTE PAYLOAD", payload);
         </Button>
       </Box>
 
-      {/* Quotes Table */}
+            {/* Quotes Table */}
       <TableContainer component={Paper}>
-        <Table>
+        <Table
+          sx={{
+            "& th, & td": {
+              borderRight: "1px solid #e5e7eb",
+            },
+            "& th:last-child, & td:last-child": {
+              borderRight: "none",
+            },
+          }}
+        >
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-            <TableRow>
-              {["Proforma Invoice #", "Customer", "Date", "Expiry",  "Amount", "Status", "Actions"].map((h) => (
-                <TableCell key={h}><strong>{h}</strong></TableCell>
-              ))}
-            </TableRow>
+            <TableRow>{["Proforma Invoice #", "Customer", "Date", "Expiry",  "Amount", "Status", "Actions"].map((h) => (<TableCell key={h}><strong>{h}</strong></TableCell>))}</TableRow>
           </TableHead>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                  No Proforma Invoices found
-                </TableCell>
-              </TableRow>
-            ) : filtered.map((qt) => (
+            {filtered.length === 0 ? (<TableRow><TableCell colSpan={8} align="center" sx={{ py: 4, color: "text.secondary" }}>No Proforma Invoices found</TableCell></TableRow>) : filtered.map((qt) => (
               <TableRow key={qt.id} hover>
                 <TableCell sx={{ color: "#1976d2", fontWeight: "bold" }}>{qt.quote_number}</TableCell>
                 <TableCell>{qt.customerName}</TableCell>
                 <TableCell>{qt.quoteDate}</TableCell>
-                <TableCell
-                  sx={{ color: qt.status === "Expired" ? "#d32f2f" : "inherit", fontWeight: qt.status === "Expired" ? "bold" : "normal" }}
-                >
-                  {qt.expiryDate}
-                </TableCell>
-              
+                <TableCell sx={{ color: qt.status === "Expired" ? "#d32f2f" : "inherit", fontWeight: qt.status === "Expired" ? "bold" : "normal" }}>{qt.expiryDate}</TableCell>
                 <TableCell><strong>{formatPrice(qt.totalAmount)}</strong></TableCell>
                 <TableCell>
                   <Chip

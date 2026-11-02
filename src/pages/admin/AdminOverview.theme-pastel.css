@@ -1,0 +1,183 @@
+/**
+ * Pastel Theme - Soft, Gentle Colors
+ * Light pastel colors with rounded corners and soft shadows
+ */
+
+:root {
+  --bg-primary: #fff5f5;
+  --bg-card: #ffffff;
+  --bg-hover: #fef3c7;
+  --text-primary: #374151;
+  --text-secondary: #6b7280;
+  --border-color: #f3f4f6;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --navy: #9ca3af;
+  --hrms: #93c5fd;
+  --invoice: #fdba74;
+  --ops: #86efac;
+  --crm: #c4b5fd;
+  --good: #86efac;
+  --warning: #fcd34d;
+  --bad: #fca5a5;
+  --present: #86efac;
+  --late: #fcd34d;
+  --absent: #fca5a5;
+  --sales: #93c5fd;
+  --receipts: #86efac;
+  --expenses: #fca5a5;
+}
+
+.admin-overview {
+  background: linear-gradient(135deg, #fef3c7 0%, #fecaca 50%, #c7d2fe 100%);
+  background-attachment: fixed;
+}
+
+.section-card {
+  background: #ffffff;
+  border: 2px solid #f3f4f6;
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.section-card--hrms {
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border-color: #93c5fd;
+}
+
+.section-card--invoice {
+  background: linear-gradient(135deg, #fed7aa 0%, #fff7ed 100%);
+  border-color: #fdba74;
+}
+
+.section-card--ops {
+  background: linear-gradient(135deg, #bbf7d0 0%, #f0fdf4 100%);
+  border-color: #86efac;
+}
+
+.section-card--crm {
+  background: linear-gradient(135deg, #e9d5ff 0%, #faf5ff 100%);
+  border-color: #c4b5fd;
+}
+
+.section-card__header {
+  background: rgba(255, 255, 255, 0.5);
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.section-card__icon {
+  background: #ffffff;
+  color: #93c5fd;
+  border: 2px solid #dbeafe;
+  box-shadow: 0 2px 8px rgba(147, 197, 253, 0.2);
+}
+
+.section-card--invoice .section-card__icon {
+  color: #fdba74;
+  border-color: #fed7aa;
+  box-shadow: 0 2px 8px rgba(253, 186, 116, 0.2);
+}
+
+.section-card--ops .section-card__icon {
+  color: #86efac;
+  border-color: #bbf7d0;
+  box-shadow: 0 2px 8px rgba(134, 239, 172, 0.2);
+}
+
+.section-card--crm .section-card__icon {
+  color: #c4b5fd;
+  border-color: #e9d5ff;
+  box-shadow: 0 2px 8px rgba(196, 181, 253, 0.2);
+}
+
+.small-card {
+  background: #ffffff;
+  border: 2px solid #f3f4f6;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.small-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.small-card__value {
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+.section-card--invoice .small-card__value {
+  color: #fdba74;
+}
+
+.section-card--ops .small-card__value {
+  color: #86efac;
+}
+
+.section-card--crm .small-card__value {
+  color: #c4b5fd;
+}
+
+.attention-card {
+  background: #ffffff;
+  border: 2px solid #fecaca;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(252, 165, 165, 0.15);
+}
+
+.attention-card:hover {
+  border-color: #fca5a5;
+  box-shadow: 0 8px 24px rgba(252, 165, 165, 0.25);
+}
+
+.attention-card__value {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
+.chart-card,
+.ops-panel,
+.bottom-panel {
+  background: #ffffff;
+  border: 2px solid #f3f4f6;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.chart-card:hover,
+.ops-panel:hover,
+.bottom-panel:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.ops-panel:nth-child(1) {
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border-color: #93c5fd;
+}
+
+.ops-panel:nth-child(2) {
+  background: linear-gradient(135deg, #bbf7d0 0%, #f0fdf4 100%);
+  border-color: #86efac;
+}
+
+.ops-panel:nth-child(3) {
+  background: linear-gradient(135deg, #fed7aa 0%, #fff7ed 100%);
+  border-color: #fdba74;
+}
+
+.ops-panel:nth-child(4) {
+  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  border-color: #fcd34d;
+}
+
+.bottom-panel:nth-child(1) {
+  background: linear-gradient(135deg, #fed7aa 0%, #fff7ed 100%);
+  border-color: #fdba74;
+}
+
+.bottom-panel:nth-child(2) {
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  border-color: #93c5fd;
+}

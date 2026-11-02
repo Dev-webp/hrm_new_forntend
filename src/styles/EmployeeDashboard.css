@@ -176,6 +176,36 @@
         .status-chip.absent { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
         .status-chip.late { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
         .status-chip.halfday { background: rgba(139,92,246,0.12); color: var(--purple); border: 1px solid rgba(139,92,246,0.3); }
+        .attendance-message { margin-top: 12px; min-height: 42px; display: flex; align-items: center; gap: 9px; border-radius: 12px; padding: 10px 12px; font-size: 0.84rem; font-weight: 850; }
+        .attendance-message.present { color: #15803D; background: #ECFDF3; border: 1px solid #BBF7D0; }
+        .attendance-message.late, .attendance-message.halfday { color: #92400E; background: #FFFBEB; border: 1px solid #FDE68A; }
+        .attendance-message.absent { color: #991B1B; background: #FEF2F2; border: 1px solid #FECACA; }
+
+        /* ── TIMER CARD ── */
+        .timer-card { background: linear-gradient(135deg, #1E293B, #0F172A); border: 2px solid var(--gold-dim); border-radius: 20px; padding: 20px 24px; margin-bottom: 20px; }
+        .timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .timer-title { font-size: 0.85rem; font-weight: 700; color: #FFFFFF; margin-bottom: 4px; }
+        .timer-subtitle { font-size: 0.68rem; color: rgba(255,255,255,0.6); }
+        .timer-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 40px; font-size: 0.68rem; font-weight: 700; }
+        .timer-status.running { background: rgba(74,222,128,0.2); color: #16A34A; border: 1px solid rgba(74,222,128,0.4); }
+        .timer-status.break { background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); }
+        .timer-status.stopped { background: rgba(239,68,68,0.2); color: #DC2626; border: 1px solid rgba(239,68,68,0.4); }
+        .timer-display { display: flex; flex-direction: column; align-items: center; padding: 24px 0; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 16px; }
+        .timer-time { font-size: 2.5rem; font-weight: 800; color: var(--gold); font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; }
+        .timer-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+        .timer-info { text-align: center; font-size: 0.68rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+        @keyframes timerPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.2)} }
+
+        /* ── TOP TIMER CARD ── */
+        .top-timer-card { background: linear-gradient(135deg, #1E293B, #0F172A); border: 2px solid var(--gold-dim); border-radius: 16px; padding: 16px 20px; min-width: 200px; display: flex; flex-direction: column; justify-content: center; }
+        .top-timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .top-timer-label { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.5px; }
+        .top-timer-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.62rem; font-weight: 700; }
+        .top-timer-status.running { background: rgba(74,222,128,0.2); color: #16A34A; border: 1px solid rgba(74,222,128,0.4); }
+        .top-timer-status.break { background: rgba(245,158,11,0.2); color: #F59E0B; border: 1px solid rgba(245,158,11,0.4); }
+        .top-timer-status.stopped { background: rgba(239,68,68,0.2); color: #DC2626; border: 1px solid rgba(239,68,68,0.4); }
+        .top-timer-time { font-size: 1.8rem; font-weight: 800; color: var(--gold); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; line-height: 1.2; }
+        .top-timer-note { font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-top: 8px; font-weight: 600; }
 
         /* ATTENDANCE CALENDAR */
         .attendance-calendar-card { background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 20px; padding: 18px 22px; margin-top: 14px; }
@@ -506,7 +536,7 @@
 
 .employee-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-bottom: 16px;
 }
