@@ -31,14 +31,54 @@ export default function NotificationBadge({ type = "notifications" }) {
         },
         ops: async () => {
           // Fetch OPS notifications count from OPS API
-          if (!hasOpsSession()) return { count: 0 };
+          if (!hasOpsSession()) {
+            console.log("[NotificationBadge] OPS session not active");
+            return { count: 0 };
+          }
           
           try {
-            const response = await opsApi.get('/dashboard/stats');
-            const stats = response.data || {};
-            // Return sum of pending leads and pending audits
-            const pendingCount = (stats.leads?.pending || 0) + (stats.audits?.pending || 0);
-            return { count: pendingCount };
+            // Fetch pending audits count
+            let auditsCount = 0;
+            try {
+              const auditsResponse = await opsApi.get('/audits/pending');
+              const audits = auditsResponse.data || [];
+              auditsCount = Array.isArray(audits) ? audits.length : 0;
+              console.log("[NotificationBadge] Pending audits count:", auditsCount);
+            } catch (err) {
+              console.error("[NotificationBadge] Error fetching pending audits:", err);
+            }
+            
+            // Fetch unassigned cases directly from the correct endpoint
+            let casesCount = 0;
+            try {
+              const casesResponse = await opsApi.get('/cases/unassigned');
+              const responseData = casesResponse.data;
+              console.log("[NotificationBadge] Unassigned cases response:", responseData);
+              // Handle both possible response structures
+              if (Array.isArray(responseData)) {
+                casesCount = responseData.length;
+              } else if (responseData?.leads && Array.isArray(responseData.leads)) {
+                casesCount = responseData.leads.length;
+              } else if (responseData?.data && Array.isArray(responseData.data)) {
+                casesCount = responseData.data.length;
+              }
+              console.log("[NotificationBadge] Unassigned cases count:", casesCount);
+            } catch (err) {
+              console.error("[NotificationBadge] Error fetching unassigned cases:", err);
+              // If unassigned fails due to permissions, try board
+              try {
+                const boardResponse = await opsApi.get('/cases/board');
+                const boardData = boardResponse.data || [];
+                casesCount = Array.isArray(boardData) ? boardData.length : 0;
+                console.log("[NotificationBadge] Board cases count (fallback):", casesCount);
+              } catch (boardErr) {
+                console.error("[NotificationBadge] Error fetching board cases:", boardErr);
+              }
+            }
+            
+            const totalCount = auditsCount + casesCount;
+            console.log("[NotificationBadge] OPS total count:", { auditsCount, casesCount, total: totalCount });
+            return { count: totalCount };
           } catch (err) {
             console.error("OPS notification count error:", err);
             return { count: 0 };

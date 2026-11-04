@@ -88,6 +88,8 @@ const AdminOverview = () => {
   const [showTableView, setShowTableView] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [attendanceChartData, setAttendanceChartData] = useState({
     labels: [],
     present: [],
@@ -105,15 +107,14 @@ const AdminOverview = () => {
 
   const fetchHRMSData = useCallback(async () => {
     try {
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      
+      const startOfMonth = new Date(selectedYear, selectedMonth, 1);
+      const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
+
       const start = startOfMonth.toISOString().split('T')[0];
       const end = endOfMonth.toISOString().split('T')[0];
-      const todayStr = today.toISOString().split('T')[0];
-      
-      console.log('Fetching HRMS data with params:', { start, end, today: todayStr, branch: 'all' });
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      console.log('Fetching HRMS data with params:', { start, end, today: todayStr, branch: 'all', selectedMonth, selectedYear });
       
       const response = await api.get('/admin/dashboard/attendance', {
         params: {
@@ -214,7 +215,7 @@ const AdminOverview = () => {
         absent: [],
       });
     }
-  }, []);
+  }, [selectedMonth, selectedYear]);
 
   const fetchInvoiceData = useCallback(async () => {
     console.log('[Executive Dashboard] fetchInvoiceData called');
@@ -734,16 +735,49 @@ const AdminOverview = () => {
           <div className="dashboard-header__titles">
             <h1 className="dashboard-header__title">{getGreeting()}, {userName}! 👋</h1>
             <p className="dashboard-header__date">{formatFullDate(currentTime)} • {currentTime.toLocaleTimeString()}</p>
+          </div>
+          <div className="dashboard-header__right">
             <div className="dashboard-header__stats">
               <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">📅</span> Total Days: {monthStats.totalDays}</span>
               <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">💼</span> Working Days: {monthStats.workingDays}</span>
               <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">☀️</span> Sundays: {monthStats.sundays}</span>
               <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">🎁</span> Holidays: {monthStats.holidays}</span>
             </div>
-          </div>
-        </div>
-        <div className="dashboard-header__bottom">
-          <div className="dashboard-header__actions">
+            <div className="dashboard-header__date-picker">
+              <select
+                value={selectedMonth}
+                onChange={(e) => {
+                  console.log('Month changed to:', e.target.value);
+                  setSelectedMonth(parseInt(e.target.value));
+                }}
+                className="dashboard-header__select"
+              >
+                <option value={0}>January</option>
+                <option value={1}>February</option>
+                <option value={2}>March</option>
+                <option value={3}>April</option>
+                <option value={4}>May</option>
+                <option value={5}>June</option>
+                <option value={6}>July</option>
+                <option value={7}>August</option>
+                <option value={8}>September</option>
+                <option value={9}>October</option>
+                <option value={10}>November</option>
+                <option value={11}>December</option>
+              </select>
+              <select
+                value={selectedYear}
+                onChange={(e) => {
+                  console.log('Year changed to:', e.target.value);
+                  setSelectedYear(parseInt(e.target.value));
+                }}
+                className="dashboard-header__select"
+              >
+                {[2023, 2024, 2025, 2026, 2027, 2028].map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
             <button
               className="dashboard-header__button"
               onClick={handleRefresh}

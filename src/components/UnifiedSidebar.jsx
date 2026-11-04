@@ -147,13 +147,6 @@ function UnifiedSidebar({ role = "admin" }) {
         <img
           src={logo}
           alt="VJC Overseas"
-          style={{
-            width: "200px",
-            height: "auto",
-            borderRadius: "10px",
-            objectFit: "contain",
-            padding: "4px",
-          }}
         />
       </div>
 

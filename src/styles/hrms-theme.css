@@ -434,6 +434,21 @@ body.hrms-dashboard {
   padding: 10px 8px 18px !important;
   margin-bottom: 12px !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.sidebar-header img,
+.employee-sidebar .logo-area img {
+  box-shadow: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  border-radius: 10px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
 }
 
 .brand-mark {

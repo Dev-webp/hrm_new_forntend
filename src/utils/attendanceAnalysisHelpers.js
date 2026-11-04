@@ -573,12 +573,22 @@ export function computeOverviewStats(records) {
   const lateDays = safeRecords.filter(isGraceLateAttendanceRecord).length;
   const halfDays = safeRecords.filter((r) => r.status === "half_day").length;
   const absent = safeRecords.filter((r) => r.status === "absent").length;
+  const noRecord = safeRecords.filter((r) => r.status === "no_record").length;
   const paidLeaveDays = safeRecords.filter(isPaidLeaveRecord).length;
   const unpaidLeaveDays = safeRecords.filter(isUnpaidLeaveRecord).length;
   const leaveDays = paidLeaveDays + unpaidLeaveDays;
+  const unpaidLeavesCombined = unpaidLeaveDays + absent + noRecord;
+  const sandwichSundays = safeRecords.filter((r) => r.sandwich_rule_applied && new Date(r.date).getDay() === 0).length;
+  const holidays = safeRecords.filter((r) => r.status === "holiday").length;
   const totalDays = safeRecords.filter(
     (r) => !["sunday", "holiday"].includes(r.status)
   ).length;
+  
+  // Calculate total days in the month from the records
+  const daysInMonth = safeRecords.length > 0 
+    ? new Date(new Date(safeRecords[0].date).getFullYear(), new Date(safeRecords[0].date).getMonth() + 1, 0).getDate()
+    : 30;
+  
   const effectivePresent = presentDays + halfDays * 0.5;
   const attRate = effectivePresent + absent
     ? Math.round((effectivePresent / (effectivePresent + absent)) * 100)
@@ -594,9 +604,14 @@ export function computeOverviewStats(records) {
     lateDays,
     halfDays,
     absent,
+    noRecord,
     leaveDays,
     paidLeaveDays,
     unpaidLeaveDays,
+    unpaidLeavesCombined,
+    sandwichSundays,
+    holidays,
+    daysInMonth,
     totalDays,
     attRate,
     avgBreak,

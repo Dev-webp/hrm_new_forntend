@@ -207,10 +207,46 @@ function IndividualAnalysisView({
         </div>
         <div className="hero-meta">
           <div className="hero-meta-item">
-            <div className="val" id="indPresent">
-              {overview.presentDays + overview.halfDays}
+            <div className="val" id="indFullDays">
+              {overview.presentDays}
             </div>
-            <div className="lbl">Present</div>
+            <div className="lbl">Full Days</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indHalfDays">
+              {overview.halfDays}
+            </div>
+            <div className="lbl">Half Days</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indUnpaidLeaves">
+              {overview.unpaidLeavesCombined}
+            </div>
+            <div className="lbl">Unpaid Leaves</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indPaidLeave">
+              {overview.paidLeaveDays}
+            </div>
+            <div className="lbl">Paid Leave</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indSandwichSundays">
+              {overview.sandwichSundays}
+            </div>
+            <div className="lbl">Sandwich Sundays</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indHolidays">
+              {overview.holidays}
+            </div>
+            <div className="lbl">Holidays</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indTotalDays">
+              {overview.daysInMonth}
+            </div>
+            <div className="lbl">Total Days</div>
           </div>
           <div className="hero-meta-item">
             <div className="val" id="indLate">
@@ -219,22 +255,10 @@ function IndividualAnalysisView({
             <div className="lbl">Late In</div>
           </div>
           <div className="hero-meta-item">
-            <div className="val" id="indAbsent">
-              {overview.absent}
-            </div>
-            <div className="lbl">Absent</div>
-          </div>
-          <div className="hero-meta-item">
             <div className="val" id="indBreakAvg">
               {overview.avgBreak}m
             </div>
             <div className="lbl">Avg Break</div>
-          </div>
-          <div className="hero-meta-item">
-            <div className="val" id="indAttRate">
-              {overview.attRate}%
-            </div>
-            <div className="lbl">Att. Rate</div>
           </div>
         </div>
       </div>

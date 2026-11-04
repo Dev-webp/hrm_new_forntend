@@ -27,7 +27,7 @@ export default function EmployeeLeave({ embedded = false }) {
   const [currentFilter, setCurrentFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({
-    leaveType: "Unpaid",
+    leaveType: "Paid",
     leaveDurationType: "full_day",
     halfDaySession: "",
     fromDate: "",
@@ -65,7 +65,7 @@ export default function EmployeeLeave({ embedded = false }) {
       const balance = await fetchMyLeaveBalance();
       setLeaveBalance(balance);
 
-      setForm((f) => ({ ...f, leaveType: "Unpaid" }));
+      setForm((f) => ({ ...f, leaveType: "Paid" }));
     } catch (e) {
       showToast(`Error: ${e.message}`, "error");
     } finally {
@@ -287,7 +287,7 @@ const renderReason = (reason) => {
       showToast("✅ Leave request submitted!", "success");
       setModalOpen(false);
       setForm({
-        leaveType: "Unpaid",
+        leaveType: "Paid",
         leaveDurationType: "full_day",
         halfDaySession: "",
         fromDate: "",
@@ -615,6 +615,7 @@ const renderReason = (reason) => {
                   setForm((f) => ({ ...f, leaveType: e.target.value }))
                 }
               >
+                <option value="Paid">Paid Leave</option>
                 <option value="Unpaid">Unpaid Leave</option>
                 <option value="Sick">Sick Leave</option>
                 <option value="Casual">Casual Leave</option>

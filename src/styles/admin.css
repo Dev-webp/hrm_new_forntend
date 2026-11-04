@@ -6,9 +6,41 @@
   box-sizing: border-box;
 }
 
+select {
+  display: inline-block !important;
+  padding: 8px 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  min-width: 120px !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  appearance: menulist !important;
+  position: relative !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+select option {
+  padding: 8px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
 /* Performance: Optimize rendering */
 img {
   content-visibility: auto;
+  box-shadow: none !important;
+  filter: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
 }
 
 /* Performance: Reduce paint on scroll */

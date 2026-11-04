@@ -79,7 +79,6 @@ export const NAV_MODULES = [
           { slug: "/admin/ops/employees", icon: "fa-users-gear", label: "OPS Employees", roles: ["admin", "manager", "operational-manager", "sub-admin"], opsAccess: true, absolute: true },
           { slug: "/admin/invoice/employees", icon: "fa-file-invoice-dollar", label: "Add Invoice Employee", roles: ["admin", "manager"], invoicePermission: "services", absolute: true },
           { slug: "/department", icon: "fa-building", label: "Add Department", roles: ["admin"] },
-          { slug: "/shifts", icon: "fa-clock", label: "Shift Management", roles: ["admin"] },
         ]
       },
       { slug: "/employees", icon: "fa-users", label: "Employees", roles: ["manager", "operational-manager"] },
