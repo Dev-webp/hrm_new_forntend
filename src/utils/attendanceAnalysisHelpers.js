@@ -578,7 +578,16 @@ export function computeOverviewStats(records) {
   const unpaidLeaveDays = safeRecords.filter(isUnpaidLeaveRecord).length;
   const leaveDays = paidLeaveDays + unpaidLeaveDays;
   const unpaidLeavesCombined = unpaidLeaveDays + absent + noRecord;
-  const sandwichSundays = safeRecords.filter((r) => r.sandwich_rule_applied && new Date(r.date).getDay() === 0).length;
+  
+  // Count sandwich Sundays - Sundays that have sandwich policy applied
+  const sandwichSundays = safeRecords.filter((r) => {
+    const isSunday = new Date(r.date).getDay() === 0;
+    const hasSandwichApplied = r.sandwich_rule_applied === true || 
+                              (r.sandwich_results && r.sandwich_results.length > 0 && 
+                               r.sandwich_results.some(s => s.applied === true));
+    return isSunday && hasSandwichApplied;
+  }).length;
+  
   const holidays = safeRecords.filter((r) => r.status === "holiday").length;
   const totalDays = safeRecords.filter(
     (r) => !["sunday", "holiday"].includes(r.status)
