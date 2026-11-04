@@ -205,6 +205,8 @@
   border-color: var(--hrms);
   box-shadow: var(--shadow-sm);
 }
+
+.dashboard-header {
   display: flex;
   align-items: center;
   gap: 12px;
