@@ -65,6 +65,7 @@ function AdminDashboard() {
 
   const user = useMemo(() => getStoredUser(), []);
   const isOperationalManager = user?.role === "OPERATIONAL_MANAGER";
+  const canManageCalendar = ["SUPER_ADMIN", "OPERATIONAL_MANAGER", "MANAGER"].includes(user?.role);
 
   const [year, monthNum] = currentMonthStr.split("-").map(Number);
 
@@ -283,6 +284,8 @@ function AdminDashboard() {
     return () => window.clearInterval(intervalId);
   }, [buildNotifications, currentBranch, currentMonthStr, todayStr, monthNum, year]);
 
+  const actionBasePath = isOperationalManager ? "/operations" : "/admin";
+
   const monthTiles = useMemo(
     () => {
       const monthStats = dashboardData?.calendar || { total: 0, sundays: 0, holidays: 0, workingDays: 0 };
@@ -323,9 +326,17 @@ function AdminDashboard() {
           value: monthKpi ? Number(monthKpi.absent) : "--",
           accent: "#DC2626",
         },
+        {
+          icon: "fas fa-plus-circle",
+          label: "Add Holiday",
+          value: "Add",
+          accent: "#7c3aed",
+          isAction: true,
+          onClick: () => navigate(`${actionBasePath}/calendar`),
+        },
       ];
     },
-    [monthKpi, dashboardData?.calendar]
+    [monthKpi, dashboardData?.calendar, actionBasePath, navigate]
   );
 
   const branchLeaderboard = useMemo(
@@ -394,7 +405,6 @@ function AdminDashboard() {
   const profileSubtitle = isOperationalManager
     ? "Operations · All Branches"
     : "VJC Overseas";
-  const actionBasePath = isOperationalManager ? "/operations" : "/admin";
 
   return (
     <>
@@ -472,6 +482,15 @@ function AdminDashboard() {
               icon="fas fa-building"
               accentColor="#0d47a1"
             />
+            {canManageCalendar && (
+              <button
+                className="add-holiday-header-btn"
+                onClick={() => navigate(`${actionBasePath}/calendar?addHoliday=true`)}
+                title="Add Holiday"
+              >
+                <i className="fas fa-calendar-plus" /> Add Holiday
+              </button>
+            )}
           </div>
         </div>
 

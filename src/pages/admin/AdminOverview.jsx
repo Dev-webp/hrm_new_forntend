@@ -529,7 +529,7 @@ const AdminOverview = () => {
 
     pendingWork.push({
       icon: '🎯',
-      title: 'OPS leads on remaining white spaces',
+      title: 'OPS leads',
       count: ops.totalLeads || 0,
       route: '/admin/ops/leads',
     });
@@ -591,7 +591,7 @@ const AdminOverview = () => {
       pendingWork: generatePendingWork(prev.hrms, prev.invoice, prev.crm, prev.ops),
       lastUpdated: new Date().toISOString(),
     }));
-  }, [data.hrms, data.invoice, data.crm, data.ops, generateAlerts, generatePendingWork]);
+  }, [data.hrms, data.invoice, data.crm, data.ops]);
 
   const handleRefresh = () => {
     fetchAllData();
@@ -729,57 +729,50 @@ const AdminOverview = () => {
 
   return (
     <div className="admin-overview">
-      {/* Header */}
-      <div className="dashboard-header">
-        <div className="dashboard-header__top">
-          <div className="dashboard-header__titles">
-            <h1 className="dashboard-header__title">{getGreeting()}, {userName}! 👋</h1>
-            <p className="dashboard-header__date">{formatFullDate(currentTime)} • {currentTime.toLocaleTimeString()}</p>
+      {/* Executive Dashboard Header */}
+      <div className="executive-header">
+        {/* Top Row: Greeting and Date/Time Controls */}
+        <div className="executive-header__top">
+          <div className="executive-header__greeting">
+            <h1 className="executive-header__title">{getGreeting()}, {userName}! 👋</h1>
+            <p className="executive-header__datetime">{formatFullDate(currentTime)} • {currentTime.toLocaleTimeString()}</p>
           </div>
-          <div className="dashboard-header__right">
-            <div className="dashboard-header__stats">
-              <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">📅</span> Total Days: {monthStats.totalDays}</span>
-              <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">💼</span> Working Days: {monthStats.workingDays}</span>
-              <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">☀️</span> Sundays: {monthStats.sundays}</span>
-              <span className="dashboard-header__stat"><span className="dashboard-header__stat-icon">🎁</span> Holidays: {monthStats.holidays}</span>
-            </div>
-            <div className="dashboard-header__date-picker">
-              <select
-                value={selectedMonth}
-                onChange={(e) => {
-                  console.log('Month changed to:', e.target.value);
-                  setSelectedMonth(parseInt(e.target.value));
-                }}
-                className="dashboard-header__select"
-              >
-                <option value={0}>January</option>
-                <option value={1}>February</option>
-                <option value={2}>March</option>
-                <option value={3}>April</option>
-                <option value={4}>May</option>
-                <option value={5}>June</option>
-                <option value={6}>July</option>
-                <option value={7}>August</option>
-                <option value={8}>September</option>
-                <option value={9}>October</option>
-                <option value={10}>November</option>
-                <option value={11}>December</option>
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => {
-                  console.log('Year changed to:', e.target.value);
-                  setSelectedYear(parseInt(e.target.value));
-                }}
-                className="dashboard-header__select"
-              >
-                {[2023, 2024, 2025, 2026, 2027, 2028].map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
+
+          {/* Month/Year Selectors and Refresh */}
+          <div className="executive-header__controls">
+            <select
+              value={selectedMonth}
+              onChange={(e) => {
+                setSelectedMonth(parseInt(e.target.value));
+              }}
+              className="executive-header__select"
+            >
+              <option value={0}>January</option>
+              <option value={1}>February</option>
+              <option value={2}>March</option>
+              <option value={3}>April</option>
+              <option value={4}>May</option>
+              <option value={5}>June</option>
+              <option value={6}>July</option>
+              <option value={7}>August</option>
+              <option value={8}>September</option>
+              <option value={9}>October</option>
+              <option value={10}>November</option>
+              <option value={11}>December</option>
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(parseInt(e.target.value));
+              }}
+              className="executive-header__select"
+            >
+              {[2023, 2024, 2025, 2026, 2027, 2028].map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
             <button
-              className="dashboard-header__button"
+              className="executive-header__refresh"
               onClick={handleRefresh}
               title="Refresh Data"
             >
@@ -787,9 +780,89 @@ const AdminOverview = () => {
             </button>
           </div>
         </div>
+
+        {/* Separator Line */}
+        <hr className="executive-header__separator" />
+
+        {/* Middle Row: Monthly Statistics Cards */}
+        <div className="executive-header__stats">
+          <div className="stat-card stat-card--total">
+            <div className="stat-card__icon">📅</div>
+            <div className="stat-card__content">
+              <span className="stat-card__label">Total Days</span>
+              <span className="stat-card__value">{monthStats.totalDays}</span>
+            </div>
+          </div>
+          <div className="stat-card stat-card--working">
+            <div className="stat-card__icon">💼</div>
+            <div className="stat-card__content">
+              <span className="stat-card__label">Working Days</span>
+              <span className="stat-card__value">{monthStats.workingDays}</span>
+            </div>
+          </div>
+          <div className="stat-card stat-card--sundays">
+            <div className="stat-card__icon">☀️</div>
+            <div className="stat-card__content">
+              <span className="stat-card__label">Sundays</span>
+              <span className="stat-card__value">{monthStats.sundays}</span>
+            </div>
+          </div>
+          <div className="stat-card stat-card--holidays">
+            <div className="stat-card__icon">🎁</div>
+            <div className="stat-card__content">
+              <span className="stat-card__label">Holidays</span>
+              <span className="stat-card__value">{monthStats.holidays}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Separator Line */}
+        <hr className="executive-header__separator" />
+
+        {/* Bottom Row: Quick Action Buttons */}
+        <div className="executive-header__actions">
+          <button
+            className="executive-header__action"
+            onClick={() => navigate('/admin/employees')}
+            title="Add Employee"
+          >
+            <span className="executive-header__action-icon">👤</span>
+            <span className="executive-header__action-text">Add Employee</span>
+          </button>
+          <button
+            className="executive-header__action"
+            onClick={() => navigate('/admin/attendance-analysis')}
+            title="Attendance Analysis"
+          >
+            <span className="executive-header__action-icon">📊</span>
+            <span className="executive-header__action-text">Attendance Analysis</span>
+          </button>
+          <button
+            className="executive-header__action"
+            onClick={() => navigate('/admin/invoice/reports?report=salesBySalesPerson')}
+            title="Employee Sales Report"
+          >
+            <span className="executive-header__action-icon">💰</span>
+            <span className="executive-header__action-text">Employee Sales Report</span>
+          </button>
+          <button
+            className="executive-header__action"
+            onClick={() => navigate('/admin/payroll')}
+            title="Employee Payroll"
+          >
+            <span className="executive-header__action-icon">💵</span>
+            <span className="executive-header__action-text">Employee Payroll</span>
+          </button>
+          <button
+            className="executive-header__action"
+            onClick={() => navigate('/admin/calendar?addHoliday=true')}
+            title="Add Holiday"
+          >
+            <span className="executive-header__action-icon">📅</span>
+            <span className="executive-header__action-text">Add Holiday</span>
+          </button>
+        </div>
       </div>
-
-
 
       {/* Needs Attention Section */}
       {data.alerts && data.alerts.length > 0 && (

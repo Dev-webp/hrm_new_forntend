@@ -133,7 +133,7 @@ export const NAV_MODULES = [
         subItems: [
           { slug: "/invoice/approvals", icon: "fa-clipboard-check", label: "Approval Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
           { slug: "/invoice/invoices", icon: "fa-file-invoice", label: "Approved Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
-          { slug: "/invoice/rejected", icon: "fa-file-circle-xmark", label: "Reject Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
+          { slug: "/invoice/rejected", icon: "fa-file-circle-xmark", label: "Rejected Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
           { slug: "/invoice/quotes", icon: "fa-file-signature", label: "Proforma Invoice", roles: ["admin", "manager"], invoicePermission: "quotes" },
         ]
       },
@@ -166,12 +166,12 @@ export const NAV_MODULES = [
     ],
   },
   {
-    module: "HR Documents",
+    module: "HR Operations",
     items: [
       {
         slug: "/hr-docs",
         icon: "fa-file-lines",
-        label: "HR Documents",
+        label: "HR Operations",
         roles: ["admin", "manager", "operational-manager", "sub-admin"],
         subItems: [
           { slug: "/letters", icon: "fa-file-contract", label: "Offer & Relieving Letter", roles: ["admin"] },

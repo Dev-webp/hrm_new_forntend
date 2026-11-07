@@ -431,7 +431,7 @@ function AdminEmployees() {
           <div className="em-detail-row">
             <i className="fas fa-calendar em-detail-icon" />
             <span className="em-detail-label">Joining Date</span>
-            <span className="em-detail-value">{employee.dateOfBirth ? formatDate(employee.dateOfBirth) : "—"}</span>
+            <span className="em-detail-value">{employee.joiningDate ? formatDate(employee.joiningDate) : "—"}</span>
           </div>
         </div>
 
@@ -846,7 +846,7 @@ function AdminEmployees() {
         /* --- Employee Card --- */
         .em-card {
           background: var(--card-bg);
-          border: 3px solid #044172;
+          border: 3px solid #D1D5DB;
           border-radius: var(--card-radius);
           padding: 20px;
           transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;

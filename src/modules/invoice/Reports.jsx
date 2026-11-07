@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 
 const API = axios.create({
@@ -657,9 +658,18 @@ function ReportView({ reportId, onBack }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Reports() {
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState(new Set(["salesByCustomer", "invoiceDetails"]));
   const [activeReport, setActiveReport] = useState(null);
+
+  // Check for report query parameter on mount
+  useEffect(() => {
+    const reportParam = searchParams.get('report');
+    if (reportParam && !activeReport) {
+      setActiveReport(reportParam);
+    }
+  }, [searchParams, activeReport]);
 
   function toggleFav(id, e) {
     e.stopPropagation();

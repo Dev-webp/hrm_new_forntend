@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import {
   addHoliday,
+  deleteHoliday,
   fetchAttendanceForDate,
   fetchAttendanceRange,
   fetchHolidaysForMonth,
@@ -330,9 +332,10 @@ function escapeHtml(str) {
 
 function AdminCalendar() {
   const today = new Date();
+  const [searchParams] = useSearchParams();
   const currentUser = useMemo(() => getStoredUser(), []);
   const isOperationalManager = currentUser?.role === "OPERATIONAL_MANAGER";
-  const canManageCalendar = currentUser?.role === "SUPER_ADMIN";
+  const canManageCalendar = ["SUPER_ADMIN", "OPERATIONAL_MANAGER", "MANAGER"].includes(currentUser?.role);
 
   const [currentDate, setCurrentDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
@@ -373,6 +376,17 @@ function AdminCalendar() {
   const [selectedDayRecord, setSelectedDayRecord] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
   const [editError, setEditError] = useState("");
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [holidayForm, setHolidayForm] = useState({
+    date: "",
+    name: "",
+    type: "holiday",
+    branch: "all"
+  });
+  const [holidayError, setHolidayError] = useState("");
+  const [editingHoliday, setEditingHoliday] = useState(null);
+  const [showYearCalendar, setShowYearCalendar] = useState(false);
+  const [yearHolidays, setYearHolidays] = useState([]);
 
   const branchDropdownRef = useRef(null);
   const monthChangeTimerRef = useRef(null);
@@ -395,6 +409,88 @@ function AdminCalendar() {
     setToast({ show: true, message });
     setTimeout(() => setToast({ show: false, message: "" }), 2200);
   }, []);
+
+  const handleAddHoliday = async () => {
+    const { date, name, type, branch } = holidayForm;
+
+    if (!date || !name) {
+      setHolidayError("Date and name are required");
+      return;
+    }
+
+    try {
+      await addHoliday({
+        date,
+        name,
+        type,
+        branch,
+      });
+
+      setShowHolidayModal(false);
+      setHolidayForm({ date: "", name: "", type: "holiday", branch: "all" });
+      setHolidayError("");
+      setEditingHoliday(null);
+      setCustomEntries({});
+      setCalendarDaysCache({});
+      setMonthlyStatsCache({});
+      setRefreshKey((prev) => prev + 1);
+      showToast(editingHoliday ? "Holiday updated successfully" : "Holiday added successfully");
+    } catch (err) {
+      setHolidayError(err?.response?.data?.message || "Failed to save holiday. Please try again.");
+    }
+  };
+
+  const handleDeleteHoliday = async (date) => {
+    if (!window.confirm("Are you sure you want to delete this holiday?")) {
+      return;
+    }
+
+    try {
+      await deleteHoliday(date);
+      setCustomEntries({});
+      setCalendarDaysCache({});
+      setMonthlyStatsCache({});
+      setRefreshKey((prev) => prev + 1);
+      showToast("Holiday deleted successfully");
+    } catch (err) {
+      showToast("Failed to delete holiday. Please try again.");
+    }
+  };
+
+  const handleEditHoliday = (holiday) => {
+    setEditingHoliday(holiday);
+    setHolidayForm({
+      date: holiday.date,
+      name: holiday.name,
+      type: holiday.type || "holiday",
+      branch: holiday.branch || "all"
+    });
+    setShowHolidayModal(true);
+    setHolidayError("");
+  };
+
+  const handleShowYearCalendar = async () => {
+    try {
+      const currentYear = currentDate.getFullYear();
+      const response = await fetchHolidaysForMonth(currentYear, null);
+      setYearHolidays(response);
+      setShowYearCalendar(true);
+    } catch (err) {
+      console.error("Failed to fetch year holidays:", err);
+      showToast("Failed to load year holidays");
+    }
+  };
+
+  // Auto-open holiday modal if addHoliday=true in URL
+  useEffect(() => {
+    if (searchParams.get("addHoliday") === "true" && canManageCalendar) {
+      setEditingHoliday(null);
+      setHolidayForm({ date: "", name: "", type: "holiday", branch: "all" });
+      setShowHolidayModal(true);
+      // Remove the parameter from URL
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [searchParams, canManageCalendar]);
 
   const clearCaches = useCallback(() => {
     setMonthlyStatsCache({});
@@ -452,9 +548,9 @@ function AdminCalendar() {
     return employees.filter((emp) => emp.department === departmentFilter);
   }, [departmentFilter, employees]);
 
-  const fetchHolidays = useCallback(async (year, month) => {
+  const fetchHolidays = useCallback(async (year, month, branch) => {
     try {
-      const data = await fetchHolidaysForMonth(year, month);
+      const data = await fetchHolidaysForMonth(year, month, branch);
 
       const entries = {};
 
@@ -465,6 +561,7 @@ function AdminCalendar() {
         entries[key] = {
           type: h.type,
           name: h.name,
+          branch: h.branch,
         };
       });
 
@@ -476,6 +573,13 @@ function AdminCalendar() {
       return {};
     }
   }, []);
+
+  // --- NEW: Refetch holidays when branch changes ---
+  useEffect(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    fetchHolidays(year, month + 1, currentBranch);
+  }, [currentBranch, currentDate, fetchHolidays]);
 
   const fetchMonthStatsRange = useCallback(async (year, month, branch) => {
     const mm = String(month + 1).padStart(2, "0");
@@ -598,7 +702,7 @@ function AdminCalendar() {
     [fetchMonthStatsRange, fetchStatsForDate]
   );
 
-  const updateMonthStatsFromEntries = useCallback((year, month, entries) => {
+  const updateMonthStatsFromEntries = useCallback((year, month, entries, branch) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const mm = String(month + 1).padStart(2, "0");
 
@@ -617,9 +721,12 @@ function AdminCalendar() {
         continue;
       }
 
-      if (entry?.type === "holiday") {
+      // Check if holiday applies to current branch
+      const appliesToBranch = !entry?.branch || entry?.branch === "all" || entry?.branch === branch;
+
+      if (entry?.type === "holiday" && appliesToBranch) {
         holidayCount++;
-      } else if (entry?.type === "halfday") {
+      } else if (entry?.type === "halfday" && appliesToBranch) {
         halfDayCount++;
         workingDays += 0.5;
       } else {
@@ -699,7 +806,7 @@ function AdminCalendar() {
     setError("");
 
     try {
-      const holidayEntries = await fetchHolidays(year, month + 1);
+      const holidayEntries = await fetchHolidays(year, month + 1, currentBranch);
 
       // --- UPDATED: branch vs employee mode ---
       let statsMap = null;
@@ -742,8 +849,8 @@ function AdminCalendar() {
         if (selectedEmployeeId !== "all") {
           const st = employeeRecord?.status || null;
           const isLate = Number(employeeRecord?.lateMinutes || 0) > 0;
-          const isCompanyHoliday = entry?.type === "holiday";
-          const isCompanyHalfDay = entry?.type === "halfday";
+          const isCompanyHoliday = entry?.type === "holiday" && (entry?.branch === "all" || entry?.branch === currentBranch);
+          const isCompanyHalfDay = entry?.type === "halfday" && (entry?.branch === "all" || entry?.branch === currentBranch);
           const resolvedStatus = getCalendarAttendanceStatus(employeeRecord);
           const statusKey = resolveEmployeeCalendarStatus(employeeRecord, {
             isSunday: isSun,
@@ -853,8 +960,8 @@ function AdminCalendar() {
           total: 0,
         };
 
-        const isCompanyHoliday = entry?.type === "holiday";
-        const isCompanyHalfDay = entry?.type === "halfday";
+        const isCompanyHoliday = entry?.type === "holiday" && (entry?.branch === "all" || entry?.branch === currentBranch);
+        const isCompanyHalfDay = entry?.type === "halfday" && (entry?.branch === "all" || entry?.branch === currentBranch);
 
         if (isSun && !entry) {
           dayClass += " sunday";
@@ -982,7 +1089,7 @@ function AdminCalendar() {
       setCalendarDays(days);
       setCalendarDaysCache((prev) => ({ ...prev, [cacheKey]: days }));
 
-      updateMonthStatsFromEntries(year, month, holidayEntries);
+      updateMonthStatsFromEntries(year, month, holidayEntries, currentBranch);
       renderBottomTablesFromEntries(year, month, holidayEntries);
     } catch (err) {
       const message =
@@ -1042,52 +1149,6 @@ function AdminCalendar() {
     showToast(`Filtering: ${branch === "all" ? "All Branches" : branch}`);
   };
 
-  const handleAddHoliday = async () => {
-    const date = prompt("Enter date (YYYY-MM-DD):\nExample: 2026-06-15");
-    if (!date) return;
-
-    const cleanDate = date.trim();
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
-      showToast("❌ Date must be YYYY-MM-DD format");
-      return;
-    }
-
-    const name = prompt("Enter holiday / half-day label:\nExample: Diwali");
-    if (!name || !name.trim()) {
-      showToast("❌ Name cannot be empty");
-      return;
-    }
-
-    const cleanName = name.trim();
-
-    const isHalfDay = confirm(
-      "Click OK for Half Day\nClick Cancel for Full Holiday"
-    );
-
-    const type = isHalfDay ? "halfday" : "holiday";
-
-    try {
-      const savedHoliday = await addHoliday(cleanDate, cleanName, type);
-      console.log("✅ SAVED HOLIDAY:", savedHoliday);
-
-      const [y, m] = cleanDate.split("-").map(Number);
-
-      setCalendarDaysCache({});
-      setMonthlyStatsCache({});
-      setCustomEntries({});
-
-      setCurrentDate(new Date(y, m - 1, 1));
-
-      setRefreshKey((prev) => prev + 1);
-
-      showToast(`✅ "${cleanName}" added for ${cleanDate}`);
-    } catch (e) {
-      showToast("❌ Network error: " + (e.response?.data?.message || e.message));
-      console.error(e);
-    }
-  };
-
   const branchDisplay =
     currentBranch === "all"
       ? "All Branches"
@@ -1127,6 +1188,27 @@ function AdminCalendar() {
           )}
         </div>
 
+        <div className="header-actions">
+          <button
+            className="view-year-holidays-btn-header"
+            onClick={handleShowYearCalendar}
+          >
+            <i className="fas fa-calendar-alt"></i> Holiday Calendar
+          </button>
+          {canManageCalendar && (
+            <button
+              className="add-holiday-btn-header"
+              onClick={() => {
+                setEditingHoliday(null);
+                setHolidayForm({ date: "", name: "", type: "holiday", branch: "all" });
+                setShowHolidayModal(true);
+              }}
+            >
+              <i className="fas fa-plus"></i> Add Holiday
+            </button>
+          )}
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -1135,23 +1217,6 @@ function AdminCalendar() {
             flexWrap: "wrap",
           }}
         >
-          {canManageCalendar && (
-            <button
-              onClick={handleAddHoliday}
-              style={{
-                background: "#FF8C00",
-                border: "none",
-                padding: "10px 22px",
-                borderRadius: "40px",
-                fontWeight: "600",
-                cursor: "pointer",
-                color: "#1A2B4B",
-              }}
-            >
-              + Add Holiday
-            </button>
-          )}
-
           {/* --- NEW: Employee dropdown --- */}
           {calendarMode === "branch" && (
             <>
@@ -1574,37 +1639,178 @@ function AdminCalendar() {
         </div>
       )}
 
-      <div className="bottom-tables">
-        <div className="info-table">
-          <h3>
-            <i className="fas fa-calendar-times"></i> Holidays
-          </h3>
+      {/* Holiday Modal */}
+      {showHolidayModal && (
+        <div className="modal-overlay" onClick={() => setShowHolidayModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              <i className="fas fa-calendar-plus"></i> {editingHoliday ? "Edit Holiday" : "Add Holiday"}
+            </h3>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Name</th>
-              </tr>
-            </thead>
+            <div className="form-group">
+              <label>Date <span style={{ color: "#DC2626" }}>*</span></label>
+              <input
+                type="date"
+                value={holidayForm.date}
+                onChange={(e) => setHolidayForm({ ...holidayForm, date: e.target.value })}
+                disabled={!!editingHoliday}
+                style={{
+                  border: holidayError ? "1px solid #DC2626" : "1px solid #DBE7F3",
+                  backgroundColor: editingHoliday ? "#F1F5F9" : "#FFFFFF",
+                  cursor: editingHoliday ? "not-allowed" : "pointer"
+                }}
+              />
+              {editingHoliday && (
+                <small style={{ color: "#64748B", fontSize: "12px", marginTop: "4px", display: "block" }}>
+                  Date cannot be changed when editing
+                </small>
+              )}
+            </div>
 
-            <tbody>
-              {bottomTables.holidays.length === 0 ? (
-                <tr>
-                  <td colSpan="2">No holidays</td>
-                </tr>
+            <div className="form-group">
+              <label>Holiday Name <span style={{ color: "#DC2626" }}>*</span></label>
+              <input
+                type="text"
+                placeholder="e.g., Diwali, Independence Day"
+                value={holidayForm.name}
+                onChange={(e) => setHolidayForm({ ...holidayForm, name: e.target.value })}
+                style={{
+                  border: holidayError ? "1px solid #DC2626" : "1px solid #DBE7F3"
+                }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Type</label>
+              <select
+                value={holidayForm.type}
+                onChange={(e) => setHolidayForm({ ...holidayForm, type: e.target.value })}
+              >
+                <option value="holiday">Full Day Holiday</option>
+                <option value="halfday">Half Day Holiday</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Branch</label>
+              <select
+                value={holidayForm.branch}
+                onChange={(e) => setHolidayForm({ ...holidayForm, branch: e.target.value })}
+              >
+                <option value="all">All Branches</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Bangalore">Bangalore</option>
+              </select>
+            </div>
+
+            {holidayError && (
+              <div style={{ color: "#DC2626", fontSize: "0.8rem", marginTop: "-6px" }}>
+                {holidayError}
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button
+                onClick={handleAddHoliday}
+                className="btn-primary"
+              >
+                <i className="fas fa-save"></i> Save Holiday
+              </button>
+              <button
+                onClick={() => {
+                  setShowHolidayModal(false);
+                  setHolidayForm({ date: "", name: "", type: "holiday", branch: "all" });
+                  setHolidayError("");
+                }}
+                className="btn-secondary"
+              >
+                <i className="fas fa-times"></i> Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Year Holiday Calendar Modal */}
+      {showYearCalendar && (
+        <div className="modal-overlay" onClick={() => setShowYearCalendar(false)}>
+          <div className="modal-content year-calendar-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              <i className="fas fa-calendar-alt"></i> {currentDate.getFullYear()} Holiday Calendar
+            </h3>
+
+            <div className="year-calendar-summary">
+              <div className="summary-card">
+                <div className="summary-value">{yearHolidays.length}</div>
+                <div className="summary-label">Total Holidays</div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-value">
+                  {yearHolidays.filter(h => h.type === "holiday").length}
+                </div>
+                <div className="summary-label">Full Days</div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-value">
+                  {yearHolidays.filter(h => h.type === "halfday").length}
+                </div>
+                <div className="summary-label">Half Days</div>
+              </div>
+            </div>
+
+            <div className="year-holidays-list">
+              {yearHolidays.length === 0 ? (
+                <div className="no-holidays">No holidays for this year</div>
               ) : (
-                bottomTables.holidays.map((h, index) => (
-                  <tr key={`holiday-${index}`}>
-                    <td>{h.date}</td>
-                    <td>{escapeHtml(h.name)}</td>
-                  </tr>
+                yearHolidays.map((h, index) => (
+                  <div key={`year-holiday-${index}`} className="year-holiday-item">
+                    <div className="holiday-date">
+                      <i className="fas fa-calendar-day"></i>
+                      {h.date}
+                    </div>
+                    <div className="holiday-name">{escapeHtml(h.name)}</div>
+                    <div className="holiday-type">
+                      {h.type === "halfday" ? "Half Day" : "Full Day"}
+                    </div>
+                    {canManageCalendar && (
+                      <div className="year-holiday-actions">
+                        <button
+                          className="year-holiday-edit-btn"
+                          onClick={() => {
+                            setShowYearCalendar(false);
+                            handleEditHoliday(h);
+                          }}
+                          title="Edit holiday"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className="year-holiday-delete-btn"
+                          onClick={() => handleDeleteHoliday(h.date)}
+                          title="Delete holiday"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
 
+            <div className="modal-actions">
+              <button
+                onClick={() => setShowYearCalendar(false)}
+                className="btn-primary"
+              >
+                <i className="fas fa-times"></i> Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bottom-tables">
         <div className="info-table">
           <h3>
             <i className="fas fa-sun"></i> Sundays

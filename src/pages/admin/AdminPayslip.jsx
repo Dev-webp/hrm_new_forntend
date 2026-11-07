@@ -227,6 +227,19 @@ useEffect(() => {
   loadDepartments();
 }, [loadBranches, loadDepartments]);
 
+// Load employees by default on page load
+useEffect(() => {
+  const loadEmployees = async () => {
+    try {
+      const emps = await fetchPayrollEmployees();
+      setEmployees(Array.isArray(emps) ? emps : []);
+    } catch (e) {
+      console.error("Failed to load employees:", e);
+    }
+  };
+  loadEmployees();
+}, []);
+
 useEffect(() => {
   loadPayslips();
 }, [loadPayslips]);
@@ -264,6 +277,19 @@ const handleMonthSelect = (year, month) => {
 const toggleMonthMenu = (e) => {
   e.stopPropagation();
   setMonthMenuOpen(!monthMenuOpen);
+};
+
+// Navigate year
+const prevYear = () => {
+  const currentYear = parseInt(currentMonth.slice(0, 4));
+  const newYear = currentYear - 1;
+  setCurrentMonth(`${newYear}-${currentMonth.slice(5, 7)}-01`);
+};
+
+const nextYear = () => {
+  const currentYear = parseInt(currentMonth.slice(0, 4));
+  const newYear = currentYear + 1;
+  setCurrentMonth(`${newYear}-${currentMonth.slice(5, 7)}-01`);
 };
 
 // Get available months (current year)
@@ -492,26 +518,46 @@ const handleOpenGenModal = async () => {
     const hdr = [
       "Employee",
       "Emp ID",
-      "Department",
       "Branch",
+      "Department",
       "Month",
-      "CTC",
+      "Basic CTC",
+      "Per Day",
+      "Present",
+      "Absent",
+      "Paid Leave",
+      "Half Day",
+      "Paid Sundays",
+      "Sandwich Sundays",
+      "Holidays",
+      "Total Days",
+      "Late Login",
       "Incentives",
       "Deductions",
-      "Tax",
+      "Total Paid Days",
       "Net Pay",
       "Status",
     ];
     const rows = safePayslips.map((p) => [
       p.full_name,
       p.employee_code || "",
-      p.department,
       p.branch,
+      p.department,
       monthLabel(p.month),
       p.basic_salary,
-      p.incentives,
-      p.deductions,
-      p.tax,
+      p.per_day_salary || (Number(p.basic_salary || 0) / (Number(p.total_days) || 30)).toFixed(2),
+      p.present_days || 0,
+      p.absent_days || 0,
+      p.paid_leaves || 0,
+      p.half_days || 0,
+      p.paid_sundays || 0,
+      p.sandwich_sundays || 0,
+      p.holidays || 0,
+      p.total_days || 0,
+      p.late_logins || 0,
+      p.incentives || 0,
+      p.deductions || 0,
+      p.payable_days || 0,
       p.net_pay,
       p.payment_status,
     ]);
@@ -610,32 +656,57 @@ const handleOpenGenModal = async () => {
       </div>
 
       <div className="scrollable-content">
-      <div className="toolbar-container">
-        <div className="toolbar-row">
-          <div className="search-box">
-            <i className="fas fa-search search-icon"></i>
+      <div className="payroll-dashboard-container">
+        <div className="payroll-filter-row">
+          <div className="payroll-search-container">
+            <i className="fas fa-search payroll-search-icon"></i>
             <input
               type="text"
-              placeholder="Search employee..."
+              className="payroll-search-input"
+              placeholder="Search employee by name, email or employee ID..."
               onChange={handleSearchChange}
             />
           </div>
-          <div className="month-selector" ref={monthDropdownRef}>
-            <div
-              className="month-btn"
-              onClick={toggleMonthMenu}
+          <div className="payroll-department-container">
+            <i className="fas fa-building payroll-department-icon"></i>
+            <select
+              value={currentDept}
+              onChange={(e) => setCurrentDept(e.target.value)}
+              className="payroll-department-select"
             >
-              <i className="fas fa-calendar"></i>
-              <span>{monthLabel(currentMonth)}</span>
-              <i className="fas fa-chevron-down"></i>
+              <option value="">All Departments</option>
+              {departments.map((d) => {
+                const value = d === "All" ? "all" : d;
+                return (
+                  <option key={d} value={value}>
+                    {d}
+                  </option>
+                );
+              })}
+            </select>
+            <i className="fas fa-chevron-down payroll-department-arrow"></i>
+          </div>
+          <div className="payroll-month-container" ref={monthDropdownRef}>
+            <div
+              className="payroll-month-selector"
+              onClick={(e) => toggleMonthMenu(e)}
+            >
+              <i className="fas fa-calendar payroll-month-icon"></i>
+              <span className="payroll-month-text">{monthLabel(currentMonth)}</span>
+              <i className="fas fa-chevron-down payroll-month-arrow"></i>
             </div>
             {monthMenuOpen && (
-              <div className="month-menu open">
-                <div className="month-menu-grid">
+              <div className="payroll-month-popover">
+                <div className="payroll-month-header">
+                  <i className="fas fa-chevron-left payroll-nav-arrow" onClick={(e) => { e.stopPropagation(); prevYear(); }}></i>
+                  <span className="payroll-year-display">{currentMonth.slice(0, 4)}</span>
+                  <i className="fas fa-chevron-right payroll-nav-arrow" onClick={(e) => { e.stopPropagation(); nextYear(); }}></i>
+                </div>
+                <div className="payroll-month-grid">
                   {getAvailableMonths().map((m) => (
                     <div
                       key={m.monthKey}
-                      className={`month-menu-item ${currentMonth.slice(0, 7) === m.monthKey ? 'active' : ''}`}
+                      className={`payroll-month-item ${currentMonth.slice(0, 7) === m.monthKey ? 'payroll-month-active' : ''}`}
                       onClick={() => handleMonthSelect(m.year, m.value)}
                     >
                       {m.label}
@@ -646,82 +717,62 @@ const handleOpenGenModal = async () => {
             )}
           </div>
         </div>
-        <div className="department-section">
-          <div className="department-header">
-            <div className="department-label">Department</div>
-            <div className="department-count">{departments.length} departments</div>
+
+        <div className="payroll-kpi-row">
+          <div className="payroll-kpi-card payroll-kpi-blue">
+            <div className="payroll-kpi-icon-container">
+              <i className="fas fa-coins payroll-kpi-icon"></i>
+            </div>
+            <div className="payroll-kpi-content">
+              <div className="payroll-kpi-label">Total Payroll</div>
+              <div className="payroll-kpi-value">{inr(kpi.total)}</div>
+            </div>
+            <div className="payroll-kpi-wave payroll-wave-blue"></div>
           </div>
-          <div className="department-filters">
-            {departments.map((d) => {
-              const value = d === "All" ? "all" : d;
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  className={`dept-filter ${currentDept === value ? "active" : ""}`}
-                  onClick={() => setCurrentDept(value)}
-                >
-                  {d}
-                </button>
-              );
-            })}
+          <div className="payroll-kpi-card payroll-kpi-green">
+            <div className="payroll-kpi-icon-container">
+              <i className="fas fa-users payroll-kpi-icon"></i>
+            </div>
+            <div className="payroll-kpi-content">
+              <div className="payroll-kpi-label">Active Employees</div>
+              <div className="payroll-kpi-value">{kpi.count}</div>
+            </div>
+            <div className="payroll-kpi-wave payroll-wave-green"></div>
+          </div>
+          <div className="payroll-kpi-card payroll-kpi-purple">
+            <div className="payroll-kpi-icon-container">
+              <i className="fas fa-calendar-check payroll-kpi-icon"></i>
+            </div>
+            <div className="payroll-kpi-content">
+              <div className="payroll-kpi-label">Total Present Days</div>
+              <div className="payroll-kpi-value">{safePayslips.reduce((sum, p) => sum + (Number(p.present_days) || 0), 0)}</div>
+            </div>
+            <div className="payroll-kpi-wave payroll-wave-purple"></div>
+          </div>
+          <div className="payroll-kpi-card payroll-kpi-orange">
+            <div className="payroll-kpi-icon-container">
+              <i className="fas fa-minus-circle payroll-kpi-icon"></i>
+            </div>
+            <div className="payroll-kpi-content">
+              <div className="payroll-kpi-label">Total Deductions</div>
+              <div className="payroll-kpi-value">{inr(kpi.deduct)}</div>
+            </div>
+            <div className="payroll-kpi-wave payroll-wave-orange"></div>
+          </div>
+          <div className="payroll-kpi-card payroll-kpi-pink">
+            <div className="payroll-kpi-icon-container">
+              <i className="fas fa-clock payroll-kpi-icon"></i>
+            </div>
+            <div className="payroll-kpi-content">
+              <div className="payroll-kpi-label">Unpaid Payslips</div>
+              <div className="payroll-kpi-value">{kpi.unpaid}</div>
+            </div>
+            <div className="payroll-kpi-wave payroll-wave-pink"></div>
           </div>
         </div>
       </div>
 
-      <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <i className="fas fa-coins"></i>
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-label">Total Payroll</div>
-            <div className="kpi-value">{inr(kpi.total)}</div>
-            <div className="kpi-sub">Selected month & filters</div>
-          </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <i className="fas fa-users"></i>
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-label">Active Employees</div>
-            <div className="kpi-value">{kpi.count}</div>
-            <div className="kpi-sub">Payslips generated</div>
-          </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <i className="fas fa-calendar-check"></i>
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-label">Total Present Days</div>
-            <div className="kpi-value">{safePayslips.reduce((sum, p) => sum + (Number(p.present_days) || 0), 0)}</div>
-            <div className="kpi-sub">Across all employees</div>
-          </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <i className="fas fa-minus-circle"></i>
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-label">Total Deductions</div>
-            <div className="kpi-value deduction">{inr(kpi.deduct)}</div>
-            <div className="kpi-sub">Across all employees</div>
-          </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon">
-            <i className="fas fa-clock"></i>
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-label">Unpaid Payslips</div>
-            <div className="kpi-value unpaid">{kpi.unpaid}</div>
-            <div className="kpi-sub">Pending disbursement</div>
-          </div>
-        </div>
-      </div>
-
+      <div className="table-container-modern">
       <div className="table-card">
         <div className="table-header">
           <div className="table-title">
@@ -748,6 +799,7 @@ const handleOpenGenModal = async () => {
                 <th>Sandwich Sundays</th>
                 <th>Holidays</th>
                 <th>Total Days</th>
+                <th>Late Login</th>
                 <th>Incentives</th>
                 <th>Deductions</th>
                 <th>Total Paid Days</th>
@@ -759,19 +811,21 @@ const handleOpenGenModal = async () => {
             <tbody>
               {loading ? (
                 <tr className="empty-row">
-                  <td colSpan="19">
+                  <td colSpan="20">
                     <span className="spinner"></span> Loading…
                   </td>
                 </tr>
               ) : error ? (
                 <tr className="empty-row">
-                  <td colSpan="19" style={{ color: "var(--red)" }}>
+                  <td colSpan="20" style={{ color: "var(--red)" }}>
                     Failed: {esc(error)}
                   </td>
                 </tr>
-              ) : !safePayslips.length ? (
+              ) : safePayslips.length === 0 ? (
                 <tr className="empty-row">
-                  <td colSpan="19">No payslips found for the selected filters.</td>
+                  <td colSpan="20" style={{ color: "#71829D", fontStyle: "italic" }}>
+                    No payslips generated for this month yet. Click "Generate Payslip" or "Batch Generate" to create payslips.
+                  </td>
                 </tr>
               ) : (
                 safePayslips.map((p) => {
@@ -808,6 +862,7 @@ const handleOpenGenModal = async () => {
                       <td className="mono" style={{color: 'var(--red)'}}>{p.unpaid_sundays || 0}</td>
                       <td className="mono">{p.holidays || 0}</td>
                       <td className="mono" style={{fontWeight: 'bold'}}>{p.total_days || 0}</td>
+                      <td className="mono" style={{color: 'var(--orange)'}}>{p.late_logins || 0}</td>
                       <td className="mono earning-val">{inr(p.incentives)}</td>
                       <td className="mono deduction-val">{inr(p.deductions)}</td>
                       <td className="mono" style={{fontWeight: 'bold', color: 'var(--green)'}}>{p.payable_days || 0}</td>
@@ -855,6 +910,8 @@ const handleOpenGenModal = async () => {
             </tbody>
           </table>
         </div>
+      </div>
+      </div>
       </div>
       </div>
 
@@ -934,7 +991,7 @@ const handleOpenGenModal = async () => {
     setAlreadyGenerated(alreadyDone);
     await fetchAndRenderPreview(selectedEmployee.id, month);
   }
-}}
+                  }}
                   />
                 </div>
                 <div className="form-group">
@@ -1295,7 +1352,6 @@ const handleOpenGenModal = async () => {
         }}
       >
         {toast.message}
-      </div>
       </div>
     </div>
   );

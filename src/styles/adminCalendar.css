@@ -3,6 +3,64 @@
   background: #F8FAFC;
 }
 
+.admin-calendar-page .header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.admin-calendar-page .add-holiday-btn-header {
+  background: #0D47A1;
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.2);
+}
+
+.admin-calendar-page .add-holiday-btn-header:hover {
+  background: #1565C0;
+  box-shadow: 0 4px 12px rgba(13, 71, 161, 0.3);
+  transform: translateY(-1px);
+}
+
+.admin-calendar-page .add-holiday-btn-header i {
+  font-size: 16px;
+}
+
+.admin-calendar-page .view-year-holidays-btn-header {
+  background: #6366F1;
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.admin-calendar-page .view-year-holidays-btn-header:hover {
+  background: #7C3AED;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+}
+
+.admin-calendar-page .view-year-holidays-btn-header i {
+  font-size: 16px;
+}
+
 .admin-calendar-page .calendar-mode-toggle {
   display: inline-flex;
   gap: 6px;
@@ -707,3 +765,405 @@
 .admin-calendar-page .stat-card .stat-label {
   font-weight: 700;
 }
+
+/* Add Holiday Button */
+.add-holiday-btn {
+  background: #0D47A1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.2);
+}
+
+.add-holiday-btn:hover {
+  background: #1565C0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 71, 161, 0.3);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A2B4B;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-content .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-content .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #DBE7F3;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group select:focus {
+  border-color: #0D47A1;
+}
+
+.modal-content .modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-content .btn-primary,
+.modal-content .btn-secondary {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.modal-content .btn-primary {
+  background: #0D47A1;
+  color: #FFFFFF;
+}
+
+.modal-content .btn-primary:hover {
+  background: #1565C0;
+}
+
+.modal-content .btn-secondary {
+  background: #F1F5F9;
+  color: #334155;
+}
+
+.modal-content .btn-secondary:hover {
+  background: #E2E8F0;
+}
+
+
+/* Holidays Section - Top */
+.holidays-section-top {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.holidays-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.holidays-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1A2B4B;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.holidays-title i {
+  color: #0D47A1;
+}
+
+.holidays-table-container {
+  border: 1px solid #DBE7F3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.holidays-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.holidays-table thead {
+  background: #F8FAFC;
+}
+
+.holidays-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: #334155;
+  border-bottom: 2px solid #DBE7F3;
+}
+
+.holidays-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #DBE7F3;
+  font-size: 14px;
+  color: #1A2B4B;
+}
+
+.holidays-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.holidays-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.edit-holiday-btn {
+  background: #0D47A1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edit-holiday-btn:hover {
+  background: #1565C0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.3);
+}
+
+
+/* Year Calendar Button */
+.view-year-holidays-btn {
+  background: #6366F1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+  margin-right: 12px;
+}
+
+.view-year-holidays-btn:hover {
+  background: #4F46E5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Holidays Actions Container */
+.holidays-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Year Calendar Modal */
+.year-calendar-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.year-calendar-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #F8FAFC;
+  border-radius: 8px;
+}
+
+.summary-card {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0D47A1;
+  margin-bottom: 4px;
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.year-holidays-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #DBE7F3;
+  border-radius: 8px;
+}
+
+.no-holidays {
+  text-align: center;
+  padding: 40px;
+  color: #64748B;
+  font-size: 14px;
+}
+
+.year-holiday-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #DBE7F3;
+  transition: background 0.2s ease;
+}
+
+.year-holiday-item:last-child {
+  border-bottom: none;
+}
+
+.year-holiday-item:hover {
+  background: #F8FAFC;
+}
+
+.holiday-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0D47A1;
+  min-width: 120px;
+}
+
+.holiday-name {
+  flex: 1;
+  font-weight: 500;
+  color: #1A2B4B;
+}
+
+.holiday-type {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #E0E7FF;
+  color: #4338CA;
+}
+
+
+.delete-holiday-btn {
+  background: #DC2626;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.delete-holiday-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+
+.year-holiday-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.year-holiday-edit-btn,
+.year-holiday-delete-btn {
+  background: #0D47A1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.year-holiday-edit-btn:hover {
+  background: #1565C0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.3);
+}
+
+.year-holiday-delete-btn {
+  background: #DC2626;
+}
+
+.year-holiday-delete-btn:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+

@@ -48,6 +48,90 @@ img {
   will-change: transform;
 }
 
+/* Global Section Border - Light Gray */
+.dashboard-header,
+.stat-card,
+.advanced-filters,
+.activity-bulk-toolbar,
+.table-wrapper,
+.modal-box,
+.kpi-card,
+.em-card,
+.em-stat-card,
+.em-filter-bar,
+.table-card,
+.department-section,
+.toolbar-container,
+.filter-section,
+.summary-section,
+.card-section {
+  border: 3px solid #D1D5DB !important;
+}
+
+/* Global Table Styling */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+table thead th {
+  font-size: 13px !important;
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+  border-right: 2px solid #D1D5DB;
+  border-bottom: 2px solid #D1D5DB;
+  background: #F9FAFB;
+  color: #142B55;
+}
+
+table thead th:last-child {
+  border-right: none;
+}
+
+table tbody td {
+  padding: 12px 16px;
+  border-right: 2px solid #D1D5DB;
+  border-bottom: 1px solid #E5E7EB;
+  font-size: 14px;
+  color: #374151;
+}
+
+table tbody td:last-child {
+  border-right: none;
+}
+
+table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table tbody tr:hover {
+  background: #F9FAFB;
+}
+
+/* Section Separators */
+table thead {
+  border-bottom: 2px solid #D1D5DB;
+}
+
+.table-wrapper,
+.table-card {
+  border-top: 3px solid #D1D5DB !important;
+  border-bottom: 3px solid #D1D5DB !important;
+}
+
+.dashboard-header__bottom,
+.toolbar-container > div,
+.department-section > div,
+.filter-section > div {
+  border-bottom: 1px solid #D1D5DB;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+
+
 :root {
   --gold: #FF8C00;
   --gold-light: #f0cc5a;
@@ -774,6 +858,30 @@ body.hrms-dashboard #root {
   letter-spacing: 1px;
   color: var(--muted);
   margin-top: 4px;
+}
+
+.strip-tile-action {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.strip-tile-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.strip-tile .tile-action-icon {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 0.9rem;
+  color: var(--accent-color, var(--gold));
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.strip-tile-action:hover .tile-action-icon {
+  opacity: 1;
 }
 
 .section-hdr {
@@ -2885,3 +2993,129 @@ body.hrms-dashboard #root {
     grid-template-columns: repeat(5, minmax(118px, 1fr));
   }
 }
+
+/* Add Holiday Button in Executive Dashboard Header */
+.add-holiday-header-btn {
+  background: #0D47A1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.2);
+}
+
+.add-holiday-header-btn:hover {
+  background: #1565C0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 71, 161, 0.3);
+}
+
+
+/* Dashboard Holiday Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A2B4B;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-content .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-content .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #DBE7F3;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group select:focus {
+  border-color: #0D47A1;
+}
+
+.modal-content .modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-content .btn-primary,
+.modal-content .btn-secondary {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.modal-content .btn-primary {
+  background: #0D47A1;
+  color: #FFFFFF;
+}
+
+.modal-content .btn-primary:hover {
+  background: #1565C0;
+}
+
+.modal-content .btn-secondary {
+  background: #F1F5F9;
+  color: #334155;
+}
+
+.modal-content .btn-secondary:hover {
+  background: #E2E8F0;
+}
+

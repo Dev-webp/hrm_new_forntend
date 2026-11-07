@@ -200,7 +200,7 @@ const OverallDashboard = () => {
     
     pendingWork.push({
       icon: '🎯',
-      title: 'OPS leads on remaining white spaces',
+      title: 'OPS leads',
       count: data.ops.totalLeads || 0,
       route: '/admin/ops/leads',
     });

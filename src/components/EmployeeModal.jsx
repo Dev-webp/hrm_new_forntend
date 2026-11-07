@@ -128,6 +128,48 @@ function EmployeeFormModal({
 
         </div>
 
+        {/* ====================================================
+            DATE FIELDS
+        ==================================================== */}
+
+        <div className="form-row">
+
+          <div className="form-group">
+            <label htmlFor="joiningDate">
+              Joining Date
+            </label>
+            <input
+              id="joiningDate"
+              type="date"
+              value={form.joiningDate}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  joiningDate: event.target.value,
+                })
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="dateOfBirth">
+              Date of Birth
+            </label>
+            <input
+              id="dateOfBirth"
+              type="date"
+              value={form.dateOfBirth}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  dateOfBirth: event.target.value,
+                })
+              }
+            />
+          </div>
+
+        </div>
+
 
         {/* ====================================================
             DEPARTMENT / BRANCH

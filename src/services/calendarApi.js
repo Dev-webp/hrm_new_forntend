@@ -1,29 +1,45 @@
 import api from "./api";
 
-// Fetch holidays for a specific month
-export async function fetchHolidaysForMonth(year, month) {
-  const mm = String(month).padStart(2, "0");
+// Fetch holidays for a specific month or year
+export async function fetchHolidaysForMonth(year, month, branch) {
+  const params = {
+    _t: Date.now(),
+  };
 
-  // Your attendanceRoutes.js supports month=YYYY-MM
-  const response = await api.get("/holidays", {
-    params: {
-      month: `${year}-${mm}`,
-      _t: Date.now(),
-    },
-  });
+  if (year) {
+    params.year = year;
+  }
+
+  if (month) {
+    const mm = String(month).padStart(2, "0");
+    params.month = `${year}-${mm}`;
+  }
+
+  if (branch && branch !== "all") {
+    params.branch = branch;
+  }
+
+  const response = await api.get("/holidays", { params });
 
   console.log("HOLIDAYS FROM API:", response.data);
   return Array.isArray(response.data) ? response.data : [];
 }
 
 // Add a new holiday
-export async function addHoliday(date, name, type) {
+export async function addHoliday({ date, name, type, branch }) {
   const response = await api.post("/holidays", {
     date,
     name,
     type,
+    branch,
   });
 
+  return response.data;
+}
+
+// Delete a holiday
+export async function deleteHoliday(date) {
+  const response = await api.delete(`/holidays/${date}`);
   return response.data;
 }
 

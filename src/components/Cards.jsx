@@ -20,12 +20,13 @@ export function WelcomeStat({ value, label, colorClass, icon, accentColor }) {
   );
 }
 
-export function StripTile({ icon, label, value, accentColor }) {
+export function StripTile({ icon, label, value, accentColor, isAction, onClick }) {
   const displayValue = isNaN(value) ? 0 : value;
   return (
     <div
-      className="strip-tile"
+      className={`strip-tile ${isAction ? "strip-tile-action" : ""}`}
       style={{ "--accent-color": accentColor }}
+      onClick={isAction ? onClick : undefined}
     >
       <div className="tile-icon">
         <i className={icon} />
@@ -34,6 +35,7 @@ export function StripTile({ icon, label, value, accentColor }) {
         <div className="tile-val">{displayValue}</div>
         <div className="tile-lbl">{label}</div>
       </div>
+      {isAction && <div className="tile-action-icon"><i className="fas fa-arrow-right" /></div>}
     </div>
   );
 }
