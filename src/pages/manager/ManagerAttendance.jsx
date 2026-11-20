@@ -135,8 +135,9 @@ export default function ManagerAttendance() {
     }
   }, []);
   const isOperationalManager = storedUser.role === "OPERATIONAL_MANAGER";
+  const canPickBranch = isOperationalManager || storedUser.role === "HR";
   const [selectedBranch, setSelectedBranch] = useState("all");
-  const branch = isOperationalManager ? selectedBranch : (localStorage.getItem("branch") || "Hyderabad");
+  const branch = canPickBranch ? selectedBranch : (localStorage.getItem("branch") || "Hyderabad");
   const searchTimeoutRef = useRef(null);
 
   const showToast = useCallback((msg) => {
@@ -207,9 +208,16 @@ export default function ManagerAttendance() {
     }
   }, [currentDate, branch, showToast]);
 
-  const loadHistory = useCallback(async () => {
+  const loadHistory = useCallback(async (start = historyStart, end = historyEnd) => {
     try {
-      const records = await fetchSelfHistory(historyStart, historyEnd);
+      if (start && end) {
+        const days = Math.floor((new Date(end) - new Date(start)) / 86400000) + 1;
+        if (days > 62) {
+          showToast("History range cannot exceed 62 days");
+          return;
+        }
+      }
+      const records = await fetchSelfHistory(start, end);
       setHistoryRecords(records);
     } catch (err) {
       showToast("Failed to load history: " + err.message);
@@ -265,10 +273,11 @@ export default function ManagerAttendance() {
   };
 
   const handleHistoryOpen = () => {
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 3600000).toISOString().slice(0, 10);
-    setHistoryStart(ninetyDaysAgo);
+    // Backend caps self-history ranges at 62 days (MAX_ATTENDANCE_RANGE_DAYS)
+    const sixtyOneDaysAgo = new Date(Date.now() - 61 * 24 * 3600000).toISOString().slice(0, 10);
+    setHistoryStart(sixtyOneDaysAgo);
     setHistoryEnd(today);
-    loadHistory();
+    loadHistory(sixtyOneDaysAgo, today);
     setHistoryModal(true);
   };
 
@@ -327,7 +336,7 @@ export default function ManagerAttendance() {
             </p>
           </div>
           <div className="controls-group">
-            {isOperationalManager ? (
+            {canPickBranch ? (
               <label className="branch-pill">
                 <i className="fas fa-store"></i>
                 <select
@@ -568,7 +577,7 @@ export default function ManagerAttendance() {
               <input type="date" value={historyStart} onChange={(e) => setHistoryStart(e.target.value)} style={{ flex: 1 }} />
               <label>To</label>
               <input type="date" value={historyEnd} onChange={(e) => setHistoryEnd(e.target.value)} style={{ flex: 1 }} />
-              <button type="button" className="save-btn" style={{ padding: "6px 16px" }} onClick={loadHistory}>
+              <button type="button" className="save-btn" style={{ padding: "6px 16px" }} onClick={() => loadHistory()}>
                 Filter
               </button>
             </div>

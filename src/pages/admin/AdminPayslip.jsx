@@ -4,10 +4,13 @@ import {
   downloadPayslipPdf,
   fetchAttendancePreview,
   fetchBranches,
+  fetchIndividualAttendanceAnalysis,
   fetchPayrollEmployees,
   fetchPayslip,
+  fetchPayslipByEmployeeMonth,
   fetchPayslips,
   generatePayslip,
+  updatePayslipAdjustments,
   updatePayslipStatus,
 } from "../../services/payslipApi";
 import { fetchDepartments as fetchManagedDepartments } from "../../services/departmentApi";
@@ -86,6 +89,7 @@ function AdminPayslip() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [attendanceRecords, setAttendanceRecords] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [alreadyGenerated, setAlreadyGenerated] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -94,6 +98,14 @@ function AdminPayslip() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewPayslip, setViewPayslip] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
+
+  // Edit incentives/deductions modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editPayslip, setEditPayslip] = useState(null);
+  const [editIncentives, setEditIncentives] = useState(0);
+  const [editDeductions, setEditDeductions] = useState(0);
+  const [editTax, setEditTax] = useState(0);
+  const [editSaving, setEditSaving] = useState(false);
 
   // KPI state
   const [kpi, setKpi] = useState({
@@ -390,6 +402,37 @@ const handleSearchChange = (e) => {
     }
   };
 
+  // Open edit incentives/deductions modal
+  const handleOpenEditModal = async (p) => {
+    setEditModalOpen(true);
+    setEditPayslip(p);
+    setEditIncentives(Number(p.incentives || 0));
+    setEditDeductions(Number(p.deductions || 0));
+    setEditTax(Number(p.tax || 0));
+  };
+
+  // Save incentives/deductions
+  const handleSaveAdjustments = async () => {
+    if (!editPayslip) return;
+    
+    setEditSaving(true);
+    try {
+      await updatePayslipAdjustments(
+        editPayslip.id,
+        editIncentives,
+        editDeductions,
+        editTax
+      );
+      showToast("✅ Adjustments saved successfully!", "green");
+      setEditModalOpen(false);
+      loadPayslips(); // Refresh the table
+    } catch (e) {
+      showToast("Failed to save adjustments: " + e.message, "red");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   // Open generate modal
 const handleOpenGenModal = async () => {
   setGenModalOpen(true);
@@ -402,6 +445,7 @@ const handleOpenGenModal = async () => {
   setGenTax(0);
   setSelectedEmployee(null);
   setPreviewData(null);
+  setAttendanceRecords(null);
   setAlreadyGenerated(false);
 
   try {
@@ -447,16 +491,41 @@ const handleOpenGenModal = async () => {
     try {
       const data = await fetchAttendancePreview(userId, month);
       setPreviewData(data);
+
+      // Also fetch detailed attendance records from individual analysis
+      const attendanceData = await fetchIndividualAttendanceAnalysis(userId, month);
+      setAttendanceRecords(attendanceData.records || []);
+
+      // Check if payslip already exists and populate editable fields
+      const alreadyDone = generatedMap.has(`${userId}_${month}`);
+      if (alreadyDone) {
+        // Fetch existing payslip to get saved incentives/deductions/tax
+        try {
+          const existingPayslip = await fetchPayslipByEmployeeMonth(userId, month);
+          if (existingPayslip) {
+            setGenIncentives(Number(existingPayslip.incentives || 0));
+            setGenDeductions(Number(existingPayslip.deductions || 0));
+            setGenTax(Number(existingPayslip.tax || 0));
+          }
+        } catch (e) {
+          // If fetch fails, keep values at 0
+          console.log('Could not fetch existing payslip values:', e);
+        }
+      }
     } catch (e) {
       showToast("Error loading attendance: " + e.message, "red");
     } finally {
       setPreviewLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, generatedMap]);
 
   // Fetch preview when modal opens or employee/month changes
   useEffect(() => {
     if (genModalOpen && selectedEmployee?.id && genMonth) {
+      // Reset editable fields when employee or month changes
+      setGenIncentives(0);
+      setGenDeductions(0);
+      setGenTax(0);
       fetchAndRenderPreview(selectedEmployee.id, genMonth);
     }
   }, [genModalOpen, selectedEmployee?.id, genMonth, fetchAndRenderPreview]);
@@ -480,6 +549,7 @@ const handleOpenGenModal = async () => {
       showToast("✅ Payslip generated successfully!", "green");
       setGenModalOpen(false);
       setPreviewData(null);
+      setAttendanceRecords(null);
       loadPayslips();
     } catch (e) {
       showToast("Error: " + e.message, "red");
@@ -520,47 +590,48 @@ const handleOpenGenModal = async () => {
       "Emp ID",
       "Branch",
       "Department",
-      "Month",
       "Basic CTC",
-      "Per Day",
+      "Daily Rate",
       "Present",
       "Absent",
+      "Half Days",
+      "Late Logins",
       "Paid Leave",
-      "Half Day",
+      "Auth AWI",
+      "Unauth Absent",
       "Paid Sundays",
-      "Sandwich Sundays",
+      "Unpaid Sundays",
       "Holidays",
-      "Total Days",
-      "Late Login",
-      "Incentives",
-      "Deductions",
-      "Total Paid Days",
+      "Payable Days",
       "Net Pay",
       "Status",
     ];
-    const rows = safePayslips.map((p) => [
-      p.full_name,
-      p.employee_code || "",
-      p.branch,
-      p.department,
-      monthLabel(p.month),
-      p.basic_salary,
-      p.per_day_salary || (Number(p.basic_salary || 0) / (Number(p.total_days) || 30)).toFixed(2),
-      p.present_days || 0,
-      p.absent_days || 0,
-      p.paid_leaves || 0,
-      p.half_days || 0,
-      p.paid_sundays || 0,
-      p.sandwich_sundays || 0,
-      p.holidays || 0,
-      p.total_days || 0,
-      p.late_logins || 0,
-      p.incentives || 0,
-      p.deductions || 0,
-      p.payable_days || 0,
-      p.net_pay,
-      p.payment_status,
-    ]);
+    const rows = safePayslips.map((p) => {
+      const awiDays = Number(p.awi_deduction_days || 0);
+      const authAwi = Math.floor(awiDays / 2);
+      const unauthAbsent = awiDays - authAwi;
+      return [
+        p.full_name,
+        p.employee_code || "",
+        p.branch,
+        p.department,
+        p.basic_salary,
+        p.basic_salary / 30,
+        p.full_days || 0,
+        p.absent_days || 0,
+        p.half_days || 0,
+        p.late_login_count || 0,
+        p.paid_leave || 0,
+        p.auth_awi || 0,
+        p.unauth_awi || 0,
+        p.paid_sundays || 0,
+        p.unpaid_sundays || 0,
+        p.holidays || 0,
+        p.total_paid_days || 0,
+        p.net_pay,
+        p.payment_status,
+      ];
+    });
     const csv = [hdr, ...rows]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\n");
@@ -788,21 +859,19 @@ const handleOpenGenModal = async () => {
               <tr>
                 <th>Employee</th>
                 <th>Branch / Dept</th>
-                <th>Month</th>
                 <th>Basic CTC</th>
-                <th>Per Day</th>
+                <th>Daily Rate</th>
                 <th>Present</th>
                 <th>Absent</th>
+                <th>Half Days</th>
+                <th>Late Logins</th>
                 <th>Paid Leave</th>
-                <th>Half Day</th>
+                <th>Auth AWI</th>
+                <th>Unauth Absent</th>
                 <th>Paid Sundays</th>
-                <th>Sandwich Sundays</th>
+                <th>Unpaid Sundays</th>
                 <th>Holidays</th>
-                <th>Total Days</th>
-                <th>Late Login</th>
-                <th>Incentives</th>
-                <th>Deductions</th>
-                <th>Total Paid Days</th>
+                <th>Payable Days</th>
                 <th>Net Pay</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -811,35 +880,28 @@ const handleOpenGenModal = async () => {
             <tbody>
               {loading ? (
                 <tr className="empty-row">
-                  <td colSpan="20">
-                    <span className="spinner"></span> Loading…
+                  <td colSpan="18">
+                    Loading…
                   </td>
                 </tr>
               ) : error ? (
                 <tr className="empty-row">
-                  <td colSpan="20" style={{ color: "var(--red)" }}>
+                  <td colSpan="18" style={{ color: "var(--red)" }}>
                     Failed: {esc(error)}
                   </td>
                 </tr>
               ) : safePayslips.length === 0 ? (
                 <tr className="empty-row">
-                  <td colSpan="20" style={{ color: "#71829D", fontStyle: "italic" }}>
+                  <td colSpan="18" style={{ color: "#71829D", fontStyle: "italic" }}>
                     No payslips generated for this month yet. Click "Generate Payslip" or "Batch Generate" to create payslips.
                   </td>
                 </tr>
               ) : (
                 safePayslips.map((p) => {
                   const isPaid = p.payment_status === "paid";
-                  const perDay = Number(p.basic_salary || 0) / (Number(p.total_days) || 30);
-                  const calculatedDays = (
-                    (Number(p.present_days) || 0) +
-                    (Number(p.sundays) || 0) +
-                    (Number(p.holidays) || 0) +
-                    (Number(p.paid_leaves) || 0) +
-                    (Number(p.half_days) || 0) * 0.5
-                  );
-                  const calculatedSalary = perDay * calculatedDays;
-                  const netSalary = calculatedSalary + Number(p.incentives || 0) - Number(p.deductions || 0) - Number(p.tax || 0);
+                  const perDay = Number(p.basic_salary || 0) / 30;
+                  // Use the saved net_pay from database instead of recalculating
+                  const netSalary = Number(p.net_pay || 0);
 
                   return (
                     <tr key={p.id}>
@@ -851,22 +913,20 @@ const handleOpenGenModal = async () => {
                         <div>{esc(p.branch)}</div>
                         <div className="emp-meta">{esc(p.department)}</div>
                       </td>
-                      <td>{monthLabel(p.month)}</td>
                       <td className="mono">{inr(p.basic_salary)}</td>
-                      <td className="mono">{inr2(perDay)}</td>
-                      <td className="mono" style={{color: 'var(--green)'}}>{p.present_days || 0}</td>
+                      <td className="mono">{inr(p.basic_salary / 30)}</td>
+                      <td className="mono" style={{color: 'var(--green)'}}>{p.full_days || 0}</td>
                       <td className="mono" style={{color: 'var(--red)'}}>{p.absent_days || 0}</td>
-                      <td className="mono" style={{color: 'var(--blue)'}}>{p.paid_leaves || 0}</td>
-                      <td className="mono" style={{color: 'var(--orange)'}}>{p.half_days || 0}</td>
-                      <td className="mono" style={{color: 'var(--blue)'}}>{p.paid_sundays || 0}</td>
+                      <td className="mono" style={{color: '#F59E0B'}}>{p.half_days || 0}</td>
+                      <td className="mono" style={{color: '#7C3AED'}}>{p.late_login_count || 0}</td>
+                      <td className="mono" style={{color: 'var(--green)'}}>{p.paid_leave || 0}</td>
+                      <td className="mono" style={{color: '#F59E0B', fontWeight: 'bold'}}>{p.auth_awi || 0}</td>
+                      <td className="mono" style={{color: 'var(--red)', fontWeight: 'bold'}}>{p.unauth_awi || 0}</td>
+                      <td className="mono" style={{color: '#3B82F6'}}>{p.paid_sundays || 0}</td>
                       <td className="mono" style={{color: 'var(--red)'}}>{p.unpaid_sundays || 0}</td>
-                      <td className="mono">{p.holidays || 0}</td>
-                      <td className="mono" style={{fontWeight: 'bold'}}>{p.total_days || 0}</td>
-                      <td className="mono" style={{color: 'var(--orange)'}}>{p.late_logins || 0}</td>
-                      <td className="mono earning-val">{inr(p.incentives)}</td>
-                      <td className="mono deduction-val">{inr(p.deductions)}</td>
-                      <td className="mono" style={{fontWeight: 'bold', color: 'var(--green)'}}>{p.payable_days || 0}</td>
-                      <td className="mono net-val">{inr(p.net_pay)}</td>
+                      <td className="mono" style={{color: 'var(--green)'}}>{p.holidays || 0}</td>
+                      <td className="mono" style={{fontWeight: 'bold', color: (p.total_paid_days || 0) > 0 ? 'var(--green)' : 'var(--red)'}}>{p.total_paid_days || 0}</td>
+                      <td className="mono net-val" style={{color: (netSalary || 0) > 0 ? 'var(--green)' : 'var(--red)'}}>{inr(netSalary)}</td>
                       <td>
                         <span className={`status-pill ${isPaid ? "paid" : "unpaid"}`}>
                           <i className={`fas fa-${isPaid ? "check-circle" : "clock"}`}></i>
@@ -881,6 +941,13 @@ const handleOpenGenModal = async () => {
                             title="View"
                           >
                             <i className="fas fa-eye"></i>
+                          </button>
+                          <button
+                            className="icon-btn"
+                            onClick={() => handleOpenEditModal(p)}
+                            title="Edit Incentives/Deductions"
+                          >
+                            <i className="fas fa-edit"></i>
                           </button>
                           <button
                             className="icon-btn"
@@ -1021,6 +1088,36 @@ const handleOpenGenModal = async () => {
                     value={selectedEmployee?.joining_date || "—"}
                   />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Incentives (₹)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Enter incentives amount"
+                    value={genIncentives}
+                    onChange={(e) => setGenIncentives(Number(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Deductions (₹)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Enter deductions amount"
+                    value={genDeductions}
+                    onChange={(e) => setGenDeductions(Number(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Tax/TDS (₹)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Enter tax amount"
+                    value={genTax}
+                    onChange={(e) => setGenTax(Number(e.target.value) || 0)}
+                  />
+                </div>
               </div>
 
               {previewData && (
@@ -1028,7 +1125,6 @@ const handleOpenGenModal = async () => {
                   <div className="att-preview">
                     <div className="att-preview-title">
                       <i className="fas fa-chart-bar"></i> Attendance Summary{" "}
-                      {previewLoading && <span className="spinner"></span>}
                     </div>
                     <div className="att-grid">
                       <div className="att-box muted">
@@ -1043,35 +1139,11 @@ const handleOpenGenModal = async () => {
                         </div>
                         <div className="att-box-label">Total Sundays</div>
                       </div>
-                      <div className="att-box green">
-                        <div className="att-box-val">
-                          {previewData.sandwich?.paidSundays?.length || 0}
-                        </div>
-                        <div className="att-box-label">Paid Sundays ✓</div>
-                      </div>
-                      <div className="att-box red">
-                        <div className="att-box-val">
-                          {previewData.sandwich?.unpaidSundays?.length || 0}
-                        </div>
-                        <div className="att-box-label">Sandwich Sundays ✗</div>
-                      </div>
                       <div className="att-box blue">
                         <div className="att-box-val">
                           {previewData.calendar.holidayCount}
                         </div>
                         <div className="att-box-label">Total Holidays</div>
-                      </div>
-                      <div className="att-box green">
-                        <div className="att-box-val">
-                          {previewData.sandwich?.paidHolidays?.length || 0}
-                        </div>
-                        <div className="att-box-label">Paid Holidays ✓</div>
-                      </div>
-                      <div className="att-box red">
-                        <div className="att-box-val">
-                          {previewData.sandwich?.unpaidHolidays?.length || 0}
-                        </div>
-                        <div className="att-box-label">Unpaid Holidays ✗</div>
                       </div>
                       <div className="att-box gold">
                         <div className="att-box-val">
@@ -1079,51 +1151,10 @@ const handleOpenGenModal = async () => {
                         </div>
                         <div className="att-box-label">Working Days</div>
                       </div>
-                      <div className="att-box green">
-                        <div className="att-box-val">
-                          {previewData.attendance.fullDays}
-                        </div>
-                        <div className="att-box-label">Full Days</div>
-                      </div>
-                      <div className="att-box amber">
-                        <div className="att-box-val">
-                          {previewData.attendance.halfDays}
-                        </div>
-                        <div className="att-box-label">Half Days</div>
-                      </div>
-                      <div className="att-box red">
-                        <div className="att-box-val">
-                          {previewData.attendance.absentDays}
-                        </div>
-                        <div className="att-box-label">Absent</div>
-                      </div>
-                      <div
-                        className={`att-box ${
-                          previewData.attendance.lateLogins > 6 ? "red" : "amber"
-                        }`}
-                      >
-                        <div className="att-box-val">
-                          {previewData.attendance.lateLogins}
-                        </div>
-                        <div className="att-box-label">Late Logins</div>
-                      </div>
-                      <div className="att-box green">
-                        <div className="att-box-val">
-                          {previewData.leave.paidLeaveUsed}
-                        </div>
-                        <div className="att-box-label">Paid Leave</div>
-                      </div>
-                      <div className="att-box red">
-                        <div className="att-box-val">
-                          {previewData.leave.unpaidLeaveDays}
-                        </div>
-                        <div className="att-box-label">Unpaid Leave</div>
-                      </div>
                     </div>
                    <div className="att-note">
   Daily Rate = <span>{inr2(previewData.salary?.dailyRate || 0)}</span> ·
-  Payable Days = <span>{previewData.salary?.payableDays || 0}</span> ·
-  Unpaid Leave Days = <span>{previewData.leave?.unpaidLeaveDays || 0}</span>
+  Payable Days = <span>{Number(previewData.salary?.payableDays || 0).toFixed(1)}</span> ·
   Sandwich Days = <span>0</span>
 </div>
                     {previewData.leave.eligible ? (
@@ -1167,52 +1198,120 @@ const handleOpenGenModal = async () => {
                     )}
                   </div>
 
-                  {previewData && (
+                  {attendanceRecords && (
                     <>
                       <div className="salary-preview">
                         <div className="sal-row section-head">
-                          <span>Attendance Details</span>
+                          <span>Attendance Details (from Analysis)</span>
                         </div>
 
+{/* Calculate from attendanceRecords instead of previewData */}
+{(() => {
+  const fullDays = attendanceRecords.filter(r => r.status === 'full_day' || r.status === 'present').length;
+  const halfDays = attendanceRecords.filter(r => r.status === 'half_day').length;
+  const absent = attendanceRecords.filter(r => r.status === 'absent').length;
+  const unpaidLeaves = attendanceRecords.filter(r => r.status === 'unpaid_leave').length;
+  const noRecord = attendanceRecords.filter(r => r.status === 'no_record').length;
+  const paidLeaves = Number(
+    previewData?.leave?.paidLeaveUsed ??
+      attendanceRecords.filter(r => r.status === 'paid_leave').length
+  );
+  const authAwi = attendanceRecords.filter(r => r.status === 'authorized_absence').length;
+  const unauthAbsent = attendanceRecords.filter(r => r.status === 'unauthorized_absence').length;
+  const paidSundays = attendanceRecords.filter(r => r.status === 'sunday' && !r.sandwich_rule_applied).length;
+  const unpaidSundays = attendanceRecords.filter(r => r.status === 'sunday' && r.sandwich_rule_applied).length;
+  const holidays = attendanceRecords.filter(r => r.status === 'holiday').length;
+  const lateLogins = attendanceRecords.filter(r => r.lateMinutes > 0).length;
+  
+  const totalAbsences = Number(
+    previewData?.leave?.totalAbsences ??
+      (absent + unpaidLeaves + noRecord + paidLeaves)
+  );
+  const totalAbsentDays = Math.max(0, totalAbsences - paidLeaves);
+  
+  const payableDays = Number(previewData?.salary?.payableDays || 0);
+  const finalPayableDays = Math.max(0, payableDays - unauthAbsent - lateLogins);
+  
+  return (
+    <>
 <div className="sal-row">
   <span>Present Days</span>
-  <span>{previewData.attendance?.fullDays || 0}</span>
+  <span style={{ color: '#16A34A' }}>{fullDays}</span>
 </div>
 
 <div className="sal-row">
   <span>Absent Days</span>
-  <span className="deduction-val">{previewData.attendance?.absentDays || 0}</span>
+  <span className="deduction-val" style={{ color: '#DC2626' }}>{totalAbsentDays}</span>
 </div>
 
 <div className="sal-row">
   <span>Half Days</span>
-  <span>{previewData.attendance?.halfDays || 0}</span>
+  <span style={{ color: '#16A34A' }}>{halfDays}</span>
+</div>
+
+<div className="sal-row">
+  <span>Late Logins</span>
+  <span style={{color: '#DC2626'}}>{lateLogins}</span>
 </div>
 
 <div className="sal-row">
   <span>Paid Leaves</span>
-  <span>{previewData.leave?.paidLeaveUsed || 0}</span>
+  <span style={{ color: '#16A34A' }}>{paidLeaves}</span>
 </div>
 
 <div className="sal-row">
-  <span>Sundays</span>
-  <span>{previewData.sandwich?.paidSundays?.length || 0}</span>
+  <span>Auth AWI</span>
+  <span style={{ color: '#DC2626' }}>{authAwi}</span>
+</div>
+
+<div className="sal-row">
+  <span>Unauth Absent</span>
+  <span className="deduction-val" style={{ color: '#DC2626' }}>{unauthAbsent}</span>
+</div>
+
+<div className="sal-row">
+  <span>Paid Sundays</span>
+  <span style={{ color: '#16A34A' }}>{paidSundays}</span>
+</div>
+
+<div className="sal-row">
+  <span>Unpaid Sundays</span>
+  <span className="deduction-val" style={{ color: '#DC2626' }}>{unpaidSundays}</span>
 </div>
 
 <div className="sal-row">
   <span>Holidays</span>
-  <span>{previewData.calendar?.holidayCount || 0}</span>
+  <span style={{ color: '#16A34A' }}>{holidays}</span>
 </div>
 
 <div className="sal-row subtotal">
   <span>Total Payable Days</span>
-  <span>{previewData.salary?.payableDays || 0}</span>
+  <span style={{ color: '#16A34A' }}>{finalPayableDays.toFixed(1)}</span>
 </div>
+    </>
+  );
+})()}
 
                         <div className="sal-row section-head">
                           <span>Earnings</span>
                         </div>
 
+{(() => {
+  const payableDays = Number(previewData?.salary?.payableDays || 0);
+  const dailyRate = Number(previewData?.salary?.dailyRate || 0);
+  // Use the same values as the attendance details section for consistency
+  const unauthorizedDays = Number(
+    attendanceRecords?.filter(r => r.status === 'unauthorized_absence').length || 0
+  );
+  const lateLoginDays = Number(
+    attendanceRecords?.filter(r => r.lateMinutes > 0).length || 0
+  );
+  const finalPayableDays = Math.max(0, payableDays - unauthorizedDays - lateLoginDays);
+  const calculatedSalary = dailyRate * finalPayableDays;
+  const netSalary = calculatedSalary + Number(genIncentives) - Number(genDeductions) - Number(genTax);
+  
+  return (
+    <>
 <div className="sal-row">
   <span>Monthly Salary</span>
   <span>{inr2(selectedEmployee?.salary)}</span>
@@ -1220,18 +1319,59 @@ const handleOpenGenModal = async () => {
 
 <div className="sal-row">
   <span>Daily Rate</span>
-  <span>{inr2(previewData.salary?.dailyRate || 0)}</span>
+  <span>{inr2(dailyRate)}</span>
 </div>
 
 <div className="sal-row">
   <span>Salary Calculation</span>
-  <span>{inr2(previewData.salary?.dailyRate || 0)} × {previewData.salary?.payableDays || 0}</span>
+  <span>{inr2(dailyRate)} × {finalPayableDays.toFixed(1)}</span>
 </div>
 
-<div className="sal-row subtotal">
-  <span>Net Salary (Take Home)</span>
-  <span>{inr2(previewData.salary?.netPay || 0)}</span>
+<div className="sal-row">
+  <span>Calculated Salary</span>
+  <span>{inr2(calculatedSalary)}</span>
 </div>
+
+<div className="sal-row">
+  <span style={{ color: '#10B981' }}>+ Incentives</span>
+  <input
+    type="number"
+    className="salary-input"
+    value={genIncentives}
+    onInput={(e) => setGenIncentives(Number(e.target.value) || 0)}
+    style={{ width: '120px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #10B981', background: '#1a0a0a', color: '#10B981' }}
+  />
+</div>
+
+<div className="sal-row">
+  <span style={{ color: '#DC2626' }}>- Deductions</span>
+  <input
+    type="number"
+    className="salary-input"
+    value={genDeductions}
+    onInput={(e) => setGenDeductions(Number(e.target.value) || 0)}
+    style={{ width: '120px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #DC2626', background: '#1a0a0a', color: '#DC2626' }}
+  />
+</div>
+
+<div className="sal-row">
+  <span style={{ color: '#F59E0B' }}>- Tax (TDS)</span>
+  <input
+    type="number"
+    className="salary-input"
+    value={genTax}
+    onInput={(e) => setGenTax(Number(e.target.value) || 0)}
+    style={{ width: '120px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #F59E0B', background: '#1a0a0a', color: '#F59E0B' }}
+  />
+</div>
+
+<div className="sal-row subtotal" style={{ fontSize: '1.1em', fontWeight: 'bold', background: 'rgba(16, 163, 74, 0.1)', border: '1px solid rgba(16, 163, 74, 0.3)' }}>
+  <span>Net Salary (Take Home)</span>
+  <span style={{ color: '#10B981' }}>{inr2(netSalary)}</span>
+</div>
+    </>
+  );
+})()}
 
 
 
@@ -1249,6 +1389,70 @@ const handleOpenGenModal = async () => {
                           <span className="mono deduction-val">- {inr2(genTax)}</span>
                         </div>
                       </div>
+
+                      {/* Detailed Attendance Table */}
+                      {attendanceRecords && attendanceRecords.length > 0 && (
+                        <div className="att-preview">
+                          <div className="att-preview-title">
+                            <i className="fas fa-table"></i> Detailed Attendance Log
+                          </div>
+                          <div style={{ overflowX: "auto", marginTop: "12px" }}>
+                            <table className="data-table">
+                              <thead>
+                                <tr>
+                                  <th>Date</th>
+                                  <th>Status</th>
+                                  <th>Login</th>
+                                  <th>Logout</th>
+                                  <th>Hours</th>
+                                  <th>Late</th>
+                                  <th>Break (min)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {attendanceRecords.map((r) => {
+                                  const statusColor = r.status === 'unauthorized_absence' ? '#DC2626' :
+                                    r.status === 'authorized_absence' ? '#F59E0B' :
+                                    r.status === 'sunday' ? '#3B82F6' :
+                                    r.status === 'holiday' ? '#8B5CF6' :
+                                    r.status === 'paid_leave' ? '#10B981' :
+                                    r.status === 'unpaid_leave' ? '#EF4444' :
+                                    r.status === 'half_day' ? '#F59E0B' :
+                                    r.status === 'absent' ? '#EF4444' : '#6B7280';
+                                  
+                                  const displayStatus = r.display_status || r.computed_status || r.status;
+                                  
+                                  const formatTime = (t) => t === '--' ? '--' : t;
+                                  
+                                  return (
+                                    <tr key={r.date}>
+                                      <td style={{ color: "#FF8C00" }}>
+                                        {new Date(r.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                      </td>
+                                      <td>
+                                        <span style={{ color: statusColor, fontWeight: 500 }}>
+                                          {displayStatus}
+                                        </span>
+                                      </td>
+                                      <td>{formatTime(r.checkIn)}</td>
+                                      <td>{formatTime(r.checkOut)}</td>
+                                      <td style={{ fontWeight: 700 }}>
+                                        {r.workHours > 0 ? r.workHours.toFixed(1) : '--'}
+                                      </td>
+                                      <td style={{ color: r.lateMinutes > 0 ? "#FF8C00" : "#7B8199" }}>
+                                        {r.lateMinutes > 0 ? `${r.lateMinutes} min` : '--'}
+                                      </td>
+                                      <td style={{ color: r.breaks > 60 ? "#DC2626" : "#16A34A" }}>
+                                        {r.breaks > 0 ? r.breaks : '--'}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
                       <div className="net-box">
                         <div className="net-box-label">
                           <i
@@ -1257,7 +1461,21 @@ const handleOpenGenModal = async () => {
                           ></i>{" "}
                           Net Salary (Take Home)
                         </div>
-                        <div className="net-box-amount">{inr2(previewData.salary?.netPay || 0)}</div>
+                        <div className="net-box-amount">{inr2(
+                          // Use the same calculation as the preview section
+                          (() => {
+                            const payableDays = Number(previewData?.salary?.payableDays || 0);
+                            const dailyRate = Number(previewData?.salary?.dailyRate || 0);
+                            const unauthorizedDays = Number(
+                              attendanceRecords?.filter(r => r.status === 'unauthorized_absence').length || 0
+                            );
+                            const lateLoginDays = Number(
+                              attendanceRecords?.filter(r => r.lateMinutes > 0).length || 0
+                            );
+                            const finalPayableDays = Math.max(0, payableDays - unauthorizedDays - lateLoginDays);
+                            return (finalPayableDays * dailyRate) + Number(genIncentives || 0) - Number(genDeductions || 0) - Number(genTax || 0);
+                          })()
+                        )}</div>
                       </div>
                     </>
                   )}
@@ -1303,7 +1521,7 @@ const handleOpenGenModal = async () => {
             </div>
             {viewLoading ? (
               <div style={{ textAlign: "center", padding: "48px" }}>
-                <span className="spinner"></span>
+                Loading...
               </div>
             ) : viewPayslip ? (
               <div className="payslip-view">
@@ -1314,6 +1532,13 @@ const handleOpenGenModal = async () => {
                   </h3>
                   <p>Net Pay: {inr2(viewPayslip.net_pay)}</p>
                   <p>Status: {viewPayslip.payment_status}</p>
+                  {(viewPayslip.awi_deduction_days > 0 || viewPayslip.awi_deduction > 0) && (
+                    <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "var(--light-red)", borderRadius: "8px" }}>
+                      <p style={{ margin: "0", fontWeight: "bold", color: "var(--red)" }}>
+                        AWI Deduction: {viewPayslip.awi_deduction_days || 0} days = {inr(viewPayslip.awi_deduction)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -1333,6 +1558,122 @@ const handleOpenGenModal = async () => {
                 onClick={() => handleDownload(viewPayslip?.id)}
               >
                 <i className="fas fa-download"></i> Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Incentives/Deductions Modal */}
+      {editModalOpen && editPayslip && (
+        <div
+          className="modal-overlay open"
+          onClick={() => setEditModalOpen(false)}
+        >
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h2>
+                <i className="fas fa-edit"></i> Edit Adjustments
+              </h2>
+              <button
+                className="modal-close"
+                onClick={() => setEditModalOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group full">
+                  <label className="form-label">Employee</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    readOnly
+                    value={editPayslip.full_name}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Month</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    readOnly
+                    value={monthLabel(editPayslip.month)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Current Net Pay</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    readOnly
+                    value={inr2(editPayslip.net_pay)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Incentives (₹)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={editIncentives}
+                    onChange={(e) => setEditIncentives(Number(e.target.value))}
+                    min="0"
+                    step="100"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Deductions (₹)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={editDeductions}
+                    onChange={(e) => setEditDeductions(Number(e.target.value))}
+                    min="0"
+                    step="100"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Tax/TDS (₹)</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={editTax}
+                    onChange={(e) => setEditTax(Number(e.target.value))}
+                    min="0"
+                    step="100"
+                  />
+                </div>
+              </div>
+              
+              <div style={{ marginTop: "16px", padding: "16px", backgroundColor: "var(--light-blue)", borderRadius: "8px" }}>
+                <strong>Preview Calculation:</strong>
+                <div style={{ marginTop: "8px" }}>
+                  Basic Salary: {inr2(editPayslip.basic_salary)}<br />
+                  Current Net Pay: {inr2(editPayslip.net_pay)}<br />
+                  New Net Pay: {inr2(
+                    (editPayslip.basic_salary / (editPayslip.working_days || 30)) * (editPayslip.working_days || 30) +
+                    editIncentives -
+                    editDeductions -
+                    editTax
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => setEditModalOpen(false)}
+                disabled={editSaving}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-gold"
+                onClick={handleSaveAdjustments}
+                disabled={editSaving}
+              >
+                {editSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

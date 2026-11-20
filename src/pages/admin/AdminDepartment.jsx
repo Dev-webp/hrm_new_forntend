@@ -212,14 +212,6 @@ export default function AdminDepartment() {
           <span>Assigned Employees</span>
           <strong>{loading ? "-" : summary.employees}</strong>
         </div>
-        <div className="department-kpi success">
-          <span>Present</span>
-          <strong>{loading ? "-" : summary.present}</strong>
-        </div>
-        <div className="department-kpi danger">
-          <span>Absent</span>
-          <strong>{loading ? "-" : summary.absent}</strong>
-        </div>
       </div>
 
       <div className="department-toolbar">
@@ -263,8 +255,6 @@ export default function AdminDepartment() {
               <th>Branch</th>
               <th>Status</th>
               <th>Employees</th>
-              <th>Present</th>
-              <th>Absent</th>
               <th>Description</th>
               <th>Actions</th>
             </tr>
@@ -272,11 +262,11 @@ export default function AdminDepartment() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="department-empty">Loading departments...</td>
+                <td colSpan={7} className="department-empty">Loading departments...</td>
               </tr>
             ) : departments.length === 0 ? (
               <tr>
-                <td colSpan={9} className="department-empty">
+                <td colSpan={7} className="department-empty">
                   No departments found. Add a department to start using dynamic HRMS filters.
                 </td>
               </tr>
@@ -294,8 +284,6 @@ export default function AdminDepartment() {
                     </span>
                   </td>
                   <td>{department.employees || 0}</td>
-                  <td className="department-present-count">{department.present || 0}</td>
-                  <td className="department-absent-count">{department.absent || 0}</td>
                   <td className="department-description">
                     {department.description || "-"}
                   </td>

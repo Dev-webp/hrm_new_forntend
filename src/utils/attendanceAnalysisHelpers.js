@@ -465,10 +465,19 @@ export function getAttendanceStyle(rec) {
   }
 
   // ============================================================
-  // SUNDAY — BLUE
+  // SUNDAY — BLUE (paid) or RED (unpaid/sandwich)
   // ============================================================
 
   if (status === "sunday") {
+    const isUnpaid = safe.sandwich_rule_applied === true ||
+                      (safe.sandwich_results && safe.sandwich_results.length > 0 &&
+                       safe.sandwich_results.some(s => s.applied === true));
+    if (isUnpaid) {
+      return {
+        className: "cal-unpaid-sunday",
+        numClass: "default-num",
+      };
+    }
     return {
       className: "cal-sunday",
       numClass: "blue-num",
@@ -564,7 +573,7 @@ export function buildWeeksCache(monthStr) {
   return weeks;
 }
 
-export function computeOverviewStats(records) {
+export function computeOverviewStats(records, sandwichByDate = new Map()) {
   const safeRecords = normalizeAttendanceAnalysisRecords(records);
   const workDays = safeRecords.filter(
     (r) => !["absent", "leave", "paid_leave", "unpaid_leave", "sunday", "holiday"].includes(r.status)
@@ -577,16 +586,30 @@ export function computeOverviewStats(records) {
   const paidLeaveDays = safeRecords.filter(isPaidLeaveRecord).length;
   const unpaidLeaveDays = safeRecords.filter(isUnpaidLeaveRecord).length;
   const leaveDays = paidLeaveDays + unpaidLeaveDays;
+
+  // AWI categories
+  const authorizedAwi = safeRecords.filter((r) => r.status === "authorized_absence").length;
+  const unauthorizedAbsent = safeRecords.filter((r) => r.status === "unauthorized_absence").length;
+
+  // Unauth AWI - only manually changed unauth AWI days
+  const unauthAwiAdminChanged = unauthorizedAbsent;
+
+  // Total absent days includes: absent + unpaid_leave + no_record (NOT unauthorized_absence)
+  const totalAbsentDays = absent + unpaidLeaveDays + noRecord;
   const unpaidLeavesCombined = unpaidLeaveDays + absent + noRecord;
-  
-  // Count sandwich Sundays - Sundays that have sandwich policy applied
+
+  // Count sandwich Sundays using backend's sandwich_rule_applied field ONLY
   const sandwichSundays = safeRecords.filter((r) => {
     const isSunday = new Date(r.date).getDay() === 0;
-    const hasSandwichApplied = r.sandwich_rule_applied === true || 
-                              (r.sandwich_results && r.sandwich_results.length > 0 && 
-                               r.sandwich_results.some(s => s.applied === true));
-    return isSunday && hasSandwichApplied;
+    const isUnpaid = r.sandwich_rule_applied === true;
+    return isSunday && isUnpaid;
   }).length;
+
+  // Count total Sundays first
+  const totalSundays = safeRecords.filter((r) => new Date(r.date).getDay() === 0).length;
+
+  // Count paid Sundays - Sundays without sandwich policy applied
+  const paidSundays = totalSundays - sandwichSundays;
   
   const holidays = safeRecords.filter((r) => r.status === "holiday").length;
   const totalDays = safeRecords.filter(
@@ -607,18 +630,54 @@ export function computeOverviewStats(records) {
     : 0;
   const exceed = workDays.filter((r) => r.breaks > 60).length;
 
+  // Console log for debugging
+  console.log("📊 ATTENDANCE ANALYSIS BREAKDOWN:");
+  console.log("====================================");
+  console.log("Total Records:", safeRecords.length);
+  console.log("Days in Month:", daysInMonth);
+  console.log("");
+  console.log("🟢 PRESENT:");
+  console.log("  Full Days:", presentDays);
+  console.log("  Half Days:", halfDays);
+  console.log("  Late Days:", lateDays);
+  console.log("");
+  console.log("🔴 ABSENT:");
+  console.log("  Absent Days (includes absent + unpaid leave + no record):", totalAbsentDays);
+  console.log("");
+  console.log("⚠️  AWI (Manually Changed in AWI Management):");
+  console.log("  Auth AWI:", authorizedAwi);
+  console.log("  Unauth AWI:", unauthAwiAdminChanged);
+  console.log("");
+  console.log("📅 SUNDAYS & HOLIDAYS:");
+  console.log("  Total Sundays:", totalSundays);
+  console.log("  Paid Sundays:", paidSundays);
+  console.log("  Unpaid Sundays (sandwich):", sandwichSundays);
+  console.log("  Holidays:", holidays);
+  console.log("");
+  console.log("📈 CALCULATIONS:");
+  console.log("  Effective Present:", effectivePresent);
+  console.log("  Attendance Rate:", attRate + "%");
+  console.log("  Avg Break (min):", avgBreak);
+  console.log("  Exceeded 60min Break Days:", exceed);
+  console.log("====================================");
+
   return {
     workDays,
     presentDays,
     lateDays,
     halfDays,
     absent,
+    absentDays: totalAbsentDays, // Now includes unauth AWI
     noRecord,
     leaveDays,
     paidLeaveDays,
     unpaidLeaveDays,
     unpaidLeavesCombined,
+    authorizedAwi,
+    unauthorizedAbsent,
+    unauthAwiAdminChanged,
     sandwichSundays,
+    paidSundays,
     holidays,
     daysInMonth,
     totalDays,

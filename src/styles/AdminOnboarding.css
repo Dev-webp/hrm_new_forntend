@@ -1,0 +1,53 @@
+/* Replace src/styles/AdminOnboarding.css with this file.
+   All classes are prefixed "ob-" so they don't clash with other pages. */
+.ob-page{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#f5f7fa;color:#1a2b4b;min-height:100vh;padding:24px 32px;font-size:14px;line-height:1.5}
+.ob-page *{box-sizing:border-box}
+.ob-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#5b6b86}
+.ob-card{background:#fff;border:1px solid #e3e8f0;border-radius:12px;padding:20px;margin-bottom:16px}
+.ob-title{font-size:20px;font-weight:600}
+.ob-h3{margin:0 0 8px;font-size:14px;font-weight:600}
+.ob-sub{font-size:12px;color:#5b6b86}
+.ob-grow{flex:1;min-width:200px}
+.ob-loading{padding:48px;text-align:center;color:#5b6b86}
+.ob-profile{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ob-avatar{width:56px;height:56px;border-radius:50%;background:#e8f0fb;color:#0d47a1;font-weight:600;font-size:18px;display:flex;align-items:center;justify-content:center;flex:none}
+.ob-avatar.sm{width:40px;height:40px;font-size:14px}
+.ob-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.ob-hd{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.ob-hd h2{margin:0;font-size:16px;font-weight:600;flex:1}
+.ob-n{width:28px;height:28px;border-radius:50%;background:#0d47a1;color:#fff;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.ob-ow{font-size:12px;color:#5b6b86}
+.ob-bd{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;white-space:nowrap;background:#eef1f6;color:#46546d}
+.ob-bd.ok{background:#e3f4ea;color:#14633a}
+.ob-bd.wa{background:#fff1dc;color:#8a4b00}
+.ob-bd.no{background:#eef1f6;color:#46546d}
+.ob-bd.er{background:#fdecec;color:#a32020}
+.ob-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #e9edf4;flex-wrap:wrap}
+.ob-s{flex:1;min-width:160px}
+.ob-btn{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid #c5cfe0;background:#fff;color:#1a2b4b;font:inherit;font-weight:500;cursor:pointer}
+.ob-btn:hover{background:#f5f7fa}
+.ob-btn.p{background:#0d47a1;border-color:#0d47a1;color:#fff}
+.ob-btn.p:hover{background:#0b3d8a}
+.ob-acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.ob-bar{height:8px;background:#e3e8f0;border-radius:4px;overflow:hidden}
+.ob-bar>div{height:100%;background:#0d47a1;transition:width .3s}
+.ob-rl{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e9edf4}
+.ob-emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ob-emp{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 14px;border:1px solid #e3e8f0;border-radius:10px;background:#fff;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.ob-emp:hover{background:#e8f0fb;border-color:#c5cfe0}
+.ob-emp-info{flex:1;display:flex;flex-direction:column}
+.ob-clist{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ob-clist:hover{border-color:#9fb0cc}
+.ob-empty{text-align:center}
+label{display:block;font-size:12px;font-weight:500;color:#34425c}
+.ob-page input,.ob-page select,.ob-page textarea{display:block;width:100%;min-height:44px;margin:4px 0 12px;padding:8px 12px;border:1px solid #c5cfe0;border-radius:8px;background:#fff;color:#1a2b4b;font:inherit}
+.ob-page textarea{min-height:90px;resize:vertical}
+.ob-fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.ob-overlay{position:fixed;inset:0;background:rgba(26,43,75,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:1000}
+.ob-modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:480px}
+.ob-toast{position:fixed;top:20px;right:20px;padding:12px 18px;border-radius:8px;background:#1a2b4b;color:#fff;z-index:1100;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.ob-toast.success{background:#14633a}
+.ob-toast.error{background:#a32020}
+.ob-meta{margin-top:8px;padding:8px 12px;background:#f8fafc;border-radius:6px;border-left:3px solid #c5cfe0}
+.ob-meta .ob-sub{color:#46546d;font-size:11px;margin:2px 0}
+@media(max-width:900px){.ob-grid{grid-template-columns:minmax(0,1fr)}.ob-page{padding:16px}}

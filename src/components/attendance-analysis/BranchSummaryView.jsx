@@ -15,6 +15,9 @@ function BranchSummaryView({
   onToggleTrends,
   onViewFullAnalysis,
 }) {
+  console.log('[BranchSummaryView] kpi:', kpi);
+  console.log('[BranchSummaryView] employees:', employees);
+
   const totalAbsent = employees?.reduce(
     (sum, employee) =>
       sum + Number(employee.absent_days || 0),

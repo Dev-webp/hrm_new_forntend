@@ -48,6 +48,153 @@ img {
   will-change: transform;
 }
 
+/* Birthday Banner Styles */
+.birthday-banner {
+  background: linear-gradient(135deg, #fff5f5 0%, #fffbeb 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+}
+
+.birthday-banner.upcoming {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-color: #0ea5e9;
+}
+
+.birthday-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 12px;
+}
+
+.birthday-banner.upcoming .birthday-banner-title {
+  color: #0369a1;
+}
+
+.birthday-banner-title i {
+  color: #f59e0b;
+  font-size: 18px;
+}
+
+.birthday-banner.upcoming .birthday-banner-title i {
+  color: #0ea5e9;
+}
+
+.birthday-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.birthday-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.birthday-item.today {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.birthday-banner.upcoming .birthday-item {
+  border-color: #bae6fd;
+  background: white;
+}
+
+.birthday-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.birthday-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.birthday-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.birthday-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.birthday-details {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.birthday-icon {
+  font-size: 20px;
+  color: #f59e0b;
+  animation: birthday-bounce 1s ease-in-out infinite;
+}
+
+.birthday-countdown {
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 4px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.today-badge {
+  background: #f59e0b;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  animation: birthday-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes birthday-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes birthday-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
 /* Global Section Border - Light Gray */
 .dashboard-header,
 .stat-card,
@@ -464,6 +611,8 @@ body.hrms-dashboard #root {
   background: var(--bg);
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  transition: all 0.3s ease;
 }
 
 .topbar {
@@ -3119,3 +3268,60 @@ body.hrms-dashboard #root {
   background: #E2E8F0;
 }
 
+
+/* Darker outlines for each dashboard section */
+.admin-dashboard-page .welcome-banner,
+.admin-dashboard-page .notif-strip,
+.admin-dashboard-page .strip-tile,
+.admin-dashboard-page .chart-panel,
+.admin-dashboard-page .branch-panel,
+.admin-dashboard-page .panel,
+.admin-dashboard-page .emp-card,
+.admin-dashboard-page .welcome-stat {
+  border-color: rgba(255, 140, 0, 0.6) !important;
+}
+
+/* HR dashboard quick actions */
+.quick-actions-strip {
+  background: var(--bg3);
+  border: 1px solid var(--gold-border);
+  border-radius: 14px;
+  padding: 20px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.quick-actions-items {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--gold-border);
+  background: #4a90e2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-action-btn i {
+  color: #fff;
+}
+
+.quick-action-btn:hover {
+  background: #357abd;
+  border-color: #357abd;
+  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.3);
+  transform: translateY(-1px);
+}

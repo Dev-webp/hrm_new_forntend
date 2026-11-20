@@ -1048,11 +1048,6 @@ export default function AdminActivityLogs() {
       ) : null}
 
       <div className="table-wrapper">
-        {loading ? (
-          <div className="table-loading-overlay" aria-busy="true">
-            <div className="loading-spinner" />
-          </div>
-        ) : null}
         <div className="table-scroll">
           <table className="log-table">
             <thead>
@@ -1073,7 +1068,6 @@ export default function AdminActivityLogs() {
               {loading && !logsData.length ? (
                 <tr>
                   <td colSpan={8} className="table-message">
-                    <i className="fas fa-spinner fa-spin" />
                     Loading logs…
                   </td>
                 </tr>
@@ -1230,7 +1224,7 @@ export default function AdminActivityLogs() {
           </div>
           {detailLoading ? (
             <div className="table-message">
-              <i className="fas fa-spinner fa-spin" />
+              Loading...
             </div>
           ) : detailFields ? (
             <>

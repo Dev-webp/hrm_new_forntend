@@ -26,7 +26,7 @@ export async function fetchPayrollEmployees() {
 
 // Fetch payslips with filters
 export async function fetchPayslips(filters) {
-  let url = `/payroll/payslips?limit=200`;
+  let url = `/payroll/payslips?limit=200&_t=${Date.now()}`; // Add cache-busting timestamp
   if (filters.month) url += `&month=${filters.month}`;
   if (filters.branch && filters.branch !== "all")
     url += `&branch=${encodeURIComponent(filters.branch)}`;
@@ -44,6 +44,15 @@ export async function fetchAttendancePreview(userId, month) {
     `/payroll/attendance-preview?user_id=${userId}&month=${month}`
   );
   return response.data;
+}
+
+// Fetch existing payslip by employee and month
+export async function fetchPayslipByEmployeeMonth(userId, month) {
+  const response = await api.get(
+    `/payroll/payslips?user_id=${userId}&month=${month}`
+  );
+  const payslips = normalizeArrayResponse(response.data, "fetchPayslipByEmployeeMonth");
+  return payslips.length > 0 ? payslips[0] : null;
 }
 
 // Generate payslip
@@ -76,6 +85,24 @@ export async function updatePayslipStatus(id, status) {
 export async function downloadPayslipPdf(id) {
   const response = await api.get(`/payroll/payslip/${id}/download`, {
     responseType: "blob",
+  });
+  return response.data;
+}
+
+// Fetch individual attendance analysis for payslip preview
+export async function fetchIndividualAttendanceAnalysis(userId, month) {
+  const response = await api.get(
+    `/attendance-analysis/individual?userId=${userId}&month=${month}`
+  );
+  return response.data;
+}
+
+// Update payslip incentives and deductions
+export async function updatePayslipAdjustments(id, incentives, deductions, tax) {
+  const response = await api.put(`/payroll/payslip/${id}/adjustments`, {
+    incentives: Number(incentives),
+    deductions: Number(deductions),
+    tax: Number(tax),
   });
   return response.data;
 }

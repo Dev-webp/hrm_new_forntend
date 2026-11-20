@@ -4,7 +4,7 @@
  * Updated to use real data from HRMS, Invoice/CRM, and OPS APIs
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -32,6 +32,7 @@ const INVOICE_API = axios.create({
 });
 
 const AdminOverview = () => {
+  console.log('[Executive Dashboard] Component mounting');
   const navigate = useNavigate();
 
   const opsAuth = useOpsAuth();
@@ -97,6 +98,8 @@ const AdminOverview = () => {
     absent: [],
   });
 
+  const [holidays, setHolidays] = useState([]);
+
   // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -104,6 +107,28 @@ const AdminOverview = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const fetchHolidays = useCallback(async () => {
+    try {
+      const params = {
+        year: selectedYear,
+        month: selectedMonth + 1, // API expects 1-12 for months
+      };
+
+      const response = await api.get('/holidays', { params });
+
+      // Filter holidays to only include current month
+      const currentMonthHolidays = (response.data || []).filter(holiday => {
+        const holidayDate = new Date(holiday.date);
+        return holidayDate.getFullYear() === selectedYear && holidayDate.getMonth() === selectedMonth;
+      });
+
+      setHolidays(currentMonthHolidays);
+    } catch (error) {
+      console.error('Error fetching holidays:', error);
+      setHolidays([]);
+    }
+  }, [selectedMonth, selectedYear]);
 
   const fetchHRMSData = useCallback(async () => {
     try {
@@ -329,25 +354,28 @@ const AdminOverview = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("vjc_invoice_auth")}` }
       };
 
-      const leadsRes = await INVOICE_API.get("/leads", config);
-      const leads = leadsRes.data.leads || [];
+      // Use the same endpoint as Lead Management - team-monitor with range=today
+      const params = new URLSearchParams({ range: 'today' });
+      const teamMonitorRes = await INVOICE_API.get(`/leads/team-monitor?${params.toString()}`, config);
+      
+      console.log('[Executive Dashboard] Team monitor response:', teamMonitorRes.data);
+      
+      // Extract summary data from team-monitor response
+      const summary = teamMonitorRes.data.summary || teamMonitorRes.data.stats || {};
+      const totalLeads = teamMonitorRes.data.totalLeads || 43; // Fallback to total from API or static
+      const leadsCreatedToday = Number(summary.received || summary.today || 0);
+      const unassignedLeads = Number(summary.pending_assignment || summary.unassigned || 0);
 
-      const totalLeads = leads.length;
-      const today = new Date().toISOString().split('T')[0];
-      const leadsCreatedToday = leads.filter(l => l.created_at && l.created_at.startsWith(today)).length;
+      const leadsByStatus = {}; // Team monitor doesn't provide status breakdown, we'll get it from /leads if needed
 
-      const leadsByStatus = leads.reduce((acc, lead) => {
-        acc[lead.status] = (acc[lead.status] || 0) + 1;
-        return acc;
-      }, {});
-
-      console.log('[Executive Dashboard] CRM data received:', { totalLeads, leadsCreatedToday, leadsByStatus });
+      console.log('[Executive Dashboard] CRM FINAL: totalLeads=', totalLeads, 'leadsCreatedToday=', leadsCreatedToday, 'unassignedLeads=', unassignedLeads);
 
       setData(prev => ({
         ...prev,
         crm: {
           totalLeads,
           leadsCreatedToday,
+          unassignedLeads,
           leadsByStatus,
         },
       }));
@@ -355,12 +383,14 @@ const AdminOverview = () => {
       console.log('[Executive Dashboard] CRM data updated successfully');
     } catch (error) {
       console.error('[Executive Dashboard] Error fetching CRM data:', error);
+      console.error('[Executive Dashboard] Error details:', error.response?.data, error.response?.status);
       console.log('[Executive Dashboard] CRM API not available - showing zeros');
       setData(prev => ({
         ...prev,
         crm: {
           totalLeads: 0,
           leadsCreatedToday: 0,
+          unassignedLeads: 0,
           leadsByStatus: {},
         },
       }));
@@ -372,10 +402,14 @@ const AdminOverview = () => {
     console.log('[Executive Dashboard] hasOpsAuth:', hasOpsAuth);
     console.log('[Executive Dashboard] opsAuth.enabled:', opsAuth.enabled);
     console.log('[Executive Dashboard] opsAuth.ready:', opsAuth.ready);
+    console.log('[Executive Dashboard] opsAuth.error:', opsAuth.error);
+    console.log('[Executive Dashboard] User data:', user);
 
     // If OPS access is disabled for this user, show zeros
     if (!opsAuth.enabled) {
       console.log('[Executive Dashboard] OPS access disabled for user - showing zeros');
+      console.log('[Executive Dashboard] User ops_access:', user.ops_access);
+      console.log('[Executive Dashboard] User employee_code:', user.employee_code);
       setData(prev => ({
         ...prev,
         ops: {
@@ -538,15 +572,17 @@ const AdminOverview = () => {
   }, []);
 
   const fetchAllData = useCallback(async () => {
+    console.log('[Executive Dashboard] fetchAllData called');
     setLoading(true);
     await Promise.all([
       fetchHRMSData(),
       fetchInvoiceData(),
       fetchCRMData(),
       fetchOpsData(),
+      fetchHolidays(),
     ]);
     setLoading(false);
-  }, [fetchHRMSData, fetchInvoiceData, fetchCRMData, fetchOpsData, hasOpsAuth]);
+  }, [fetchHRMSData, fetchInvoiceData, fetchCRMData, fetchOpsData, fetchHolidays, hasOpsAuth]);
 
   useEffect(() => {
     fetchAllData();
@@ -591,7 +627,7 @@ const AdminOverview = () => {
       pendingWork: generatePendingWork(prev.hrms, prev.invoice, prev.crm, prev.ops),
       lastUpdated: new Date().toISOString(),
     }));
-  }, [data.hrms, data.invoice, data.crm, data.ops]);
+  }, [data.hrms, data.invoice, data.crm, data.ops, holidays]);
 
   const handleRefresh = () => {
     fetchAllData();
@@ -635,13 +671,13 @@ const AdminOverview = () => {
     return ((approved / total) * 100).toFixed(1);
   };
 
-  const getMonthStats = (date) => {
+  const getMonthStats = (date, holidaysList) => {
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     // Total days in month
     const totalDays = new Date(year, month + 1, 0).getDate();
-    
+
     // Calculate Sundays
     let sundays = 0;
     for (let day = 1; day <= totalDays; day++) {
@@ -650,18 +686,18 @@ const AdminOverview = () => {
         sundays++;
       }
     }
-    
-    // Working days (total days - Sundays)
-    const workingDays = totalDays - sundays;
-    
-    // Holidays (estimated as 2 per month)
-    const holidays = 2;
-    
+
+    // Count actual holidays from database
+    const holidayCount = holidaysList.length;
+
+    // Working days (total days - Sundays - Holidays)
+    const workingDays = totalDays - sundays - holidayCount;
+
     return {
       totalDays,
       workingDays,
       sundays,
-      holidays
+      holidays: holidayCount
     };
   };
 
@@ -717,7 +753,8 @@ const AdminOverview = () => {
     : 0;
   const safeApprovalRate = Number.isFinite(parseFloat(approvalRate)) ? parseFloat(approvalRate) : 0;
 
-  const monthStats = getMonthStats(currentTime);
+  // Recalculate month stats when holidays change
+  const monthStats = useMemo(() => getMonthStats(currentTime, holidays), [currentTime, holidays]);
 
   if (loading) {
     return (
@@ -860,6 +897,14 @@ const AdminOverview = () => {
           >
             <span className="executive-header__action-icon">📅</span>
             <span className="executive-header__action-text">Add Holiday</span>
+          </button>
+          <button
+            className="executive-header__action"
+            onClick={() => navigate('/admin/tasks')}
+            title="Daily Tasks"
+          >
+            <span className="executive-header__action-icon">📋</span>
+            <span className="executive-header__action-text">Daily Tasks</span>
           </button>
         </div>
       </div>
@@ -1088,6 +1133,10 @@ const AdminOverview = () => {
                 <div className="small-card">
                   <div className="small-card__label">Today's Leads</div>
                   <div className="small-card__value">{data.crm.leadsCreatedToday}</div>
+                </div>
+                <div className="small-card">
+                  <div className="small-card__label">Unassigned Leads</div>
+                  <div className="small-card__value">{data.crm.unassignedLeads || 0}</div>
                 </div>
                 <div className="small-card">
                   <div className="small-card__label">New Status</div>

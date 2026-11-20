@@ -26,6 +26,8 @@ import {
   buildEmployeePayload,
   employeeToForm,
   formatDate,
+  getEmployeeStatusLabel,
+  isEmployeeInactive,
   mapApiEmployee,
   validateEmployeeForm,
 } from "../../utils/employeeHelpers";
@@ -41,6 +43,7 @@ const ROLE_META = {
   SUB_ADMIN: { label: "SUB ADMIN", color: "#14A79E" },
   "Operational Manager": { label: "OPERATIONAL MANAGER", color: "#F6821F" },
   OPERATIONAL_MANAGER: { label: "OPERATIONAL MANAGER", color: "#F6821F" },
+  HR: { label: "HR", color: "#7C3AED" },
   "Super Admin": { label: "SUPER ADMIN", color: "#0E2A4D" },
   SUPER_ADMIN: { label: "SUPER ADMIN", color: "#0E2A4D" },
 };
@@ -150,7 +153,9 @@ function AdminEmployees() {
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const roleMatch = roleFilter === "all" || employee.role === roleFilter;
-      const statusMatch = viewMode === "all" || employee.status === viewMode;
+      const employeeInactive = isEmployeeInactive(employee);
+      const statusMatch = viewMode === "all" ||
+        (viewMode === "inactive" ? employeeInactive : !employeeInactive);
       return roleMatch && statusMatch;
     });
   }, [employees, roleFilter, viewMode]);
@@ -163,7 +168,7 @@ function AdminEmployees() {
 
   const stats = useMemo(() => {
     const total = employees.length;
-    const activeCount = employees.filter((e) => e.status === "active").length;
+    const activeCount = employees.filter((e) => !isEmployeeInactive(e)).length;
     const inactiveCount = total - activeCount;
     const activePercentage = total > 0 ? Math.round((activeCount / total) * 100) : 0;
     const inactivePercentage = total > 0 ? Math.round((inactiveCount / total) * 100) : 0;
@@ -374,7 +379,8 @@ function AdminEmployees() {
 
   const EmployeeCard = memo(({ employee, onDetails, onInvoiceAccess, onOpsAccess }) => {
     const roleMeta = getRoleMeta(employee.role);
-    const isActive = (employee.status || "active") === "active";
+    const isActive = !isEmployeeInactive(employee);
+    const statusLabel = getEmployeeStatusLabel(employee);
 
     // Determine role badge class
     const getRoleBadgeClass = (role) => {
@@ -401,7 +407,7 @@ function AdminEmployees() {
               </span>
               <span className={`em-status-indicator${isActive ? " active" : " inactive"}`}>
                 <span className="em-status-dot" />
-                {isActive ? "Active" : "Inactive"}
+                {statusLabel}
               </span>
             </div>
           </div>

@@ -31,6 +31,19 @@ function CalendarDay({ dateStr, dayNum, record, sandwichResults = [] }) {
   const style = getAttendanceStyle(safeRecord);
   const hasSandwichPolicy = sandwichResults.length > 0;
   const hasAppliedPenalty = hasAppliedSandwichPenalty(sandwichResults);
+  
+  // Add inline style fallback for Sundays to ensure color is applied
+  let inlineStyle = {};
+  if (safeRecord.status === "sunday") {
+    // Use ONLY backend's sandwich_rule_applied field (ignore frontend calculation)
+    const isUnpaid = safeRecord.sandwich_rule_applied === true;
+    if (isUnpaid) {
+      inlineStyle = { background: "rgba(220, 38, 38, 0.18)", border: "1px solid rgba(220, 38, 38, 0.45)" };
+    } else {
+      inlineStyle = { background: "rgba(37, 99, 235, 0.18)", border: "1px solid rgba(37, 99, 235, 0.45)" };
+    }
+  }
+  
   const className = [
     "cal-day",
     style.className,
@@ -57,7 +70,7 @@ function CalendarDay({ dateStr, dayNum, record, sandwichResults = [] }) {
             : "Absent";
 
   return (
-    <div className={className}>
+    <div className={className} style={inlineStyle}>
       <div className={`day-num ${style.numClass}`}>{dayNum}</div>
       {hasSandwichPolicy ? (
         <span className="sandwich-indicator" aria-label="Sandwich policy result">

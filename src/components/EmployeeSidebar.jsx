@@ -15,6 +15,8 @@ const NAV_ITEMS = [
   { id: "attendance", path: "/employee/attendance", icon: "fa-calendar-check", label: "Attendance" },
   { id: "leave", path: "/employee/leave", icon: "fa-umbrella-beach", label: "Leave" },
   { id: "breaks", path: "/employee/breaks", icon: "fa-coffee", label: "Breaks" },
+  { id: "tasks", path: "/employee/tasks", icon: "fa-tasks", label: "Tasks" },
+  { id: "awi", path: "/employee/awi", icon: "fa-exclamation-triangle", label: "AWI Requests" },
   { id: "messages", path: "/employee/messages", icon: "fa-envelope", label: "Messages" },
   { id: "payslip", path: "/employee/payslip", icon: "fa-file-invoice-dollar", label: "Payslip" },
   { id: "instructions", path: "/employee/instructions", icon: "fa-book-open", label: "Instructions" },
@@ -24,9 +26,9 @@ const NAV_ITEMS = [
   { id: "reports", path: "/employee/invoice/reports", icon: "fa-chart-pie", label: "Reports", invoicePermission: "reports" },
   { id: "invoices", path: "/employee/invoice/invoices", icon: "fa-file-invoice", label: "Invoices", invoicePermission: "invoices" },
   { id: "rejected-invoices", path: "/employee/invoice/rejected", icon: "fa-file-circle-xmark", label: "Rejected Invoices", invoicePermission: "invoices" },
-  { id: "quotes", path: "/employee/invoice/quotes", icon: "fa-file-signature", label: "Quotes", invoicePermission: "quotes" },
+  { id: "quotes", path: "/employee/invoice/quotes", icon: "fa-file-signature", label: "Proforma Invoice", invoicePermission: "quotes" },
   { id: "payments", path: "/employee/invoice/payments", icon: "fa-credit-card", label: "Payments", invoicePermission: "payments" },
-  { id: "items", path: "/employee/invoice/items", icon: "fa-boxes-stacked", label: "Items", invoicePermission: "services" },
+  { id: "items", path: "/employee/invoice/items", icon: "fa-boxes-stacked", label: "Services", invoicePermission: "services" },
   // OPS portal: shown only once the OPS sign-in has succeeded and OPS says this
   // person's work profiles may open the section (opsSection).
   { id: "ops-connect", path: "/employee/ops/dashboard", icon: "fa-plug", label: "OPS Portal", opsEntry: true },
@@ -40,7 +42,7 @@ const NAV_ITEMS = [
   { id: "ops", path: "/ops/dashboard", icon: "fa-briefcase", label: "OPS Portal", opsAccess: true },
 ];
 
-export default function EmployeeSidebar({ activePage = "dashboard" }) {
+export default function EmployeeSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -54,10 +56,15 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
   const hrmsInvoicePermissions = hrmsUser?.invoice_permissions || {};
 
   const visibleItems = NAV_ITEMS.filter((item) => {
+    // OPS items
     if (item.opsEntry) return ops.enabled && !ops.ready;
     if (item.opsSection) return ops.ready && ops.allowedSections.includes(item.opsSection);
-    // For Invoice/CRM items, check HRMS invoice_access first
-    // Use HRMS permissions if set, otherwise use Invoice auth permissions
+    
+    // Basic HRMS items (no special permissions required)
+    const basicItems = ["dashboard", "attendance", "leave", "breaks", "tasks", "messages", "payslip", "instructions", "help-center"];
+    if (basicItems.includes(item.id)) return true;
+    
+    // Invoice/CRM items - check permissions
     const hasInvoiceAccess = hrmsUser?.invoice_access === true;
     const hasPermission = !item.invoicePermission ||
       (hrmsInvoicePermissions[item.invoicePermission] || invoicePermissions[item.invoicePermission]);
@@ -121,8 +128,10 @@ export default function EmployeeSidebar({ activePage = "dashboard" }) {
   };
 
   const isActive = (item) => {
-    if (activePage) return item.id === activePage;
-    return location.pathname === item.path;
+    // Match exact path or path with trailing slash
+    const currentPath = location.pathname.endsWith('/') ? location.pathname.slice(0, -1) : location.pathname;
+    const itemPath = item.path.endsWith('/') ? item.path.slice(0, -1) : item.path;
+    return currentPath === itemPath;
   };
 
   // "Case Filing" and "Case Processing" share one page and differ

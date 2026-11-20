@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { normalizeArray } from "./employeeUtils";
 import "../../styles/EmployeeBreaks.css";
@@ -380,7 +379,7 @@ export default function EmployeeBreaks() {
     if (isLoading) {
       return (
         <div className="empty-hist">
-          <span className="spinner" />
+          Loading...
         </div>
       );
     }
@@ -672,8 +671,7 @@ export default function EmployeeBreaks() {
     });
 
   return (
-    <div className="layout employee-breaks-page">
-      <EmployeeSidebar activePage="breaks" />
+    <div className="employee-breaks-page">
       <div className="main">
         <div className="topbar">
           <div>

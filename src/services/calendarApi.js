@@ -11,8 +11,8 @@ export async function fetchHolidaysForMonth(year, month, branch) {
   }
 
   if (month) {
-    const mm = String(month).padStart(2, "0");
-    params.month = `${year}-${mm}`;
+    // Backend expects month as a number (1-12), not a formatted string
+    params.month = month;
   }
 
   if (branch && branch !== "all") {
@@ -21,7 +21,6 @@ export async function fetchHolidaysForMonth(year, month, branch) {
 
   const response = await api.get("/holidays", { params });
 
-  console.log("HOLIDAYS FROM API:", response.data);
   return Array.isArray(response.data) ? response.data : [];
 }
 

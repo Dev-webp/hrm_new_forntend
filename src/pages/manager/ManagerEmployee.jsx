@@ -10,6 +10,7 @@ import {
   EMPTY_EMPLOYEE_FORM,
   buildEmployeePayload,
   employeeToForm,
+  isEmployeeInactive,
   mapApiEmployee,
   validateEmployeeForm,
 } from "../../utils/employeeHelpers";
@@ -99,14 +100,16 @@ function ManagerEmployee() {
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
       const roleMatch = roleFilter === "all" || employee.role === roleFilter;
-      const statusMatch = statusFilter === "all" || employee.status === statusFilter;
+      const employeeInactive = isEmployeeInactive(employee);
+      const statusMatch = statusFilter === "all" ||
+        (statusFilter === "inactive" ? employeeInactive : !employeeInactive);
       return roleMatch && statusMatch;
     });
   }, [employees, roleFilter, statusFilter]);
 
   const stats = useMemo(() => {
     const total = filteredEmployees.length;
-    const activeCount = filteredEmployees.filter((employee) => employee.status === "active").length;
+    const activeCount = filteredEmployees.filter((employee) => !isEmployeeInactive(employee)).length;
     const uniqueDepts = new Set(filteredEmployees.map((employee) => employee.department));
     return {
       total,

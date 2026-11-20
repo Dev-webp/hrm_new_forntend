@@ -127,7 +127,7 @@ try {
   // Step 4: Redirect based on user role
   const role = data.user.role;
 
-  if (role === "SUPER_ADMIN") {
+  if (role === "SUPER_ADMIN" || role === "HR") {
     navigate("/admin");
   } else if (role === "OPERATIONAL_MANAGER") {
     navigate("/operations");

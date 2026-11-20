@@ -52,6 +52,7 @@ export default function LeadProfileHistory() {
   const [lead, setLead] = useState(null);
   const [assignedHistory, setAssignedHistory] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [related, setRelated] = useState([]);   // NEW — other enquiries of the same customer
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -71,6 +72,7 @@ export default function LeadProfileHistory() {
   setLead(data.lead);
   setAssignedHistory(data.assigned_history || []);
   setNotes(data.notes || []);
+  setRelated(data.related || []);
         } else {
           setError(data.message || "Failed to load profile history");
         }
@@ -176,6 +178,40 @@ export default function LeadProfileHistory() {
 
         {/* ── RIGHT: Assigned History + Notes ── */}
         <Grid item xs={12} md={4}>
+          {/* NEW — other enquiries of the same customer (same phone number) */}
+          {related.length > 0 && (
+            <>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, letterSpacing: 0.5 }}>
+                OTHER ENQUIRIES OF THIS CUSTOMER
+              </Typography>
+              <TableContainer component={Paper} sx={{ mb: 3 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#1a2472" }}><TableCell sx={headerCellSx}>Created</TableCell><TableCell sx={headerCellSx}>Service</TableCell><TableCell sx={headerCellSx}>Status</TableCell><TableCell sx={headerCellSx}>Consultant</TableCell><TableCell sx={headerCellSx}>History</TableCell></TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {related.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell sx={{ ...cellBorderSx, whiteSpace: "nowrap" }}>{fmtDate(r.created_at)}</TableCell>
+                        <TableCell sx={cellBorderSx}>{r.service_type || "—"}</TableCell>
+                        <TableCell sx={cellBorderSx}>{r.status || "New"}</TableCell>
+                        <TableCell sx={cellBorderSx}>{r.assigned_to_name || "Not assigned"}</TableCell>
+                        <TableCell sx={cellBorderSx}>
+                          <Button
+                            size="small"
+                            onClick={() => window.open(`/lead-history/${r.id}`, "_blank")}
+                            sx={{ textTransform: "none", minWidth: "auto" }}
+                          >
+                            Open
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, letterSpacing: 0.5 }}>
             ASSIGNED HISTORY
           </Typography>

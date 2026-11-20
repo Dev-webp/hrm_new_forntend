@@ -246,7 +246,7 @@ export default function ManagerLeave() {
       {loading ? (
         <tr>
           <td colSpan={14} className="manager-leave-empty">
-            <i className="fas fa-spinner fa-spin" /> Loading requests…
+            Loading requests…
           </td>
         </tr>
       ) : filteredLeaves.length ? (

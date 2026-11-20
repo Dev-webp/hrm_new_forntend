@@ -3,43 +3,13 @@
         :root { --gold: #FF8C00; --gold-dim: rgba(255, 140, 0,0.3); --gold-bg: rgba(255, 140, 0,0.08); --bg-page: #F5F7FA; --bg-card: #FFFFFF; --bg-day: #FFFFFF; --text-main: #1A2B4B; --text-muted: #64748B; --c-present: #16A34A; --c-absent: #DC2626; --c-late: #FF8C00; --c-halfday: #FACC15; --c-leave: #0D47A1; --c-holiday: #0D47A1; --c-sunday: #0D47A1; --c-empty: #CBD5E1; }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #FFFFFF; } ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
 
-        .app-layout { display: flex; height: 100vh; overflow: hidden; }
-        .employee-attendance-page.layout {
+        .employee-attendance-page {
             display: flex;
+            flex-direction: column;
             width: 100%;
             height: 100vh;
             overflow: hidden;
         }
-        .employee-attendance-page.layout > .employee-sidebar {
-            flex: 0 0 270px;
-            min-width: 270px;
-        }
-        .employee-attendance-page.layout > .main-content {
-            flex: 1 1 auto;
-            min-width: 0;
-        }
-
-        /* Sidebar */
-        .sidebar { width: 280px; background: var(--bg-page); border-right: 1px solid var(--gold-dim); display: flex; flex-direction: column; transition: width 0.3s; overflow-y: auto; flex-shrink: 0; }
-        .sidebar.collapsed { width: 90px; }
-        .sidebar.collapsed .sidebar-header h2, .sidebar.collapsed .sidebar-header p, .sidebar.collapsed .nav-item span,
-        .sidebar.collapsed .secure-badge, .sidebar.collapsed .collapse-text, .sidebar.collapsed .emp-info { display: none; }
-        .sidebar.collapsed .nav-item { justify-content: center; padding: 12px 0; }
-        .sidebar.collapsed .nav-item i { margin-right: 0; font-size: 1.4rem; }
-        .sidebar-header { padding: 28px 24px 20px; border-bottom: 1px solid var(--gold-dim); margin-bottom: 16px; }
-        .sidebar-header h2 { font-size: 1.55rem; font-weight: 800; background: linear-gradient(135deg,#FFF4E5,#FF8C00); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .sidebar-header p { font-size: 0.7rem; color: #FF8C00; margin-top: 6px; }
-        .employee-badge { background: var(--gold-bg); border: 1px solid var(--gold-dim); border-radius: 20px; padding: 8px 16px; margin: 0 20px 20px; display: flex; align-items: center; gap: 10px; }
-        .emp-avatar { width: 34px; height: 34px; background: linear-gradient(135deg,#FF8C00,#D97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; color: #1A2B4B; flex-shrink: 0; }
-        .emp-info .name { font-weight: 600; color: var(--gold); font-size: 0.82rem; }
-        .emp-info .dept { font-size: 0.63rem; color: #64748B; margin-top: 2px; }
-        .nav-section { padding: 0 20px; margin-bottom: 24px; }
-        .nav-item { display: flex; align-items: center; gap: 14px; padding: 10px 16px; margin: 4px 0; border-radius: 14px; font-size: 0.85rem; font-weight: 500; color: #64748B; transition: 0.2s; cursor: pointer; }
-        .nav-item i { width: 24px; font-size: 1.2rem; color: #FF8C00; }
-        .nav-item:hover { background: #0D47A1; color: var(--gold); }
-        .nav-item.active { background: rgba(255, 140, 0,0.1); border-left: 3px solid var(--gold); color: var(--gold); }
-        .secure-badge { margin-left: auto; background: #FFF4E5; font-size: 0.65rem; padding: 4px 10px; border-radius: 40px; color: var(--gold); }
-        .collapse-divider { border-top: 1px solid var(--gold-dim); margin-top: 8px; }
 
         /* Main Content */
         .main-content { flex: 1; overflow-y: auto; background: #FFFFFF; padding: 24px 28px 48px; }

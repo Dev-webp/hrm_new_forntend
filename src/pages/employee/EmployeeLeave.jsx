@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
 import { escapeHtml, normalizeArray } from "./employeeUtils";
@@ -319,12 +318,10 @@ const renderReason = (reason) => {
   return (
     <div
       className={[
-        embedded ? "employee-leave-page" : "layout employee-leave-page",
+        "employee-leave-page",
         isSubAdminLeave ? "subadmin-leave-page" : "",
       ].filter(Boolean).join(" ")}
     >
-      {!embedded && <EmployeeSidebar activePage="leave" />}
-
       <div className="main">
         <div className="topbar employee-leave-topbar subadmin-leave-topbar">
           <div>
@@ -431,7 +428,7 @@ const renderReason = (reason) => {
           <div className="leave-list" id="leaveList">
             {isLoading ? (
               <div style={{ textAlign: "center", padding: 40 }}>
-                <span className="spinner" />
+                Loading...
               </div>
             ) : !filteredLeaves.length ? (
               <div className="empty-state">

@@ -183,7 +183,7 @@ export default function AdminProfile() {
 
             <div className="profile-actions">
               <button type="submit" className="profile-save-btn" disabled={loading || saving}>
-                <i className={`fas ${saving ? "fa-spinner fa-spin" : "fa-save"}`} />
+                <i className="fas fa-save" />
                 <span>{saving ? "Saving..." : "Save Changes"}</span>
               </button>
             </div>

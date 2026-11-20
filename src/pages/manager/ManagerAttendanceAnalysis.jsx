@@ -369,7 +369,14 @@ export default function ManagerAttendanceAnalysis() {
     const avgBreak = workDays.length
       ? Math.round(workDays.reduce((s, r) => s + r.breaks, 0) / workDays.length) : 0;
     const exceed = workDays.filter((r) => r.breaks > 60).length;
-    return { attRate, presentDays, lateDays, halfDays, absent, avgBreak, exceed };
+    const paidLeave = records.filter((r) => isPaidLeaveRecord(r)).length;
+    const unpaidLeave = records.filter((r) => isUnpaidLeaveRecord(r)).length;
+    const authorizedAwi = records.filter((r) => r.status === "authorized_absence").length;
+    const unauthorizedAbsent = records.filter((r) => r.status === "unauthorized_absence").length;
+    const paidSundays = records.filter((r) => r.status === "sunday" && !r.sandwich_rule_applied).length;
+    const unpaidSundays = records.filter((r) => r.status === "sunday" && r.sandwich_rule_applied).length;
+    const holidays = records.filter((r) => r.status === "holiday").length;
+    return { attRate, presentDays, lateDays, halfDays, absent, avgBreak, exceed, paidLeave, unpaidLeave, authorizedAwi, unauthorizedAbsent, paidSundays, unpaidSundays, holidays };
   }, [records]);
 
   const breakSummaryKpi = useMemo(() => {
@@ -756,9 +763,16 @@ export default function ManagerAttendanceAnalysis() {
               ) : summary ? (
                 <>
                   <div className="kpi-tile"><div className="label">Employees</div><div className="value">{summary.employees.length}</div></div>
-                  <div className="kpi-tile"><div className="label">Total Present</div><div className="value">{summary.kpi.total_present || 0}</div></div>
-                  <div className="kpi-tile"><div className="label">Total Late</div><div className="value">{summary.kpi.total_late || 0}</div></div>
-                  <div className="kpi-tile"><div className="label">Break Exceeded</div><div className="value">{summary.kpi.total_exceeded || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Full Days</div><div className="value">{summary.employees.reduce((s, e) => s + (e.full_days || 0), 0)}</div></div>
+                  <div className="kpi-tile"><div className="label">Half Days</div><div className="value">{summary.employees.reduce((s, e) => s + (e.half_days || 0), 0)}</div></div>
+                  <div className="kpi-tile"><div className="label">Paid Leave</div><div className="value">{summary.kpi.total_paid_leave || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Unpaid Leave</div><div className="value">{summary.kpi.total_unpaid_leave || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Authorized AWI</div><div className="value">{summary.kpi.total_authorized_awi || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Unauthorized Absent</div><div className="value">{summary.kpi.total_unauthorized_absent || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Paid Sundays</div><div className="value">{summary.kpi.total_paid_sundays || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Unpaid Sundays</div><div className="value">{summary.kpi.total_unpaid_sundays || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Late Logins</div><div className="value">{summary.kpi.total_late || 0}</div></div>
+                  <div className="kpi-tile"><div className="label">Holidays</div><div className="value">{summary.kpi.total_holidays || 0}</div></div>
                 </>
               ) : null}
             </div>
@@ -767,12 +781,12 @@ export default function ManagerAttendanceAnalysis() {
               <div style={{ overflowX: "auto" }}>
                 <table className="data-table">
                   <thead>
-                    <tr><th>Employee</th><th>Dept</th><th>Present</th><th>Late</th><th>Absent</th><th>Avg Break</th><th>Exceeded 60m</th></tr>
+                    <tr><th>Employee</th><th>Dept</th><th>Full Days</th><th>Half Days</th><th>Paid Leave</th><th>Unpaid Leave</th><th>Auth AWI</th><th>Unauth Absent</th><th>Paid Sun</th><th>Unpaid Sun</th><th>Late</th><th>Holidays</th></tr>
                   </thead>
                   <tbody>
                     {summaryLoading
                       ? Array(5).fill(null).map((_, i) => (
-                          <tr key={i}>{Array(7).fill(null).map((_, j) => (
+                          <tr key={i}>{Array(12).fill(null).map((_, j) => (
                             <td key={j}><div style={{ height: "14px", background: "#EAF4FF", borderRadius: "6px" }}></div></td>
                           ))}</tr>
                         ))
@@ -781,14 +795,19 @@ export default function ManagerAttendanceAnalysis() {
                             <tr key={e.user_id}>
                               <td><strong>{e.full_name}</strong><br /><span style={{ fontSize: "10px" }}>{e.department}</span></td>
                               <td>{e.department}</td>
-                              <td style={{ color: "#16A34A" }}>{e.present_days}</td>
-                              <td style={{ color: "#FF8C00" }}>{e.late_days}</td>
-                              <td style={{ color: "#DC2626" }}>{e.absent_days}</td>
-                              <td>{e.avg_break_mins}m</td>
-                              <td>{e.break_exceeded_days}</td>
+                              <td style={{ color: "#16A34A" }}>{e.full_days || 0}</td>
+                              <td style={{ color: "#F59E0B" }}>{e.half_days || 0}</td>
+                              <td style={{ color: "#3B82F6" }}>{e.paid_leave_days || 0}</td>
+                              <td style={{ color: "#EF4444" }}>{e.unpaid_leave_days || 0}</td>
+                              <td style={{ color: "#8B5CF6" }}>{e.authorized_awi_days || 0}</td>
+                              <td style={{ color: "#DC2626" }}>{e.unauthorized_absent_days || 0}</td>
+                              <td style={{ color: "#10B981" }}>{e.paid_sundays || 0}</td>
+                              <td style={{ color: "#F97316" }}>{e.unpaid_sundays || 0}</td>
+                              <td style={{ color: "#FF8C00" }}>{e.late_days || 0}</td>
+                              <td style={{ color: "#6B7280" }}>{e.holidays || 0}</td>
                             </tr>
                           ))
-                        : <tr><td colSpan="7" style={{ color: "#64748B", textAlign: "center" }}>No data</td></tr>}
+                        : <tr><td colSpan="12" style={{ color: "#64748B", textAlign: "center" }}>No data</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -808,9 +827,13 @@ export default function ManagerAttendanceAnalysis() {
                 {[
                   { val: overviewKpi ? (overviewKpi.presentDays + overviewKpi.halfDays) : "—", lbl: "Present" },
                   { val: overviewKpi?.lateDays ?? "—", lbl: "Late In" },
-                  { val: overviewKpi?.absent ?? "—", lbl: "Absent" },
-                  { val: overviewKpi ? `${overviewKpi.avgBreak}m` : "—", lbl: "Avg Break" },
-                  { val: overviewKpi ? `${overviewKpi.attRate}%` : "—", lbl: "Att. Rate" },
+                  { val: overviewKpi?.paidLeave ?? "—", lbl: "Paid Leave" },
+                  { val: overviewKpi?.unpaidLeave ?? "—", lbl: "Unpaid Leave" },
+                  { val: overviewKpi?.authorizedAwi ?? "—", lbl: "Auth AWI" },
+                  { val: overviewKpi?.unauthorizedAbsent ?? "—", lbl: "Unauth Absent" },
+                  { val: overviewKpi?.paidSundays ?? "—", lbl: "Paid Sun" },
+                  { val: overviewKpi?.unpaidSundays ?? "—", lbl: "Unpaid Sun" },
+                  { val: overviewKpi?.holidays ?? "—", lbl: "Holidays" },
                 ].map(({ val, lbl }) => (
                   <div key={lbl} className="hero-meta-item">
                     <div className="val">{val}</div>
@@ -845,9 +868,16 @@ export default function ManagerAttendanceAnalysis() {
                 {overviewKpi && (
                   <div className="kpi-grid">
                     <div className="kpi-tile"><div className="label">Attendance Rate</div><div className="value">{overviewKpi.attRate}%</div></div>
-                    <div className="kpi-tile"><div className="label">Present Days</div><div className="value">{overviewKpi.presentDays}</div></div>
-                    <div className="kpi-tile"><div className="label">Late Arrivals</div><div className="value">{overviewKpi.lateDays}</div></div>
-                    <div className="kpi-tile"><div className="label">Break Exceeded</div><div className="value">{overviewKpi.exceed}</div></div>
+                    <div className="kpi-tile"><div className="label">Full Days</div><div className="value">{overviewKpi.presentDays}</div></div>
+                    <div className="kpi-tile"><div className="label">Half Days</div><div className="value">{overviewKpi.halfDays}</div></div>
+                    <div className="kpi-tile"><div className="label">Paid Leave</div><div className="value">{overviewKpi.paidLeave}</div></div>
+                    <div className="kpi-tile"><div className="label">Unpaid Leave</div><div className="value">{overviewKpi.unpaidLeave}</div></div>
+                    <div className="kpi-tile"><div className="label">Authorized AWI</div><div className="value">{overviewKpi.authorizedAwi}</div></div>
+                    <div className="kpi-tile"><div className="label">Unauthorized Absent</div><div className="value">{overviewKpi.unauthorizedAbsent}</div></div>
+                    <div className="kpi-tile"><div className="label">Paid Sundays</div><div className="value">{overviewKpi.paidSundays}</div></div>
+                    <div className="kpi-tile"><div className="label">Unpaid Sundays</div><div className="value">{overviewKpi.unpaidSundays}</div></div>
+                    <div className="kpi-tile"><div className="label">Late Logins</div><div className="value">{overviewKpi.lateDays}</div></div>
+                    <div className="kpi-tile"><div className="label">Holidays</div><div className="value">{overviewKpi.holidays}</div></div>
                   </div>
                 )}
                 <div className="chart-row">

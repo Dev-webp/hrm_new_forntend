@@ -335,7 +335,7 @@ function AdminCalendar() {
   const [searchParams] = useSearchParams();
   const currentUser = useMemo(() => getStoredUser(), []);
   const isOperationalManager = currentUser?.role === "OPERATIONAL_MANAGER";
-  const canManageCalendar = ["SUPER_ADMIN", "OPERATIONAL_MANAGER", "MANAGER"].includes(currentUser?.role);
+  const canManageCalendar = ["SUPER_ADMIN", "OPERATIONAL_MANAGER", "MANAGER", "HR"].includes(currentUser?.role);
 
   const [currentDate, setCurrentDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
@@ -387,6 +387,14 @@ function AdminCalendar() {
   const [editingHoliday, setEditingHoliday] = useState(null);
   const [showYearCalendar, setShowYearCalendar] = useState(false);
   const [yearHolidays, setYearHolidays] = useState([]);
+
+  // Annual rollover states
+  const [showRolloverModal, setShowRolloverModal] = useState(false);
+  const [rolloverFromYear, setRolloverFromYear] = useState(new Date().getFullYear());
+  const [rolloverToYear, setRolloverToYear] = useState(new Date().getFullYear() + 1);
+  const [rolloverPreview, setRolloverPreview] = useState(null);
+  const [rolloverLoading, setRolloverLoading] = useState(false);
+  const [rolloverError, setRolloverError] = useState("");
 
   const branchDropdownRef = useRef(null);
   const monthChangeTimerRef = useRef(null);
@@ -454,6 +462,118 @@ function AdminCalendar() {
       showToast("Holiday deleted successfully");
     } catch (err) {
       showToast("Failed to delete holiday. Please try again.");
+    }
+  };
+
+  // Bulk download handler
+  const handleDownloadHolidays = async () => {
+    try {
+      const currentYear = currentDate.getFullYear();
+      const branchParam = currentBranch ? `&branch=${currentBranch}` : '';
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const url = `${apiUrl}/holidays/download?year=${currentYear}${branchParam}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to download holidays');
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `holidays_${currentYear}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(link);
+      
+      showToast("Holidays downloaded successfully");
+    } catch (err) {
+      console.error("Download error:", err);
+      showToast("Failed to download holidays. Please try again.");
+    }
+  };
+
+  // Annual rollover preview handler
+  const handleRolloverPreview = async () => {
+    setRolloverLoading(true);
+    setRolloverError("");
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const response = await fetch(`${apiUrl}/holidays/rollover`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fromYear: rolloverFromYear,
+          toYear: rolloverToYear
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Rollover preview failed');
+      }
+
+      setRolloverPreview(data);
+    } catch (err) {
+      setRolloverError(err.message || "Failed to generate rollover preview. Please try again.");
+    } finally {
+      setRolloverLoading(false);
+    }
+  };
+
+  // Annual rollover confirm handler
+  const handleRolloverConfirm = async () => {
+    if (!rolloverPreview || !rolloverPreview.proposed || rolloverPreview.proposed.length === 0) {
+      setRolloverError("No holidays to rollover");
+      return;
+    }
+
+    setRolloverLoading(true);
+    setRolloverError("");
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      const response = await fetch(`${apiUrl}/holidays/rollover/confirm`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          holidays: rolloverPreview.proposed
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Rollover confirmation failed');
+      }
+
+      setShowRolloverModal(false);
+      setRolloverPreview(null);
+      setCustomEntries({});
+      setCalendarDaysCache({});
+      setMonthlyStatsCache({});
+      setRefreshKey((prev) => prev + 1);
+      showToast(`Annual rollover completed: ${data.results.imported} holidays imported`);
+    } catch (err) {
+      setRolloverError(err.message || "Failed to complete rollover. Please try again.");
+    } finally {
+      setRolloverLoading(false);
     }
   };
 
@@ -552,9 +672,15 @@ function AdminCalendar() {
     try {
       const data = await fetchHolidaysForMonth(year, month, branch);
 
+      // Filter holidays to only include current month
+      const currentMonthHolidays = data.filter(h => {
+        const holidayDate = new Date(h.date);
+        return holidayDate.getFullYear() === year && holidayDate.getMonth() === month - 1;
+      });
+
       const entries = {};
 
-      data.forEach((h) => {
+      currentMonthHolidays.forEach((h) => {
         const dateStr = String(h.date).slice(0, 10);
         const key = dateStr.slice(5, 10);
 
@@ -960,8 +1086,8 @@ function AdminCalendar() {
           total: 0,
         };
 
-        const isCompanyHoliday = entry?.type === "holiday" && (entry?.branch === "all" || entry?.branch === currentBranch);
-        const isCompanyHalfDay = entry?.type === "halfday" && (entry?.branch === "all" || entry?.branch === currentBranch);
+        const isCompanyHoliday = entry?.type === "holiday" && (!entry?.branch || entry?.branch === "all" || entry?.branch === currentBranch);
+        const isCompanyHalfDay = entry?.type === "halfday" && (!entry?.branch || entry?.branch === "all" || entry?.branch === currentBranch);
 
         if (isSun && !entry) {
           dayClass += " sunday";
@@ -1196,16 +1322,34 @@ function AdminCalendar() {
             <i className="fas fa-calendar-alt"></i> Holiday Calendar
           </button>
           {canManageCalendar && (
-            <button
-              className="add-holiday-btn-header"
-              onClick={() => {
-                setEditingHoliday(null);
-                setHolidayForm({ date: "", name: "", type: "holiday", branch: "all" });
-                setShowHolidayModal(true);
-              }}
-            >
-              <i className="fas fa-plus"></i> Add Holiday
-            </button>
+            <>
+              <button
+                className="add-holiday-btn-header"
+                onClick={() => {
+                  setEditingHoliday(null);
+                  setHolidayForm({ date: "", name: "", type: "holiday", branch: "all" });
+                  setShowHolidayModal(true);
+                }}
+              >
+                <i className="fas fa-plus"></i> Add Holiday
+              </button>
+              <button
+                className="add-holiday-btn-header"
+                onClick={handleDownloadHolidays}
+                title="Download holidays as CSV"
+              >
+                <i className="fas fa-download"></i> Download
+              </button>
+              {["SUPER_ADMIN", "HR"].includes(currentUser?.role) && (
+                <button
+                  className="add-holiday-btn-header"
+                  onClick={() => setShowRolloverModal(true)}
+                  title="Annual rollover - generate next year's holidays"
+                >
+                  <i className="fas fa-sync-alt"></i> Annual Rollover
+                </button>
+              )}
+            </>
           )}
         </div>
 
@@ -1407,22 +1551,6 @@ function AdminCalendar() {
       </div>
 
       <div className="calendar-grid" style={{ position: "relative" }}>
-        {loading && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(3,3,3,0.55)",
-              zIndex: 10,
-              backdropFilter: "blur(2px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div className="loading-spinner"></div>
-          </div>
-        )}
 
         {error ? (
           <div style={{ textAlign: "center", padding: "40px" }}>
@@ -1727,6 +1855,144 @@ function AdminCalendar() {
                 <i className="fas fa-times"></i> Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Annual Rollover Modal */}
+      {showRolloverModal && (
+        <div className="modal-overlay" onClick={() => setShowRolloverModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "700px" }}>
+            <h3>
+              <i className="fas fa-sync-alt"></i> Annual Holiday Rollover
+            </h3>
+
+            <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>From Year</label>
+                <input
+                  type="number"
+                  value={rolloverFromYear}
+                  onChange={(e) => setRolloverFromYear(parseInt(e.target.value))}
+                  style={{ width: "100%" }}
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>To Year</label>
+                <input
+                  type="number"
+                  value={rolloverToYear}
+                  onChange={(e) => setRolloverToYear(parseInt(e.target.value))}
+                  style={{ width: "100%" }}
+                />
+              </div>
+            </div>
+
+            {!rolloverPreview ? (
+              <>
+                <div style={{ marginBottom: "16px", color: "#64748B", fontSize: "14px" }}>
+                  This will generate a preview of holidays from {rolloverFromYear} to be copied to {rolloverToYear}.
+                  You can review and approve before applying.
+                </div>
+
+                {rolloverError && (
+                  <div style={{ color: "#DC2626", fontSize: "0.8rem", marginBottom: "12px" }}>
+                    {rolloverError}
+                  </div>
+                )}
+
+                <div className="modal-actions">
+                  <button
+                    onClick={handleRolloverPreview}
+                    className="btn-primary"
+                    disabled={rolloverLoading}
+                  >
+                    <i className="fas fa-eye"></i> Generate Preview
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowRolloverModal(false);
+                      setRolloverPreview(null);
+                      setRolloverError("");
+                    }}
+                    className="btn-secondary"
+                  >
+                    <i className="fas fa-times"></i> Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: "16px", padding: "12px", background: "#F0F9FF", borderRadius: "8px" }}>
+                  <div style={{ fontWeight: "600", marginBottom: "8px" }}>Rollover Preview:</div>
+                  <div style={{ fontSize: "14px" }}>
+                    <div>📅 Proposed holidays: {rolloverPreview.total}</div>
+                    <div>⚠️ Conflicts: {rolloverPreview.conflictCount}</div>
+                  </div>
+                </div>
+
+                {rolloverPreview.conflicts && rolloverPreview.conflicts.length > 0 && (
+                  <div style={{ marginBottom: "16px", padding: "12px", background: "#FEF2F2", borderRadius: "8px" }}>
+                    <div style={{ fontWeight: "600", marginBottom: "8px", color: "#DC2626" }}>Conflicts (will be skipped):</div>
+                    <div style={{ fontSize: "13px", maxHeight: "150px", overflowY: "auto" }}>
+                      {rolloverPreview.conflicts.map((conflict, idx) => (
+                        <div key={idx} style={{ marginBottom: "4px" }}>
+                          {conflict.date}: "{conflict.existingName}" already exists (proposed: "{conflict.proposedName}")
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {rolloverPreview.proposed && rolloverPreview.proposed.length > 0 && (
+                  <div style={{ marginBottom: "16px", padding: "12px", background: "#F0FDF4", borderRadius: "8px" }}>
+                    <div style={{ fontWeight: "600", marginBottom: "8px", color: "#16A34A" }}>Holidays to be added:</div>
+                    <div style={{ fontSize: "13px", maxHeight: "200px", overflowY: "auto" }}>
+                      {rolloverPreview.proposed.map((holiday, idx) => (
+                        <div key={idx} style={{ marginBottom: "4px" }}>
+                          {holiday.date}: {holiday.name} ({holiday.type}, {holiday.branch})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {rolloverError && (
+                  <div style={{ color: "#DC2626", fontSize: "0.8rem", marginBottom: "12px" }}>
+                    {rolloverError}
+                  </div>
+                )}
+
+                <div className="modal-actions">
+                  <button
+                    onClick={handleRolloverConfirm}
+                    className="btn-primary"
+                    disabled={rolloverLoading || rolloverPreview.proposed.length === 0}
+                  >
+                    <i className="fas fa-check"></i> Confirm & Apply
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRolloverPreview(null);
+                      setRolloverError("");
+                    }}
+                    className="btn-secondary"
+                  >
+                    <i className="fas fa-arrow-left"></i> Back
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowRolloverModal(false);
+                      setRolloverPreview(null);
+                      setRolloverError("");
+                    }}
+                    className="btn-secondary"
+                  >
+                    <i className="fas fa-times"></i> Cancel
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

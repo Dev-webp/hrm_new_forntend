@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import UnifiedSidebar from "../components/UnifiedSidebar";
+import EmployeeSidebar from "../components/EmployeeSidebar";
 import LiveNotificationToast from "../components/LiveNotificationToast";
+import { getStoredRole } from "../utils/auth";
 import "../styles/admin.css";
 
 function DashboardLayout({ role = "admin", children = null }) {
@@ -13,15 +15,18 @@ function DashboardLayout({ role = "admin", children = null }) {
     };
   }, []);
 
+  // Use EmployeeSidebar for employee role, UnifiedSidebar for others
+  const Sidebar = role === "employee" ? EmployeeSidebar : UnifiedSidebar;
+
   return (
     <div className="app-layout">
-      <UnifiedSidebar role={role} />
+      <Sidebar role={role} />
 
       <div className="main-panel">
         {children ?? <Outlet />}
       </div>
 
-      {role !== "sub-admin" && <LiveNotificationToast />}
+      {role !== "sub-admin" && getStoredRole() !== "HR" && <LiveNotificationToast />}
     </div>
   );
 }

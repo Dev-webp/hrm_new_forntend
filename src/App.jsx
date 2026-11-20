@@ -381,10 +381,15 @@ function AuthenticatedApp() {
             path="/employee/*"
             element={
               <RequireAuth>
-                <EmployeeRoutes />
+                <DashboardLayout role="employee" />
               </RequireAuth>
             }
-          />
+          >
+            <Route
+              path="*"
+              element={<EmployeeRoutes />}
+            />
+          </Route>
 
           {/* =================================================
               SUB ADMIN

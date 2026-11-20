@@ -12,6 +12,11 @@
   border: 1px solid rgba(37, 99, 235, 0.45);
 }
 
+.cal-unpaid-sunday {
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(220, 38, 38, 0.45);
+}
+
 .blue-num {
   color: #2563eb;
 }
@@ -606,9 +611,9 @@
 }
 
 .admin-analysis-page .cal-no-record {
-  background: var(--calendar-empty-bg, #E2E8F0);
-  border-color: var(--calendar-empty-border, #94A3B8);
-  color: var(--calendar-empty-text, #334155);
+  background: #E2E8F0;
+  border: 1px solid #94A3B8;
+  color: #334155;
 }
 
 .admin-analysis-page .day-num.green-num {

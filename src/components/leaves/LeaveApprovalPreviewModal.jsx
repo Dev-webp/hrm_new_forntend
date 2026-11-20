@@ -55,7 +55,7 @@ export default function LeaveApprovalPreviewModal({
         </header>
 
         {loading ? (
-          <div className="leave-preview-state"><i className="fas fa-spinner fa-spin" /> Calculating leave policy…</div>
+          <div className="leave-preview-state">Calculating leave policy…</div>
         ) : error ? (
           <div className="leave-preview-state error">{error}</div>
         ) : preview ? (

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import {
   escapeHtml,
@@ -153,7 +152,6 @@ function AttendanceStateCard({ title, message, actionLabel, onAction, loading = 
   return (
     <div className="detailed-section" role={loading ? "status" : "alert"} aria-live="polite">
       <div style={{ textAlign: "center", padding: "34px 20px" }}>
-        {loading && <span className="loading-spinner" aria-hidden="true" />}
         <h3 style={{ color: "var(--gold)", marginTop: loading ? 14 : 0, marginBottom: 8 }}>
           {title}
         </h3>
@@ -888,8 +886,7 @@ export default function EmployeeAttendance({ embedded = false }) {
   };
 
   return (
-    <div className={embedded ? "employee-attendance-page" : "layout employee-attendance-page"}>
-      {!embedded && <EmployeeSidebar activePage="attendance" />}
+    <div className="employee-attendance-page">
       <main className="main-content">
         <div className="page-header">
           <div>
@@ -1039,7 +1036,7 @@ export default function EmployeeAttendance({ embedded = false }) {
           ))}
           {isLoading ? (
             <div className="grid-loader">
-              <span className="loading-spinner" />
+              Loading...
             </div>
           ) : (
             (Array.isArray(calDays) ? calDays : []).map((cell) =>

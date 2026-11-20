@@ -466,7 +466,6 @@ export default function ManagerNotifications() {
         <div className="notif-list">
           {!feedReady ? (
             <div className="empty-state">
-              <i className="fas fa-spinner fa-spin" />
               <p>Connecting to branch feed…</p>
             </div>
           ) : !filteredList.length ? (

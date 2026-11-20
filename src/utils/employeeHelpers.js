@@ -10,6 +10,7 @@ export const ROLE_OPTIONS = [
   { value: "Sub Admin", label: "Sub Admin" },
   { value: "Admin", label: "Admin (Manager)" },
   { value: "Operational Manager", label: "Operational Manager" },
+  { value: "HR", label: "HR" },
   { value: "Super Admin", label: "Super Admin" },
 ];
 
@@ -29,6 +30,7 @@ export const FORM_ROLE_OPTIONS = [
   { value: "Sub Admin", label: "Sub Admin" },
   { value: "Admin", label: "Admin (Manager)" },
   { value: "Operational Manager", label: "Operational Manager" },
+  { value: "HR", label: "HR" },
   { value: "Super Admin", label: "Super Admin" },
 ];
 
@@ -36,6 +38,7 @@ export function mapRoleFromBackend(role) {
   if (role === "SUB_ADMIN") return "Sub Admin";
   if (role === "MANAGER") return "Admin";
   if (role === "OPERATIONAL_MANAGER") return "Operational Manager";
+  if (role === "HR") return "HR";
   if (role === "SUPER_ADMIN") return "Super Admin";
   return "Employee";
 }
@@ -44,8 +47,28 @@ export function mapRoleToBackend(role) {
   if (role === "Sub Admin") return "SUB_ADMIN";
   if (role === "Admin") return "MANAGER";
   if (role === "Operational Manager") return "OPERATIONAL_MANAGER";
+  if (role === "HR") return "HR";
   if (role === "Super Admin") return "SUPER_ADMIN";
   return "EMPLOYEE";
+}
+
+const TERMINAL_EMPLOYMENT_STATUSES = new Set(["EXITED", "TERMINATED"]);
+
+export function getEmploymentStatus(employee) {
+  return String(employee?.employmentStatus || employee?.employment_status || "").toUpperCase();
+}
+
+export function isEmployeeInactive(employee) {
+  if (TERMINAL_EMPLOYMENT_STATUSES.has(getEmploymentStatus(employee))) return true;
+  return String(employee?.status || "active").toLowerCase() !== "active";
+}
+
+export function getEmployeeStatusLabel(employee) {
+  const employmentStatus = getEmploymentStatus(employee);
+  if (TERMINAL_EMPLOYMENT_STATUSES.has(employmentStatus)) {
+    return employmentStatus.charAt(0) + employmentStatus.slice(1).toLowerCase();
+  }
+  return isEmployeeInactive(employee) ? "Inactive" : "Active";
 }
 
 export function mapApiEmployee(emp) {
@@ -61,6 +84,7 @@ export function mapApiEmployee(emp) {
     branch: emp.branch,
     joined: emp.joining_date,
     status: emp.status,
+    employmentStatus: emp.employment_status || "ACTIVE",
     salary: Number(emp.salary),
     role: mapRoleFromBackend(emp.role),
 
@@ -81,10 +105,11 @@ export function mapApiEmployee(emp) {
     // See the note in buildEmployeePayload about re-checking permission
     // boxes on every edit.
     invoiceAccess: emp.invoice_access === true,
+    invoicePermissions: emp.invoice_permissions ? (typeof emp.invoice_permissions === 'string' ? JSON.parse(emp.invoice_permissions) : emp.invoice_permissions) : {},
 
     // 🎯 OPS ACCESS — OPS system integration flag
     opsAccess: emp.ops_access === true,
-    ops_permissions: emp.ops_permissions || {},
+    ops_permissions: emp.ops_permissions ? (typeof emp.ops_permissions === 'string' ? JSON.parse(emp.ops_permissions) : emp.ops_permissions) : {},
   };
 }
 export function formatAadhar(aadhar) {
@@ -228,19 +253,9 @@ export function employeeToForm(employee) {
     loginAccessType: employee.loginAccessType || "OFFICE",
     allowedBranches: employee.allowedBranches || [],
 
-    // 🧾 INVOICE / CRM ACCESS — the on/off flag comes from HRMS, but the
-    // actual permission checkboxes always start unchecked here, since
-    // that detail lives in the Invoice database, not HRMS's. Re-check
-    // whichever boxes this person should actually have before saving.
+    // 🧾 INVOICE / CRM ACCESS — the on/off flag comes from HRMS, and
+    // the permission checkboxes are loaded from invoice_permissions field.
     invoiceAccess: employee.invoiceAccess === true,
-    invoicePermissions: employee.invoiceAccess ? (employee.invoicePermissions || {
-      customers: false,
-      invoices: false,
-      quotes: false,
-      payments: false,
-      expenses: false,
-      reports: false,
-      services: false,
-    }) : {},
+    invoicePermissions: employee.invoicePermissions || {},
   };
 }

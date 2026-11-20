@@ -27,6 +27,7 @@ import {
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const user = useMemo(() => getStoredUser(), []);
   const today = useMemo(() => new Date(), []);
   const todayStr = today.toISOString().slice(0, 10);
 
@@ -50,12 +51,12 @@ function AdminDashboard() {
     pendingLeaves: "--",
     departments: "--",
   });
-  const [notifications, setNotifications] = useState([
-    { cls: "info", icon: "fa-spinner fa-spin", text: "Loading notifications…" },
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [monthKpi, setMonthKpi] = useState(null);
   const [leaveItems, setLeaveItems] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [birthdays, setBirthdays] = useState([]);
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
 
   const [clock, setClock] = useState({
     time: "--:-- --",
@@ -63,9 +64,37 @@ function AdminDashboard() {
     dateLabel: "",
   });
 
-  const user = useMemo(() => getStoredUser(), []);
+  // Fetch today's birthdays and upcoming birthdays (only for admin roles)
+  useEffect(() => {
+    const fetchBirthdays = async () => {
+      // Only fetch if user has admin role
+      const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "OPERATIONAL_MANAGER" || user?.role === "MANAGER" || user?.role === "HR";
+      if (!isAdmin) {
+        setBirthdays([]);
+        setUpcomingBirthdays([]);
+        return;
+      }
+
+      try {
+        const [todayResponse, upcomingResponse] = await Promise.all([
+          api.get("/birthdays/today"),
+          api.get("/birthdays/upcoming"),
+        ]);
+        setBirthdays(todayResponse.data.birthdays || []);
+        setUpcomingBirthdays(upcomingResponse.data.birthdays || []);
+      } catch (error) {
+        console.error("Error fetching birthdays:", error);
+        setBirthdays([]);
+        setUpcomingBirthdays([]);
+      }
+    };
+
+    fetchBirthdays();
+  }, [user?.role]);
+
   const isOperationalManager = user?.role === "OPERATIONAL_MANAGER";
-  const canManageCalendar = ["SUPER_ADMIN", "OPERATIONAL_MANAGER", "MANAGER"].includes(user?.role);
+  const isHr = user?.role === "HR";
+  const canManageCalendar = ["SUPER_ADMIN", "OPERATIONAL_MANAGER", "MANAGER", "HR"].includes(user?.role);
 
   const [year, monthNum] = currentMonthStr.split("-").map(Number);
 
@@ -206,7 +235,7 @@ function AdminDashboard() {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
-    showToast("Loading dashboard…");
+    // showToast("Loading dashboard…"); // Removed to avoid UI overlap
 
     try {
       const lastDay = monthDays(year, monthNum);
@@ -235,7 +264,8 @@ function AdminDashboard() {
 
       showToast("✓ Dashboard updated");
     } catch (error) {
-      showToast(`Error: ${error.message}`);
+      const errorMessage = error?.message || String(error) || "Unknown error";
+      showToast(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -325,14 +355,6 @@ function AdminDashboard() {
           label: "Absences (MTD)",
           value: monthKpi ? Number(monthKpi.absent) : "--",
           accent: "#DC2626",
-        },
-        {
-          icon: "fas fa-plus-circle",
-          label: "Add Holiday",
-          value: "Add",
-          accent: "#7c3aed",
-          isAction: true,
-          onClick: () => navigate(`${actionBasePath}/calendar`),
         },
       ];
     },
@@ -482,17 +504,72 @@ function AdminDashboard() {
               icon="fas fa-building"
               accentColor="#0d47a1"
             />
-            {canManageCalendar && (
-              <button
-                className="add-holiday-header-btn"
-                onClick={() => navigate(`${actionBasePath}/calendar?addHoliday=true`)}
-                title="Add Holiday"
-              >
-                <i className="fas fa-calendar-plus" /> Add Holiday
-              </button>
-            )}
           </div>
         </div>
+
+        {isHr && (
+          <div className="quick-actions-strip">
+            <div className="notif-strip-title">
+              <i className="fas fa-bolt" /> Quick Actions
+            </div>
+            <div className="quick-actions-items">
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => navigate("/admin/attendance")}
+              >
+                <i className="fas fa-calendar-check" /> My Attendance
+              </button>
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => navigate("/admin/breaks")}
+              >
+                <i className="fas fa-coffee" /> My Breaks
+              </button>
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => {
+                  console.log("Navigating to attendance analysis");
+                  navigate("/admin/attendance-analysis");
+                }}
+              >
+                <i className="fas fa-chart-line" /> Attendance Analysis
+              </button>
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => navigate("/admin/awi-management")}
+              >
+                <i className="fas fa-clipboard-check" /> AWI Management
+              </button>
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => navigate("/admin/lifecycle-onboarding")}
+              >
+                <i className="fas fa-arrows-rotate" /> Onboarding &amp; Offboarding
+              </button>
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => navigate("/admin/employees")}
+              >
+                <i className="fas fa-user-plus" /> Add Employee
+              </button>
+              {canManageCalendar && (
+                <button
+                  type="button"
+                  className="quick-action-btn"
+                  onClick={() => navigate(`${actionBasePath}/calendar?addHoliday=true`)}
+                >
+                  <i className="fas fa-calendar-plus" /> Add Holiday
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="notif-strip">
           <div className="notif-strip-title">
@@ -515,6 +592,62 @@ function AdminDashboard() {
             <i className="fas fa-arrow-right" />
           </button>
         </div>
+
+        {birthdays.length > 0 && (
+          <div className="birthday-banner">
+            <div className="birthday-banner-title">
+              <i className="fas fa-birthday-cake" /> Today's Birthdays
+            </div>
+            <div className="birthday-list">
+              {birthdays.map((bday) => (
+                <div key={bday.id} className="birthday-item today">
+                  <div className="birthday-avatar">
+                    {getInitials(bday.name)}
+                  </div>
+                  <div className="birthday-info">
+                    <div className="birthday-name">{bday.name}</div>
+                    <div className="birthday-details">
+                      {bday.department} · {bday.branch} · Turning {bday.age}
+                    </div>
+                  </div>
+                  <div className="birthday-icon">
+                    <i className="fas fa-cake-candles" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {upcomingBirthdays.length > 0 && (
+          <div className="birthday-banner upcoming">
+            <div className="birthday-banner-title">
+              <i className="fas fa-calendar-alt" /> Upcoming Birthdays (Next 5 Days)
+            </div>
+            <div className="birthday-list">
+              {upcomingBirthdays.map((bday) => (
+                <div key={bday.id} className="birthday-item">
+                  <div className="birthday-avatar">
+                    {getInitials(bday.name)}
+                  </div>
+                  <div className="birthday-info">
+                    <div className="birthday-name">{bday.name}</div>
+                    <div className="birthday-details">
+                      {bday.department} · {bday.branch} · Turning {bday.age}
+                    </div>
+                  </div>
+                  <div className="birthday-countdown">
+                    {bday.daysUntil === 0 ? (
+                      <span className="today-badge">Today!</span>
+                    ) : (
+                      <span>{bday.daysUntil} days</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="month-strip">
           {loading && !monthKpi ? (
@@ -809,7 +942,14 @@ function AdminDashboard() {
                     <button
                       type="button"
                       className="emp-action-btn"
-                      onClick={() => navigate(`/admin/employees?employeeId=${employee.id}`)}
+                      onClick={() => {
+                        if (employee.id) {
+                          navigate(`/admin/employees?employeeId=${employee.id}`);
+                        } else {
+                          console.error("Employee ID is missing:", employee);
+                          showToast("Employee ID is missing. Cannot view details.");
+                        }
+                      }}
                       title="View employee details"
                     >
                       <i className="fas fa-user" /> View Details
@@ -817,9 +957,16 @@ function AdminDashboard() {
                     <button
                       type="button"
                       className="emp-action-btn"
-                      onClick={() => navigate(
-                        `/admin/attendance-analysis?employeeId=${employee.id}&branch=${encodeURIComponent(employee.branch || "all")}&month=${currentMonthStr}`
-                      )}
+                      onClick={() => {
+                        if (employee.id) {
+                          navigate(
+                            `/admin/attendance-analysis?employeeId=${employee.id}&branch=${encodeURIComponent(employee.branch || "all")}&month=${currentMonthStr}`
+                          );
+                        } else {
+                          console.error("Employee ID is missing:", employee);
+                          showToast("Employee ID is missing. Cannot view attendance analysis.");
+                        }
+                      }}
                       title="View attendance analysis"
                     >
                       <i className="fas fa-chart-bar" /> Attendance Analysis

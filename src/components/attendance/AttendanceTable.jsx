@@ -212,7 +212,7 @@ function AttendanceTable({
       <tbody>
         <tr>
           <td colSpan={11}>
-            <span className="loading-spinner" /> Loading...
+            Loading...
           </td>
         </tr>
       </tbody>

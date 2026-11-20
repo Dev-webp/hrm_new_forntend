@@ -1821,8 +1821,7 @@ textarea::placeholder {
 .employee-dashboard .calendar-cell.calendar-holiday,
 .admin-analysis-page .cal-holiday,
 .manager-analysis-page .cal-holiday,
-.cal-day.cal-holiday,
-.cal-day.cal-sunday {
+.cal-day.cal-holiday {
   background: var(--calendar-holiday-bg) !important;
   border-color: var(--calendar-holiday-border) !important;
   color: var(--calendar-holiday-text) !important;

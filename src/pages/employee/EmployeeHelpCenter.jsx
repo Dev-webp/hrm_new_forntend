@@ -1,4 +1,3 @@
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import "../../styles/EmployeeHelpCenter.css";
 
 const SUPPORT_CARDS = [
@@ -56,8 +55,7 @@ const SUPPORT_CARDS = [
 
 export default function EmployeeHelpCenter({ embedded = false }) {
   return (
-    <div className={embedded ? "employee-help-center-page" : "layout employee-help-center-page"}>
-      {!embedded && <EmployeeSidebar activePage="help-center" />}
+    <div className="employee-help-center-page">
       <main className="employee-help-main">
         <section className="help-center-hero">
           <div>

@@ -5,7 +5,7 @@ import {
   Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   MenuItem, Chip, Checkbox, Stack, CircularProgress, Alert,
   FormGroup, FormControlLabel, Select, InputLabel, FormControl,
-Tabs, Tab, InputAdornment, Divider, IconButton, Badge,
+Tabs, Tab, InputAdornment, Divider, IconButton, Badge, Popover,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import CallIcon from "@mui/icons-material/Call";
@@ -29,10 +29,14 @@ import AddIcon from "@mui/icons-material/Add";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import ListAltIcon from "@mui/icons-material/ListAlt";
-import TeamMonitorTab from "./TeamMonitorTab";
-
+import ShareIcon from "@mui/icons-material/Share";   // NEW
+import EventIcon from "@mui/icons-material/Event";   // NEW
+import FlagIcon from "@mui/icons-material/Flag";   // NEW
+import AccessTimeIcon from "@mui/icons-material/AccessTime";   // NEW
+import CheckIcon from "@mui/icons-material/Check";   // NEW — Followup "mark done" button
+import Switch from "@mui/material/Switch";   // NEW — Client Meeting Mode toggle
+import TeamMonitorTab from "./TeamMonitorTab";   // NEW — Team Monitor tab
 const API = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000/api";
-
 // ── Assumption: after login you store the logged-in user's basic info here.
 // If your Login.jsx stores it under a different key / shape, just change
 // this one line below (getCurrentUser) — nothing else needs to change.
@@ -263,9 +267,10 @@ const STATUS_OPTIONS = ["New", "Warm", "Cold", "Prospect", "HOLD", "Pending Agre
 // Name / Mobile stay pinned on the left while the remaining columns scroll.
 const STICKY_COL = {
   checkbox: { width: 56, left: 0 },
-  created: { width: 190, left: 56 },
-  name: { width: 200, left: 246 },
-  mobile: { width: 130, left: 446 },
+  action: { width: 80, left: 56 },       // NEW
+  created: { width: 190, left: 136 },    // was 56
+  name: { width: 200, left: 326 },       // was 246
+  mobile: { width: 130, left: 526 },     // was 446
 };
 
 // Row background color per status — matches the reference screenshots
@@ -503,7 +508,9 @@ function AddEnquiryForm({ onSaved, isChairman }) {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [staffList, setStaffList] = useState([]);   // NEW — for direct-assign dropdown
-
+  const [dup, setDup] = useState([]);   // NEW — existing leads that match the typed number
+  const [choice, setChoice] = useState("");   // NEW — "new" = user chose "Create new enquiry (same customer)"
+  const [reopening, setReopening] = useState(false);   // NEW
   // NEW — only chairman/mis-executive can fetch the employee list
   useEffect(() => {
     if (!isChairman) return;
@@ -515,7 +522,66 @@ function AddEnquiryForm({ onSaved, isChairman }) {
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
+  // NEW — duplicate check: when a number has 10+ digits, look it up (waits 0.5 s after typing stops)
+  useEffect(() => {
+    const digits = (v) => String(v || "").replace(/\D/g, "");
+    const n1 = digits(form.contact_number);
+    const n2 = digits(form.alternate_contact_number);
+    if (n1.length < 10 && n2.length < 10) { setDup([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const q = new URLSearchParams();
+        if (n1.length >= 10) q.set("number", n1);
+        if (n2.length >= 10) q.set("alt", n2);
+        const res = await fetch(`${API}/leads/check-duplicate?${q.toString()}`, { headers: authHeader() });
+        const data = await res.json();
+        if (!cancelled) setDup(data.success ? (data.duplicates || []) : []);
+      } catch {
+        if (!cancelled) setDup([]);
+      }
+    }, 500);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [form.contact_number, form.alternate_contact_number]);
   
+
+    // NEW — a changed number resets the "create new enquiry" choice
+  useEffect(() => { setChoice(""); }, [form.contact_number, form.alternate_contact_number]);
+
+  // NEW — repeat-enquiry rules:
+  //  • ACTIVE enquiry, SAME service      -> blocked (existing details are shown)
+  //  • ACTIVE enquiry, DIFFERENT service -> allowed (separate enquiry, history kept)
+  //  • Closed / Dead enquiry             -> choose: Reopen it, or create a new enquiry (same customer)
+  const norm = (v) => String(v || "").trim().toLowerCase();
+  const isInactiveLead = (d) => d.status === "Closed" || d.status === "Dead";
+  const blocking = dup.filter(
+    (d) => !isInactiveLead(d) && (!norm(d.service_type) || (form.service_type && norm(d.service_type) === norm(form.service_type)))
+  );
+  const inactiveMatches = dup.filter(isInactiveLead);
+  const needsChoice = blocking.length === 0 && inactiveMatches.length > 0 && choice !== "new";
+
+  const handleReopen = async (leadId) => {
+    if (!window.confirm("Reopen this enquiry? Old follow-ups, notes and history stay as they are.")) return;
+    setReopening(true);
+    try {
+      const res = await fetch(`${API}/leads/${leadId}/reopen`, { method: "PUT", headers: authHeader() });
+      const data = await res.json();
+      if (data.success) {
+        if (data.assigned === false) {
+          alert("Enquiry reopened, but no consultant was available. It is now in Pending Assignment.");
+        }
+        setForm(EMPTY_LEAD_FORM);
+        setErrors({});
+        onSaved(); // refreshes the list + switches to "View Enquiry" tab
+      } else {
+        alert("❌ " + (data.message || "Failed to reopen enquiry"));
+      }
+    } catch {
+      alert("❌ Failed to reopen enquiry");
+    } finally {
+      setReopening(false);
+    }
+  };
 
   const validate = () => {
     const e = {};
@@ -529,18 +595,21 @@ function AddEnquiryForm({ onSaved, isChairman }) {
 
   const handleSave = async () => {
     if (!validate()) return;
+        if (blocking.length > 0 || needsChoice) return;   // NEW — only an active same-service enquiry (or an unanswered choice) stops saving   // NEW — number already exists, do not create a duplicate
     setSaving(true);
     try {
       const res = await fetch(`${API}/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify(form),
+               body: JSON.stringify({ ...form, confirm_new_enquiry: choice === "new" }),
       });
       const data = await res.json();
       if (data.success) {
         setForm(EMPTY_LEAD_FORM);
         setErrors({});
-        onSaved(); // refreshes the list + switches to "View Enquiry" tab
+               onSaved(); // refreshes the list + switches to "View Enquiry" tab
+      } else if (data.duplicate) {
+        setDup(data.duplicates || []);   // NEW — server says this number already exists
       } else {
         alert("❌ " + (data.message || "Failed to save enquiry"));
       }
@@ -561,6 +630,52 @@ function AddEnquiryForm({ onSaved, isChairman }) {
       </Box>
 
       <CardContent sx={{ p: 3 }}>
+                       {/* NEW — existing enquiries for this number (repeat-enquiry rules) */}
+        {dup.length > 0 && (
+          <Alert severity={blocking.length > 0 ? "error" : "warning"} sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              {blocking.length > 0
+                ? "An active enquiry already exists for this customer and service, so a duplicate cannot be created."
+                : "This customer already exists in the system. Earlier enquiry details are kept."}
+            </Typography>
+
+            {dup.map((d) => (
+              <Box key={d.id} sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", py: 0.25 }}>
+                <Typography variant="body2">
+                  {d.lead_name} · {d.contact_number} · {d.service_type || "Service not set"} · Status: {d.status || "New"} · Consultant: {d.assigned_to_name || "Not assigned"} · Created {fmtDateTime(d.created_at)}
+                </Typography>
+                <Button size="small" onClick={() => window.open(`/lead-history/${d.id}`, "_blank")} sx={{ textTransform: "none" }}>
+                  View details
+                </Button>
+                {isInactiveLead(d) && (
+                  <Button size="small" variant="outlined" color="inherit" disabled={reopening} onClick={() => handleReopen(d.id)} sx={{ textTransform: "none" }}>
+                    {reopening ? "Reopening..." : "Reopen enquiry"}
+                  </Button>
+                )}
+              </Box>
+            ))}
+
+            {blocking.length === 0 && inactiveMatches.length > 0 && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  {choice === "new"
+                    ? "A new enquiry will be created under this customer. Fill the details and save."
+                    : "Choose Reopen enquiry, or create a new enquiry for this customer, to continue."}
+                </Typography>
+                <Button size="small" variant="contained" disabled={choice === "new"} onClick={() => setChoice("new")} sx={{ textTransform: "none" }}>
+                  Create new enquiry (same customer)
+                </Button>
+              </Box>
+            )}
+
+            {blocking.length === 0 && inactiveMatches.length === 0 && (
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                This customer has an active enquiry for another service. You can save a separate enquiry; the earlier history stays.
+              </Typography>
+            )}
+          </Alert>
+        )}
+
         {/* ── SECTION 1: Personal Details — 3 fields per row, side by side ── */}
         <SectionHeader icon={<PersonIcon sx={{ color: "#0f9b8e" }} />} label="Personal Details" />
         <Grid container spacing={2.5} sx={{ mb: 1 }}>
@@ -583,10 +698,10 @@ function AddEnquiryForm({ onSaved, isChairman }) {
           <Grid item xs={12} sm={6} md={4}>
             <BoxedField
               icon={<CallIcon fontSize="small" />}
-              label="Contact Number"
+                           label="Contact Number"
               required
-              error={!!errors.contact_number}
-              helperText={errors.contact_number}
+                            error={!!errors.contact_number || blocking.length > 0}
+              helperText={errors.contact_number || "An active enquiry for this service already exists"}
             >
               <TextField
                 variant="standard" fullWidth placeholder="Contact Number" sx={boxedFieldSx}
@@ -636,8 +751,7 @@ function AddEnquiryForm({ onSaved, isChairman }) {
             </BoxedField>
           </Grid>
 
-          // AFTER
-          <Grid item xs={12} sm={6} md={4}>
+                   <Grid item xs={12} sm={6} md={4}>
             <BoxedField
               icon={<CampaignIcon fontSize="small" />}
               label="Source"
@@ -755,8 +869,8 @@ function AddEnquiryForm({ onSaved, isChairman }) {
             variant="contained"
             size="large"
             sx={{ bgcolor: "#0f9b8e", "&:hover": { bgcolor: "#0c7d72" } }}
-            onClick={handleSave}
-            disabled={saving}
+                       onClick={handleSave}
+            disabled={saving || blocking.length > 0 || needsChoice}
           >
             {saving ? "Saving..." : "Save Enquiry"}
           </Button>
@@ -1033,10 +1147,26 @@ function NotesDialog({ open, onClose, lead, onSaved }) {
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "#f5f5f5" }}><TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell><TableCell sx={{ fontWeight: 700 }}>Remark</TableCell><TableCell sx={{ fontWeight: 700 }}>Stage</TableCell><TableCell sx={{ fontWeight: 700 }}>Reminder</TableCell><TableCell sx={{ fontWeight: 700 }}>Commented By</TableCell></TableRow>
+              <TableRow sx={{ bgcolor: "#f5f5f5" }}>
+                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Remark</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Stage</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Reminder</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Commented By</TableCell>
+              </TableRow>
             </TableHead>
             <TableBody>
-              {notes.map((n, i) => (<TableRow key={n.id || i}><TableCell>{i + 1}</TableCell><TableCell>{n.remark}</TableCell><TableCell><Chip label={n.stage || "Enquiry"} size="small" color="info" variant="outlined" /></TableCell><TableCell>{n.reminder || "—"}</TableCell><TableCell>{n.commented_by || "—"}</TableCell></TableRow>))}
+              {notes.map((n, i) => (
+                <TableRow key={n.id || i}>
+                  <TableCell>{i + 1}</TableCell>
+                  <TableCell>{n.remark}</TableCell>
+                  <TableCell>
+                    <Chip label={n.stage || "Enquiry"} size="small" color="info" variant="outlined" />
+                  </TableCell>
+                  <TableCell>{n.reminder || "—"}</TableCell>
+                  <TableCell>{n.commented_by || "—"}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -1248,10 +1378,35 @@ function PendingAssignmentTab() {
         }}
       >
                 <TableHead sx={{ bgcolor: "#f5f5f5" }}>
-          <TableRow><TableCell padding="none" sx={{ width: 56, textAlign: "center" }}><Checkbox checked={leads.length > 0 && selectedIds.length === leads.length} onChange={toggleSelectAll} /></TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 190 }}>Created - Updated</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 200 }}>Name</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 130 }}>Mobile</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 320 }}>Email</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Interested Country</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 140 }}>Service Type</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Source</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Status</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Department</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 230 }}>Review</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 180 }}>Branch</TableCell><TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 400 }}>Last Remark</TableCell></TableRow>
+          <TableRow>
+            <TableCell padding="none" sx={{ width: 56, textAlign: "center" }}>
+              <Checkbox
+                checked={leads.length > 0 && selectedIds.length === leads.length}
+                onChange={toggleSelectAll}
+              />
+            </TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 190 }}>Created - Updated</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 200 }}>Name</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 130 }}>Mobile</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 320 }}>Email</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Interested Country</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 140 }}>Service Type</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Source</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Status</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Department</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 230 }}>Review</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 180 }}>Branch</TableCell>
+            <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 400 }}>Last Remark</TableCell>
+          </TableRow>
         </TableHead>
         <TableBody>
-          {leads.length === 0 && (<TableRow><TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>No pending leads — everything got assigned.</TableCell></TableRow>)}
+          {leads.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                No pending leads — everything got assigned.
+              </TableCell>
+            </TableRow>
+          )}
                     {leads.map((lead) => (
             <TableRow key={lead.id}>
               <TableCell padding="none" sx={{ textAlign: "center" }}>
@@ -1277,7 +1432,43 @@ function PendingAssignmentTab() {
                 </Typography>
               </TableCell>
               <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.lead_name}</TableCell>
-              <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.contact_number}</TableCell><TableCell sx={{ whiteSpace: "nowrap" }}>{lead.email || "—"}</TableCell><TableCell>{(lead.interested_countries || []).map((c) => (<Chip key={c} label={c} size="small" sx={{ mr: 0.5, mb: 0.5 }} />))}</TableCell><TableCell>{lead.service_type || "—"}</TableCell><TableCell>{lead.source}</TableCell><TableCell><Chip label={lead.status || "New"} size="small" variant="outlined" /></TableCell><TableCell>{lead.department_name || "—"}</TableCell><TableCell><Stack direction="row" spacing={0.5} alignItems="center"><Button size="small" variant="outlined" startIcon={<HistoryIcon fontSize="small" />} onClick={() => openHistory(lead)} sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}>History</Button><Button size="small" variant="outlined" startIcon={<StickyNote2Icon fontSize="small" />} onClick={() => { setNotesLead(lead); setNotesOpen(true); }} sx={{ textTransform: "none", minWidth: "auto", px: 1, height: 32, borderRadius: 1 }}>Notes</Button></Stack></TableCell><TableCell>{lead.branch || "—"}</TableCell><TableCell>{lead.last_remark || "—"}</TableCell>
+              <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.contact_number}</TableCell>
+              <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.email || "—"}</TableCell>
+              <TableCell>
+                {(lead.interested_countries || []).map((c) => (
+                  <Chip key={c} label={c} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                ))}
+              </TableCell>
+              <TableCell>{lead.service_type || "—"}</TableCell>
+              <TableCell>{lead.source}</TableCell>
+              <TableCell>
+                <Chip label={lead.status || "New"} size="small" variant="outlined" />
+              </TableCell>
+              <TableCell>{lead.department_name || "—"}</TableCell>
+              <TableCell>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<HistoryIcon fontSize="small" />}
+                    onClick={() => openHistory(lead)}
+                    sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}
+                  >
+                    History
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<StickyNote2Icon fontSize="small" />}
+                    onClick={() => { setNotesLead(lead); setNotesOpen(true); }}
+                    sx={{ textTransform: "none", minWidth: "auto", px: 1, height: 32, borderRadius: 1 }}
+                  >
+                    Notes
+                  </Button>
+                </Stack>
+              </TableCell>
+              <TableCell>{lead.branch || "—"}</TableCell>
+              <TableCell>{lead.last_remark || "—"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -1514,6 +1705,956 @@ function ChairmanAssignmentFeed() {
     </Box>
   );
 }
+// ── Client Meeting Mode toggle ───────────────────────────────────────────
+// ON  = this person is skipped by round-robin (no new leads while in a client meeting)
+// OFF = back in the round-robin. Hidden for people who are not in any department.
+function ClientMeetingToggle({ onModeChange }) {
+  const [isStaff, setIsStaff] = useState(false);
+  const [inMeeting, setInMeeting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [startedAt, setStartedAt] = useState(null);   // NEW — when Meeting Mode was turned ON
+  const [now, setNow] = useState(Date.now());          // NEW — ticks every second while in meeting
+  const [snoozeUntil, setSnoozeUntil] = useState(0);   // NEW — "Still in meeting" hides popup for 30 min
+  const [endedMin, setEndedMin] = useState(null);      // NEW — shows "Meeting ended · X min" briefly
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${API}/departments/meeting-mode`, { headers: authHeader() });
+        const data = await res.json();
+        if (data.success) {
+          setIsStaff(true);
+          setInMeeting(!!data.in_meeting);
+          // NEW — keep the counter correct after a page refresh
+          if (data.in_meeting) setStartedAt(Date.now() - (Number(data.elapsed_seconds) || 0) * 1000);
+          if (onModeChange) onModeChange(!!data.in_meeting);
+        }
+      } catch {
+        // silent — the toggle simply stays hidden if this fails
+      }
+    };
+    load();
+  }, [onModeChange]);
+
+  // NEW — tick every second only while in a meeting
+  useEffect(() => {
+    if (!inMeeting) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [inMeeting]);
+
+  // NEW — hide "Meeting ended" text after 15 seconds
+  useEffect(() => {
+    if (endedMin === null) return;
+    const t = setTimeout(() => setEndedMin(null), 15000);
+    return () => clearInterval(t);
+  }, [endedMin]);
+
+  const elapsedMin = inMeeting && startedAt ? Math.floor((now - startedAt) / 60000) : 0;
+    const overdue = inMeeting && !!startedAt && now - startedAt >= 30 * 60 * 1000;
+  const showPopup = overdue && now >= snoozeUntil;
+  // NEW — timer colour: green 0-15 min, orange 15-30 min, red 30+ min
+  const meetingColor = !inMeeting ? "#0f6e56" : elapsedMin >= 30 ? "#d32f2f" : elapsedMin >= 15 ? "#eb6834" : "#1e9e5a";
+
+  // NEW — browser tab title changes while the popup is showing
+  useEffect(() => {
+    if (!showPopup) return;
+    const original = document.title;
+    document.title = "(!) Meeting 30+ min - turn OFF?";
+    return () => { document.title = original; };
+  }, [showPopup]);
+
+  const updateMode = async (next) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${API}/departments/meeting-mode`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ in_meeting: next }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (next) {
+          setStartedAt(Date.now());
+          setSnoozeUntil(0);
+          setEndedMin(null);
+        } else {
+          setEndedMin(startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : null);
+          setStartedAt(null);
+        }
+        setInMeeting(next);
+        if (onModeChange) onModeChange(next);
+      } else {
+        alert("❌ " + (data.message || "Failed to update Client Meeting Mode"));
+      }
+    } catch {
+      alert("❌ Failed to update Client Meeting Mode");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggle = (e) => updateMode(e.target.checked);
+
+  if (!isStaff) return null;
+
+  return (
+    <>
+      <Box
+        sx={{
+          display: "flex", alignItems: "center", gap: 1,
+                   border: "1px solid", borderColor: inMeeting ? meetingColor : "#c9cfd9",
+          borderRadius: 5, pl: 1.5, pr: 0.5, py: 0.25, bgcolor: overdue ? "#fdecea" : "#fff",
+        }}
+      >
+        <Box>
+          <Typography variant="caption" fontWeight={700} sx={{ display: "block", lineHeight: 1.2 }}>
+            Client Meeting Mode
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ display: "block", lineHeight: 1.2, fontSize: 10.5, fontWeight: inMeeting ? 700 : 400, color: meetingColor }}          >
+            ● {inMeeting
+              ? `In meeting · ${elapsedMin} min · leads paused`
+              : endedMin !== null
+                ? `Meeting ended · ${endedMin} min`
+                : "Available · receiving leads"}
+          </Typography>
+        </Box>
+        <Switch size="small" color="warning" checked={inMeeting} onChange={handleToggle} disabled={saving} />
+      </Box>
+
+      {/* NEW — 30 min reminder. Does not auto-close: stays until a button is clicked. */}
+      <Dialog open={showPopup} onClose={() => {}} disableEscapeKeyDown maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, bgcolor: "#d32f2f", color: "#fff" }}>
+          Is your meeting over? ({elapsedMin} min)
+        </DialogTitle>       <DialogContent>
+          <Typography variant="body2">
+            Client Meeting Mode has been ON for {elapsedMin} minutes. New leads are paused for you.
+            Turn it OFF if the meeting is finished.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setSnoozeUntil(Date.now() + 30 * 60 * 1000)}>
+            Still in meeting (remind in 30 min)
+          </Button>
+          <Button variant="contained" color="warning" onClick={() => updateMode(false)} disabled={saving}>
+            Turn OFF now
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
+// ── NEW: helpers for Followup popup + Calendar ──
+const FU_HEADER = "#0f9b8e";
+const FU_CAL = "#00a8a5";
+const FU_PAGE_SIZE = 10;
+const CAL_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const pad2 = (n) => String(n).padStart(2, "0");
+const toYMD = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const fmtDMY = (ymd) => {
+  if (!ymd) return "—";
+  const [y, m, d] = String(ymd).slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
+};
+const fmtTime12 = (t, padHour) => {
+  if (!t) return "";
+  const [h, m] = String(t).split(":").map(Number);
+  const ap = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 || 12;
+  return padHour ? `${pad2(h12)}:${pad2(m)} ${ap}` : `${h12}:${pad2(m)}${ap}`;
+};
+const fmtDateTime = (iso) =>
+  iso
+    ? new Date(iso)
+        .toLocaleString("en-GB", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit", hour12: true,
+        })
+        .replace(",", "")
+    : "—";
+const calAddDays = (d, n) => {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() + n);
+  return x;
+};
+const calStartOfWeek = (d) => calAddDays(d, -d.getDay());
+
+// ── NEW: Followup / Appointment popup (share icon click chesthe open avtundi) ──
+function FollowupDialog({ open, onClose, lead }) {
+  const [info, setInfo] = useState(null);
+  const [followups, setFollowups] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [country, setCountry] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [doneId, setDoneId] = useState(null);           // NEW — followup being completed
+  const [doneRemark, setDoneRemark] = useState("");     // NEW
+  const [doneSaving, setDoneSaving] = useState(false);  // NEW
+  const leadId = lead?.id;
+
+  const load = async () => {
+    if (!leadId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/leads/${leadId}/followups`, { headers: authHeader() });
+      const data = await res.json();
+      if (data.success) {
+        setInfo(data.lead);
+        setFollowups(data.followups || []);
+        const ic = data.lead?.interested_countries;
+        setCountry(Array.isArray(ic) ? (ic[0] || "") : (ic || ""));
+      } else {
+        alert("❌ " + (data.message || "Failed to load followups"));
+      }
+    } catch {
+      alert("❌ Failed to load followups");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!open || !leadId) return;
+    setInfo(null); setFollowups([]); setCountry("");
+    setDate(""); setTime(""); setRemarks(""); setPage(1);
+    load();
+    // eslint-disable-next-line
+  }, [open, leadId]);
+
+  const handleSave = async () => {
+    if (!date || !time || !remarks.trim()) {
+      alert("Next Followup Date, Time and Remarks are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`${API}/leads/${leadId}/followups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ followup_date: date, followup_time: time, remarks }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDate(""); setTime(""); setRemarks(""); setPage(1);
+        load();
+      } else {
+        alert("❌ " + (data.message || "Failed to save followup"));
+      }
+    } catch {
+      alert("❌ Failed to save followup");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const markDone = async (id) => {
+    try {
+      const res = await fetch(`${API}/leads/followups/${id}/done`, {
+        method: "PUT",
+        headers: authHeader(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFollowups((prev) => prev.map((f) => (f.id === id ? { ...f, done: true } : f)));
+      } else {
+        alert("❌ " + (data.message || "Not authorized"));
+      }
+       } catch {
+      alert("❌ Failed to mark done");
+    }
+  };
+
+  // NEW — tick opens the Remarks popup; OK saves the reason and marks the row Completed
+  const completeFollowup = async () => {
+    if (!doneRemark.trim()) { alert("Remarks are required"); return; }
+    setDoneSaving(true);
+    try {
+      const res = await fetch(`${API}/leads/followups/${doneId}/done`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ remark: doneRemark.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDoneId(null);
+        setDoneRemark("");
+        load();
+      } else {
+        alert("❌ " + (data.message || "Not authorized"));
+      }
+    } catch {
+      alert("❌ Failed to complete followup");
+    } finally {
+      setDoneSaving(false);
+    }
+  };
+
+  const name = info?.lead_name || lead?.lead_name || "";
+  const email = info?.email || "";
+  const mobile = info?.contact_number || lead?.contact_number || "";
+    const stage = "Enquiry";   // CHANGED — always "Enquiry" in the followup popup
+
+  const totalPages = Math.max(1, Math.ceil(followups.length / FU_PAGE_SIZE));
+  const pageRows = followups.slice((page - 1) * FU_PAGE_SIZE, page * FU_PAGE_SIZE);
+
+  // 30-minute slots, saved as "HH:MM" (same format as before)
+  const timeSlots = Array.from({ length: 48 }, (_, i) => `${pad2(Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
+  // all countries, plus the lead's own value if it is not in the list (e.g. "Canada PR")
+  const countryOptions = country && !COUNTRIES.includes(country) ? [country, ...COUNTRIES] : COUNTRIES;
+
+  const FU_ICON_BG = "#e4f5f5";
+  const FU_LINE = "#ced4da";
+
+  // plain input/select styling: no underline, no MUI quirks
+  const plainSx = {
+    width: "100%", border: "none", outline: "none", background: "transparent",
+    fontSize: 16, fontFamily: "inherit", color: "#495057", p: 0, m: 0,
+    "&::placeholder": { color: "#9aa1a9", opacity: 1 },
+  };
+
+  // icon box on the left + field on the right
+  const fuField = (icon, content, grey) => (
+    <Box sx={{ display: "flex", alignItems: "stretch", height: 44, width: "100%" }}>
+      <Box
+        sx={{
+          width: 56, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+          bgcolor: FU_ICON_BG, color: "#3d4a52",
+          border: `1px solid ${FU_LINE}`, borderRight: "none", borderRadius: "4px 0 0 4px",
+        }}
+      >
+        {icon}
+      </Box>
+      <Box
+        sx={{
+          flex: 1, minWidth: 0, display: "flex", alignItems: "center", px: 1.75,
+          bgcolor: grey ? "#e9ecef" : "#fff",
+          border: `1px solid ${FU_LINE}`, borderRadius: "0 4px 4px 0",
+        }}
+      >
+        {content}
+      </Box>
+    </Box>
+  );
+
+  const roField = (icon, value, placeholder) =>
+    fuField(
+      icon,
+      <Typography noWrap sx={{ fontSize: 16, color: value ? "#495057" : "#9aa1a9" }}>
+        {value || placeholder}
+      </Typography>,
+      true
+    );
+
+  const lbl = (text, req) => (
+    <Typography sx={{ fontWeight: 500, mb: 0.75, fontSize: 17, color: "#343a40" }}>
+      {text}{req && <span style={{ color: "#d32f2f" }}> *</span>}
+    </Typography>
+  );
+
+  const badge = (n) => (
+    <Box sx={{ bgcolor: "#343a40", color: "#fff", borderRadius: 1, fontSize: 12, fontWeight: 700, px: 0.9, py: 0.1 }}>
+      {n}
+    </Box>
+  );
+
+  const cardSx = { border: "1px solid #cfd4d9", borderRadius: 1.5, boxShadow: "0 1px 6px rgba(0,0,0,0.35)", p: 2.5, mb: 2, bgcolor: "#fff" };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <Box sx={{ bgcolor: FU_HEADER, color: "#fff", px: 3, py: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Typography variant="h6" fontWeight={600}>Followup / Appointment</Typography>
+        <IconButton onClick={onClose} sx={{ color: "#fff" }} size="small"><CloseIcon /></IconButton>
+      </Box>
+
+      <DialogContent sx={{ pt: 2.5 }}>
+        {/* Top info: 4 equal full-width columns */}
+        <Box sx={cardSx}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" }, gap: 2.5 }}>
+            <Box sx={{ minWidth: 0 }}>{lbl("Name")}{roField(<PersonIcon fontSize="small" />, name, "Name")}</Box>
+            <Box sx={{ minWidth: 0 }}>{lbl("Email")}{roField(<EmailIcon fontSize="small" />, email, "Email")}</Box>
+            <Box sx={{ minWidth: 0 }}>{lbl("Mobile")}{roField(<CallIcon fontSize="small" />, mobile, "Mobile")}</Box>
+            <Box sx={{ minWidth: 0 }}>
+              {lbl("Interested Country")}
+              {fuField(
+                <FlagIcon fontSize="small" />,
+                <Box component="select" value={country} onChange={(e) => setCountry(e.target.value)} sx={{ ...plainSx, cursor: "pointer" }}>
+                  <option value="">—</option>
+                  {countryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                </Box>,
+                true
+              )}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Followups header (Appointments removed) */}
+        <Box sx={{ borderBottom: "1px solid #e0e0e0", mb: 2 }}>
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, px: 8, py: 1.5, borderBottom: `3px solid ${FU_HEADER}`, mb: "-1px" }}>
+            <Typography sx={{ fontSize: 18, color: FU_HEADER }}>Followups</Typography>
+            {badge(followups.length)}
+          </Box>
+        </Box>
+
+        {/* Date / Time / Remarks: 1 : 1 : 2 */}
+        <Box sx={cardSx}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 2fr" }, gap: 2.5 }}>
+            <Box sx={{ minWidth: 0 }}>
+              {lbl("Next Followup Date", true)}
+              {fuField(
+                <EventIcon fontSize="small" />,
+                <Box component="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} sx={plainSx} />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              {lbl("Next Followup Time", true)}
+              {fuField(
+                <AccessTimeIcon fontSize="small" />,
+                <Box component="select" value={time} onChange={(e) => setTime(e.target.value)}
+                  sx={{ ...plainSx, cursor: "pointer", color: time ? "#495057" : "#9aa1a9" }}>
+                  <option value="">Follow Up Time</option>
+                  {timeSlots.map((t) => <option key={t} value={t} style={{ color: "#495057" }}>{fmtTime12(t)}</option>)}
+                </Box>
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              {lbl("Remarks", true)}
+              {fuField(
+                <StickyNote2Icon fontSize="small" />,
+                <Box component="input" type="text" placeholder="Remarks" value={remarks} onChange={(e) => setRemarks(e.target.value)} sx={plainSx} />
+              )}
+            </Box>
+          </Box>
+        </Box>
+
+        <TableContainer sx={{ border: "1px solid #dee2e6", borderRadius: 1, p: 1 }}>
+          <Table
+            size="small"
+            sx={{
+              tableLayout: "fixed",
+              minWidth: 900,
+              "& .MuiTableCell-root": { border: "1px solid #dee2e6", fontSize: 15, color: "#343a40", verticalAlign: "top", py: 1.25 },
+              "& .MuiTableHead-root .MuiTableCell-root": { fontWeight: 700, borderBottom: "2px solid #c9ced3", verticalAlign: "bottom" },
+            }}
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 70 }}>S.No.</TableCell>
+                <TableCell sx={{ width: 110 }}>Action</TableCell>
+                <TableCell sx={{ width: 230 }}>Created By</TableCell>
+                <TableCell>Remarks</TableCell>
+                <TableCell sx={{ width: 120 }}>Stage</TableCell>
+                <TableCell sx={{ width: 150 }}>Attempt<br />Date / Time</TableCell>
+                <TableCell sx={{ width: 150 }}>Next Follow Up<br />Date / Time</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading && (
+                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 3 }}><CircularProgress size={24} /></TableCell></TableRow>
+              )}
+              {!loading && followups.length === 0 && (
+                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 3, color: "text.secondary" }}>No followups yet.</TableCell></TableRow>
+              )}
+              {!loading && pageRows.map((f, i) => (
+                <TableRow key={f.id} sx={f.done ? { bgcolor: "#5cb85c" } : undefined}>
+                  <TableCell>{(page - 1) * FU_PAGE_SIZE + i + 1}</TableCell>
+                                    <TableCell>
+                    {f.done ? (
+                      <Box sx={{ display: "inline-block", bgcolor: "#3d9a3d", color: "#fff", borderRadius: 1, px: 1, py: 0.5, fontSize: 14, fontWeight: 600 }}>
+                        Completed
+                      </Box>
+                    ) : (
+                      <IconButton
+                        size="small"
+                        onClick={() => { setDoneId(f.id); setDoneRemark(""); }}
+                        title="Mark as done"
+                        sx={{ width: 34, height: 34, bgcolor: FU_HEADER, color: "#fff", borderRadius: 1, "&:hover": { bgcolor: "#0c7d72" } }}
+                      >
+                        <CheckIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {f.created_by_name || f.commented_by || "—"}
+                    {f.department && (<><br />({f.department})</>)}
+                  </TableCell>
+                  <TableCell>
+                    {f.remark}
+                    {f.done && f.completion_remark && (
+                      <Box sx={{ mt: 0.75, fontSize: 14, fontWeight: 600 }}>
+                        Completed: {f.completion_remark}
+                      </Box>
+                    )}
+                  </TableCell>                  <TableCell>
+                    <Box sx={{ display: "inline-block", border: "1px solid #3d4a6b", color: "#3d4a6b", borderRadius: "4px", px: 1.25, py: 0.25, fontSize: 14, fontWeight: 600 }}>{stage}</Box>
+                  </TableCell>
+                  <TableCell>{fmtDateTime(f.created_at)}</TableCell>
+                  <TableCell>{fmtDMY(f.reminder_date)} {fmtTime12(f.reminder_time)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Stack direction="row" spacing={0} justifyContent="flex-end" sx={{ mt: 2 }}>
+          <Button size="small" variant="outlined" disabled={page <= 1} onClick={() => setPage(page - 1)}
+            sx={{ textTransform: "none", borderRadius: "4px 0 0 4px", color: "#555", borderColor: "#ddd" }}>Previous</Button>
+          {Array.from({ length: totalPages }, (_, k) => k + 1).map((p) => (
+            <Button key={p} size="small" variant={p === page ? "contained" : "outlined"} onClick={() => setPage(p)}
+              sx={{ textTransform: "none", minWidth: 40, borderRadius: 0, bgcolor: p === page ? FU_HEADER : undefined, borderColor: "#ddd", color: p === page ? "#fff" : "#555", "&:hover": { bgcolor: p === page ? "#0c7d72" : undefined } }}>{p}</Button>
+          ))}
+          <Button size="small" variant="outlined" disabled={page >= totalPages} onClick={() => setPage(page + 1)}
+            sx={{ textTransform: "none", borderRadius: "0 4px 4px 0", color: "#555", borderColor: "#ddd" }}>Next</Button>
+        </Stack>
+      </DialogContent>
+
+      <Divider />
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button variant="contained" onClick={onClose}
+          sx={{ textTransform: "none", minWidth: 84, bgcolor: "#ff6b7d", "&:hover": { bgcolor: "#e85a6b" } }}>
+          Close
+        </Button>
+        <Button variant="contained" onClick={handleSave} disabled={saving}
+          sx={{ textTransform: "none", minWidth: 84, bgcolor: FU_HEADER, "&:hover": { bgcolor: "#0c7d72" } }}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
+            </DialogActions>
+
+      {/* NEW — Remarks popup: opens when the green tick is clicked */}
+      <Dialog open={doneId !== null} onClose={() => setDoneId(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ textAlign: "center", fontWeight: 600 }}>Remarks</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            rows={4}
+            placeholder="Complete Remarks"
+            value={doneRemark}
+            onChange={(e) => setDoneRemark(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "center", pb: 3, gap: 1 }}>
+          <Button variant="contained" onClick={completeFollowup} disabled={doneSaving || !doneRemark.trim()}
+            sx={{ textTransform: "none", minWidth: 84, bgcolor: FU_HEADER, "&:hover": { bgcolor: "#0c7d72" } }}>
+            {doneSaving ? "Saving..." : "OK"}
+          </Button>
+          <Button variant="contained" onClick={() => setDoneId(null)}
+            sx={{ textTransform: "none", minWidth: 84, bgcolor: "#6c7a89", "&:hover": { bgcolor: "#59656f" } }}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Dialog>
+  );
+}
+// ── NEW: Calendar (month / day / week / list) ──
+function FollowupCalendarDialog({ open, onClose }) {
+  const [view, setView] = useState("month");
+  const [cursor, setCursor] = useState(new Date());
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+    const [fuOpen, setFuOpen] = useState(false);
+  const [fuLead, setFuLead] = useState(null);
+  const [moreAnchor, setMoreAnchor] = useState(null);
+  const [moreDay, setMoreDay] = useState(null);
+
+  const monthFirst = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const monthLast = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+  let rangeStart;
+  let rangeEnd;
+  if (view === "month") {
+    rangeStart = calStartOfWeek(monthFirst);
+    rangeEnd = calAddDays(calStartOfWeek(monthLast), 6);
+  } else if (view === "week") {
+    rangeStart = calStartOfWeek(cursor);
+    rangeEnd = calAddDays(rangeStart, 6);
+  } else if (view === "day") {
+    rangeStart = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+    rangeEnd = rangeStart;
+  } else {
+    rangeStart = monthFirst;
+    rangeEnd = monthLast;
+  }
+  const fromStr = toYMD(rangeStart);
+  const toStr = toYMD(rangeEnd);
+  const todayYmd = toYMD(new Date());
+
+  const loadEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/leads/calendar?from=${fromStr}&to=${toStr}`, { headers: authHeader() });
+      const data = await res.json();
+      if (data.success) setEvents(data.events || []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) loadEvents();
+    // eslint-disable-next-line
+  }, [open, fromStr, toStr]);
+
+  useEffect(() => {
+    if (open) { setView("month"); setCursor(new Date()); }
+  }, [open]);
+
+  const byDate = {};
+  events.forEach((e) => { (byDate[e.date] = byDate[e.date] || []).push(e); });
+
+  const shift = (dir) => {
+    if (view === "month" || view === "list") setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + dir, 1));
+    else if (view === "week") setCursor(calAddDays(cursor, 7 * dir));
+    else setCursor(calAddDays(cursor, dir));
+  };
+
+  const title =
+    view === "day"
+      ? cursor.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+      : view === "week"
+        ? `${rangeStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${rangeEnd.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+        : cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  const openEvent = (e) => {
+    setMoreAnchor(null); setMoreDay(null);
+    setFuLead({ id: e.lead_id, lead_name: e.lead_name });
+    setFuOpen(true);
+  };
+
+  const renderEvent = (e, extra) => (
+    <Box
+      key={e.id}
+      onClick={() => openEvent(e)}
+      title={`${e.lead_name}${e.remark ? " – " + e.remark : ""}`}
+      sx={{
+        bgcolor: FU_CAL, color: "#fff", borderRadius: 0.5, px: 1, py: 0.5, mb: 0.5,
+        fontSize: 13, cursor: "pointer", whiteSpace: "nowrap", overflow: "hidden",
+        textOverflow: "ellipsis", "&:hover": { opacity: 0.9 },
+      }}
+    >
+      <b>{fmtTime12(e.time, true)}</b> {e.lead_name}{extra}
+    </Box>
+  );
+
+  const days = [];
+  if (view === "month" || view === "week") {
+    for (let d = rangeStart; d <= rangeEnd; d = calAddDays(d, 1)) days.push(d);
+  }
+
+  const toolBtn = (label, active, onClick) => (
+    <Button
+      key={label}
+      size="small"
+      onClick={onClick}
+      sx={{
+        textTransform: "none", borderRadius: 0, px: 1.5, minWidth: 0,
+        bgcolor: active ? FU_CAL : "#fff", color: active ? "#fff" : "#333",
+        border: "1px solid #ddd", "&:hover": { bgcolor: active ? FU_CAL : "#f5f5f5" },
+      }}
+    >
+      {label}
+    </Button>
+  );
+
+  return (
+    <>
+      <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
+        <Box sx={{ bgcolor: FU_HEADER, color: "#fff", px: 3, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="h6" fontWeight={600}>Followup Calendar</Typography>
+          <IconButton onClick={onClose} sx={{ color: "#fff" }} size="small"><CloseIcon /></IconButton>
+        </Box>
+
+        <DialogContent sx={{ pt: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1, mb: 2 }}>
+            <Typography variant="h5" sx={{ color: "#333" }}>{title}</Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              {loading && <CircularProgress size={18} />}
+              <Box sx={{ display: "flex" }}>
+                {["month", "day", "week", "list"].map((v) => toolBtn(v, view === v, () => setView(v)))}
+              </Box>
+              <Box sx={{ display: "flex" }}>
+                {toolBtn("‹", false, () => shift(-1))}
+                {toolBtn("›", false, () => shift(1))}
+              </Box>
+              <Button size="small" onClick={() => setCursor(new Date())}
+                sx={{ textTransform: "none", border: "1px solid #ddd", color: "#777", bgcolor: "#fff" }}>today</Button>
+            </Stack>
+          </Box>
+
+          {(view === "month" || view === "week") && (
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", borderLeft: "1px solid #ddd", borderTop: "1px solid #ddd" }}>
+              {CAL_DAYS.map((d, i) => (
+                <Box key={d} sx={{ bgcolor: FU_CAL, color: "#fff", fontWeight: 700, textAlign: "center", py: 1.25, borderRight: "1px solid #ddd" }}>
+                  {view === "week" ? `${d} ${days[i] ? days[i].getDate() : ""}` : d}
+                </Box>
+              ))}
+              {days.map((d) => {
+                const ymd = toYMD(d);
+                const list = byDate[ymd] || [];
+                const isToday = ymd === todayYmd;
+                const other = view === "month" && d.getMonth() !== cursor.getMonth();
+                const limit = view === "month" ? 2 : list.length;
+                return (
+                  <Box key={ymd} sx={{ minHeight: view === "month" ? 130 : 320, p: 0.5, minWidth: 0, borderRight: "1px solid #ddd", borderBottom: "1px solid #ddd", bgcolor: isToday ? "#fcf8e3" : "#fff" }}>
+                    {view === "month" && (
+                      <Typography variant="body2" align="right" sx={{ pr: 0.5, mb: 0.5, color: other ? "#aaa" : "#333" }}>{d.getDate()}</Typography>
+                    )}
+                    {list.slice(0, limit).map((e) => renderEvent(e))}
+                    {list.length > limit && (
+                      <Typography
+                        variant="body2"
+                        onClick={(ev) => { setMoreAnchor(ev.currentTarget); setMoreDay(ymd); }}
+                        sx={{ color: "#555", cursor: "pointer", px: 0.5, "&:hover": { textDecoration: "underline" } }}
+                      >
+                        +{list.length - limit} more
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+
+          {view === "day" && (
+            <Box sx={{ border: "1px solid #ddd", p: 1.5, minHeight: 200 }}>
+              {(byDate[toYMD(cursor)] || []).length === 0 && (
+                <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>No followups on this day.</Typography>
+              )}
+              {(byDate[toYMD(cursor)] || []).map((e) =>
+                renderEvent(e, `${e.agent_name ? "  ·  " + e.agent_name : ""}${e.remark ? "  ·  " + e.remark : ""}`)
+              )}
+            </Box>
+          )}
+
+          {view === "list" && (
+            <Box sx={{ border: "1px solid #ddd" }}>
+              {Object.keys(byDate).length === 0 && (
+                <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: "center" }}>No followups this month.</Typography>
+              )}
+              {Object.keys(byDate).sort().map((ymd) => (
+                <Box key={ymd}>
+                  <Box sx={{ bgcolor: "#f5f5f5", px: 1.5, py: 0.75, fontWeight: 700, borderBottom: "1px solid #ddd" }}>{fmtDMY(ymd)}</Box>
+                  <Box sx={{ p: 1 }}>
+                    {byDate[ymd].map((e) =>
+                      renderEvent(e, `${e.agent_name ? "  ·  " + e.agent_name : ""}${e.remark ? "  ·  " + e.remark : ""}`)
+                    )}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+
+        <Popover
+          open={Boolean(moreAnchor)}
+          anchorEl={moreAnchor}
+          onClose={() => { setMoreAnchor(null); setMoreDay(null); }}
+          anchorOrigin={{ vertical: "top", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{ sx: { width: 300, maxHeight: 420, bgcolor: "#f0f0f0", p: 1 } }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 0.5, pb: 1 }}>
+            <Typography sx={{ fontSize: 17, color: "#333" }}>
+              {moreDay
+                ? new Date(moreDay + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+                : ""}
+            </Typography>
+            <IconButton size="small" onClick={() => { setMoreAnchor(null); setMoreDay(null); }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box sx={{ overflowY: "auto", maxHeight: 340 }}>
+            {(byDate[moreDay] || []).map((e) =>
+              renderEvent(e, e.agent_name ? `  ·  ${e.agent_name}` : "")
+            )}
+          </Box>
+        </Popover>
+      </Dialog>
+
+      <FollowupDialog
+        open={fuOpen}
+        onClose={() => { setFuOpen(false); loadEvents(); }}
+        lead={fuLead}
+      />
+    </>
+  );
+}
+// ── NEW: Dead Enquiry tab — all leads with status "Dead" ─────────────────
+function DeadEnquiryTab() {
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [fuOpen, setFuOpen] = useState(false);
+  const [fuLead, setFuLead] = useState(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesLead, setNotesLead] = useState(null);
+
+  const fetchDead = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/leads?status=Dead`, { headers: authHeader() });
+      const data = await res.json();
+      if (data.success) setLeads(data.leads || []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchDead(); }, []);
+
+  // changing status away from Dead sends the lead back to View Enquiry
+  const changeStatus = async (leadId, newStatus) => {
+    if (newStatus === "Dead") return;
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+    try {
+      await fetch(`${API}/leads/${leadId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch {
+      alert("❌ Failed to update status");
+      fetchDead();
+    }
+  };
+
+  const shown = leads.filter((l) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      l.lead_name?.toLowerCase().includes(q) ||
+      l.email?.toLowerCase().includes(q) ||
+      l.contact_number?.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <>
+      <Box sx={{ display: "flex", gap: 2, mb: 2, alignItems: "center", flexWrap: "wrap" }}>
+        <TextField
+          size="small"
+          placeholder="Search Name / Email / Mobile"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ width: 260 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
+          Total Number of Records - {shown.length}
+        </Typography>
+      </Box>
+
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>
+      ) : (
+        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, boxShadow: "none", border: "1px solid #e0e0e0" }}>
+          <Table
+            size="small"
+            sx={{
+              minWidth: 1500,
+              "& .MuiTableCell-root": { borderRight: "1px solid #c4c4c4", borderBottom: "1px solid #c4c4c4" },
+            }}
+          >
+            <TableHead sx={{ bgcolor: "#f5f5f5" }}>
+              <TableRow>
+                {["Action", "Created - Updated", "Name", "Mobile", "Email", "Service Type", "Interested Country", "Assigned To", "Status", "Review", "Last Remark"].map((h) => (
+                  <TableCell key={h} sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {shown.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={11} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                    No dead enquiries.
+                  </TableCell>
+                </TableRow>
+              )}
+              {shown.map((lead) => (
+                <TableRow key={lead.id} sx={{ bgcolor: statusRowColor("Dead") }}>
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      title="Followup / Appointment (see reason)"
+                      onClick={() => { setFuLead(lead); setFuOpen(true); }}
+                      sx={{ bgcolor: "#28a745", color: "#fff", borderRadius: 1, "&:hover": { bgcolor: "#1e7e34" } }}
+                    >
+                      <ShareIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell sx={{ lineHeight: 1.8, whiteSpace: "nowrap" }}>
+                    <Typography variant="body2">{fmtDateTime(lead.created_at)}</Typography>
+                    <Typography variant="body2" color="text.secondary">{fmtDateTime(lead.updated_at)}</Typography>
+                  </TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.lead_name}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.contact_number}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{lead.email || "—"}</TableCell>
+                  <TableCell>{lead.service_type || "—"}</TableCell>
+                  <TableCell>
+                    {(lead.interested_countries || []).map((c) => (
+                      <Chip key={c} label={c} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                    ))}
+                  </TableCell>
+                  <TableCell>{lead.assigned_to_name || "Not Assigned"}</TableCell>
+                  <TableCell>
+                    <TextField
+                      select size="small" value="Dead"
+                      onChange={(e) => changeStatus(lead.id, e.target.value)}
+                      sx={{ minWidth: 140, bgcolor: "#fff" }}
+                    >
+                      {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                    </TextField>
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5}>
+                      <Button
+                        size="small" variant="outlined"
+                        startIcon={<HistoryIcon fontSize="small" />}
+                        onClick={() => window.open(`/lead-history/${lead.id}`, "_blank")}
+                        sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}
+                      >
+                        History
+                      </Button>
+                      <Button
+                        size="small" variant="outlined"
+                        startIcon={<StickyNote2Icon fontSize="small" />}
+                        onClick={() => { setNotesLead(lead); setNotesOpen(true); }}
+                        sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}
+                      >
+                        Notes
+                      </Button>
+                    </Stack>
+                  </TableCell>
+                  <TableCell sx={{ minWidth: 300 }}>{lead.last_remark || "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      <FollowupDialog open={fuOpen} onClose={() => setFuOpen(false)} lead={fuLead} />
+      <NotesDialog open={notesOpen} onClose={() => setNotesOpen(false)} lead={notesLead} onSaved={fetchDead} />
+    </>
+  );
+}
+
 // ── Main Lead Management Page ────────────────────────────────────────────
 function LeadManagement() {
   const currentUser = getCurrentUser();
@@ -1523,11 +2664,15 @@ function LeadManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0); // 0 = Add Enquiry, 1 = View Enquiry
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [inMeeting, setInMeeting] = useState(false); // NEW — drives the "In meeting" banner
+  const [assignOpen, setAssignOpen] = useState(false);  const [selectedIds, setSelectedIds] = useState([]);
 const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState(""); // Name / Email / Mobile search — client-side filter
-  const [notesOpen, setNotesOpen] = useState(false);
+  const [followupOpen, setFollowupOpen] = useState(false);   // NEW
+  const [followupLead, setFollowupLead] = useState(null);    // NEW
+  const [calendarOpen, setCalendarOpen] = useState(false);   // NEW
+    const [notesOpen, setNotesOpen] = useState(false);
+    //   const [notesOpen, setNotesOpen] = useState(false);
   const [notesLead, setNotesLead] = useState(null);
 
   const fetchLeads = async () => {
@@ -1582,7 +2727,8 @@ const [statusFilter, setStatusFilter] = useState("All");
   };
 
   // Client-side search — filters by Name / Email / Mobile, matches the "Search Customers" bar style
-  const filteredLeads = leads.filter((l) => {
+    const filteredLeads = leads.filter((l) => {
+    if (l.status === "Dead") return false;   // NEW — Dead leads live in the Dead Enquiry tab
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -1605,17 +2751,30 @@ const [statusFilter, setStatusFilter] = useState("All");
         >
           <Tab label="Add Enquiry" />
           <Tab label="View Enquiry" />
-          {isChairman && <Tab label="Departments" />}
+                    {isChairman && <Tab label="Departments" />}
           {isChairman && <Tab label="Pending Assignment" />}
-          <Tab label="Team Monitor" value={4} />
-        </Tabs>
+          <Tab label="Lead Monitor" value={4} />
+          <Tab label="Dead Enquiry" value={5} />
+                  </Tabs>
         <Stack direction="row" spacing={1} alignItems="center">
-          {isChairman && <ChairmanAssignmentFeed />}
-          <ReminderBell />
-        </Stack>
+          {!isChairman && <ClientMeetingToggle onModeChange={setInMeeting} />}          {isChairman && <ChairmanAssignmentFeed />}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<EventIcon fontSize="small" />}
+            onClick={() => setCalendarOpen(true)}
+            sx={{ textTransform: "none", color: "#fff", bgcolor: "#0f9b8e", borderColor: "#0f9b8e", "&:hover": { bgcolor: "#0c7d72", borderColor: "#0c7d72" } }}
+          >
+            Calendar
+          </Button>
+          <ReminderBell />        </Stack>
       </Box>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
+      {inMeeting && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Client Meeting Mode is ON — you are skipped in lead assignment. Turn it OFF after the meeting to start receiving leads again.
+        </Alert>
+      )}
       {/* ── Tab 0: Add Enquiry ── */}
 
       {tab === 0 && (
@@ -1631,11 +2790,13 @@ const [statusFilter, setStatusFilter] = useState("All");
             {/* ── Tab 2: Departments (chairman only) ── */}
       {tab === 2 && isChairman && <DepartmentsTab />}
 
-      {/* ── Tab 3: Pending Assignment (chairman only) ── */}
+           {/* ── Tab 3: Pending Assignment (chairman only) ── */}
       {tab === 3 && isChairman && <PendingAssignmentTab />}
 
-      {/* ── Tab 4: Team Monitor ── */}
-      {tab === 4 && <TeamMonitorTab />}
+      {/* ── Tab 4: Team Monitor (chairman / mis-executive only) ── */}
+      {tab === 4 && <TeamMonitorTab onGoPending={isChairman ? () => setTab(3) : undefined} onGoView={() => setTab(1)} />}
+      {/* NEW — Tab 5: Dead Enquiry (chairman + employee) */}
+      {tab === 5 && <DeadEnquiryTab />}
 
       {/* ── Tab 1: View Enquiry ── */}
       {tab === 1 && (
@@ -1659,7 +2820,7 @@ const [statusFilter, setStatusFilter] = useState("All");
         <TextField select label="Status" size="small" value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)} sx={{ width: 180 }}>
           <MenuItem value="All">All</MenuItem>
-          {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+          {STATUS_OPTIONS.filter((s) => s !== "Dead").map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
         </TextField>
 
         {isChairman && (
@@ -1733,8 +2894,8 @@ const [statusFilter, setStatusFilter] = useState("All");
                     onChange={toggleSelectAll}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.created.left, width: STICKY_COL.created.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Created - Updated</TableCell>
-
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.action.left, width: STICKY_COL.action.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4", textAlign: "center" }}>Action</TableCell>
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.created.left, width: STICKY_COL.created.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Created - Updated</TableCell>
 <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.name.left, width: STICKY_COL.name.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Name</TableCell>
 
 <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.mobile.left, width: STICKY_COL.mobile.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Mobile</TableCell>
@@ -1763,8 +2924,7 @@ const [statusFilter, setStatusFilter] = useState("All");
             <TableBody>
               {filteredLeads.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={14} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                    No enquiries found. Click "+ Add Enquiry" to create one.
+<TableCell colSpan={15} align="center" sx={{ py: 4, color: "text.secondary" }}>                    No enquiries found. Click "+ Add Enquiry" to create one.
                   </TableCell>
                 </TableRow>
               )}
@@ -1778,6 +2938,28 @@ const [statusFilter, setStatusFilter] = useState("All");
                       checked={selectedIds.includes(lead.id)}
                       onChange={() => toggleSelect(lead.id)}
                     />
+                  </TableCell>
+                  {/* NEW — Action column (share icon) */}
+                  <TableCell
+                    padding="none"
+                    sx={{
+                      position: "sticky",
+                      left: STICKY_COL.action.left,
+                      width: STICKY_COL.action.width,
+                      zIndex: 1,
+                      bgcolor: statusRowColor(lead.status),
+                      textAlign: "center",
+                      borderRight: "1px solid #c4c4c4",
+                    }}
+                  >
+                    <IconButton
+                      size="small"
+                      title="Followup / Appointment"
+                      onClick={() => { setFollowupLead(lead); setFollowupOpen(true); }}
+                      sx={{ bgcolor: "#28a745", color: "#fff", borderRadius: 1, "&:hover": { bgcolor: "#1e7e34" } }}
+                    >
+                      <ShareIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                  <TableCell
   
@@ -1959,11 +3141,22 @@ const [statusFilter, setStatusFilter] = useState("All");
         onAssigned={() => { setSelectedIds([]); fetchLeads(); }}
       />
 
-      <NotesDialog
+           <NotesDialog
         open={notesOpen}
         onClose={() => setNotesOpen(false)}
         lead={notesLead}
         onSaved={fetchLeads}
+      />
+
+      {/* NEW — Followup popup + Calendar */}
+      <FollowupDialog
+        open={followupOpen}
+        onClose={() => setFollowupOpen(false)}
+        lead={followupLead}
+      />
+      <FollowupCalendarDialog
+        open={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
       />
     </Box>
   );

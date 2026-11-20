@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { normalizeArray } from "./employeeUtils";
 import "../../styles/EmployeePayslip.css";
@@ -332,9 +331,7 @@ export default function EmployeePayslip({ embedded = false }) {
   const hasPayslips = allPayslips.length > 0;
 
   return (
-    <div className={embedded ? "employee-payslip-page" : "layout employee-payslip-page"}>
-      {!embedded && <EmployeeSidebar activePage="payslip" />}
-
+    <div className="employee-payslip-page">
       <div className="main">
         <div className="topbar">
           <div>
@@ -407,7 +404,7 @@ export default function EmployeePayslip({ embedded = false }) {
           <div id="payslipContainer">
             {isLoading || loadingPayslip ? (
               <div style={{ textAlign: "center", padding: 40 }}>
-                <span className="spinner" /> Loading payslip...
+                Loading payslip...
               </div>
             ) : !currentPayslip ? (
               <div className="empty-state">

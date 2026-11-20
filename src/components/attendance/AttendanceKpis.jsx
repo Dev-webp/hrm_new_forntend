@@ -6,7 +6,6 @@ function AttendanceKpis({ stats, records = [], loading, error }) {
       <div className="kpi-grid">
         <div className="kpi">
           <div className="kpi-title">Loading stats...</div>
-          <span className="loading-spinner" />
         </div>
       </div>
     );

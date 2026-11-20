@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import "../../styles/EmployeeInstructions.css";
 
 const POLICY_SECTIONS = [
@@ -418,8 +417,7 @@ export default function EmployeeInstructions({ embedded = false }) {
   };
 
   return (
-    <div className={embedded ? "employee-instructions-page" : "layout employee-instructions-page"}>
-      {!embedded && <EmployeeSidebar activePage="instructions" />}
+    <div className="employee-instructions-page">
       <main className="employee-instructions-main">
         <section className="handbook-header">
           <div className="handbook-title-block">

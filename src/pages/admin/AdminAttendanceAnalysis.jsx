@@ -37,11 +37,14 @@ function AdminAttendanceAnalysis() {
 
   const user = useMemo(() => getStoredUser(), []);
   const isOperationalManager = user?.role === "OPERATIONAL_MANAGER";
-  const headerInitials = isOperationalManager ? "OM" : "SA";
+  const isHr = user?.role === "HR";
+  const headerInitials = isOperationalManager ? "OM" : isHr ? "HR" : "SA";
   const headerName = isOperationalManager
     ? "Operational Manager"
-    : "Super Admin";
-  const headerSubtitle = isOperationalManager
+    : isHr
+      ? "HR"
+      : "Super Admin";
+  const headerSubtitle = isOperationalManager || isHr
     ? "Operations · Live"
     : "Chairman · Live";
 
@@ -235,7 +238,7 @@ function AdminAttendanceAnalysis() {
           setViewMode("individual");
           setWeeksCache(buildWeeksCache(monthStr));
 
-          showToast(`Loaded ${emp.name} (cached)`);
+          // showToast(`Loaded ${emp.name} (cached)`); // Removed to avoid UI overlap
 
           return true;
         } catch (err) {
@@ -256,7 +259,7 @@ function AdminAttendanceAnalysis() {
       setCurrentEmpId(normalizedEmpId);
       setSelectedEmployeeId(String(normalizedEmpId));
 
-      showToast(`Loading ${emp.name}…`);
+      // showToast(`Loading ${emp.name}…`); // Removed to avoid UI overlap
 
       try {
         const signal = getSignal();
@@ -273,13 +276,14 @@ function AdminAttendanceAnalysis() {
         const transformedRecords = normalizeAttendanceAnalysisRecords(
           data.records || []
         );
-        const sandwichByDate = computeEmployeeSandwichByDate({
-          attendance: data.contextRecords || [],
-          leaves: monthlyLeaves || [],
-          holidays: data.holidays || [],
-          joiningDate: data.joiningDate || emp.joining_date || emp.joiningDate,
-          month: monthStr,
-        });
+
+        // Build sandwichByDate from backend's sandwich_rule_applied field
+        const sandwichByDate = new Map();
+        for (const record of data.records || []) {
+          if (record.status === 'sunday' && record.sandwich_results) {
+            sandwichByDate.set(record.date, record.sandwich_results);
+          }
+        }
 
         recordsCacheRef.current[cacheKey] = transformedRecords;
         sandwichCacheRef.current[cacheKey] = sandwichByDate;
@@ -289,7 +293,7 @@ function AdminAttendanceAnalysis() {
         setCurrentSandwichByDate(sandwichByDate);
         setWeeksCache(buildWeeksCache(monthStr));
 
-        showToast(`Loaded ${emp.name}`);
+        // showToast(`Loaded ${emp.name}`); // Removed to avoid UI overlap
 
         return true;
       } catch (err) {

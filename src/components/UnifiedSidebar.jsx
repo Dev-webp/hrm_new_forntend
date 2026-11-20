@@ -68,6 +68,17 @@ function UnifiedSidebar({ role = "admin" }) {
     }
   }, [navigate]);
 
+  // HR logs into the admin portal but is limited to HRMS modules:
+  // no Invoice/CRM, no OPS portal, no notifications,
+  // no activity logs. They keep self-service payslip, full employee
+  // management (incl. Add Invoice/OPS Employee), attendance, breaks,
+  // HR operations, and profile.
+  const isHr = storedUser?.role === "HR";
+  const HR_HIDDEN_SLUGS = ["/notifications", "/activity-logs", "/overview", "/profile"];
+  const HR_ALLOWED_ABSOLUTE = ["/admin/ops/employees", "/admin/invoice/employees"];
+  const HR_BLOCKED_PATTERN = /^\/(invoice|crm|finance|ops|reports)(\/|$)/;
+  const effectiveRole = isHr ? "admin" : role;
+
   // Memoized visibility check for performance
   const itemIsVisible = useCallback((item) => {
     try {
@@ -76,8 +87,25 @@ function UnifiedSidebar({ role = "admin" }) {
         return true; // Old-style items are always visible for their role
       }
 
+      if (isHr) {
+        const slug = item.slug || "";
+        if (HR_ALLOWED_ABSOLUTE.includes(slug)) {
+          // whitelisted employee-management shortcuts — fall through
+        } else {
+          if (HR_HIDDEN_SLUGS.includes(slug)) return false;
+          if (slug === "/my-payslip") return true;
+          if (item.opsAccess || item.opsEntry || item.opsSection || item.invoicePermission) return false;
+          if (HR_BLOCKED_PATTERN.test(slug)) return false;
+          // Hide parents whose entire submenu is Invoice/OPS for HR
+          if (Array.isArray(item.subItems) && item.subItems.length > 0 &&
+              !item.subItems.some((sub) => itemIsVisible(sub))) {
+            return false;
+          }
+        }
+      }
+
       if (!item || !item.roles || !Array.isArray(item.roles)) return false;
-      if (!item.roles.includes(role)) return false;
+      if (!item.roles.includes(effectiveRole)) return false;
 
       // Handle OPS items with subItems (parent items)
       if (item.subItems && Array.isArray(item.subItems) && item.subItems.length > 0) {
@@ -113,7 +141,7 @@ function UnifiedSidebar({ role = "admin" }) {
       console.error('[UnifiedSidebar] Error checking item visibility:', error, item);
       return false; // Hide item on error to prevent crashes
     }
-  }, [role, storedUser, ops, invoicePermissions]);
+  }, [role, effectiveRole, isHr, storedUser, ops, invoicePermissions]);
 
   // Select the appropriate navigation config based on role
   const navConfig = useMemo(() => {
@@ -128,18 +156,30 @@ function UnifiedSidebar({ role = "admin" }) {
     }
   }, [role]);
 
-  // Memoize visible items to prevent recalculation on every render
+  // Memoize visible items to prevent recalculation on every render.
+  // HR gets a flat sidebar: every allowed leaf is shown directly,
+  // with no parent/child expand-collapse groups.
   const visibleModules = useMemo(() => {
     return navConfig.map((mod) => {
       try {
-        const visibleItems = mod.items.filter(itemIsVisible);
+        const visibleItems = [];
+        for (const item of mod.items) {
+          if (!itemIsVisible(item)) continue;
+          if (isHr && Array.isArray(item.subItems) && item.subItems.length > 0) {
+            for (const sub of item.subItems) {
+              if (itemIsVisible(sub)) visibleItems.push(sub);
+            }
+          } else {
+            visibleItems.push(item);
+          }
+        }
         return { ...mod, visibleItems };
       } catch (error) {
         console.error('[UnifiedSidebar] Error filtering module items:', error, mod);
         return { ...mod, visibleItems: [] };
       }
     }).filter(mod => mod.visibleItems.length > 0);
-  }, [itemIsVisible, navConfig]);
+  }, [itemIsVisible, navConfig, isHr]);
 
   return (
     <aside className={`sidebar${collapsed ? " collapsed" : ""}`}>

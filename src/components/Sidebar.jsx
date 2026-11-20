@@ -22,7 +22,7 @@ function Sidebar({ role = "admin" }) {
 
   // Use role-specific navigation config
   let navSections;
-  if (role === "admin") {
+  if (role === "admin" || role === "HR") {
     navSections = NAV_MODULES;
   } else if (role === "manager") {
     navSections = MANAGER_NAV;

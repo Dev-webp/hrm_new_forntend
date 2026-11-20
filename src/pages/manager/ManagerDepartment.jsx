@@ -97,7 +97,6 @@ export default function ManagerDepartment() {
         <div className="dept-grid" id="deptGrid">
           {loading ? (
             <div className="empty-state">
-              <span className="spinner" />
               <p style={{ marginTop: "16px" }}>Loading departments...</p>
             </div>
           ) : error ? (

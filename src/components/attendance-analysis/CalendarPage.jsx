@@ -123,7 +123,7 @@ function CalendarPage({ userId, branch = "all", initialMonth }) {
         <AttendanceCalendarHeatmap monthStr={monthStr} records={records} />
         {loading ? (
           <div className="cal-loading-overlay" aria-busy="true">
-            <div className="loading-spinner" />
+            Loading...
           </div>
         ) : null}
       </div>

@@ -68,8 +68,8 @@ function IndividualAnalysisView({
   );
 
   const overview = useMemo(
-    () => computeOverviewStats(safeRecords),
-    [safeRecords]
+    () => computeOverviewStats(safeRecords, sandwichByDate),
+    [safeRecords, sandwichByDate]
   );
 
 
@@ -219,10 +219,10 @@ function IndividualAnalysisView({
             <div className="lbl">Half Days</div>
           </div>
           <div className="hero-meta-item">
-            <div className="val" id="indUnpaidLeaves">
-              {overview.unpaidLeavesCombined}
+            <div className="val" id="indAbsentDays">
+              {overview.absentDays}
             </div>
-            <div className="lbl">Unpaid Leaves</div>
+            <div className="lbl">Absent Days</div>
           </div>
           <div className="hero-meta-item">
             <div className="val" id="indPaidLeave">
@@ -231,10 +231,28 @@ function IndividualAnalysisView({
             <div className="lbl">Paid Leave</div>
           </div>
           <div className="hero-meta-item">
-            <div className="val" id="indSandwichSundays">
+            <div className="val" id="indAuthAwi">
+              {overview.authorizedAwi}
+            </div>
+            <div className="lbl">Auth AWI</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indUnauthAdminChanged">
+              {overview.unauthAwiAdminChanged}
+            </div>
+            <div className="lbl">Unauth AWI</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indPaidSundays">
+              {overview.paidSundays}
+            </div>
+            <div className="lbl">Paid Sun</div>
+          </div>
+          <div className="hero-meta-item">
+            <div className="val" id="indUnpaidSundays">
               {overview.sandwichSundays}
             </div>
-            <div className="lbl">Sandwich Sundays</div>
+            <div className="lbl">Unpaid Sun</div>
           </div>
           <div className="hero-meta-item">
             <div className="val" id="indHolidays">
@@ -243,22 +261,10 @@ function IndividualAnalysisView({
             <div className="lbl">Holidays</div>
           </div>
           <div className="hero-meta-item">
-            <div className="val" id="indTotalDays">
-              {overview.daysInMonth}
-            </div>
-            <div className="lbl">Total Days</div>
-          </div>
-          <div className="hero-meta-item">
             <div className="val" id="indLate">
               {overview.lateDays}
             </div>
             <div className="lbl">Late In</div>
-          </div>
-          <div className="hero-meta-item">
-            <div className="val" id="indBreakAvg">
-              {overview.avgBreak}m
-            </div>
-            <div className="lbl">Avg Break</div>
           </div>
         </div>
       </div>
@@ -304,7 +310,7 @@ function IndividualAnalysisView({
             />
             {loading ? (
               <div className="cal-loading-overlay" aria-busy="true">
-                <div className="loading-spinner" />
+                Loading...
               </div>
             ) : null}
           </div>

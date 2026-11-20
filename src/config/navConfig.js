@@ -13,6 +13,7 @@ export const ROLE_BASE_PATH = {
   manager: "/manager",
   "operational-manager": "/operations",
   "sub-admin": "/sub-admin",
+  HR: "/admin",
 };
 
 export const NAV_MODULES = [
@@ -141,11 +142,11 @@ export const NAV_MODULES = [
         slug: "/finance",
         icon: "fa-chart-line",
         label: "Finance",
-        roles: ["admin", "manager"],
+        roles: ["admin", "manager", "HR"],
         subItems: [
           { slug: "/invoice/payments", icon: "fa-credit-card", label: "Invoice Payments", roles: ["admin", "manager"], invoicePermission: "payments" },
           { slug: "/invoice/expenses", icon: "fa-wallet", label: "Invoice Expenses", roles: ["admin", "manager"], invoicePermission: "expenses" },
-          { slug: "/payroll", icon: "fa-coins", label: "HRMS Payroll", roles: ["admin"] },
+          { slug: "/payroll", icon: "fa-coins", label: "HRMS Payroll", roles: ["admin", "HR"] },
         ]
       },
     ],
@@ -176,6 +177,9 @@ export const NAV_MODULES = [
         subItems: [
           { slug: "/letters", icon: "fa-file-contract", label: "Offer & Relieving Letter", roles: ["admin"] },
           { slug: "/calendar", icon: "fa-calendar-alt", label: "Holiday Calendar", roles: ["admin", "manager", "operational-manager", "sub-admin"] },
+          { slug: "/tasks", icon: "fa-tasks", label: "Task Management", roles: ["admin", "manager", "operational-manager"] },
+          { slug: "/awi-management", icon: "fa-exclamation-triangle", label: "AWI Management", roles: ["admin"] },
+          { slug: "/lifecycle-onboarding", icon: "fa-rocket", label: "Onboarding", roles: ["admin"] }
         ]
       },
     ],

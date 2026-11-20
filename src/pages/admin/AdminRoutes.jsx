@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import PageLoading from "../../components/PageLoading";
 import RouteErrorBoundary from "../../components/RouteErrorBoundary";
@@ -12,10 +12,12 @@ import AdminPlaceholder from "./AdminPlaceholder";
 // ======================================================
 
 const AdminAttendance = lazy(() => import("./AdminAttendance"));
+const ManagerAttendance = lazy(() => import("../manager/ManagerAttendance"));
 const AdminAttendanceAnalysis = lazy(
   () => import("./AdminAttendanceAnalysis")
 );
 const AdminBreaks = lazy(() => import("./AdminBreaks"));
+const ManagerBreaks = lazy(() => import("../manager/ManagerBreaks"));
 const AdminCalendar = lazy(() => import("./AdminCalendar"));
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
 const AdminOverview = lazy(() => import("./AdminOverview"));
@@ -32,6 +34,12 @@ const ExperienceLetter = lazy(() => import("./ExperienceLetter"));
 const LettersHome = lazy(() => import("./LettersHome"));
 const AdminProfile = lazy(() => import("./AdminProfile"));
 const ShiftManagement = lazy(() => import("./ShiftManagement"));
+const AdminTasks = lazy(() => import("./AdminTasks"));
+const AWIManagement = lazy(() => import("./AWIManagement"));
+const AdminOnboarding = lazy(() => import("./AdminOnboarding"));
+const AdminOffboarding = lazy(() => import("./AdminOffboarding"));
+const LifecycleOnboarding = lazy(() => import("./LifecycleOnboarding"));
+const EmployeePayslip = lazy(() => import("../employee/EmployeePayslip"));
 
 
 const ApprovalRequests = lazy(() => import("../../modules/invoice/ApprovalRequests"));
@@ -96,6 +104,16 @@ const OpsRoutes = lazy(() => import("../../modules/ops/OpsRoutes"));
 // ADMIN ROUTES
 // ======================================================
 
+// HR may only reach the OPS employee-management pages inside the
+// OPS portal; every other OPS section redirects to their payslip.
+function HrOpsGate({ children }) {
+  const { pathname } = useLocation();
+  if (!/\/admin\/ops\/employees/.test(pathname)) {
+    return <Navigate to="/admin/my-payslip" replace />;
+  }
+  return children;
+}
+
 function AdminRoutes() {
   const today = new Date();
 
@@ -118,7 +136,13 @@ function AdminRoutes() {
     return <Navigate to="/sub-admin" replace />;
   }
 
-  if (role && role !== "SUPER_ADMIN") {
+  // HR uses the admin portal but is excluded from admin payroll,
+  // activity logs, and notifications.
+  const isHr = role === "HR";
+  const hrBlocked = (element) =>
+    isHr ? <Navigate to="/admin/my-payslip" replace /> : element;
+
+  if (role && role !== "SUPER_ADMIN" && role !== "HR") {
     return <Navigate to="/home" replace />;
   }
 
@@ -154,12 +178,12 @@ function AdminRoutes() {
 
           <Route
             index
-            element={<AdminOverview />}
+            element={isHr ? <AdminDashboard /> : <AdminOverview />}
           />
 
           <Route
             path="overview"
-            element={<AdminOverview />}
+            element={isHr ? <Navigate to="/admin/dashboard" replace /> : <AdminOverview />}
           />
 
           <Route
@@ -187,7 +211,7 @@ function AdminRoutes() {
 
           <Route
             path="attendance"
-            element={<AdminAttendance />}
+            element={isHr ? <ManagerAttendance /> : <AdminAttendance />}
           />
 
           <Route
@@ -201,7 +225,7 @@ function AdminRoutes() {
 
           <Route
             path="breaks"
-            element={<AdminBreaks />}
+            element={isHr ? <ManagerBreaks /> : <AdminBreaks />}
           />
 
           {/* ==================================================
@@ -211,6 +235,31 @@ function AdminRoutes() {
           <Route
             path="calendar"
             element={<AdminCalendar />}
+          />
+
+          <Route
+            path="tasks"
+            element={<AdminTasks />}
+          />
+
+          <Route
+            path="awi-management"
+            element={<AWIManagement />}
+          />
+
+          <Route
+            path="onboarding"
+            element={<AdminOnboarding />}
+          />
+
+          <Route
+            path="lifecycle-onboarding"
+            element={<LifecycleOnboarding />}
+          />
+
+          <Route
+            path="offboarding"
+            element={<AdminOffboarding />}
           />
 
           {/* ==================================================
@@ -252,7 +301,16 @@ function AdminRoutes() {
 
           <Route
             path="payroll"
-            element={<AdminPayslip />}
+            element={hrBlocked(<AdminPayslip />)}
+          />
+
+          {/* ==================================================
+              MY PAYSLIP (self-service, incl. HR)
+          ================================================== */}
+
+          <Route
+            path="my-payslip"
+            element={<EmployeePayslip />}
           />
 
           {/* ==================================================
@@ -261,7 +319,7 @@ function AdminRoutes() {
 
           <Route
             path="notifications"
-            element={<AdminNotifications />}
+            element={hrBlocked(<AdminNotifications />)}
           />
 
           {/* ==================================================
@@ -270,7 +328,7 @@ function AdminRoutes() {
 
           <Route
             path="profile"
-            element={<AdminProfile />}
+            element={hrBlocked(<AdminProfile />)}
           />
 
           {/* ==================================================
@@ -279,7 +337,7 @@ function AdminRoutes() {
 
           <Route
             path="activity-logs"
-            element={<AdminActivityLogs />}
+            element={hrBlocked(<AdminActivityLogs />)}
           />
 
           {/* ==================================================
@@ -308,28 +366,28 @@ function AdminRoutes() {
 
           <Route
             path="crm/leads"
-            element={<Leads />}
+            element={hrBlocked(<Leads />)}
           />
 
           <Route
             path="crm/customers"
-            element={<Customers />}
+            element={hrBlocked(<Customers />)}
           />
 
           <Route
             path="crm/lead-history/:id"
-            element={<LeadProfileHistory />}
+            element={hrBlocked(<LeadProfileHistory />)}
           />
 
           {/* ==================================================
               INVOICE DASHBOARD
           ================================================== */}
-          <Route path="invoice/approvals" element={<ApprovalRequests />} />
-          <Route path="invoice/rejected" element={<RejectedInvoices />} />
+          <Route path="invoice/approvals" element={hrBlocked(<ApprovalRequests />)} />
+          <Route path="invoice/rejected" element={hrBlocked(<RejectedInvoices />)} />
 
           <Route
             path="invoice/dashboard"
-            element={<InvoiceDashboard />}
+            element={hrBlocked(<InvoiceDashboard />)}
           />
 
           {/* ==================================================
@@ -338,7 +396,7 @@ function AdminRoutes() {
 
           <Route
             path="invoice/invoices"
-            element={<Invoices />}
+            element={hrBlocked(<Invoices />)}
           />
 
           {/* ==================================================
@@ -347,7 +405,7 @@ function AdminRoutes() {
 
           <Route
             path="invoice/quotes"
-            element={<Quotes />}
+            element={hrBlocked(<Quotes />)}
           />
 
           {/* ==================================================
@@ -356,7 +414,7 @@ function AdminRoutes() {
 
           <Route
             path="invoice/payments"
-            element={<Payments />}
+            element={hrBlocked(<Payments />)}
           />
 
 
@@ -367,7 +425,7 @@ function AdminRoutes() {
 
           <Route
             path="invoice/expenses"
-            element={<Expenses />}
+            element={hrBlocked(<Expenses />)}
           />
 
       
@@ -377,7 +435,7 @@ function AdminRoutes() {
 
           <Route
             path="invoice/reports"
-            element={<InvoiceReports />}
+            element={hrBlocked(<InvoiceReports />)}
           />
 
           {/* ==================================================
@@ -386,7 +444,7 @@ function AdminRoutes() {
 
           <Route
             path="invoice/items"
-            element={<Items />}
+            element={hrBlocked(<Items />)}
           />
 
           {/* ==================================================
@@ -404,7 +462,7 @@ function AdminRoutes() {
 
           <Route
             path="ops/*"
-            element={<OpsRoutes />}
+            element={isHr ? <HrOpsGate><OpsRoutes /></HrOpsGate> : <OpsRoutes />}
           />
 
           {/* ==================================================

@@ -36,7 +36,10 @@ function formatLeaveDuration(request) {
 
 function AdminLeave() {
   const currentUser = useMemo(() => getStoredUser(), []);
-  const isOperationalManager = currentUser?.role === "OPERATIONAL_MANAGER";
+  const isOperationalManager = ["OPERATIONAL_MANAGER", "HR"].includes(currentUser?.role);
+  const isHrUser = currentUser?.role === "HR";
+  const [leaveView, setLeaveView] = useState("team");
+  const showTeamLeaves = !(isHrUser && leaveView === "mine");
   const [currentBranch, setCurrentBranch] = useState("all");
 const [currentDate, setCurrentDate] = useState("");
 const [statusFilter, setStatusFilter] = useState("all");
@@ -47,6 +50,7 @@ const [employeeFilter, setEmployeeFilter] = useState("all");
 
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [myLeaves, setMyLeaves] = useState([]);
+  const [myLeavesLoading, setMyLeavesLoading] = useState(true);
   const [myLeaveBalance, setMyLeaveBalance] = useState(null);
   const [myLeaveFilter, setMyLeaveFilter] = useState("all");
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -126,6 +130,7 @@ const [deleteSaving, setDeleteSaving] = useState(false);
   const loadMyLeaveData = useCallback(async () => {
     if (!isOperationalManager) return;
 
+    setMyLeavesLoading(true);
     try {
       const [leaves, balance] = await Promise.all([
         fetchMyLeaves(),
@@ -139,6 +144,8 @@ const [deleteSaving, setDeleteSaving] = useState(false);
       }));
     } catch (err) {
       showToast(err.response?.data?.message || err.message || "Failed to load your leave data");
+    } finally {
+      setMyLeavesLoading(false);
     }
   }, [isOperationalManager]);
 
@@ -415,6 +422,13 @@ const renderApprover = (leave) => {
     (leave) => myLeaveFilter === "all" || leave.status === myLeaveFilter
   );
 
+  const myLeaveTableRows = filteredMyLeaves.map((leave) => ({
+    ...leave,
+    full_name: currentUser?.full_name || currentUser?.name || "Me",
+    branch: currentUser?.branch || "—",
+    department: currentUser?.department || "—",
+  }));
+
   const filteredLeaveRequests = leaveRequests.filter((request) => {
     const statusMatches = statusFilter === "all" || request.status?.toLowerCase() === statusFilter;
     const durationKey = request.leave_duration_type === "half_day"
@@ -549,10 +563,39 @@ const getActionedAt = (request) => {
             </div>
           )}
         </div>
+
+        {isHrUser && (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => setLeaveView("team")}
+              style={{
+                padding: "8px 14px", borderRadius: "8px", cursor: "pointer",
+                border: leaveView === "team" ? "2px solid #143967" : "1px solid #cbd5e1",
+                background: leaveView === "team" ? "#143967" : "#fff",
+                color: leaveView === "team" ? "#fff" : "#334155", fontWeight: 600,
+              }}
+            >
+              Team Requests
+            </button>
+            <button
+              type="button"
+              onClick={() => setLeaveView("mine")}
+              style={{
+                padding: "8px 14px", borderRadius: "8px", cursor: "pointer",
+                border: leaveView === "mine" ? "2px solid #143967" : "1px solid #cbd5e1",
+                background: leaveView === "mine" ? "#143967" : "#fff",
+                color: leaveView === "mine" ? "#fff" : "#334155", fontWeight: 600,
+              }}
+            >
+              My Leave Requests
+            </button>
+          </div>
+        )}
       </div>
     </div>
 
-    {isOperationalManager && (
+    {isOperationalManager && (!isHrUser || leaveView === "mine") && (
       <section className="operational-my-leave-panel">
         <div className="operational-section-head">
           <div>
@@ -625,26 +668,20 @@ const getActionedAt = (request) => {
 </thead>
 
          <tbody>
-  {loading ? (
+  {myLeavesLoading ? (
     <tr>
       <td colSpan="16" style={{ textAlign: "center", padding: "40px" }}>
-        Loading leave requests...
+        Loading your leave requests...
       </td>
     </tr>
-  ) : error ? (
-    <tr>
-      <td colSpan="16" style={{ textAlign: "center", padding: "40px" }}>
-        Failed to load leave requests: {error}
-      </td>
-    </tr>
-  ) : filteredLeaveRequests.length === 0 ? (
+  ) : myLeaveTableRows.length === 0 ? (
     <tr>
       <td colSpan="16" style={{ textAlign: "center", padding: "40px" }}>
         No leave requests found
       </td>
     </tr>
   ) : (
-    filteredLeaveRequests.map((request) => {
+    myLeaveTableRows.map((request) => {
       const status = String(request.status || "pending").toLowerCase();
 
       const actionedBy = getActionedByName(request);
@@ -824,6 +861,7 @@ const getActionedAt = (request) => {
       </section>
     )}
 
+{showTeamLeaves && (<>
     {isOperationalManager && (
       <div className="operational-section-head management-head">
         <div>
@@ -1010,6 +1048,8 @@ const getActionedAt = (request) => {
         </tbody>
       </table>
     </div>
+</>)}
+
 
     {isOperationalManager && applyModalOpen && (
       <div className="modal show" onClick={() => !applySaving && setApplyModalOpen(false)}>

@@ -23,6 +23,7 @@ import {
   fetchManagerNotifications,
   fetchManagerProfile,
   fetchManagerTodayAttendance,
+  fetchAttendanceAnalysisSummary,
   markManagerNotificationRead,
   updateManagerLeaveStatus,
 } from "../../services/managerApi";
@@ -126,9 +127,7 @@ export default function ManagerDashboard() {
   const [managerProfile, setManagerProfile] = useState(null);
   const [stats, setStats] = useState({});
   const [recentAttendance, setRecentAttendance] = useState([]);
-  const [notifications, setNotifications] = useState([
-    { cls: "info", icon: "fa-spinner fa-spin", text: "Loading…" },
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentDept, setCurrentDept] = useState("all");
@@ -253,6 +252,7 @@ export default function ManagerDashboard() {
         todayAttendance,
         leaves,
         apiNotifications,
+        attendanceAnalysis,
       ] = await Promise.all([
         fetchManagerEmployees(),
         fetchManagerHolidays(year, monthNum).catch(() => []),
@@ -261,6 +261,7 @@ export default function ManagerDashboard() {
         fetchManagerTodayAttendance(branch, currentDate),
         fetchManagerLeaves("all"),
         fetchManagerNotifications().catch(() => []),
+        fetchAttendanceAnalysisSummary(currentMonthStr, branch).catch(() => null),
       ]);
 
       const nextHolidaySet = new Set(
@@ -288,7 +289,7 @@ export default function ManagerDashboard() {
       setAllEmployees(normalizedEmployees);
       setHolidaySet(nextHolidaySet);
       setAttendanceMap(nextAttendanceMap);
-      setMonthKpi(summary.monthKpi);
+      setMonthKpi(attendanceAnalysis?.kpi || summary.monthKpi);
       setRecentAttendance(todayAttendance);
       setLeaveItems(pendingLeaves.slice(0, 5));
 
@@ -448,40 +449,64 @@ export default function ManagerDashboard() {
 
     return [
       {
-        icon: "fas fa-calendar",
-        label: "Total Days",
-        value: monthStats.total,
-        accent: "#0D47A1",
+        icon: "fas fa-calendar-check",
+        label: "Full Days",
+        value: monthKpi ? Number(monthKpi.total_present) : totalPresent,
+        accent: "#16A34A",
+      },
+      {
+        icon: "fas fa-calendar-day",
+        label: "Half Days",
+        value: monthKpi ? (monthKpi.total_present_half || 0) : 0,
+        accent: "#F59E0B",
+      },
+      {
+        icon: "fas fa-umbrella-beach",
+        label: "Paid Leave",
+        value: monthKpi ? Number(monthKpi.total_paid_leave) : 0,
+        accent: "#3B82F6",
+      },
+      {
+        icon: "fas fa-file-medical",
+        label: "Unpaid Leave",
+        value: monthKpi ? Number(monthKpi.total_unpaid_leave) : 0,
+        accent: "#EF4444",
+      },
+      {
+        icon: "fas fa-user-clock",
+        label: "Auth AWI",
+        value: monthKpi ? Number(monthKpi.total_authorized_awi || 0) : 0,
+        accent: "#8B5CF6",
+      },
+      {
+        icon: "fas fa-user-slash",
+        label: "Unauth Absent",
+        value: monthKpi ? Number(monthKpi.total_unauthorized_absent || 0) : 0,
+        accent: "#DC2626",
       },
       {
         icon: "fas fa-sun",
-        label: "Sundays",
-        value: monthStats.sundays,
-        accent: "#8b5cf6",
+        label: "Paid Sundays",
+        value: monthKpi ? Number(monthKpi.total_paid_sundays || 0) : 0,
+        accent: "#10B981",
+      },
+      {
+        icon: "fas fa-cloud-sun",
+        label: "Unpaid Sundays",
+        value: monthKpi ? Number(monthKpi.total_unpaid_sundays || 0) : 0,
+        accent: "#F97316",
+      },
+      {
+        icon: "fas fa-clock",
+        label: "Late Logins",
+        value: monthKpi ? Number(monthKpi.total_late) : totalLate,
+        accent: "#FF8C00",
       },
       {
         icon: "fas fa-star-and-crescent",
         label: "Holidays",
         value: monthStats.holidays,
         accent: "#06b6d4",
-      },
-      {
-        icon: "fas fa-briefcase",
-        label: "Working Days",
-        value: monthStats.working,
-        accent: "#FF8C00",
-      },
-      {
-        icon: "fas fa-clock",
-        label: "Late (MTD)",
-        value: monthKpi ? Number(monthKpi.total_late) : totalLate,
-        accent: "#FF8C00",
-      },
-      {
-        icon: "fas fa-user-times",
-        label: "Absences (MTD)",
-        value: monthKpi ? Number(monthKpi.total_absent) : totalAbsent,
-        accent: "#DC2626",
       },
     ];
   }, [

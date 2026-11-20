@@ -18,6 +18,14 @@ class RouteErrorBoundary extends Component {
     window.location.reload();
   };
 
+  getErrorMessage = (error) => {
+    try {
+      return error?.message || String(error) || "An unexpected error occurred.";
+    } catch (e) {
+      return "An unexpected error occurred.";
+    }
+  };
+
   render() {
     const { hasError, error } = this.state;
     const { title = "Something went wrong" } = this.props;
@@ -33,7 +41,7 @@ class RouteErrorBoundary extends Component {
               <i className="fas fa-triangle-exclamation" /> {title}
             </div>
             <p style={{ color: "var(--muted)", marginTop: 12, fontSize: "0.85rem" }}>
-              {error?.message || "An unexpected error occurred."}
+              {this.getErrorMessage(error)}
             </p>
             <button
               type="button"

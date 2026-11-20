@@ -77,6 +77,12 @@ const OverallDashboard = () => {
         visaOutcome: 0,
       },
     },
+    tasks: {
+      totalTasks: 0,
+      inProgress: 0,
+      completed: 0,
+      overdue: 0,
+    },
     alerts: [],
     pendingWork: [],
     lastUpdated: new Date().toISOString(),
@@ -123,7 +129,8 @@ const OverallDashboard = () => {
     fetchHRMSData();
     fetchInvoiceData();
     fetchOpsData();
-  }, [selectedBranch]);
+    fetchTasksData();
+  }, [selectedBranch, fetchTasksData]);
 
   // Update alerts based on real data
   useEffect(() => {
@@ -204,9 +211,16 @@ const OverallDashboard = () => {
       count: data.ops.totalLeads || 0,
       route: '/admin/ops/leads',
     });
-    
+
+    pendingWork.push({
+      icon: '📋',
+      title: 'Pending tasks',
+      count: data.tasks.inProgress || 0,
+      route: '/admin/tasks',
+    });
+
     setData(prev => ({ ...prev, pendingWork }));
-  }, [data.hrms.pendingLeaveRequests, data.invoice.invoiceApprovals?.pending, data.ops.casesPendingAudit, data.ops.totalLeads]);
+  }, [data.hrms.pendingLeaveRequests, data.invoice.invoiceApprovals?.pending, data.ops.casesPendingAudit, data.ops.totalLeads, data.tasks.inProgress]);
 
   const fetchHRMSData = useCallback(async () => {
     try {
@@ -260,6 +274,34 @@ const OverallDashboard = () => {
       console.error('Error fetching HRMS data:', error);
     }
   }, [selectedBranch]);
+
+  const fetchTasksData = useCallback(async () => {
+    try {
+      const response = await api.get('/tasks/metrics');
+      const tasksData = response.data || {};
+
+      setData(prev => ({
+        ...prev,
+        tasks: {
+          totalTasks: tasksData.total || 0,
+          inProgress: tasksData.in_progress || 0,
+          completed: tasksData.completed || 0,
+          overdue: tasksData.overdue || 0,
+        },
+      }));
+    } catch (error) {
+      console.error('Error fetching tasks data:', error);
+      setData(prev => ({
+        ...prev,
+        tasks: {
+          totalTasks: 0,
+          inProgress: 0,
+          completed: 0,
+          overdue: 0,
+        },
+      }));
+    }
+  }, []);
 
   const fetchInvoiceData = useCallback(async () => {
     const token = localStorage.getItem('vjc_invoice_auth');
@@ -612,6 +654,15 @@ const OverallDashboard = () => {
           <div className="stat-card__content">
             <span className="stat-card__label">Holidays</span>
             <span className="stat-card__value">{monthStats.holidays}</span>
+          </div>
+        </div>
+        <div className="stat-card" onClick={() => navigate('/admin/tasks')} style={{ cursor: 'pointer' }}>
+          <div className="stat-card__icon stat-card__icon--blue">
+            <i className="fas fa-tasks"></i>
+          </div>
+          <div className="stat-card__content">
+            <span className="stat-card__label">Tasks</span>
+            <span className="stat-card__value">{data.tasks.totalTasks}</span>
           </div>
         </div>
       </div>

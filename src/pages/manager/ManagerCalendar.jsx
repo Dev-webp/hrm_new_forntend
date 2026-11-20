@@ -900,7 +900,7 @@ export default function ManagerCalendar() {
 
           {isLoading ? (
             <div className="grid-loader">
-              <span className="loading-spinner" />
+              Loading...
             </div>
           ) : (
             calDays.map((day) => {

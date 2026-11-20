@@ -21,7 +21,13 @@ const FRI_SAT_PATTERN_ENABLED = false; // Disabled - Fri+Sat+Sun now uses regula
 // ── Day state (unchanged from v1) ──────────────────────────────────
 function getDayState(att, isHoliday, isPreJoining, todayStr, approvedLeaveDates, dateStr) {
   if (isHoliday || isPreJoining) return "excluded";
-  if (isDateWorked(att)) return "worked";
+  if (isDateWorked(att, dateStr)) return "worked";
+
+  // If employee has actual attendance (check-in/check-out), treat as worked
+  // even if there's a leave request
+  if (att && att.check_in_time && att.check_out_time) {
+    return "worked";
+  }
 
   const hasApprovedLeaveInAtt = att && (att.leave_status === "approved" || att.approved_leave);
   const hasApprovedLeaveInSet = approvedLeaveDates && approvedLeaveDates.has(dateStr);
@@ -42,21 +48,68 @@ function getDayState(att, isHoliday, isPreJoining, todayStr, approvedLeaveDates,
   return "off";
 }
 
-function isDateWorked(att) {
+function isDateWorked(att, dateStr) {
   if (!att) return false;
   const status = String(att.status || "").toLowerCase();
   const workedStatuses = ["present", "full_day", "half_day", "late"];
-  const hasPunch = att.check_in_time || att.check_out_time;
 
-  if (hasPunch) {
-    if (status === "half_day") return true;
-    if (att.check_in_time && att.check_out_time) {
-      const inSec = timeToSeconds(att.check_in_time);
-      const outSec = timeToSeconds(att.check_out_time);
-      return Math.max(0, outSec - inSec) / 3600 > 0;
+  // Check if the date is Saturday and status is half-day
+  // Saturday half-day is qualifying event ONLY if check-out is BEFORE 7 PM
+  if (dateStr && status === "half_day") {
+    const dayOfWeek = getDayOfWeek(dateStr);
+    if (dayOfWeek === 6) { // Saturday
+      if (att.check_in_time && att.check_out_time) {
+        const checkOutTime = att.check_out_time; // Format: "HH:MM:SS"
+        const [hours] = checkOutTime.split(':').map(Number);
+        // If check-out is before 7 PM (19:00), it's a qualifying event
+        if (hours < 19) {
+          return false; // Treat as qualifying event
+        }
+        // If check-out is after 7 PM, it's worked (not qualifying event)
+      }
     }
-    return true;
+    // Check if the date is Monday
+    // Monday is qualifying event ONLY if check-in is AFTER 10:30 AM
+    if (dayOfWeek === 1) { // Monday
+      if (att.check_in_time && att.check_out_time) {
+        const checkInTime = att.check_in_time; // Format: "HH:MM:SS"
+        const [hours, minutes] = checkInTime.split(':').map(Number);
+        // If check-in is after 10:30 AM (10:30:00), it's a qualifying event
+        if (hours > 10 || (hours === 10 && minutes > 30)) {
+          return false; // Treat as qualifying event
+        }
+        // If check-in is before or at 10:30 AM, it's worked (not qualifying event)
+      }
+    }
   }
+
+  // Special case: Monday with check-in AFTER 10:30 AM is a qualifying event
+  if (dateStr) {
+    const dayOfWeek = getDayOfWeek(dateStr);
+    if (dayOfWeek === 1 && att.check_in_time && att.check_out_time) {
+      const checkInTime = att.check_in_time; // Format: "HH:MM:SS"
+      const [hours, minutes] = checkInTime.split(':').map(Number);
+      // If check-in is after 10:30 AM (10:30:00), it's a qualifying event
+      if (hours > 10 || (hours === 10 && minutes > 30)) {
+        return false; // Treat as qualifying event
+      }
+    }
+  }
+
+  // If employee has check-in AND check-out, they worked (even if half-day)
+  // This overrides leave requests for sandwich policy
+  if (att.check_in_time && att.check_out_time) {
+    const inSec = timeToSeconds(att.check_in_time);
+    const outSec = timeToSeconds(att.check_out_time);
+    return Math.max(0, outSec - inSec) / 3600 > 0;
+  }
+
+  // If employee has only check-in but no check-out, treat as NOT worked (qualifying event)
+  // This handles cases like "Absent with check-in" where employee didn't complete the day
+  if (att.check_in_time && !att.check_out_time) {
+    return false;
+  }
+
   return workedStatuses.includes(status);
 }
 
@@ -139,10 +192,38 @@ export function applySandwichPolicy(data = {}, options = {}) {
 
   const allowanceUsage = new Map();
   const sandwichResults = [];
+  
+  // Track qualifying events per Sunday
+  const sundayQualifyingEvents = new Map();
 
   // Anchors = Only Sundays inside the payroll month, in date order (holidays excluded)
   const anchors = [...allDates].sort()
     .filter((ds) => inPeriod(ds) && getDayOfWeek(ds) === 0);
+
+  // First pass: count qualifying events for each Sunday
+  for (const anchor of anchors) {
+    const before = addDays(anchor, -1);
+    const after = addDays(anchor, 1);
+    
+    let qualifyingCount = 0;
+    
+    // Check Saturday (day before)
+    if (inPeriod(before)) {
+      const beforeState = stateOf(before);
+      if (beforeState === "off") qualifyingCount++;
+    }
+    
+    // Check Monday (day after)
+    if (inPeriod(after)) {
+      const afterState = stateOf(after);
+      if (afterState === "off") qualifyingCount++;
+    }
+    
+    sundayQualifyingEvents.set(anchor, qualifyingCount);
+  }
+
+  // Second pass: apply sandwich rule
+  let firstOneEventSundayPaid = false;
 
   for (const anchor of anchors) {
     const isSunday = getDayOfWeek(anchor) === 0;
@@ -151,55 +232,25 @@ export function applySandwichPolicy(data = {}, options = {}) {
     const add = (date, applied, reason) =>
       sandwichResults.push({ date, applied, reason: prefix + reason, anchorType });
 
-    // POLICY CHANGE: Company holidays are now subject to sandwich evaluation
-    // Sunday that is also a holiday: evaluate sandwich conditions (can become sandwich)
-    // if (isSunday && holidayMap.has(anchor)) continue;        // REMOVED: holidays now participate in sandwich
-    if (joiningDate && anchor < joiningDate) continue;       // before joining
+    if (joiningDate && anchor < joiningDate) continue;
 
-    // The day before the anchor must be an ordinary day that is "off"
-    // If day before is non_ordinary (holiday/Sunday), check the day before that
-    let before = addDays(anchor, -1);
-    let beforeState = stateOf(before);
-    if (!isOrdinaryDay(before, holidayMap)) {
-      before = addDays(anchor, -2);
-      beforeState = stateOf(before);
+    const qualifyingCount = sundayQualifyingEvents.get(anchor) || 0;
+
+    if (qualifyingCount >= 2) {
+      // 2+ qualifying events = unpaid
+      add(anchor, true, "TWO_SIDED_NON_WORKING");
+    } else if (qualifyingCount === 1) {
+      // 1 qualifying event
+      if (!firstOneEventSundayPaid) {
+        // First Sunday with 1 event = paid
+        firstOneEventSundayPaid = true;
+        add(anchor, false, "FIRST_QUALIFYING_SUNDAY_ALLOWANCE");
+      } else {
+        // Subsequent Sundays with 1 event = unpaid
+        add(anchor, true, "SUBSEQUENT_ONE_EVENT_UNPAID");
+      }
     }
-    if (beforeState === "worked")   { add(before, false, "SATURDAY_WORKED");  continue; }
-    if (beforeState === "excluded") { add(before, false, "HOLIDAY_EXCLUDED"); continue; }
-    if (beforeState !== "off")      { add(before, false, "SATURDAY_PENDING"); continue; }
-
-    // Actual attendance on the off-day always wins
-    if (isDateWorked(attMap.get(anchor))) {
-      const r = isSunday ? "SUNDAY_WORKED" : "WORKED";
-      add(before, false, r);
-      add(anchor, false, r);
-      continue;
-    }
-
-    // Two-sided (before + after both off) or Fri+Sat+Sun: charge anchor, NO allowance used
-    const after = addDays(anchor, 1);
-    const twoSided = isOff(after);
-    const friSat = !twoSided && isSunday && FRI_SAT_PATTERN_ENABLED && isOff(addDays(before, -1));
-    if (twoSided || friSat) {
-      add(anchor, true, twoSided ? "TWO_SIDED_NON_WORKING" : "FRI_SAT_SUN_NON_WORKING");
-      add(before, false, twoSided ? "TWO_SIDED_EXCEPTION_NO_ALLOWANCE" : "FRI_SAT_PATTERN_NO_ALLOWANCE");
-      continue;
-    }
-
-    // One-sided: shared monthly free allowance (Sundays AND holidays pooled)
-    const { year, month } = getYearMonth(anchor);
-    const key = `:${year}:${month}`;
-    const used = (allowanceUsage.get(key) || 0) + 1;
-    allowanceUsage.set(key, used);
-
-    if (used === 1) {
-      add(before, false, "FIRST_QUALIFYING_SATURDAY");
-      add(anchor, false, "SATURDAY_ALLOWANCE");
-    } else {
-      const reason = qualifyingReason(used);
-      add(before, false, reason);
-      add(anchor, true, reason);
-    }
+    // 0 qualifying events = paid (no action needed - no sandwich result added)
   }
 
   return { sandwichResults, allowanceUsage };

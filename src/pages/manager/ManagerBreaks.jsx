@@ -521,12 +521,12 @@ export default function ManagerBreaks() {
     setToken(storedToken);
 
     const decoded = parseJwt(storedToken);
-    if (!decoded || !["MANAGER", "OPERATIONAL_MANAGER", "SUB_ADMIN"].includes(decoded.role)) {
+    if (!decoded || !["MANAGER", "OPERATIONAL_MANAGER", "SUB_ADMIN", "HR"].includes(decoded.role)) {
       navigate("/login");
       return;
     }
 
-    const operational = decoded.role === "OPERATIONAL_MANAGER";
+    const operational = ["OPERATIONAL_MANAGER", "HR"].includes(decoded.role);
     setIsOperationalManager(operational);
     setManagerBranch(operational ? "all" : decoded.branch);
     setManagerId(decoded.id);
@@ -682,7 +682,7 @@ export default function ManagerBreaks() {
                   {historyLoading ? (
                     <tr>
                       <td colSpan="9" style={{ textAlign: "center", padding: "40px" }}>
-                        <div className="spinner"></div>
+                        Loading...
                       </td>
                     </tr>
                   ) : historyRows.length === 0 ? (
@@ -763,7 +763,7 @@ export default function ManagerBreaks() {
               {isLoading ? (
                 <tr>
                   <td colSpan="10">
-                    <div className="spinner"></div> Loading...
+                    Loading...
                   </td>
                 </tr>
               ) : employeesList.length === 0 ? (

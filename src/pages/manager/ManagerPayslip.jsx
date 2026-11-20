@@ -257,7 +257,7 @@ export default function ManagerPayslip() {
 
       {isLoading || loadingPayslip ? (
         <div style={{ textAlign: "center", padding: 40 }}>
-          <span className="spinner" /> Loading payslip...
+          Loading payslip...
         </div>
       ) : !currentPayslip ? (
         <div className="empty-state">

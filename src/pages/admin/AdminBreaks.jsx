@@ -510,7 +510,7 @@ function AdminLeave() {
             {loading ? (
               <tr>
                 <td colSpan="10" style={{ textAlign: "center", padding: "40px" }}>
-                  <div className="loading-spinner"></div> Loading breaks...
+                  Loading breaks...
                 </td>
               </tr>
             ) : error ? (

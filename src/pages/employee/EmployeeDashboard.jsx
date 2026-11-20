@@ -1,14 +1,37 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
+import LiveWorkTimer from "../../components/LiveWorkTimer";
 import { useEmployeeApi } from "../../hooks/useEmployeeApi";
 import { parseJwt } from "../../utils/parseJwt";
+import api from "../../services/api";
 import {
   formatProductionHours,
   formatTime12Hour,
 } from "../../utils/timeFormat";
 import { MONTH_NAMES, normalizeArray, WEEK_DAYS } from "./employeeUtils";
 import { getCalendarAttendanceStatus } from "../../utils/calendarStatusColors";
+import {
+  CalendarCheck,
+  Clock,
+  Calendar,
+  MapPin,
+  Mail,
+  IdCard,
+  ChevronRight,
+  ListChecks,
+  FileText,
+  Umbrella,
+  Zap,
+  AlertCircle,
+  ArrowRight,
+  Play,
+  Square,
+  Clock4,
+  UserPlus,
+  LogOut,
+  Briefcase,
+} from "lucide-react";
 import "../../styles/EmployeeDashboard.css";
+import "../../styles/LiveWorkTimer.css";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -51,6 +74,7 @@ export default function EmployeeDashboard({ embedded = false }) {
       email: source.email || "",
       role: source.role || "",
       employee_code: employeeCode,
+      userId: source.id || source.userId || source.employee_id || "",
       firstName: (source.full_name || "Employee").split(" ")[0],
     };
   }, [token, profileData]);
@@ -60,11 +84,163 @@ export default function EmployeeDashboard({ embedded = false }) {
   const [allLeaves, setAllLeaves] = useState([]);
   const [todayData, setTodayData] = useState(null);
   const [holidayList, setHolidayList] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [policyExpanded, setPolicyExpanded] = useState(false);
   const [greetingMsg, setGreetingMsg] = useState("");
   const [liveDateLabel, setLiveDateLabel] = useState("—");
   const [liveTimeLabel, setLiveTimeLabel] = useState("—");
+  const [birthdayInfo, setBirthdayInfo] = useState(null);
+  const [pendingTasks, setPendingTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [timerData, setTimerData] = useState(null);
+
+  // Handle timer updates from LiveWorkTimer
+  const handleTimerUpdate = useCallback((data) => {
+    setTimerData(data);
+
+    // Update DOM elements directly for real-time display
+    const digitalTimer = document.getElementById('digital-timer');
+    const attendanceStatus = document.getElementById('attendance-status');
+    const statusText = attendanceStatus?.querySelector('.status-text');
+    const detailCheckIn = document.getElementById('detail-check-in');
+    const detailCheckOut = document.getElementById('detail-check-out');
+    const workHoursValue = document.getElementById('work-hours-value');
+    const btnCheckIn = document.getElementById('btn-check-in');
+
+    const isClockedIn = data.is_clocked_in || false;
+    const isOnBreak = data.break_status !== null && data.break_status !== undefined;
+    const hasClockedOut = data.clock_out_time !== null && data.clock_out_time !== undefined;
+
+    // Calculate display time - preserve worked hours after check-out
+    let displaySeconds = 0;
+
+    if (isClockedIn) {
+      // When clocked in and NOT on break: show elapsed work time
+      if (!isOnBreak) {
+        displaySeconds = data.elapsed_seconds || 0;
+      }
+      // When clocked in and ON break: show elapsed work time (preserved at break start)
+      else {
+        displaySeconds = data.elapsed_seconds || 0;
+      }
+    } else if (hasClockedOut) {
+      // When clocked out, preserve the final work time
+      // Priority 1: Use production_hours from todayData if available
+      if (todayData?.production_hours && todayData.production_hours > 0) {
+        displaySeconds = Math.floor(todayData.production_hours * 3600);
+      }
+      // Priority 2: Use elapsed_seconds from API (should contain final work time)
+      else if (data.elapsed_seconds && data.elapsed_seconds > 0) {
+        displaySeconds = data.elapsed_seconds;
+      }
+      // Priority 3: Calculate from timestamps (subtract break time if available)
+      else if (data.clock_in_time && data.clock_out_time) {
+        try {
+          const clockIn = new Date(data.clock_in_time);
+          const clockOut = new Date(data.clock_out_time);
+          if (!isNaN(clockIn.getTime()) && !isNaN(clockOut.getTime())) {
+            let diffMs = clockOut - clockIn;
+            // Subtract total break time if available
+            if (data.total_break_minutes && data.total_break_minutes > 0) {
+              diffMs -= (data.total_break_minutes * 60 * 1000);
+            }
+            displaySeconds = Math.floor(diffMs / 1000);
+            // Ensure non-negative
+            displaySeconds = Math.max(0, displaySeconds);
+          }
+        } catch (err) {
+          console.error("Error calculating time diff:", err);
+          displaySeconds = 0;
+        }
+      }
+    }
+
+    // Update digital timer
+    if (digitalTimer) {
+      const hours = Math.floor(displaySeconds / 3600);
+      const minutes = Math.floor((displaySeconds % 3600) / 60);
+      const seconds = displaySeconds % 60;
+      digitalTimer.textContent = `${String(hours).padStart(2, "0")} : ${String(minutes).padStart(2, "0")} : ${String(seconds).padStart(2, "0")}`;
+
+      // Update work hours
+      if (workHoursValue) {
+        workHoursValue.textContent = `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m`;
+      }
+    }
+
+    // Update status badge
+    if (attendanceStatus && statusText) {
+      let status = "Not Checked In";
+      if (hasClockedOut) {
+        status = "Checked Out";
+        attendanceStatus.style.background = "#6B7280";
+      } else if (isOnBreak) {
+        status = "On Break";
+        attendanceStatus.style.background = "#F59E0B";
+      } else if (isClockedIn) {
+        status = "Checked In";
+        attendanceStatus.style.background = "#16A36A";
+      } else {
+        attendanceStatus.style.background = "#EF4444";
+      }
+      statusText.textContent = status;
+    }
+
+    // Update check-in time
+    if (detailCheckIn) {
+      try {
+        const timeStr = data.clock_in_time || todayData?.clock_in_time;
+        detailCheckIn.textContent = timeStr ? formatTime12Hour(timeStr) : '--';
+      } catch (err) {
+        detailCheckIn.textContent = '--';
+      }
+    }
+
+    // Update check-out time
+    if (detailCheckOut) {
+      try {
+        const timeStr = data.clock_out_time || todayData?.clock_out_time;
+        detailCheckOut.textContent = timeStr ? formatTime12Hour(timeStr) : '--';
+      } catch (err) {
+        detailCheckOut.textContent = '--';
+      }
+    }
+
+    // Update button state
+    if (btnCheckIn) {
+      btnCheckIn.disabled = isClockedIn || hasClockedOut;
+    }
+  }, [todayData]);
+
+  // Clock In handler
+  const handleClockIn = useCallback(async () => {
+    try {
+      await apiFetch("/attendance/timer/clock-in", { method: "POST" });
+      // Refresh timer status
+      const timerStatus = await apiFetch("/attendance/timer/status");
+      handleTimerUpdate(timerStatus);
+    } catch (err) {
+      console.error("Clock in failed:", err);
+      alert("Failed to clock in. Please try again.");
+    }
+  }, [apiFetch, handleTimerUpdate]);
+
+  // Clock Out handler
+  const handleClockOut = useCallback(async () => {
+    try {
+      await apiFetch("/attendance/timer/clock-out", { method: "POST" });
+      // Refresh timer status
+      const timerStatus = await apiFetch("/attendance/timer/status");
+      handleTimerUpdate(timerStatus);
+      // Refresh attendance data to get updated production_hours
+      const today = new Date().toISOString().split('T')[0];
+      const attendanceData = await apiFetch(`/attendance?start=${today}&end=${today}`);
+      if (attendanceData && attendanceData.length > 0) {
+        setTodayData(attendanceData[0]);
+      }
+    } catch (err) {
+      console.error("Clock out failed:", err);
+      alert("Failed to clock out. Please try again.");
+    }
+  }, [apiFetch, handleTimerUpdate]);
 
   const safeAttendance = useMemo(
     () => (Array.isArray(allAttendance) ? allAttendance.filter(Boolean) : []),
@@ -98,7 +274,20 @@ export default function EmployeeDashboard({ embedded = false }) {
           localStorage.setItem("employee_code", profile.employee_code);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Profile fetch error:", err);
+      });
+
+    api.get("/birthdays/my-birthday")
+      .then((response) => {
+        if (!cancelled) {
+          setBirthdayInfo(response.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Birthday fetch error:", err);
+        setBirthdayInfo(null);
+      });
     return () => {
       cancelled = true;
     };
@@ -167,6 +356,61 @@ export default function EmployeeDashboard({ embedded = false }) {
     return () => clearInterval(id);
   }, [loadAll]);
 
+  // Fetch and update timer status
+  const fetchTimerStatus = useCallback(async () => {
+    try {
+      const timerStatus = await apiFetch("/attendance/timer/status");
+      handleTimerUpdate(timerStatus);
+    } catch (err) {
+      console.error("Timer status fetch error:", err);
+    }
+  }, [apiFetch, handleTimerUpdate]);
+
+  useEffect(() => {
+    fetchTimerStatus();
+    const id = setInterval(fetchTimerStatus, 1000); // Update every second
+    return () => clearInterval(id);
+  }, [fetchTimerStatus]);
+
+  // Fetch pending tasks
+  const fetchPendingTasks = useCallback(async () => {
+    try {
+      setTasksLoading(true);
+      const response = await api.get("/tasks");
+      const allTasks = response.data.tasks || [];
+      // Filter tasks assigned to current employee that are not completed
+      const employeeTasks = allTasks.filter(task => {
+        const taskStatus = (task.status || "").toLowerCase();
+        const isCompleted = taskStatus === "completed" || taskStatus === "done";
+        const isCancelled = taskStatus === "cancelled";
+        return !isCompleted && !isCancelled;
+      });
+      // Sort by due date and priority, take first 5
+      const sortedTasks = employeeTasks
+        .sort((a, b) => {
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          const aPriority = priorityOrder[a.priority?.toLowerCase()] || 1;
+          const bPriority = priorityOrder[b.priority?.toLowerCase()] || 1;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+          // If same priority, sort by due date
+          const aDue = new Date(a.due_date || "9999-12-31");
+          const bDue = new Date(b.due_date || "9999-12-31");
+          return aDue - bDue;
+        })
+        .slice(0, 5);
+      setPendingTasks(sortedTasks);
+    } catch (error) {
+      console.error("Error fetching pending tasks:", error);
+      setPendingTasks([]);
+    } finally {
+      setTasksLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPendingTasks();
+  }, [fetchPendingTasks]);
+
   const monthMeta = useMemo(() => {
     const y = viewDate.getFullYear();
     const m = viewDate.getMonth();
@@ -184,6 +428,21 @@ export default function EmployeeDashboard({ embedded = false }) {
       })
     );
 
+    // Build a set of approved leave dates
+    const approvedLeaveDates = new Set();
+    for (const leave of safeLeaves) {
+      if (leave?.status === "approved") {
+        const start = new Date(leave.from_date + "T00:00:00");
+        const end = new Date(leave.to_date + "T00:00:00");
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          approvedLeaveDates.add(`${year}-${month}-${day}`);
+        }
+      }
+    }
+
     let workingDays = 0;
     let fullDays = 0;
     let halfDays = 0;
@@ -191,10 +450,6 @@ export default function EmployeeDashboard({ embedded = false }) {
     let leaveDays = 0;
     let paidLeaveDays = 0;
     let unpaidLeaveDays = 0;
-    let totalProdHours = 0;
-    let prodCount = 0;
-    let totalBreakMinutes = 0;
-    let breakCount = 0;
     let lateMinutes = 0;
 
     for (let d = 1; d <= lastDay; d++) {
@@ -217,58 +472,35 @@ export default function EmployeeDashboard({ embedded = false }) {
         } else if (status === "leave") leaveDays++;
         else if (!isSun && !isHol) absentDays++;
         lateMinutes += Number(rec?.late_minutes || 0);
-        if (Number(rec?.production_hours || 0) > 0) {
-          totalProdHours += parseFloat(rec?.production_hours || 0);
-          prodCount++;
+      } else if (!isSun && !isHol) {
+        // Check if there's approved leave for this date
+        if (approvedLeaveDates.has(ds)) {
+          leaveDays++;
+          // Try to determine if paid or unpaid from leave request
+          const leaveForDate = safeLeaves.find(l => {
+            if (l?.status !== "approved") return false;
+            const start = new Date(l.from_date + "T00:00:00");
+            const end = new Date(l.to_date + "T00:00:00");
+            const checkDate = new Date(ds + "T00:00:00");
+            return checkDate >= start && checkDate <= end;
+          });
+          if (leaveForDate) {
+            const type = String(leaveForDate.leave_type || "").toLowerCase();
+            const category = String(leaveForDate.leave_category || "").toLowerCase();
+            if (type === "paid" || category === "paid") {
+              paidLeaveDays++;
+            } else {
+              unpaidLeaveDays++;
+            }
+          }
+        } else {
+          absentDays++;
         }
-        if (Number(rec?.total_break_minutes || 0) > 0) {
-          totalBreakMinutes += Number(rec?.total_break_minutes || 0);
-          breakCount++;
-        }
-      } else if (!isSun && !isHol) absentDays++;
+      }
     }
 
-    const effectivePresent = fullDays + halfDays * 0.5;
-    const attendanceDenominator = effectivePresent + absentDays;
-    const score =
-      attendanceDenominator > 0
-        ? Math.round((effectivePresent / attendanceDenominator) * 100)
-        : 0;
-    const avgHours = prodCount > 0 ? totalProdHours / prodCount : 0;
-    const grade =
-      score >= 95
-        ? "Excellent"
-        : score >= 80
-          ? "Good"
-          : score >= 60
-            ? "Average"
-            : "Needs Improvement";
-    const gradeClass =
-      score >= 95
-        ? "excellent"
-        : score >= 80
-          ? "good"
-          : score >= 60
-            ? "average"
-            : "poor";
-    const hint =
-      score >= 95
-        ? "Perfect attendance!"
-        : score >= 80
-          ? "Room to improve"
-          : "Attendance needs attention";
-
-    const today = new Date().toISOString().slice(0, 10);
-    let currentStreak = 0;
-    const sorted = [...safeAttendance]
-      .sort((a, b) => String(b?.date || "").localeCompare(String(a?.date || "")));
-    for (const rec of sorted) {
-      if (rec?.date > today) continue;
-      if (rec?.status === "full_day") currentStreak++;
-      else break;
-    }
-
-    const rate = score;
+    const effectivePresentDays = fullDays + (halfDays * 0.5);
+    const rate = workingDays > 0 ? Math.round((effectivePresentDays / workingDays) * 100) : 0;
     const approvedDays = safeLeaves
       .filter((l) => l?.status === "approved")
       .reduce((s, l) => s + Number(l.requested_days ?? l.days ?? 0), 0);
@@ -283,13 +515,6 @@ export default function EmployeeDashboard({ embedded = false }) {
       leaveDays,
       paidLeaveDays,
       unpaidLeaveDays,
-      score,
-      avgHours,
-      avgBreakMinutes: breakCount > 0 ? Math.round(totalBreakMinutes / breakCount) : 0,
-      grade,
-      gradeClass,
-      hint,
-      currentStreak,
       rate,
       leaveBalance,
       approvedLeaveDays: approvedDays,
@@ -297,462 +522,341 @@ export default function EmployeeDashboard({ embedded = false }) {
       lateMinutes,
       holidayCount: holidayList.length,
       totalDays: lastDay,
-      sundays: Array.from({ length: lastDay }, (_, index) => index + 1).filter(
-        (day) => new Date(y, m, day).getDay() === 0
-      ).length,
-      leaveRequests: safeLeaves.length,
     };
   }, [safeAttendance, safeLeaves, holidayList, monthMeta]);
 
-  const todayCard = useMemo(() => {
-    const d = todayData;
-    let statusText = "Not Available";
-    let statusCls = "absent";
-    if (d?.status === "half_day") {
-      statusText = "Half Day";
-      statusCls = "halfday";
-    } else if (isPaidLeaveDay(d)) {
-      statusText = "Paid Leave";
-      statusCls = "paid-leave";
-    } else if (isUnpaidLeaveDay(d)) {
-      statusText = "Unpaid Leave";
-      statusCls = "unpaid-leave";
-    } else if (d?.status === "leave") {
-      statusText = "Leave";
-      statusCls = "leave";
-    } else if (d?.status === "missing_checkout") {
-      statusText = "Missing Checkout";
-      statusCls = "late";
-    } else if (isGraceLateLogin(d) && d?.status !== "absent") {
-      statusText = "Late";
-      statusCls = "late";
-    } else if (d?.status === "full_day") {
-      statusText = "Present";
-      statusCls = "present";
-    } else if (d?.status === "present" || d?.status === "in_progress" || d?.status === "working") {
-      statusText = d?.status === "in_progress" || d?.status === "working" ? "Working" : "Present";
-      statusCls = "present";
-    }
-    return {
-      checkIn: formatTime12Hour(d?.check_in_time) || "—",
-      checkOut: formatTime12Hour(d?.check_out_time) || "—",
-      late: Number(d?.late_minutes || 0),
-      productionHours: formatProductionHours(Number(d?.production_hours || 0)),
-      statusText,
-      statusCls,
-      message:
-        d?.status === "absent" || !d
-          ? "Attendance not completed."
-            : isGraceLateLogin(d)
-            ? `You are late by ${Number(d?.late_minutes || 0)} minutes.`
-            : "Great! You are on time today.",
-    };
-  }, [todayData]);
-
-  const calendarDays = useMemo(() => {
-    const { y, m, mm, lastDay } = monthMeta;
-    const holidaySet = new Set(
-      holidayList.map((h) => {
-        const d = h.date;
-        return typeof d === "string" ? d.slice(0, 10) : d?.toISOString?.()?.slice(0, 10);
-      })
-    );
-    const attendanceByDate = new Map(
-      safeAttendance.map((rec) => {
-        const dateKey =
-          typeof rec.date === "string" ? rec.date.slice(0, 10) : rec.date?.toISOString?.()?.slice(0, 10);
-        return [dateKey, rec];
-      })
-    );
-    const firstDayOffset = new Date(y, m, 1).getDay();
-    const cells = Array.from({ length: firstDayOffset }, (_, i) => ({
-      key: `blank-${i}`,
-      blank: true,
-    }));
-
-    for (let d = 1; d <= lastDay; d++) {
-      const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
-      const dow = new Date(y, m, d).getDay();
-      const rec = attendanceByDate.get(ds);
-      const isHoliday = holidaySet.has(ds);
-      const isSunday = dow === 0;
-      let status = "No record";
-      let className = "no-record calendar-empty";
-      const todayStr = new Date().toISOString().slice(0, 10);
-
-      if (isHoliday || isSunday) {
-        status = isSunday ? "Sunday" : "Holiday";
-        className = "holiday calendar-holiday";
-      } else if (rec) {
-        if (isPaidLeaveDay(rec)) {
-          status = "Paid Leave";
-          className = "paid-leave calendar-paid-leave";
-        } else if (isUnpaidLeaveDay(rec)) {
-          status = "Unpaid Leave";
-          className = "unpaid-leave calendar-unpaid-leave";
-        } else if (rec?.status === "absent") {
-          status = "Absent";
-          className = "absent calendar-absent";
-        } else if (rec?.status === "half_day") {
-          status = "Half Day";
-          className = "halfday calendar-halfday";
-        } else if (isGraceLateLogin(rec)) {
-          status = "Late";
-          className = "late calendar-late";
-        } else if (rec?.status === "missing_checkout") {
-          status = "Missing Checkout";
-          className = "late calendar-late";
-        } else if (rec?.status === "full_day" || rec?.status === "present") {
-          status = "Present";
-          className = "present calendar-present";
-        }
-      } else if (ds <= todayStr) {
-        status = "Absent";
-        className = "absent calendar-absent";
-      }
-
-      cells.push({
-        key: ds,
-        day: d,
-        status,
-        className,
-      });
-    }
-
-    return cells;
-  }, [safeAttendance, holidayList, monthMeta]);
-
-  const detailRows = useMemo(() => {
-    const { y, m, mm, lastDay } = monthMeta;
-    const holidaySet = new Set(
-      holidayList.map((h) => {
-        const d = h.date;
-        return typeof d === "string" ? d.slice(0, 10) : d?.toISOString?.()?.slice(0, 10);
-      })
-    );
-    const rows = [];
-    const todayStr = new Date().toISOString().slice(0, 10);
-    for (let d = 1; d <= lastDay; d++) {
-      const ds = `${y}-${mm}-${String(d).padStart(2, "0")}`;
-      const dow = new Date(ds).getDay();
-      if (dow === 0 || holidaySet.has(ds)) continue;
-      const rec = safeAttendance.find((r) => r?.date === ds);
-      let statusNode = ds <= todayStr ? (
-        <span className="status-chip absent">Absent</span>
-      ) : (
-        <span style={{ color: "var(--muted)" }}>No Record</span>
-      );
-      let statusText = ds <= todayStr ? "Absent" : "No Record";
-      if (rec) {
-        const safeStatus = String(rec?.status || "").toLowerCase();
-        const cls =
-          ["full_day", "present", "in_progress", "working"].includes(safeStatus)
-            ? "present"
-            : safeStatus === "leave"
-              ? "leave"
-            : safeStatus === "missing_checkout"
-              ? "late"
-            : safeStatus === "half_day"
-              ? "halfday"
-              : "absent";
-        const txt =
-          safeStatus === "in_progress" || safeStatus === "working"
-            ? "Working"
-            : safeStatus === "missing_checkout"
-              ? "Missing Checkout"
-            : safeStatus === "leave"
-              ? "Leave"
-            : ["full_day", "present", "leave"].includes(safeStatus)
-            ? "Present"
-            : safeStatus === "half_day"
-              ? "Half Day"
-              : "Absent";
-        statusText = txt;
-        statusNode = (
-          <>
-            <span className={`status-chip ${cls}`}>{txt}</span>
-            {isGraceLateLogin(rec) && rec?.status !== "absent" && (
-              <span
-                style={{
-                  fontSize: ".68rem",
-                  color: "var(--amber)",
-                  marginLeft: 6,
-                }}
-              >
-                +{Number(rec?.late_minutes || 0)}m late
-              </span>
-            )}
-          </>
-        );
-      }
-      rows.push({
-        key: ds,
-        date: ds,
-        day: WEEK_DAYS[dow],
-        in: formatTime12Hour(rec?.check_in_time),
-        out: formatTime12Hour(rec?.check_out_time),
-        status: statusNode,
-        statusText,
-      });
-    }
-    return rows;
-  }, [safeAttendance, holidayList, monthMeta]);
-
-  const monthLabel = `${monthMeta.y}-${monthMeta.mm}`;
-  const analyticsSubTitle = `${viewDate.toLocaleDateString("en-IN", {
-    month: "long",
-    year: "numeric",
-  })} Â· Personal Report`;
-  const todayDateLabel = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  const overviewItems = [
-    { label: "Total Days", value: analytics.totalDays, icon: "fa-calendar-days", tone: "blue" },
-    { label: "Working Days", value: analytics.workingDays, icon: "fa-briefcase", tone: "success" },
-    { label: "Sundays", value: analytics.sundays, icon: "fa-sun", tone: "purple" },
-    { label: "Total Present", value: analytics.fullDays, icon: "fa-user-check", tone: "success" },
-    { label: "Late Logins", value: analytics.lateCount, icon: "fa-business-time", tone: "warning" },
-    { label: "Absences", value: analytics.absentDays, icon: "fa-user-slash", tone: "danger" },
-    { label: "Paid Leave", value: analytics.paidLeaveDays, icon: "fa-calendar-check", tone: "purple" },
-    { label: "Unpaid Leave", value: analytics.unpaidLeaveDays, icon: "fa-calendar-xmark", tone: "danger" },
-  ];
-
   const actionBase = userProfile.role === "SUB_ADMIN" ? "/sub-admin" : "/employee";
-  const quickActions = [
-    { label: "Apply Leave", subtitle: "Request time off", icon: "fa-paper-plane", path: `${actionBase}/leave` },
-    { label: "My Attendance", subtitle: "View daily logs", icon: "fa-calendar-check", path: userProfile.role === "SUB_ADMIN" ? "/sub-admin/calendar" : "/employee/attendance" },
-    { label: "Breaks", subtitle: "Manage break time", icon: "fa-mug-hot", path: `${actionBase}/breaks` },
-    { label: "Payslip", subtitle: "Salary documents", icon: "fa-file-invoice-dollar", path: `${actionBase}/payslip` },
-    { label: "Messages", subtitle: "Contact HR team", icon: "fa-envelope", path: userProfile.role === "SUB_ADMIN" ? "/sub-admin/help-center" : "/employee/messages" },
-  ];
-
-  const monthlySummaryCards = [
-    { label: "Present Days", value: analytics.fullDays, max: analytics.workingDays, tone: "success", icon: "fa-user-check" },
-    { label: "Absent Days", value: analytics.absentDays, max: analytics.workingDays, tone: "danger", icon: "fa-user-xmark" },
-    { label: "Late Logins", value: analytics.lateCount, max: Math.max(analytics.lateCount, 1), tone: "warning", icon: "fa-clock" },
-    { label: "Leave Requests", value: analytics.leaveRequests, max: Math.max(analytics.leaveRequests, 6), tone: "purple", icon: "fa-umbrella-beach" },
-    { label: "Attendance %", value: `${analytics.rate}%`, rawValue: analytics.rate, max: 100, tone: "blue", icon: "fa-chart-simple" },
-  ];
-
-  const detailFields = [
-    ["Email", userProfile.email || "—"],
-    ["Department", userProfile.department || "—"],
-    ["Location", userProfile.branch || "—"],
-    ["Employee ID", userProfile.employee_code],
-  ];
-
-  const performanceMetrics = [
-    {
-      cls: "blue",
-      icon: "fa-percent",
-      label: "Attendance %",
-      value: `${analytics.rate}%`,
-      note: analytics.grade,
-      noteClass: `score-grade ${analytics.gradeClass}`,
-    },
-    {
-      cls: "success",
-      icon: "fa-business-time",
-      label: "Avg Working Hours",
-      value: formatProductionHours(analytics.avgHours),
-      note: analytics.hint,
-    },
-    {
-      cls: "purple",
-      icon: "fa-mug-hot",
-      label: "Avg Break Time",
-      value: `${analytics.avgBreakMinutes}m`,
-      note: "Daily average",
-    },
-    {
-      cls: "warning",
-      icon: "fa-clock",
-      label: "Late Minutes (Monthly)",
-      value: analytics.lateMinutes,
-      note: `${analytics.lateCount} late logins`,
-    },
-  ];
-
-  const changeMonth = (delta) => {
-    setViewDate((prev) => {
-      const next = new Date(prev);
-      next.setMonth(next.getMonth() + delta);
-      return next;
-    });
-  };
 
   return (
-    <div className={embedded ? "employee-dashboard" : "layout employee-dashboard"}>
-      {!embedded && <EmployeeSidebar activePage="dashboard" />}
+    <div className={embedded ? "employee-dashboard" : "employee-dashboard"}>
       <div className="main">
         <div className="content">
-          <section className="employee-top-card">
-            <div className="employee-greeting">
-              <div className="welcome-kicker">{getGreeting()},</div>
-              <div className="welcome-title">{userProfile.full_name}</div>
-              <div className="employee-date-row">
-                <span><i className="fas fa-calendar-day" /> {liveDateLabel}</span>
-                <span><i className="fas fa-clock" /> {liveTimeLabel}</span>
-              </div>
-            </div>
-            <div className="employee-details-card">
-              {detailFields.map(([label, value]) => (
-                <div key={label}>
-                  <span>{label}</span>
-                  <strong>{value}</strong>
+          {/* Birthday Widget */}
+          {birthdayInfo && birthdayInfo.hasBirthday && birthdayInfo.isToday && (
+            <section className="birthday-widget today">
+              <div className="birthday-greeting">
+                <div className="birthday-icon-large">
+                  <i className="fas fa-birthday-cake" />
                 </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="monthly-overview-card">
-            <div className="monthly-overview-head">
-              <div>
-                <h2>{viewDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" })} Overview</h2>
-                <p>Month-to-date attendance summary</p>
-              </div>
-              <div className="month-nav">
-                <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month">
-                  <i className="fas fa-chevron-left" />
-                </button>
-                <span>{monthLabel}</span>
-                <button type="button" onClick={() => changeMonth(1)} aria-label="Next month">
-                  <i className="fas fa-chevron-right" />
-                </button>
-              </div>
-            </div>
-            <div className="overview-kpi-row">
-              {overviewItems.map((item) => (
-                <div className="overview-kpi" key={item.label}>
-                  <span className={`dash-icon mini ${item.tone}`}>
-                    <i className={`fas ${item.icon}`} />
-                  </span>
-                  <strong>{item.value}</strong>
-                  <small>{item.label}</small>
+                <div className="birthday-message">
+                  <h2>🎉 Happy Birthday, {userProfile.firstName}! 🎉</h2>
+                  <p>Wishing you a wonderful birthday from the entire VJC Overseas team!</p>
+                  <p className="birthday-age">Turning {birthdayInfo.age} today</p>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          <div className="employee-main-grid">
-            <section className="today-card dashboard-snapshot">
-              <div className="today-header">
-                <div>
-                  <div className="today-title">Today&apos;s Attendance</div>
-                  <span className="today-date">{todayDateLabel}</span>
-                </div>
-                <span className={`status-chip ${todayCard.statusCls}`}>{todayCard.statusText}</span>
-              </div>
-              <div className="today-grid">
-                <div>
-                  <i className="fas fa-right-to-bracket ti-icon" />
-                  <div className="ti-label">Check In</div>
-                  <div className="ti-val">{todayCard.checkIn}</div>
-                </div>
-                <div>
-                  <i className="fas fa-right-from-bracket ti-icon" />
-                  <div className="ti-label">Check Out</div>
-                  <div className="ti-val">{todayCard.checkOut}</div>
-                </div>
-                <div>
-                  <i className="fas fa-clock ti-icon" />
-                  <div className="ti-label">Late Minutes</div>
-                  <div className="ti-val">{todayCard.late} min</div>
-                </div>
-                <div>
-                  <i className="fas fa-id-badge ti-icon" />
-                  <div className="ti-label">Status</div>
-                  <div className="ti-val">{todayCard.statusText}</div>
-                </div>
-              </div>
-              <div className={`attendance-message ${todayCard.statusCls}`}>
-                <i className={`fas ${todayCard.statusCls === "absent" ? "fa-circle-xmark" : todayCard.statusCls === "late" ? "fa-triangle-exclamation" : "fa-circle-check"}`} />
-                {todayCard.message}
               </div>
             </section>
-          </div>
+          )}
 
-          <section className="quick-actions-card">
-            <div className="section-title">Quick Actions</div>
-            <div className="quick-actions-grid">
-              {quickActions.map((action) => (
-                <button key={action.label} type="button" onClick={() => navigate(action.path)}>
-                  <span><i className={`fas ${action.icon}`} /></span>
-                  <div>
-                    <strong>{action.label}</strong>
-                    <small>{action.subtitle}</small>
-                  </div>
-                  <i className="fas fa-arrow-right action-arrow" />
-                </button>
-              ))}
+          {/* Employee Profile Header */}
+          <section className="employee-header">
+            {/* Left - Employee Greeting */}
+            <div className="header-left">
+              <h1>{getGreeting()}, {userProfile.firstName}! 👋</h1>
+              <div className="header-date">
+                <span>{liveDateLabel}</span>
+                <span className="separator">|</span>
+                <span>{userProfile.department}</span>
+                <span className="employee-live-time">{liveTimeLabel}</span>
+              </div>
+            </div>
+
+            {/* Right - Employee Information */}
+            <div className="header-right">
+              <div className="info-block">
+                <Mail className="info-icon" />
+                <div>
+                  <span className="info-label">EMAIL</span>
+                  <span className="info-value">{userProfile.email}</span>
+                </div>
+              </div>
+              <div className="separator-line"></div>
+              <div className="info-block">
+                <MapPin className="info-icon" />
+                <div>
+                  <span className="info-label">LOCATION</span>
+                  <span className="info-value">{userProfile.branch}</span>
+                </div>
+              </div>
+              <div className="separator-line"></div>
+              <div className="info-block">
+                <IdCard className="info-icon" />
+                <div>
+                  <span className="info-label">EMPLOYEE ID</span>
+                  <span className="info-value">{userProfile.employee_code}</span>
+                </div>
+              </div>
             </div>
           </section>
 
-          <section className="monthly-summary-card">
-            {monthlySummaryCards.map((item) => {
-              const rawValue = item.rawValue ?? Number(item.value || 0);
-              const percent = item.max > 0 ? Math.min(100, Math.round((rawValue / item.max) * 100)) : 0;
-              return (
-                <div className={`summary-progress-card ${item.tone}`} key={item.label}>
-                  <i className={`fas ${item.icon} summary-icon`} />
-                  <strong>{item.value}</strong>
-                  <span>{item.label}</span>
-                  <small>{percent}%</small>
-                  <div className="summary-progress-track">
-                    <div style={{ width: `${percent}%` }} />
-                  </div>
-                </div>
-              );
-            })}
+          {/* Work Timer Section - Redesigned Corporate Design */}
+          <section className="work-timer-card">
+            {/* Section 1: Work Timer Header */}
+            <div className="timer-section-header">
+              <div className="timer-icon-container">
+                <Clock4 className="timer-icon" />
+              </div>
+              <div className="timer-header-text">
+                <h3 className="timer-title">Work Timer</h3>
+                <p className="timer-subtitle">Track and manage your work hours</p>
+              </div>
+            </div>
+
+            {/* Section 2: Digital Timer */}
+            <div className="timer-section-digital">
+              <div className="digital-timer-display" id="digital-timer">
+                00 : 00 : 00
+              </div>
+              <div className="timer-labels">
+                <span className="timer-label">Hours</span>
+                <span className="timer-label">Minutes</span>
+                <span className="timer-label">Seconds</span>
+              </div>
+            </div>
+
+            {/* Section 3: Attendance Controls */}
+            <div className="timer-section-controls">
+              <div className="attendance-status-pill" id="attendance-status">
+                <span className="status-indicator"></span>
+                <span className="status-text">Not Checked In</span>
+              </div>
+              <div className="control-buttons">
+                <button className="btn-check-in" id="btn-check-in" onClick={handleClockIn}>
+                  <Play className="btn-icon" />
+                  Check In
+                </button>
+              </div>
+            </div>
+
+            {/* Section 4: Attendance Details */}
+            <div className="timer-section-details">
+              <div className="detail-row">
+                <Clock className="detail-icon" />
+                <span className="detail-label">Check In:</span>
+                <span className="detail-value" id="detail-check-in">--</span>
+              </div>
+              <div className="detail-row">
+                <LogOut className="detail-icon" />
+                <span className="detail-label">Check Out:</span>
+                <span className="detail-value" id="detail-check-out">--</span>
+              </div>
+            </div>
+
+            {/* Section 5: Work Hours */}
+            <div className="timer-section-work-hours">
+              <Briefcase className="work-hours-icon" />
+              <div className="work-hours-content">
+                <span className="work-hours-label">Work Hours</span>
+                <span className="work-hours-value" id="work-hours-value">00h 00m</span>
+              </div>
+            </div>
           </section>
 
-          <section className="performance-section single">
-            <div className="performance-card-simple">
-              <div className="performance-head">
+          {/* Attendance Summary Cards - 6 Cards in One Row */}
+          <section className="summary-cards-row">
+            <div className="summary-card total">
+              <div className="summary-icon">
+                <Calendar />
+              </div>
+              <div className="summary-content">
+                <div className="summary-value">{analytics.totalDays}</div>
+                <div className="summary-label">Total Days</div>
+                <div className="summary-trend">Month</div>
+              </div>
+            </div>
+            <div className="summary-card working">
+              <div className="summary-icon">
+                <CalendarCheck />
+              </div>
+              <div className="summary-content">
+                <div className="summary-value">{analytics.workingDays}</div>
+                <div className="summary-label">Working Days</div>
+                <div className="summary-trend">Excl. Sun/Hol</div>
+              </div>
+            </div>
+            <div className="summary-card present">
+              <div className="summary-icon">
+                <CalendarCheck />
+              </div>
+              <div className="summary-content">
+                <div className="summary-value">{analytics.fullDays}</div>
+                <div className="summary-label">Present Days</div>
+                <div className="summary-trend">Full Days</div>
+              </div>
+            </div>
+            <div className="summary-card absent">
+              <div className="summary-icon">
+                <Clock />
+              </div>
+              <div className="summary-content">
+                <div className="summary-value">{analytics.absentDays}</div>
+                <div className="summary-label">Absent Days</div>
+                <div className="summary-trend">Without information</div>
+              </div>
+            </div>
+            <div className="summary-card late">
+              <div className="summary-icon">
+                <Clock />
+              </div>
+              <div className="summary-content">
+                <div className="summary-value">{analytics.lateCount}</div>
+                <div className="summary-label">Late Logins</div>
+                <div className="summary-trend">After 9:30 AM</div>
+              </div>
+            </div>
+            <div className="summary-card holiday">
+              <div className="summary-icon">
+                <Calendar />
+              </div>
+              <div className="summary-content">
+                <div className="summary-value">{analytics.holidayCount}</div>
+                <div className="summary-label">Holidays</div>
+                <div className="summary-trend">This Month</div>
+              </div>
+            </div>
+          </section>
+
+          {/* Pending Tasks and Quick Actions - Two Column Layout */}
+          <section className="tasks-actions-layout">
+            {/* Pending Tasks Section */}
+            <div className="pending-tasks-section">
+              <div className="section-header">
+                <AlertCircle className="section-icon" />
                 <div>
-                  <div className="section-title">Performance Overview</div>
-                  <div className="analytics-head-sub">{analyticsSubTitle}</div>
+                  <h2>Pending Tasks</h2>
+                  <p>{pendingTasks.length} task{pendingTasks.length !== 1 ? 's' : ''} pending</p>
                 </div>
               </div>
-              <div className="perf-stats simple">
-                {performanceMetrics.map((metric) => (
-                  <div className={`performance-metric ${metric.cls}`} key={metric.label}>
-                    <span><i className={`fas ${metric.icon}`} /> {metric.label}</span>
-                    <strong>{metric.value}</strong>
-                    <small className={metric.noteClass}>{metric.note}</small>
+              {tasksLoading ? (
+                <div className="tasks-loading">Loading tasks...</div>
+              ) : pendingTasks.length === 0 ? (
+                <div className="tasks-empty">
+                  <ListChecks className="empty-icon" />
+                  <p>No pending tasks. You're all caught up!</p>
+                </div>
+              ) : (
+                <div className="tasks-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Task Title</th>
+                        <th>Priority</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingTasks.slice(0, 5).map((task) => {
+                        const isOverdue = task.due_date && new Date(task.due_date) < new Date();
+                        const priorityClass = (task.priority || "").toLowerCase();
+                        const statusClass = (task.status || "").toLowerCase();
+                        return (
+                          <tr key={task.id} className={isOverdue ? 'overdue' : ''}>
+                            <td className="task-title-cell">{task.title || "Untitled Task"}</td>
+                            <td>
+                              <span className={`priority-badge priority-${priorityClass}`}>
+                                {task.priority || "Medium"}
+                              </span>
+                            </td>
+                            <td className={isOverdue ? 'overdue-date' : ''}>
+                              {task.due_date ? new Date(task.due_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' }) : '--'}
+                            </td>
+                            <td>
+                              <span className={`status-badge status-${statusClass}`}>
+                                {task.status || "Not Started"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {pendingTasks.length > 0 && (
+                <div className="view-all-link" onClick={() => navigate("../tasks")}>
+                  View All Tasks
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="quick-actions">
+              <div className="quick-actions-header">
+                <Zap className="quick-actions-icon" />
+                <h2>Quick Actions</h2>
+              </div>
+              <div className="quick-actions-grid">
+                <div className="quick-action-card" onClick={() => navigate("../attendance")}>
+                  <div className="action-icon-container blue">
+                    <CalendarCheck className="action-icon" />
                   </div>
-                ))}
+                  <div className="action-content">
+                    <h3>Attendance</h3>
+                    <p>View & manage attendance</p>
+                  </div>
+                  <ChevronRight className="action-arrow" />
+                </div>
+                <div className="quick-action-card" onClick={() => navigate("../leave")}>
+                  <div className="action-icon-container green">
+                    <Umbrella className="action-icon" />
+                  </div>
+                  <div className="action-content">
+                    <h3>Apply Leave</h3>
+                    <p>Request for leave</p>
+                  </div>
+                  <ChevronRight className="action-arrow" />
+                </div>
+                <div className="quick-action-card" onClick={() => navigate("../tasks")}>
+                  <div className="action-icon-container blue">
+                    <ListChecks className="action-icon" />
+                  </div>
+                  <div className="action-content">
+                    <h3>My Tasks</h3>
+                    <p>View assigned tasks</p>
+                  </div>
+                  <ChevronRight className="action-arrow" />
+                </div>
+                <div className="quick-action-card" onClick={() => navigate("../payslip")}>
+                  <div className="action-icon-container purple">
+                    <FileText className="action-icon" />
+                  </div>
+                  <div className="action-content">
+                    <h3>My Payslips</h3>
+                    <p>View & download payslips</p>
+                  </div>
+                  <ChevronRight className="action-arrow" />
+                </div>
+                <div className="quick-action-card" onClick={() => navigate("../onboarding")}>
+                  <div className="action-icon-container green">
+                    <UserPlus className="action-icon" />
+                  </div>
+                  <div className="action-content">
+                    <h3>Onboarding</h3>
+                    <p>View onboarding checklist</p>
+                  </div>
+                  <ChevronRight className="action-arrow" />
+                </div>
+                <div className="quick-action-card" onClick={() => navigate("../offboarding")}>
+                  <div className="action-icon-container red">
+                    <LogOut className="action-icon" />
+                  </div>
+                  <div className="action-content">
+                    <h3>Offboarding</h3>
+                    <p>View offboarding checklist</p>
+                  </div>
+                  <ChevronRight className="action-arrow" />
+                </div>
               </div>
             </div>
           </section>
         </div>
       </div>
-      <button
-        type="button"
-        className="employee-help-floating-btn"
-        onClick={() => navigate(userProfile.role === "SUB_ADMIN" ? "/sub-admin/help-center" : "/employee/help-center")}
-        aria-label={userProfile.role === "SUB_ADMIN" ? "Open sub admin help center" : "Open employee help center"}
-        style={embedded && userProfile.role !== "SUB_ADMIN" ? { display: "none" } : undefined}
-      >
-        <span>🎧</span>
-        Need Help
-      </button>
     </div>
   );
 }
 
-function isGraceLateLogin(rec) {
-  if (!rec?.check_in_time && !rec?.office_in && !rec?.checkIn) return false;
-  const raw = rec?.check_in_time || rec?.office_in || rec?.checkIn;
-  if (!raw) return false;
-  const [h, m] = String(raw).slice(0, 5).split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return false;
-  const minutes = h * 60 + m;
-  return minutes >= 10 * 60 + 15 && minutes < 10 * 60 + 30;
+function isGraceLateLogin(rec = {}) {
+  const status = String(rec?.status || "").toLowerCase();
+  const lateMinutes = Number(rec?.late_minutes || 0);
+  return lateMinutes > 0 && ["full_day", "present", "in_progress", "working"].includes(status);
 }
-
-
-

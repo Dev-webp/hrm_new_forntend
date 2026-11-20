@@ -8,6 +8,8 @@ import {
   buildAutoEmail,
   formatAadhar,
   formatDate,
+  getEmployeeStatusLabel,
+  isEmployeeInactive,
 } from "../utils/employeeHelpers";
 
 
@@ -972,7 +974,6 @@ function LoginAccessModal({ open, employee, onClose }) {
         {loading ? (
 
           <div className="login-access-loading">
-            <i className="fas fa-spinner fa-spin" />
             Loading login access...
           </div>
 
@@ -1222,7 +1223,6 @@ function LoginAccessModal({ open, employee, onClose }) {
               >
                 {savingAccess ? (
                   <>
-                    <i className="fas fa-spinner fa-spin" />
                     Saving...
                   </>
                 ) : (
@@ -1541,7 +1541,17 @@ function EmployeeDetailsModal({
 
               <div className="detail-value">
 
-                {employee.status === "active" ? (
+                {isEmployeeInactive(employee) ? (
+
+                  <span
+                    style={{
+                      color: "#F87171",
+                    }}
+                  >
+                    ● {getEmployeeStatusLabel(employee)}
+                  </span>
+
+                ) : (
 
                   <span
                     style={{
@@ -1549,16 +1559,6 @@ function EmployeeDetailsModal({
                     }}
                   >
                     ● Active
-                  </span>
-
-                ) : (
-
-                  <span
-                    style={{
-                      color: "#F87171",
-                    }}
-                  >
-                    ● Inactive
                   </span>
 
                 )}

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import EmployeeSidebar from "../../components/EmployeeSidebar";
 import {
   deleteEmployeeMessage,
   fetchEmployeeMessages,
@@ -106,9 +105,7 @@ export default function EmployeeMessages() {
   };
 
   return (
-    <div className="employee-layout employee-messages-page">
-      <EmployeeSidebar activePage="messages" />
-
+    <div className="employee-messages-page">
       <main className="employee-messages-main">
         <header className="messages-header">
           <div>

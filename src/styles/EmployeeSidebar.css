@@ -2,17 +2,18 @@
 
 .employee-sidebar {
   width: 270px;
-  background: #F5F7FA;
-  border-right: 1px solid rgba(255, 140, 0, 0.2);
+  background: #082F6B;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow-y: auto;
   transition: width 0.3s;
+  height: 100vh;
 }
 
 .employee-sidebar.collapsed {
-  width: 80px;
+  width: 64px;
 }
 
 .employee-sidebar.collapsed .logo-text,
@@ -40,14 +41,14 @@
 
 .employee-sidebar .logo-area {
   padding: 24px 20px 18px;
-  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 20px;
 }
 
 .employee-sidebar .logo-text h2 {
   font-size: 1.4rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #FFF4E5, #FF8C00);
+  color: white;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -55,14 +56,14 @@
 
 .employee-sidebar .logo-text p {
   font-size: 0.65rem;
-  color: #FF8C00;
+  color: rgba(255, 255, 255, 0.7);
   letter-spacing: 2px;
   margin-top: 3px;
 }
 
 .employee-sidebar .emp-avatar-area {
   padding: 0 20px 20px;
-  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -72,27 +73,26 @@
 .employee-sidebar .emp-avatar {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #FF8C00, #D97706);
+  background: #FF9000;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1rem;
-  color: #1A2B4B;
-  border: 2px solid #FF8C00;
+  color: white;
   flex-shrink: 0;
 }
 
 .employee-sidebar .emp-info .name {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #FF8C00;
+  color: white;
 }
 
 .employee-sidebar .emp-info .dept {
   font-size: 0.65rem;
-  color: #64748B;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 2px;
 }
 
@@ -105,7 +105,7 @@
   font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: rgba(255, 140, 0, 0.35);
+  color: rgba(255, 255, 255, 0.5);
   padding: 8px 10px 4px;
   font-weight: 700;
 }
@@ -116,10 +116,10 @@
   gap: 12px;
   padding: 10px 14px;
   margin: 2px 0;
-  border-radius: 14px;
+  border-radius: 8px;
   font-size: 0.83rem;
   font-weight: 500;
-  color: #64748B;
+  color: white;
   cursor: pointer;
   transition: 0.2s;
   background: none;
@@ -133,24 +133,26 @@
 .employee-sidebar .nav-item i {
   width: 22px;
   font-size: 1.1rem;
-  color: #FF8C00;
+  color: white;
   flex-shrink: 0;
 }
 
 .employee-sidebar .nav-item:hover {
-  background: #0D47A1;
-  color: #FF8C00;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .employee-sidebar .nav-item.active {
-  background: linear-gradient(95deg, #0D47A1, #08306F);
-  border-left: 3px solid #FF8C00;
-  color: #FF8C00;
+  background: #FF9000;
+  color: #082F6B;
+}
+
+.employee-sidebar .nav-item.active i {
+  color: #082F6B;
 }
 
 .employee-sidebar .sidebar-bottom {
   padding: 14px;
-  border-top: 1px solid rgba(255, 140, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .employee-layout {
@@ -287,6 +289,7 @@
   background: #08306F;
   border-right: 1px solid rgba(255, 140, 0, 0.22);
   padding-bottom: 8px;
+  transition: width 0.3s ease;
 }
 
 .employee-sidebar .logo-area {
