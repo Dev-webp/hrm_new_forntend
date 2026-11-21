@@ -299,9 +299,17 @@ const chipColor = (status) => {
   }
 };
 
-// Lead history route is nested under the portal prefix (/admin or /manager).
+// Lead history route is nested under the portal prefix (/admin, /manager, or /employee).
 const leadHistoryUrl = (id) => {
-  const base = window.location.pathname.startsWith("/manager") ? "/manager" : "/admin";
+  const pathname = window.location.pathname;
+  let base;
+  if (pathname.startsWith("/manager")) {
+    base = "/manager";
+  } else if (pathname.startsWith("/employee")) {
+    base = "/employee";
+  } else {
+    base = "/admin";
+  }
   return `${base}/crm/lead-history/${id}`;
 };
 
@@ -3108,12 +3116,13 @@ const [statusFilter, setStatusFilter] = useState("All");
 </TableCell>
                   <TableCell>{lead.service_type || "—"}</TableCell>
                   <TableCell>{lead.source}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: 300, minWidth: 300 }}>
                     <select
                       value={lead.status || "New"}
                       onChange={(e) => handleStatusChange(lead.id, e.target.value)}
                       style={{
-                        minWidth: 140,
+                        width: "100%",
+                        maxWidth: 290,
                         padding: "6px 12px",
                         fontSize: "14px",
                         fontWeight: 600,

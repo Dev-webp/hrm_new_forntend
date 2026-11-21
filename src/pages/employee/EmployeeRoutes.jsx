@@ -26,6 +26,7 @@ const EmployeeAWI = lazy(() => import("./EmployeeAWI"));
 const EmployeeOnboarding = lazy(() => import("./EmployeeOnboarding"));
 const EmployeeOffboarding = lazy(() => import("./EmployeeOffboarding"));
 const EmployeeLifecycleOnboarding = lazy(() => import("./EmployeeLifecycleOnboarding"));
+const LeadProfilesHistory = lazy(() => import("../../modules/crm/LeadProfilesHistory"));
 
 export default function EmployeeRoutes() {
   const role = getStoredRole();
@@ -51,6 +52,7 @@ export default function EmployeeRoutes() {
           <Route path="my-onboarding" element={<EmployeeLifecycleOnboarding />} />
           <Route path="offboarding" element={<EmployeeOffboarding />} />
           <Route path="crm/leads" element={<EmployeeLeads />} />
+          <Route path="crm/lead-history/:id" element={<LeadProfilesHistory />} />
           <Route path="crm/customers" element={<EmployeeCustomers />} />
           <Route path="invoice/reports" element={<EmployeeReports />} />
           <Route path="invoice/invoices" element={<EmployeeInvoices />} />
