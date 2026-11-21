@@ -11,6 +11,7 @@ const EmployeeHelpCenter = lazy(() => import("../employee/EmployeeHelpCenter"));
 const EmployeeInstructions = lazy(() => import("../employee/EmployeeInstructions"));
 const EmployeeLeave = lazy(() => import("../employee/EmployeeLeave"));
 const EmployeePayslip = lazy(() => import("../employee/EmployeePayslip"));
+const EmployeeTasks = lazy(() => import("../employee/EmployeeTasks"));
 const ManagerAttendance = lazy(() => import("../manager/ManagerAttendance"));
 const ManagerBreaks = lazy(() => import("../manager/ManagerBreaks"));
 
@@ -25,6 +26,7 @@ export default function SubAdminRoutes() {
           <Route path="calendar" element={<EmployeeAttendance embedded />} />
           <Route path="breaks" element={<ManagerBreaks />} />
           <Route path="leave" element={<EmployeeLeave embedded />} />
+          <Route path="tasks" element={<EmployeeTasks embedded />} />
           <Route path="payslip" element={<EmployeePayslip embedded />} />
           <Route path="instructions" element={<EmployeeInstructions embedded />} />
           <Route path="notifications" element={<ManagerPlaceholder title="Notifications" />} />

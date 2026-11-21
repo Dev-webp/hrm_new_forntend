@@ -16,7 +16,6 @@ const NAV_ITEMS = [
   { id: "leave", path: "/employee/leave", icon: "fa-umbrella-beach", label: "Leave" },
   { id: "breaks", path: "/employee/breaks", icon: "fa-coffee", label: "Breaks" },
   { id: "tasks", path: "/employee/tasks", icon: "fa-tasks", label: "Tasks" },
-  { id: "awi", path: "/employee/awi", icon: "fa-exclamation-triangle", label: "AWI Requests" },
   { id: "messages", path: "/employee/messages", icon: "fa-envelope", label: "Messages" },
   { id: "payslip", path: "/employee/payslip", icon: "fa-file-invoice-dollar", label: "Payslip" },
   { id: "instructions", path: "/employee/instructions", icon: "fa-book-open", label: "Instructions" },

@@ -5,6 +5,7 @@ export const SUB_ADMIN_NAV = [
       { path: "/sub-admin", icon: "fa-chart-line", label: "Dashboard", end: true },
       { path: "/sub-admin/calendar", icon: "fa-calendar-alt", label: "Calendar" },
       { path: "/sub-admin/leave", icon: "fa-umbrella-beach", label: "Leave" },
+      { path: "/sub-admin/tasks", icon: "fa-tasks", label: "Tasks" },
       { path: "/sub-admin/payslip", icon: "fa-file-invoice-dollar", label: "My Payslip" },
       { path: "/subadmin/instructions", icon: "fa-book-open", label: "Instructions" },
     ],

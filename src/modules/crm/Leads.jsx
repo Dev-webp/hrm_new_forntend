@@ -273,16 +273,18 @@ const STICKY_COL = {
   mobile: { width: 130, left: 526 },     // was 446
 };
 
-// Row background color per status — matches the reference screenshots
+// Row background color per status — matches the user requirements
 const statusRowColor = (status) => {
-  switch (status) {
-    case "Warm": return "#f6d9a7";
-    case "Cold": return "#ffffff";
-    case "Prospect": return "#a9d6d1";
-    case "HOLD": return "#e3a6a1";
-    case "Pending Agreement": return "#ffffff";
-    case "Dead": return "#d9d9d9";
-    default: return "#ffffff";
+  switch (String(status || "").trim().toLowerCase()) {
+    case "new": return "#FFFFFF";
+    case "warm": return "#F6D9A7";
+    case "cold": return "#FFFFFF";
+    case "prospect": return "#A9D6D1";
+    case "hold": return "#E3A6A1";
+    case "pending agreement": return "#FFFFFF";
+    case "closed": return "#FFFFFF";
+    case "dead": return "#D9D9D9";
+    default: return "#FFFFFF";
   }
 };
 
@@ -295,6 +297,38 @@ const chipColor = (status) => {
     case "Dead": return "default";
     default: return "default";
   }
+};
+
+// Lead history route is nested under the portal prefix (/admin or /manager).
+const leadHistoryUrl = (id) => {
+  const base = window.location.pathname.startsWith("/manager") ? "/manager" : "/admin";
+  return `${base}/crm/lead-history/${id}`;
+};
+
+// Status color coding for the per-row status dropdown
+const STATUS_COLORS = {
+  "New": "#1976d2",
+  "Warm": "#ed6c02",
+  "Cold": "#0288d1",
+  "Prospect": "#2e7d32",
+  "HOLD": "#d32f2f",
+  "Pending Agreement": "#8e24aa",
+  "Closed": "#616161",
+  "Dead": "#9e9e9e",
+};
+const statusColorFor = (status) => {
+  const key = Object.keys(STATUS_COLORS).find((k) => k.toLowerCase() === String(status || "").trim().toLowerCase());
+  return STATUS_COLORS[key] || "#9e9e9e";
+};
+const statusSelectSx = (status) => {
+  const c = statusColorFor(status);
+  return {
+    minWidth: 140,
+    "& .MuiSelect-select": { 
+      color: c, 
+      fontWeight: 600,
+    },
+  };
 };
 
 // AFTER
@@ -644,7 +678,7 @@ function AddEnquiryForm({ onSaved, isChairman }) {
                 <Typography variant="body2">
                   {d.lead_name} · {d.contact_number} · {d.service_type || "Service not set"} · Status: {d.status || "New"} · Consultant: {d.assigned_to_name || "Not assigned"} · Created {fmtDateTime(d.created_at)}
                 </Typography>
-                <Button size="small" onClick={() => window.open(`/lead-history/${d.id}`, "_blank")} sx={{ textTransform: "none" }}>
+                <Button size="small" onClick={() => window.open(leadHistoryUrl(d.id), "_blank")} sx={{ textTransform: "none" }}>
                   View details
                 </Button>
                 {isInactiveLead(d) && (
@@ -1340,7 +1374,7 @@ function PendingAssignmentTab() {
   };
 
   const openHistory = (lead) => {
-    window.open(`/lead-history/${lead.id}`, "_blank");
+    window.open(leadHistoryUrl(lead.id), "_blank");
   };
 
   if (loading) {
@@ -1747,7 +1781,7 @@ function ClientMeetingToggle({ onModeChange }) {
   useEffect(() => {
     if (endedMin === null) return;
     const t = setTimeout(() => setEndedMin(null), 15000);
-    return () => clearInterval(t);
+    return () => clearTimeout(t);
   }, [endedMin]);
 
   const elapsedMin = inMeeting && startedAt ? Math.floor((now - startedAt) / 60000) : 0;
@@ -2574,7 +2608,7 @@ function DeadEnquiryTab() {
             <TableHead sx={{ bgcolor: "#f5f5f5" }}>
               <TableRow>
                 {["Action", "Created - Updated", "Name", "Mobile", "Email", "Service Type", "Interested Country", "Assigned To", "Status", "Review", "Last Remark"].map((h) => (
-                  <TableCell key={h} sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{h}</TableCell>
+                  <TableCell key={h} sx={{ fontWeight: 700, whiteSpace: "nowrap", fontSize: "0.75rem", padding: "8px 12px" }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -2616,7 +2650,7 @@ function DeadEnquiryTab() {
                     <TextField
                       select size="small" value="Dead"
                       onChange={(e) => changeStatus(lead.id, e.target.value)}
-                      sx={{ minWidth: 140, bgcolor: "#fff" }}
+                      sx={statusSelectSx("Dead")}
                     >
                       {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                     </TextField>
@@ -2626,7 +2660,7 @@ function DeadEnquiryTab() {
                       <Button
                         size="small" variant="outlined"
                         startIcon={<HistoryIcon fontSize="small" />}
-                        onClick={() => window.open(`/lead-history/${lead.id}`, "_blank")}
+                        onClick={() => window.open(leadHistoryUrl(lead.id), "_blank")}
                         sx={{ textTransform: "none", height: 32, minWidth: "auto", px: 1, borderRadius: 1 }}
                       >
                         History
@@ -2708,19 +2742,37 @@ const [statusFilter, setStatusFilter] = useState("All");
   // add that route in your router (App.jsx / wherever your <Routes> live)
   // pointing to the new LeadProfileHistory component given separately below.
   const openHistory = (lead) => {
-    window.open(`/lead-history/${lead.id}`, "_blank");
+    window.open(leadHistoryUrl(lead.id), "_blank");
   };
 
   const handleStatusChange = async (leadId, newStatus) => {
+    console.log("[STATUS_CHANGE] Starting update:", { leadId, newStatus, currentLeads: leads.length });
+    
     // optimistic update
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)));
+    setLeads((prev) => {
+      const updated = prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l));
+      console.log("[STATUS_CHANGE] Optimistic update completed");
+      return updated;
+    });
+    
     try {
-      await fetch(`${API}/leads/${leadId}/status`, {
+      const res = await fetch(`${API}/leads/${leadId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({ status: newStatus }),
       });
-    } catch {
+      const body = await res.json().catch(() => null);
+      console.log("[STATUS_UPDATE]", leadId, newStatus, "->", res.status, body);
+      
+      if (!res.ok || body?.success === false) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      
+      // refresh the full row so every column reflects backend state
+      console.log("[STATUS_CHANGE] Refreshing leads from backend");
+      fetchLeads();
+    } catch (err) {
+      console.error("[STATUS_UPDATE] failed:", err);
       alert("❌ Failed to update status");
       fetchLeads();
     }
@@ -2892,31 +2944,35 @@ const [statusFilter, setStatusFilter] = useState("All");
     >    <Checkbox
                     checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length}
                     onChange={toggleSelectAll}
+                    size="small"
+                    sx={{ transform: "scale(0.8)" }}
                   />
                 </TableCell>
-<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.action.left, width: STICKY_COL.action.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4", textAlign: "center" }}>Action</TableCell>
-<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.created.left, width: STICKY_COL.created.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Created - Updated</TableCell>
-<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.name.left, width: STICKY_COL.name.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Name</TableCell>
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.action.left, width: STICKY_COL.action.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4", textAlign: "center", fontSize: "0.75rem", padding: "8px 12px" }}>Action</TableCell>
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.created.left, width: STICKY_COL.created.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4", fontSize: "0.75rem", padding: "8px 12px" }}>Created - Updated</TableCell>
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.name.left, width: STICKY_COL.name.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4", fontSize: "0.75rem", padding: "8px 12px" }}>Name</TableCell>
 
-<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.mobile.left, width: STICKY_COL.mobile.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4" }}>Mobile</TableCell>
-<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 320, pl: 3 }}>Email</TableCell>
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: STICKY_COL.mobile.left, width: STICKY_COL.mobile.width, zIndex: 3, bgcolor: "#f5f5f5", borderRight: "1px solid #c4c4c4", fontSize: "0.75rem", padding: "8px 12px" }}>Mobile</TableCell>
+<TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 320, pl: 3, fontSize: "0.75rem", padding: "8px 12px" }}>Email</TableCell>
                 <TableCell
   sx={{
     fontWeight: 700,
     whiteSpace: "nowrap",
     width: 160,
     pl: 2,
+    fontSize: "0.75rem",
+    padding: "8px 12px",
   }}
 >
   Interested Country
 </TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 140 }}>Service Type</TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Source</TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160 }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Assigned By</TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120 }}>Assigned To</TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 110 }}>SLA Timer</TableCell>
-                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 230 }}>Review</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 140, fontSize: "0.75rem", padding: "8px 12px" }}>Service Type</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120, fontSize: "0.75rem", padding: "8px 12px" }}>Source</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 160, fontSize: "0.75rem", padding: "8px 12px" }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120, fontSize: "0.75rem", padding: "8px 12px" }}>Assigned By</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 120, fontSize: "0.75rem", padding: "8px 12px" }}>Assigned To</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 110, fontSize: "0.75rem", padding: "8px 12px" }}>SLA Timer</TableCell>
+                <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 230, fontSize: "0.75rem", padding: "8px 12px" }}>Review</TableCell>
                 <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 180 }}>Branch</TableCell>
                 <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap", width: 400 }}>Last Remark</TableCell>
               </TableRow>
@@ -2929,14 +2985,25 @@ const [statusFilter, setStatusFilter] = useState("All");
                 </TableRow>
               )}
               {filteredLeads.map((lead) => (
-                <TableRow key={lead.id} sx={{ bgcolor: statusRowColor(lead.status) }}>
+                <TableRow 
+                  key={lead.id} 
+                  sx={{ 
+                    bgcolor: `${statusRowColor(lead.status)} !important`, 
+                    "& .MuiTableCell-root": {
+                      bgcolor: `${statusRowColor(lead.status)} !important`,
+                    }
+                  }} 
+                  style={{ backgroundColor: statusRowColor(lead.status) }}
+                >
 <TableCell
                     padding="none"
-                    sx={{ position: "sticky", left: STICKY_COL.checkbox.left, width: STICKY_COL.checkbox.width, textAlign: "center", zIndex: 1, bgcolor: statusRowColor(lead.status) }}
+                    sx={{ position: "sticky", left: STICKY_COL.checkbox.left, width: STICKY_COL.checkbox.width, textAlign: "center", zIndex: 1, bgcolor: `${statusRowColor(lead.status)} !important` }}
                   >
                     <Checkbox
                       checked={selectedIds.includes(lead.id)}
                       onChange={() => toggleSelect(lead.id)}
+                      size="small"
+                      sx={{ transform: "scale(0.8)" }}
                     />
                   </TableCell>
                   {/* NEW — Action column (share icon) */}
@@ -2947,7 +3014,7 @@ const [statusFilter, setStatusFilter] = useState("All");
                       left: STICKY_COL.action.left,
                       width: STICKY_COL.action.width,
                       zIndex: 1,
-                      bgcolor: statusRowColor(lead.status),
+                      bgcolor: `${statusRowColor(lead.status)} !important`,
                       textAlign: "center",
                       borderRight: "1px solid #c4c4c4",
                     }}
@@ -2968,7 +3035,7 @@ const [statusFilter, setStatusFilter] = useState("All");
     left: STICKY_COL.created.left,
     width: STICKY_COL.created.width,
     zIndex: 1,
-    bgcolor: statusRowColor(lead.status),
+    bgcolor: `${statusRowColor(lead.status)} !important`,
     lineHeight: 1.8,
     borderRight: "1px solid #c4c4c4",
   }}
@@ -3005,7 +3072,7 @@ const [statusFilter, setStatusFilter] = useState("All");
     left: STICKY_COL.name.left,
     width: STICKY_COL.name.width,
     zIndex: 1,
-    bgcolor: statusRowColor(lead.status),
+    bgcolor: `${statusRowColor(lead.status)} !important`,
     whiteSpace: "nowrap",
     borderRight: "1px solid #c4c4c4",
   }}
@@ -3018,7 +3085,7 @@ const [statusFilter, setStatusFilter] = useState("All");
     left: STICKY_COL.mobile.left,
     width: STICKY_COL.mobile.width,
     zIndex: 1,
-    bgcolor: statusRowColor(lead.status),
+    bgcolor: `${statusRowColor(lead.status)} !important`,
     whiteSpace: "nowrap",
     borderRight: "1px solid #c4c4c4",
   }}
@@ -3042,13 +3109,23 @@ const [statusFilter, setStatusFilter] = useState("All");
                   <TableCell>{lead.service_type || "—"}</TableCell>
                   <TableCell>{lead.source}</TableCell>
                   <TableCell>
-                    <TextField
-                      select size="small" value={lead.status}
+                    <select
+                      value={lead.status || "New"}
                       onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                      sx={{ minWidth: 140, bgcolor: "#fff" }}
+                      style={{
+                        minWidth: 140,
+                        padding: "6px 12px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: statusColorFor(lead.status || "New"),
+                        backgroundColor: "#fff",
+                        border: "1px solid #c4c4c4",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                      }}
                     >
-                      {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                    </TextField>
+                      {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </TableCell>
                   <TableCell>{lead.assigned_by_name || "—"}</TableCell>
                   <TableCell>{lead.assigned_to_name || "Not Assigned"}</TableCell>

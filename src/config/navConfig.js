@@ -43,7 +43,7 @@ export const NAV_MODULES = [
         label: "Leads",
         roles: ["admin", "manager", "operational-manager", "sub-admin"],
         subItems: [
-          { slug: "/crm/leads", icon: "fa-file-invoice", label: "Invoice Leads", roles: ["admin", "manager"], invoicePermission: "customers" },
+          { slug: "/crm/leads", icon: "fa-file-invoice", label: "CRM Leads", roles: ["admin", "manager"], invoicePermission: "customers" },
           { slug: "/admin/ops/leads", icon: "fa-briefcase", label: "OPS Leads", roles: ["admin", "manager", "operational-manager", "sub-admin"], opsAccess: true, opsSection: "leads", absolute: true },
           { slug: "/crm/customers", icon: "fa-address-book", label: "Customers", roles: ["admin", "manager"], invoicePermission: "customers" },
         ]

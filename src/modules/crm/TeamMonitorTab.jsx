@@ -24,6 +24,12 @@ import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 
 const API = import.meta.env.VITE_INVOICE_API_URL || "http://localhost:5000/api";
 
+// Lead history route is nested under the portal prefix (/admin or /manager).
+const leadHistoryUrl = (id) => {
+  const base = window.location.pathname.startsWith("/manager") ? "/manager" : "/admin";
+  return `${base}/crm/lead-history/${id}`;
+};
+
 const authHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("vjc_invoice_auth")}`,
 });
@@ -302,7 +308,7 @@ const load = useCallback(
   const sla = pct(s.contacted, s.assigned);
   const self = data?.scope === "self";
 
-  const openLead = (id) => window.open(`/lead-history/${id}`, "_blank");
+  const openLead = (id) => window.open(leadHistoryUrl(id), "_blank");
 const openAgentRedFlags = async (agent) => {
   setSelectedAgent(agent);
   setAgentRedFlags([]);

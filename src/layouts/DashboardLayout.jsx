@@ -3,7 +3,8 @@ import { Outlet } from "react-router-dom";
 import UnifiedSidebar from "../components/UnifiedSidebar";
 import EmployeeSidebar from "../components/EmployeeSidebar";
 import LiveNotificationToast from "../components/LiveNotificationToast";
-import { getStoredRole } from "../utils/auth";
+import ScreenTimeTracker from "../components/ScreenTimeTracker";
+import { getStoredRole, getStoredUser } from "../utils/auth";
 import "../styles/admin.css";
 
 function DashboardLayout({ role = "admin", children = null }) {
@@ -17,6 +18,25 @@ function DashboardLayout({ role = "admin", children = null }) {
 
   // Use EmployeeSidebar for employee role, UnifiedSidebar for others
   const Sidebar = role === "employee" ? EmployeeSidebar : UnifiedSidebar;
+  const user = getStoredUser();
+  const userRole = getStoredRole();
+
+  // Show screen timer on specific dashboards: Admin, HR, Sub-admin, Manager, Employee, Operational Manager
+  const shouldShowScreenTimer = [
+    "admin",
+    "HR",
+    "sub-admin",
+    "manager",
+    "employee",
+    "operational-manager"
+  ].includes(role) || [
+    "admin",
+    "HR",
+    "sub-admin",
+    "manager",
+    "employee",
+    "operational-manager"
+  ].includes(userRole);
 
   return (
     <div className="app-layout">
@@ -26,7 +46,10 @@ function DashboardLayout({ role = "admin", children = null }) {
         {children ?? <Outlet />}
       </div>
 
-      {role !== "sub-admin" && getStoredRole() !== "HR" && <LiveNotificationToast />}
+      {role !== "sub-admin" && userRole !== "HR" && <LiveNotificationToast />}
+      
+      {/* Screen Time Tracker - only on Admin, HR, Sub-admin, Manager, Employee dashboards */}
+      {user?.id && shouldShowScreenTimer && <ScreenTimeTracker userId={user.id} />}
     </div>
   );
 }

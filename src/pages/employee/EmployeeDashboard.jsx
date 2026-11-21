@@ -700,7 +700,7 @@ export default function EmployeeDashboard({ embedded = false }) {
               <div className="summary-content">
                 <div className="summary-value">{analytics.lateCount}</div>
                 <div className="summary-label">Late Logins</div>
-                <div className="summary-trend">After 9:30 AM</div>
+              
               </div>
             </div>
             <div className="summary-card holiday">
