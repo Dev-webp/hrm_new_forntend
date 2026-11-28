@@ -234,10 +234,12 @@ export default function AdminNotifications() {
           const effectiveTo = viewToDate || viewFromDate;
           if ((effectiveFrom && createdDate < effectiveFrom) || (effectiveTo && createdDate > effectiveTo)) return;
           setNotifications((prev) => [notif, ...prev]);
-          const icons = actionIcon(notif.action_type);
-          showToast(
-            `${icons.emoji} ${notif.description?.slice(0, 60) ?? ""}…`
-          );
+          if (!["login", "logout"].includes(notif.action_type)) {
+            const icons = actionIcon(notif.action_type);
+            showToast(
+              `${icons.emoji} ${notif.description?.slice(0, 60) ?? ""}…`
+            );
+          }
           setTimeout(() => addFlash(notif.id), 50);
         });
       } catch (err) {

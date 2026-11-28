@@ -43,6 +43,9 @@ function UnifiedSidebar({ role = "admin" }) {
     }
   }, []);
 
+  // Use HRMS invoice_permissions if available (for sub-admins), otherwise use Invoice auth permissions
+  const hrmsInvoicePermissions = storedUser?.invoice_permissions || {};
+
   const toggleExpand = useCallback((slug) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
@@ -84,7 +87,12 @@ function UnifiedSidebar({ role = "admin" }) {
     try {
       // Handle old-style config items (with path instead of slug)
       if (item.path) {
-        return true; // Old-style items are always visible for their role
+        // For sub-admins, check OPS access even for old-style items
+        if (role === "sub-admin") {
+          if (item.opsAccess && storedUser?.ops_access !== true) return false;
+          if (item.opsEntry || item.opsSection) return false; // Sub-admins don't get OPS unless explicitly granted
+        }
+        return true; // Old-style items are always visible for their role (unless blocked above)
       }
 
       if (isHr) {
@@ -109,39 +117,65 @@ function UnifiedSidebar({ role = "admin" }) {
 
       // Handle OPS items with subItems (parent items)
       if (item.subItems && Array.isArray(item.subItems) && item.subItems.length > 0) {
-        // Check if any sub-item is an OPS item and is allowed
-        const hasAllowedOpsSubItem = item.subItems.some(subItem => {
-          if (subItem.opsAccess && storedUser?.ops_access !== true) return false;
-          if (subItem.opsEntry) return ops?.enabled && !ops?.ready;
-          if (subItem.opsSection) return ops?.ready && ops?.allowedSections?.includes(subItem.opsSection);
-          return true;
-        });
+        // For sub-admins, check HRMS ops_access directly
+        if (role === "sub-admin") {
+          if (item.opsAccess && storedUser?.ops_access !== true) return false;
+          // Filter out OPS sub-items for sub-admins unless they have ops_access
+          const hasAllowedOpsSubItem = item.subItems.some(subItem => {
+            if (subItem.opsAccess || subItem.opsEntry || subItem.opsSection) {
+              return storedUser?.ops_access === true;
+            }
+            return true;
+          });
+          if (item.opsAccess) {
+            return hasAllowedOpsSubItem;
+          }
+        } else {
+          // Original OPS logic for other roles
+          const hasAllowedOpsSubItem = item.subItems.some(subItem => {
+            if (subItem.opsAccess && storedUser?.ops_access !== true) return false;
+            if (subItem.opsEntry) return ops?.enabled && !ops?.ready;
+            if (subItem.opsSection) return ops?.ready && ops?.allowedSections?.includes(subItem.opsSection);
+            return true;
+          });
 
-        // If parent has opsAccess, check if any sub-item is allowed
-        if (item.opsAccess) {
-          return hasAllowedOpsSubItem;
+          // If parent has opsAccess, check if any sub-item is allowed
+          if (item.opsAccess) {
+            return hasAllowedOpsSubItem;
+          }
         }
       }
 
       // Original OPS logic for standalone items
-      if (item.opsAccess && storedUser?.ops_access !== true) return false;
-      // OPS items: HRMS grants entry (ops_access), OPS decides the sections.
-      // Match EmployeeSidebar.jsx logic exactly
-      if (item.opsEntry) return ops?.enabled && !ops?.ready;
-      if (item.opsSection) return ops?.ready && ops?.allowedSections?.includes(item.opsSection);
+      // For sub-admins, check HRMS ops_access instead of OPS auth context
+      if (role === "sub-admin") {
+        if (item.opsAccess && storedUser?.ops_access !== true) return false;
+        if (item.opsEntry) return false; // Sub-admins don't use OPS entry flow
+        if (item.opsSection) return false; // Sub-admins don't have OPS sections unless granted
+      } else {
+        // Original OPS logic for other roles
+        if (item.opsAccess && storedUser?.ops_access !== true) return false;
+        // OPS items: HRMS grants entry (ops_access), OPS decides the sections.
+        // Match EmployeeSidebar.jsx logic exactly
+        if (item.opsEntry) return ops?.enabled && !ops?.ready;
+        if (item.opsSection) return ops?.ready && ops?.allowedSections?.includes(item.opsSection);
+      }
       // SECURITY NOTE: Admin bypass for Invoice permissions
       // Admins always see the full set of CRM/Finance actions, regardless of
       // their individual Invoice account permissions. This is intentional to give
       // admins full access to all modules. Managers and Employees remain gated
       // by their actual per-person Invoice permissions.
       if (role === "admin") return true;
-      if (item.invoicePermission && !invoicePermissions[item.invoicePermission]) return false;
-      return true;
+      // For sub-admins and others, check HRMS invoice_permissions first, then Invoice auth permissions
+      const hasInvoiceAccess = storedUser?.invoice_access === true;
+      const hasPermission = !item.invoicePermission ||
+        (hrmsInvoicePermissions[item.invoicePermission] || invoicePermissions[item.invoicePermission]);
+      return !item.invoicePermission || (hasInvoiceAccess && hasPermission);
     } catch (error) {
       console.error('[UnifiedSidebar] Error checking item visibility:', error, item);
       return false; // Hide item on error to prevent crashes
     }
-  }, [role, effectiveRole, isHr, storedUser, ops, invoicePermissions]);
+  }, [role, effectiveRole, isHr, storedUser, ops, invoicePermissions, hrmsInvoicePermissions]);
 
   // Select the appropriate navigation config based on role
   const navConfig = useMemo(() => {
@@ -164,6 +198,12 @@ function UnifiedSidebar({ role = "admin" }) {
       try {
         const visibleItems = [];
         for (const item of mod.items) {
+          // For old-style config items, check invoice permissions for sub-admins
+          if (item.path && item.invoicePermission) {
+            const hasInvoiceAccess = storedUser?.invoice_access === true;
+            const hasPermission = hrmsInvoicePermissions[item.invoicePermission] || invoicePermissions[item.invoicePermission];
+            if (!hasInvoiceAccess || !hasPermission) continue;
+          }
           if (!itemIsVisible(item)) continue;
           if (isHr && Array.isArray(item.subItems) && item.subItems.length > 0) {
             for (const sub of item.subItems) {
@@ -179,7 +219,7 @@ function UnifiedSidebar({ role = "admin" }) {
         return { ...mod, visibleItems: [] };
       }
     }).filter(mod => mod.visibleItems.length > 0);
-  }, [itemIsVisible, navConfig, isHr]);
+  }, [itemIsVisible, navConfig, isHr, storedUser, hrmsInvoicePermissions, invoicePermissions]);
 
   return (
     <aside className={`sidebar${collapsed ? " collapsed" : ""}`}>
@@ -283,7 +323,15 @@ function UnifiedSidebar({ role = "admin" }) {
 
                     {hasSubItems && isExpanded && (
                       <div style={{ marginLeft: '30px', marginTop: '5px' }} role="group" aria-label={`${label} submenu`}>
-                        {item.subItems.filter(subItem => itemIsVisible(subItem)).map((subItem) => {
+                        {item.subItems.filter(subItem => {
+                          // For sub-items, also check HRMS invoice_permissions first
+                          if (subItem.invoicePermission) {
+                            const hasInvoiceAccess = storedUser?.invoice_access === true;
+                            const hasPermission = hrmsInvoicePermissions[subItem.invoicePermission] || invoicePermissions[subItem.invoicePermission];
+                            return hasInvoiceAccess && hasPermission;
+                          }
+                          return itemIsVisible(subItem);
+                        }).map((subItem) => {
                           const subItemPath = subItem.absolute ? subItem.slug : `${basePath}${subItem.slug}`;
                           // Handle Case Filing/Case Processing view matching for sub-items
                           const subItemOpsViewMatches = (isActive) =>

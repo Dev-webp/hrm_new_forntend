@@ -416,6 +416,7 @@ const handleBranchSelect = (branch) => {
                 <th>Late Login Count</th>
                 <th>Production</th>
                 <th>Break (min)</th>
+                <th>Screen Time</th>
                 <th>Actions</th>
               </tr>
             </thead>

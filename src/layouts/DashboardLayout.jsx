@@ -46,7 +46,7 @@ function DashboardLayout({ role = "admin", children = null }) {
         {children ?? <Outlet />}
       </div>
 
-      {role !== "sub-admin" && userRole !== "HR" && <LiveNotificationToast />}
+      <LiveNotificationToast />
       
       {/* Screen Time Tracker - only on Admin, HR, Sub-admin, Manager, Employee dashboards */}
       {user?.id && shouldShowScreenTimer && <ScreenTimeTracker userId={user.id} />}

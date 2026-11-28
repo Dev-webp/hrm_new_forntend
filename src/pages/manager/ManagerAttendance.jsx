@@ -78,6 +78,19 @@ function getStatusBadge(status) {
   return <span className="badge badge-absent">ABSENT</span>;
 }
 
+function formatScreenTime(seconds) {
+  const totalSeconds = Number(seconds || 0);
+  if (totalSeconds <= 0) return "—";
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+  let timeString = "";
+  if (hours > 0) timeString += `${hours}h `;
+  if (minutes > 0 || hours > 0) timeString += `${minutes}m `;
+  timeString += `${remainingSeconds}s`;
+  return timeString;
+}
+
 function getStatusLabel(status) {
   const s = String(status || "absent").toLowerCase();
   if (s === "in_progress" || s === "working") return "WORKING";
@@ -509,6 +522,7 @@ export default function ManagerAttendance() {
                   <th>Late Login Count</th>
                   <th>Production</th>
                   <th>Break (min)</th>
+                  <th>Screen Time</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -591,12 +605,13 @@ export default function ManagerAttendance() {
                     <th>Status</th>
                     <th>Late (min)</th>
                     <th>Production</th>
+                    <th>Screen Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {historyRecords.length === 0 ? (
                     <tr>
-                      <td colSpan="6" style={{ textAlign: "center" }}>No records found</td>
+                      <td colSpan="7" style={{ textAlign: "center" }}>No records found</td>
                     </tr>
                   ) : (
                     historyRecords.map((r, index) => (
@@ -607,6 +622,7 @@ export default function ManagerAttendance() {
                         <td>{getStatusBadge(r.status)}</td>
                         <td>{Number(r.late_minutes || 0)}</td>
                         <td style={{ color: "#FF8C00" }}>{formatProductionHours(Number(r.production_hours || 0))}</td>
+                        <td>{formatScreenTime(r.screen_time_seconds)}</td>
                       </tr>
                     ))
                   )}

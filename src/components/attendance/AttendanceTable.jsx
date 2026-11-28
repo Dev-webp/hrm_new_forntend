@@ -182,6 +182,37 @@ function BreakCell({ minutes }) {
   );
 }
 
+function ScreenTimeCell({ seconds }) {
+  const totalSeconds = Number(seconds || 0);
+  if (totalSeconds <= 0) {
+    return (
+      <div className="attendance-screen-time-cell empty">
+        <strong>—</strong>
+        <small>No Data</small>
+      </div>
+    );
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  let timeString = "";
+  if (hours > 0) {
+    timeString += `${hours}h `;
+  }
+  if (minutes > 0 || hours > 0) {
+    timeString += `${minutes}m `;
+  }
+  timeString += `${remainingSeconds}s`;
+
+  return (
+    <div className="attendance-screen-time-cell">
+      <strong><i className="fas fa-desktop" /> {timeString}</strong>
+    </div>
+  );
+}
+
 function getRowClass(emp) {
   return `attendance-row row-${getStatusConfig(emp.status).key}`;
 }
@@ -211,7 +242,7 @@ function AttendanceTable({
     return (
       <tbody>
         <tr>
-          <td colSpan={11}>
+          <td colSpan={12}>
             Loading...
           </td>
         </tr>
@@ -224,7 +255,7 @@ function AttendanceTable({
       <tbody>
         <tr>
           <td
-            colSpan={11}
+            colSpan={12}
             style={{ textAlign: "center", padding: 40, color: "#B91C1C" }}
           >
             📆 <strong>Sunday</strong> — No attendance records are recorded.
@@ -238,7 +269,7 @@ function AttendanceTable({
     return (
       <tbody>
         <tr>
-          <td colSpan={11} className="attendance-empty-state">
+          <td colSpan={12} className="attendance-empty-state">
             <i className="fas fa-calendar-xmark" />
             <strong>No attendance records</strong>
             <span>No records found for this date.</span>
@@ -254,7 +285,7 @@ function AttendanceTable({
     return (
       <tbody>
         <tr>
-          <td colSpan={11} className="attendance-empty-state">
+          <td colSpan={12} className="attendance-empty-state">
             <i className="fas fa-user-slash" />
             <strong>No matching employees</strong>
             <span>Try changing the department filter or search.</span>
@@ -293,6 +324,9 @@ function AttendanceTable({
           </td>
           <td>
             <BreakCell minutes={emp.total_break_minutes} />
+          </td>
+          <td>
+            <ScreenTimeCell seconds={emp.screen_time_seconds} />
           </td>
           <td>
             <div className="attendance-actions">

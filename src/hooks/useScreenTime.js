@@ -73,10 +73,13 @@ export const useScreenTime = (userId) => {
     if (!userId || totalSeconds === 0) return;
 
     const secondsSinceLastSync = totalSeconds - lastSyncTime.current;
-    
+
     if (secondsSinceLastSync > 0) {
       try {
         const token = localStorage.getItem('token');
+        const today = new Date().toISOString().split('T')[0];
+        console.log('[ScreenTime] Syncing screen time:', { userId, today, secondsSinceLastSync, totalSeconds });
+
         const response = await fetch(`${HRMS_API_URL}/screen-time`, {
           method: 'POST',
           headers: {
@@ -85,17 +88,24 @@ export const useScreenTime = (userId) => {
           },
           body: JSON.stringify({
             user_id: userId,
-            date: new Date().toISOString().split('T')[0],
+            date: today,
             total_seconds: secondsSinceLastSync,
           }),
         });
 
+        console.log('[ScreenTime] Sync response status:', response.status);
+
         if (response.ok) {
+          const data = await response.json();
+          console.log('[ScreenTime] Sync response data:', data);
           lastSyncTime.current = totalSeconds;
-          console.log('Screen time synced successfully');
+          console.log('[ScreenTime] Screen time synced successfully');
+        } else {
+          const errorData = await response.json();
+          console.error('[ScreenTime] Sync failed:', response.status, errorData);
         }
       } catch (error) {
-        console.error('Error syncing screen time:', error);
+        console.error('[ScreenTime] Error syncing screen time:', error);
       }
     }
   };

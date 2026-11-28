@@ -2721,7 +2721,6 @@ const [statusFilter, setStatusFilter] = useState("All");
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (statusFilter !== "All") params.append("status", statusFilter);
       const res = await fetch(`${API}/leads?${params}`, { headers: authHeader() });
       const data = await res.json();
       if (data.success) setLeads(data.leads);
@@ -2733,7 +2732,7 @@ const [statusFilter, setStatusFilter] = useState("All");
     }
   };
 
-  useEffect(() => { fetchLeads(); }, [statusFilter]);
+  useEffect(() => { fetchLeads(); }, []);
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) =>
@@ -2789,6 +2788,7 @@ const [statusFilter, setStatusFilter] = useState("All");
   // Client-side search — filters by Name / Email / Mobile, matches the "Search Customers" bar style
     const filteredLeads = leads.filter((l) => {
     if (l.status === "Dead") return false;   // NEW — Dead leads live in the Dead Enquiry tab
+    if (statusFilter !== "All" && l.status !== statusFilter) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (

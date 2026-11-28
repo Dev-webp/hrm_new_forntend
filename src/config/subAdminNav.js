@@ -1,20 +1,35 @@
 export const SUB_ADMIN_NAV = [
   {
-    section: "Self Service",
+    section: "Menu",
     items: [
       { path: "/sub-admin", icon: "fa-chart-line", label: "Dashboard", end: true },
-      { path: "/sub-admin/calendar", icon: "fa-calendar-alt", label: "Calendar" },
-      { path: "/sub-admin/leave", icon: "fa-umbrella-beach", label: "Leave" },
-      { path: "/sub-admin/tasks", icon: "fa-tasks", label: "Tasks" },
-      { path: "/sub-admin/payslip", icon: "fa-file-invoice-dollar", label: "My Payslip" },
-      { path: "/subadmin/instructions", icon: "fa-book-open", label: "Instructions" },
-    ],
-  },
-  {
-    section: "Operations",
-    items: [
       { path: "/sub-admin/attendance", icon: "fa-calendar-check", label: "Attendance" },
+      { path: "/sub-admin/leave", icon: "fa-umbrella-beach", label: "Leave" },
       { path: "/sub-admin/breaks", icon: "fa-coffee", label: "Breaks" },
+      { path: "/sub-admin/tasks", icon: "fa-tasks", label: "Tasks" },
+      { path: "/sub-admin/messages", icon: "fa-envelope", label: "Messages" },
+      { path: "/sub-admin/payslip", icon: "fa-file-invoice-dollar", label: "Payslip" },
+      { path: "/sub-admin/calendar", icon: "fa-calendar-alt", label: "Calendar" },
+      { path: "/subadmin/instructions", icon: "fa-book-open", label: "Instructions" },
+      // Invoice/CRM items - only show if admin has granted specific permissions
+      { path: "/sub-admin/crm/leads", icon: "fa-bullseye", label: "Leads", invoicePermission: "customers" },
+      { path: "/sub-admin/crm/customers", icon: "fa-address-book", label: "Customers", invoicePermission: "customers" },
+      { path: "/sub-admin/invoice/reports", icon: "fa-chart-pie", label: "Reports", invoicePermission: "reports" },
+      { path: "/sub-admin/invoice/invoices", icon: "fa-file-invoice", label: "Invoices", invoicePermission: "invoices" },
+      { path: "/sub-admin/invoice/rejected", icon: "fa-file-circle-xmark", label: "Rejected Invoices", invoicePermission: "invoices" },
+      { path: "/sub-admin/invoice/quotes", icon: "fa-file-signature", label: "Proforma Invoice", invoicePermission: "quotes" },
+      { path: "/sub-admin/invoice/payments", icon: "fa-credit-card", label: "Payments", invoicePermission: "payments" },
+      { path: "/sub-admin/invoice/items", icon: "fa-boxes-stacked", label: "Services", invoicePermission: "services" },
+      // OPS items - only show if admin has granted OPS access
+      { path: "/sub-admin/ops/dashboard", icon: "fa-plug", label: "OPS Portal", opsEntry: true },
+      { path: "/sub-admin/ops/dashboard", icon: "fa-gauge", label: "OPS Dashboard", opsSection: "dashboard", opsAccess: true },
+      { path: "/sub-admin/ops/leads", icon: "fa-user-check", label: "Leads / Agreements", opsSection: "leads", opsAccess: true },
+      { path: "/sub-admin/ops/audit", icon: "fa-microphone", label: "Quality Audit", opsSection: "audit", opsAccess: true },
+      { path: "/sub-admin/ops/cases", icon: "fa-folder-open", label: "Case Filing Ops", opsSection: "cases", opsAccess: true },
+      { path: "/sub-admin/ops/cases?view=processing", icon: "fa-clipboard-list", label: "Case Processing", opsSection: "case-processing", opsAccess: true },
+      { path: "/sub-admin/ops/reports", icon: "fa-chart-column", label: "OPS Reports", opsSection: "reports", opsAccess: true },
+      { path: "/sub-admin/ops/employees", icon: "fa-users-gear", label: "OPS Employees", opsSection: "employees", opsAccess: true },
+      { path: "/sub-admin/ops", icon: "fa-briefcase", label: "OPS Portal", opsAccess: true },
     ],
   },
 ];

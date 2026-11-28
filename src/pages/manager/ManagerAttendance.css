@@ -252,6 +252,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .manager-attendance-page .attendance-status-cell,
 .manager-attendance-page .attendance-production-cell,
 .manager-attendance-page .attendance-break-cell,
+.manager-attendance-page .attendance-screen-time-cell,
 .manager-attendance-page .attendance-late-cell,
 .manager-attendance-page .late-login-count-cell {
   display: grid;
@@ -502,6 +503,33 @@ body { font-family: 'Inter', sans-serif; background: #F5F7FA; color: #1A2B4B; ov
 .manager-attendance-page .attendance-break-cell.empty span {
   color: #94a3b8;
   background: #f1f5f9;
+}
+
+.manager-attendance-page .attendance-screen-time-cell.empty strong {
+  color: #94a3b8;
+}
+
+.manager-attendance-page .attendance-screen-time-cell.empty small {
+  color: #94a3b8;
+}
+
+.manager-attendance-page .attendance-screen-time-cell strong {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manager-attendance-page .attendance-screen-time-cell strong i {
+  color: #0d47a1;
+}
+
+.manager-attendance-page .attendance-screen-time-cell small {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .manager-attendance-page .attendance-actions {

@@ -1446,6 +1446,7 @@
 .admin-attendance-page .attendance-status-cell,
 .admin-attendance-page .attendance-production-cell,
 .admin-attendance-page .attendance-break-cell,
+.admin-attendance-page .attendance-screen-time-cell,
 .admin-attendance-page .attendance-late-cell,
 .admin-attendance-page .late-login-count-cell {
   display: grid;
@@ -1610,6 +1611,33 @@
 .admin-attendance-page .break-ok {
   background: #dcfce7;
   color: #15803d;
+}
+
+.admin-attendance-page .attendance-screen-time-cell.empty strong {
+  color: #94a3b8;
+}
+
+.admin-attendance-page .attendance-screen-time-cell.empty small {
+  color: #94a3b8;
+}
+
+.admin-attendance-page .attendance-screen-time-cell strong {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-attendance-page .attendance-screen-time-cell strong i {
+  color: #0d47a1;
+}
+
+.admin-attendance-page .attendance-screen-time-cell small {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 @keyframes att-live-pulse {

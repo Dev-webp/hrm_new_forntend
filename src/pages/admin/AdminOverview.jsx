@@ -354,21 +354,30 @@ const AdminOverview = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("vjc_invoice_auth")}` }
       };
 
-      // Use the same endpoint as Lead Management - team-monitor with range=today
+      // Fetch total leads count and status breakdown from /leads endpoint
+      const leadsRes = await INVOICE_API.get('/leads', config);
+    const allLeads = leadsRes.data.leads || [];
+      const totalLeads = allLeads.length;
+
+      // Calculate leads by status
+      const leadsByStatus = allLeads.reduce((acc, lead) => {
+        const status = lead.status || 'Unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Use team-monitor for today's stats
       const params = new URLSearchParams({ range: 'today' });
       const teamMonitorRes = await INVOICE_API.get(`/leads/team-monitor?${params.toString()}`, config);
-      
+
       console.log('[Executive Dashboard] Team monitor response:', teamMonitorRes.data);
-      
+
       // Extract summary data from team-monitor response
       const summary = teamMonitorRes.data.summary || teamMonitorRes.data.stats || {};
-      const totalLeads = teamMonitorRes.data.totalLeads || 43; // Fallback to total from API or static
       const leadsCreatedToday = Number(summary.received || summary.today || 0);
       const unassignedLeads = Number(summary.pending_assignment || summary.unassigned || 0);
 
-      const leadsByStatus = {}; // Team monitor doesn't provide status breakdown, we'll get it from /leads if needed
-
-      console.log('[Executive Dashboard] CRM FINAL: totalLeads=', totalLeads, 'leadsCreatedToday=', leadsCreatedToday, 'unassignedLeads=', unassignedLeads);
+      console.log('[Executive Dashboard] CRM FINAL: totalLeads=', totalLeads, 'leadsCreatedToday=', leadsCreatedToday, 'unassignedLeads=', unassignedLeads, 'leadsByStatus=', leadsByStatus);
 
       setData(prev => ({
         ...prev,

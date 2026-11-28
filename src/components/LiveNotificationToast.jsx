@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { getAuthToken } from "../utils/auth";
+import { getAuthToken, getStoredRole } from "../utils/auth";
 import { loadSocketIoClient, SOCKET_SERVER_URL } from "../utils/socketClient";
 import "../styles/LiveNotificationToast.css";
+
+const LEAVE_NOTIFICATION_ACTIONS = new Set([
+  "leave_request",
+  "leave_status",
+  "leave_deleted",
+]);
 
 export default function LiveNotificationToast() {
   const [toast, setToast] = useState(null);
   const [authToken, setAuthToken] = useState(getAuthToken());
   const socketRef = useRef(null);
   const toastTimerRef = useRef(null);
+  const userRole = String(getStoredRole()).toUpperCase().replace(/-/g, "_");
 
   useEffect(() => {
     const syncToken = () => setAuthToken(getAuthToken());
@@ -40,6 +47,11 @@ export default function LiveNotificationToast() {
 
       socket.on("new_notification", (n) => {
         if (cancelled) return;
+        if (["login", "logout"].includes(n.action_type)) return;
+        if (
+          ["HR", "SUB_ADMIN"].includes(userRole) &&
+          !LEAVE_NOTIFICATION_ACTIONS.has(n.action_type)
+        ) return;
 
         setToast(n);
 
@@ -60,7 +72,7 @@ export default function LiveNotificationToast() {
       clearTimeout(toastTimerRef.current);
       socketRef.current?.disconnect();
     };
-  }, [authToken]);
+  }, [authToken, userRole]);
 
   if (!toast) return null;
 

@@ -43,9 +43,9 @@ export const NAV_MODULES = [
         label: "Leads",
         roles: ["admin", "manager", "operational-manager", "sub-admin"],
         subItems: [
-          { slug: "/crm/leads", icon: "fa-file-invoice", label: "CRM Leads", roles: ["admin", "manager"], invoicePermission: "customers" },
+          { slug: "/crm/leads", icon: "fa-file-invoice", label: "CRM Leads", roles: ["admin", "manager", "sub-admin"], invoicePermission: "customers" },
           { slug: "/admin/ops/leads", icon: "fa-briefcase", label: "OPS Leads", roles: ["admin", "manager", "operational-manager", "sub-admin"], opsAccess: true, opsSection: "leads", absolute: true },
-          { slug: "/crm/customers", icon: "fa-address-book", label: "Customers", roles: ["admin", "manager"], invoicePermission: "customers" },
+          { slug: "/crm/customers", icon: "fa-address-book", label: "Customers", roles: ["admin", "manager", "sub-admin"], invoicePermission: "customers" },
         ]
       },
     ],
@@ -129,23 +129,22 @@ export const NAV_MODULES = [
         slug: "/invoice",
         icon: "fa-file-invoice-dollar",
         label: "Invoice",
-        roles: ["admin", "manager"],
-        invoicePermission: "invoices",
+        roles: ["admin", "manager", "sub-admin"],
         subItems: [
-          { slug: "/invoice/approvals", icon: "fa-clipboard-check", label: "Approval Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
-          { slug: "/invoice/invoices", icon: "fa-file-invoice", label: "Approved Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
-          { slug: "/invoice/rejected", icon: "fa-file-circle-xmark", label: "Rejected Invoice", roles: ["admin", "manager"], invoicePermission: "invoices" },
-          { slug: "/invoice/quotes", icon: "fa-file-signature", label: "Proforma Invoice", roles: ["admin", "manager"], invoicePermission: "quotes" },
+          { slug: "/invoice/approvals", icon: "fa-clipboard-check", label: "Approval Invoice", roles: ["admin", "manager", "sub-admin"], invoicePermission: "invoices" },
+          { slug: "/invoice/invoices", icon: "fa-file-invoice", label: "Approved Invoice", roles: ["admin", "manager", "sub-admin"], invoicePermission: "invoices" },
+          { slug: "/invoice/rejected", icon: "fa-file-circle-xmark", label: "Rejected Invoice", roles: ["admin", "manager", "sub-admin"], invoicePermission: "invoices" },
+          { slug: "/invoice/quotes", icon: "fa-file-signature", label: "Proforma Invoice", roles: ["admin", "manager", "sub-admin"], invoicePermission: "quotes" },
         ]
       },
       {
         slug: "/finance",
         icon: "fa-chart-line",
         label: "Finance",
-        roles: ["admin", "manager", "HR"],
+        roles: ["admin", "manager", "HR", "sub-admin"],
         subItems: [
-          { slug: "/invoice/payments", icon: "fa-credit-card", label: "Invoice Payments", roles: ["admin", "manager"], invoicePermission: "payments" },
-          { slug: "/invoice/expenses", icon: "fa-wallet", label: "Invoice Expenses", roles: ["admin", "manager"], invoicePermission: "expenses" },
+          { slug: "/invoice/payments", icon: "fa-credit-card", label: "Invoice Payments", roles: ["admin", "manager", "sub-admin"], invoicePermission: "payments" },
+          { slug: "/invoice/expenses", icon: "fa-wallet", label: "Invoice Expenses", roles: ["admin", "manager", "sub-admin"], invoicePermission: "expenses" },
           { slug: "/payroll", icon: "fa-coins", label: "HRMS Payroll", roles: ["admin", "HR"] },
         ]
       },
@@ -160,7 +159,7 @@ export const NAV_MODULES = [
         label: "Reports",
         roles: ["admin", "manager", "operational-manager", "sub-admin"],
         subItems: [
-          { slug: "/invoice/reports", icon: "fa-file-invoice", label: "Invoice Reports", roles: ["admin", "manager"], invoicePermission: "reports" },
+          { slug: "/invoice/reports", icon: "fa-file-invoice", label: "Invoice Reports", roles: ["admin", "manager", "sub-admin"], invoicePermission: "reports" },
           { slug: "/admin/ops/reports", icon: "fa-chart-bar", label: "OPS Reports", roles: ["admin", "manager", "operational-manager", "sub-admin"], opsAccess: true, opsSection: "reports", absolute: true },
         ]
       },
